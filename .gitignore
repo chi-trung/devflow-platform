@@ -64,3 +64,6 @@ Thumbs.db
 # Docker volumes
 .docker/
 pgdata/
+
+# AI assistant local tooling
+.opencode/skills/
