@@ -6,6 +6,7 @@ import { ErrorAlert } from "../ui/ErrorAlert";
 import { Avatar } from "../ui/Avatar";
 import type {
   CommentResponse,
+  SprintResponse,
   TaskItemResponse,
   WorkspaceMemberResponse,
 } from "../../types/api";
@@ -15,6 +16,7 @@ interface TaskDetailPanelProps {
   task: TaskItemResponse;
   currentUser: CurrentUser | null;
   members: WorkspaceMemberResponse[];
+  sprints: SprintResponse[];
   workspaceId: string;
   projectId: string;
   onClose: () => void;
@@ -25,6 +27,7 @@ export function TaskDetailPanel({
   task,
   currentUser,
   members,
+  sprints,
   workspaceId,
   projectId,
   onClose,
@@ -145,6 +148,25 @@ export function TaskDetailPanel({
     priority !== task.priority ||
     assigneeId !== task.assigneeId;
 
+  async function changeSprint(sprintId: string | null) {
+    setDetailError(null);
+    const base = `/workspaces/${workspaceId}/projects/${projectId}/sprints`;
+    try {
+      if (sprintId) {
+        await api(`${base}/${sprintId}/tasks/${task.id}`, { method: "PUT" });
+      } else if (task.sprintId) {
+        await api(`${base}/${task.sprintId}/tasks/${task.id}`, {
+          method: "DELETE",
+        });
+      }
+      onTaskChanged();
+    } catch (err) {
+      setDetailError(
+        err instanceof Error ? err.message : "Failed to update sprint.",
+      );
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-40" role="dialog" aria-label="Task details">
       <button
@@ -218,6 +240,25 @@ export function TaskDetailPanel({
                 <option key={member.userId} value={member.userId}>
                   {member.displayName || member.username}
                   {member.role !== "Member" ? ` (${member.role})` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Sprint
+            <select
+              value={task.sprintId ?? ""}
+              onChange={(event) =>
+                void changeSprint(event.target.value === "" ? null : event.target.value)
+              }
+              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            >
+              <option value="">No sprint</option>
+              {sprints.map((sprint) => (
+                <option key={sprint.id} value={sprint.id}>
+                  {sprint.name}
+                  {sprint.status === "Active" ? " (active)" : ""}
                 </option>
               ))}
             </select>

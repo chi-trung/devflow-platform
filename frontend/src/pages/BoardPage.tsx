@@ -12,8 +12,10 @@ import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { Column } from "../components/board/Column";
 import { CreateTaskForm } from "../components/board/CreateTaskForm";
 import { TaskDetailPanel } from "../components/board/TaskDetailPanel";
+import { SprintBar } from "../components/board/SprintBar";
 import type {
   ProjectResponse,
+  SprintResponse,
   TaskItemResponse,
   WorkspaceMemberResponse,
 } from "../types/api";
@@ -38,6 +40,11 @@ export function BoardPage() {
     [workspaceId],
   );
 
+  const { data: sprints, reload: reloadSprints } = useApi<SprintResponse[]>(
+    () => api(`/workspaces/${workspaceId}/projects/${projectId}/sprints`),
+    [workspaceId, projectId],
+  );
+
   const {
     data,
     error,
@@ -52,9 +59,20 @@ export function BoardPage() {
   const [boardError, setBoardError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [sprintFilter, setSprintFilter] = useState<string>("all");
   const { currentUser } = useAuth();
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null;
+
+  const myRole = members?.find((m) => m.userId === currentUser?.id)?.role;
+  const canManageSprints = myRole === "Owner" || myRole === "Admin";
+
+  const visibleTasks =
+    sprintFilter === "all"
+      ? tasks
+      : sprintFilter === "none"
+        ? tasks.filter((t) => !t.sprintId)
+        : tasks.filter((t) => t.sprintId === sprintFilter);
 
   useEffect(() => {
     if (data) setTasks(data);
@@ -159,6 +177,21 @@ export function BoardPage() {
           )}
         </div>
 
+        {sprints && sprints.length >= 0 && (
+          <SprintBar
+            sprints={sprints}
+            canManage={canManageSprints}
+            filter={sprintFilter}
+            onFilterChange={setSprintFilter}
+            onChanged={() => {
+              reloadSprints();
+              reload();
+            }}
+            workspaceId={workspaceId}
+            projectId={projectId}
+          />
+        )}
+
         {creating && (
           <CreateTaskForm
             onCreate={createTask}
@@ -207,7 +240,7 @@ export function BoardPage() {
                 <Column
                   title={title}
                   status={status}
-                  tasks={tasks.filter((t) => t.status === status)}
+                  tasks={visibleTasks.filter((t) => t.status === status)}
                   members={members ?? []}
                   onDropTask={(taskId, next) => void moveTask(taskId, next)}
                   onDelete={(task) => void deleteTask(task)}
@@ -224,10 +257,14 @@ export function BoardPage() {
           task={selectedTask}
           currentUser={currentUser}
           members={members ?? []}
+          sprints={(sprints ?? []).filter((s) => s.status !== "Completed")}
           workspaceId={workspaceId}
           projectId={projectId}
           onClose={() => setSelectedTaskId(null)}
-          onTaskChanged={reload}
+          onTaskChanged={() => {
+            reload();
+            reloadSprints();
+          }}
         />
       )}
     </AppShell>

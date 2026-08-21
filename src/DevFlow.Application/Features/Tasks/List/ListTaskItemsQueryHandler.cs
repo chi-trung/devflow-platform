@@ -32,6 +32,7 @@ public sealed class ListTaskItemsQueryHandler(
                 task.Status.ToString(),
                 task.Priority.ToString(),
                 task.AssigneeId,
+                task.SprintId,
                 task.DueDateUtc,
                 task.CompletedAtUtc))
             .ToList();

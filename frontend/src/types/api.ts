@@ -50,6 +50,7 @@ export interface TaskItemResponse {
   status: "Backlog" | "InProgress" | "InReview" | "Done";
   priority: "Low" | "Medium" | "High" | "Critical";
   assigneeId: string | null;
+  sprintId: string | null;
   dueDateUtc: string | null;
   completedAtUtc: string | null;
 }

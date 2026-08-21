@@ -8,5 +8,6 @@ public sealed record TaskItemResponse(
     string Status,
     string Priority,
     Guid? AssigneeId,
+    Guid? SprintId,
     DateTimeOffset? DueDateUtc,
     DateTimeOffset? CompletedAtUtc);
