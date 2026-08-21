@@ -93,4 +93,88 @@ public sealed class TasksController(ISender sender) : ControllerBase
 
         return NoContent();
     }
+
+    [HttpGet("{taskId:guid}/attachments")]
+    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Tasks.Attachments.TaskAttachmentResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListAttachments(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        CancellationToken cancellationToken)
+    {
+        var attachments = await sender.Send(
+            new Application.Features.Tasks.Attachments.ListTaskAttachmentsQuery(workspaceId, projectId, taskId),
+            cancellationToken);
+
+        return Ok(attachments);
+    }
+
+    [HttpPost("{taskId:guid}/attachments")]
+    [ProducesResponseType(typeof(Application.Features.Tasks.Attachments.TaskAttachmentResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadAttachment(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(new ProblemDetails { Title = "No file uploaded." });
+        }
+
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream, cancellationToken);
+
+        var command = new Application.Features.Tasks.Attachments.UploadTaskAttachmentCommand(
+            workspaceId,
+            projectId,
+            taskId,
+            file.FileName,
+            file.ContentType ?? "application/octet-stream",
+            file.Length,
+            memoryStream.ToArray());
+
+        var result = await sender.Send(command, cancellationToken);
+
+        return StatusCode(StatusCodes.Status201Created, result);
+    }
+
+    [HttpGet("{taskId:guid}/attachments/{attachmentId:guid}/download")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DownloadAttachment(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        Guid attachmentId,
+        CancellationToken cancellationToken)
+    {
+        var fileResult = await sender.Send(
+            new Application.Features.Tasks.Attachments.DownloadTaskAttachmentQuery(workspaceId, projectId, taskId, attachmentId),
+            cancellationToken);
+
+        return File(fileResult.Data, fileResult.ContentType, fileResult.FileName);
+    }
+
+    [HttpDelete("{taskId:guid}/attachments/{attachmentId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteAttachment(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        Guid attachmentId,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Tasks.Attachments.DeleteTaskAttachmentCommand(workspaceId, projectId, taskId, attachmentId),
+            cancellationToken);
+
+        return NoContent();
+    }
 }

@@ -28,6 +28,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
 
+    public DbSet<TaskAttachment> TaskAttachments => Set<TaskAttachment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);

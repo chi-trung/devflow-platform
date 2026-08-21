@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { X } from "lucide-react";
-import { api } from "../../lib/api";
+import { X, Paperclip, Download, Trash2 } from "lucide-react";
+import { api, tokens } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { ErrorAlert } from "../ui/ErrorAlert";
 import { Avatar } from "../ui/Avatar";
@@ -9,6 +9,7 @@ import type {
   CommentResponse,
   SprintResponse,
   TaskItemResponse,
+  TaskAttachmentResponse,
   WorkspaceMemberResponse,
 } from "../../types/api";
 import type { CurrentUser } from "../../auth/AuthContext";
@@ -50,6 +51,10 @@ export function TaskDetailPanel({
   const [newComment, setNewComment] = useState("");
   const [commentError, setCommentError] = useState<string | null>(null);
   const [postingComment, setPostingComment] = useState(false);
+
+  const [attachments, setAttachments] = useState<TaskAttachmentResponse[]>([]);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const { push } = useToast();
 
   useEffect(() => {
@@ -73,28 +78,110 @@ export function TaskDetailPanel({
   useEffect(() => {
     let cancelled = false;
     setCommentsLoading(true);
+    setAttachmentsLoading(true);
 
-    api<CommentResponse[]>(
-      `/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/comments`,
-    )
-      .then((data) => {
-        if (!cancelled) setComments(data);
+    Promise.all([
+      api<CommentResponse[]>(
+        `/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/comments`,
+      ),
+      api<TaskAttachmentResponse[]>(
+        `/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/attachments`,
+      ),
+    ])
+      .then(([comms, atts]) => {
+        if (!cancelled) {
+          setComments(comms);
+          setAttachments(atts);
+        }
       })
       .catch((err: unknown) => {
         if (!cancelled) {
           setCommentError(
-            err instanceof Error ? err.message : "Failed to load comments.",
+            err instanceof Error ? err.message : "Failed to load task details.",
           );
         }
       })
       .finally(() => {
-        if (!cancelled) setCommentsLoading(false);
+        if (!cancelled) {
+          setCommentsLoading(false);
+          setAttachmentsLoading(false);
+        }
       });
 
     return () => {
       cancelled = true;
     };
   }, [task.id, workspaceId, projectId]);
+
+  async function uploadFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(
+        `/api/v1/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/attachments`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${tokens.access}`,
+          },
+          body: formData,
+        },
+      );
+
+      if (!res.ok) throw new Error("Upload failed");
+      const created = (await res.json()) as TaskAttachmentResponse;
+      setAttachments((curr) => [created, ...curr]);
+      push("File attached");
+    } catch {
+      push("Failed to upload file", "error");
+    } finally {
+      setUploading(false);
+      event.target.value = "";
+    }
+  }
+
+  async function downloadAttachment(att: TaskAttachmentResponse) {
+    try {
+      const res = await fetch(
+        `/api/v1/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/attachments/${att.id}/download`,
+        {
+          headers: {
+            Authorization: `Bearer ${tokens.access}`,
+          },
+        },
+      );
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = att.fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch {
+      push("Failed to download file", "error");
+    }
+  }
+
+  async function deleteAttachment(att: TaskAttachmentResponse) {
+    try {
+      await api(
+        `/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/attachments/${att.id}`,
+        { method: "DELETE" },
+      );
+      setAttachments((curr) => curr.filter((a) => a.id !== att.id));
+      push("Attachment removed");
+    } catch {
+      push("Failed to remove attachment", "error");
+    }
+  }
 
   async function saveChanges() {
     if (!title.trim()) {
@@ -326,6 +413,70 @@ export function TaskDetailPanel({
               className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
             />
           </label>
+
+          <section className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium flex items-center gap-1.5">
+                <Paperclip className="size-4 text-muted-foreground" aria-hidden />
+                Attachments{" "}
+                <span className="font-mono text-xs text-muted-foreground">
+                  ({attachments.length})
+                </span>
+              </h3>
+              <label className="cursor-pointer text-xs font-medium text-primary hover:underline">
+                {uploading ? "Uploading…" : "+ Add file"}
+                <input
+                  type="file"
+                  onChange={uploadFile}
+                  disabled={uploading}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              {attachmentsLoading ? (
+                <p className="text-xs text-muted-foreground">Loading…</p>
+              ) : attachments.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No attachments.</p>
+              ) : (
+                attachments.map((att) => (
+                  <div
+                    key={att.id}
+                    className="group flex items-center justify-between rounded-lg border border-border/60 bg-card p-2 text-xs"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Paperclip className="size-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate font-medium text-foreground">
+                        {att.fileName}
+                      </span>
+                      <span className="shrink-0 text-[10px] font-mono text-muted-foreground">
+                        ({Math.round(att.fileSize / 1024)} KB)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => void downloadAttachment(att)}
+                        title="Download"
+                        className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-foreground"
+                      >
+                        <Download className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void deleteAttachment(att)}
+                        title="Delete"
+                        className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-destructive"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
 
           <section className="flex min-h-0 flex-1 flex-col">
             <h3 className="mb-2 text-sm font-medium">
