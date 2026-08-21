@@ -21,6 +21,11 @@ public sealed class UserRepository(DevFlowDbContext dbContext) : IUserRepository
         return dbContext.Users.FirstOrDefaultAsync(user => user.Email == email, cancellationToken);
     }
 
+    public Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Users.FirstOrDefaultAsync(user => user.Id == id, cancellationToken);
+    }
+
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
         await dbContext.Users.AddAsync(user, cancellationToken);
