@@ -18,6 +18,17 @@ public sealed class ProjectRepository(DevFlowDbContext dbContext) : IProjectRepo
         return dbContext.Projects.FirstOrDefaultAsync(project => project.Id == id, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Project>> GetForWorkspaceAsync(Guid workspaceId, CancellationToken cancellationToken = default)
+    {
+        var projects = await dbContext.Projects
+            .AsNoTracking()
+            .Where(project => project.WorkspaceId == workspaceId)
+            .OrderBy(project => project.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+
+        return projects;
+    }
+
     public async Task AddAsync(Project project, CancellationToken cancellationToken = default)
     {
         await dbContext.Projects.AddAsync(project, cancellationToken);

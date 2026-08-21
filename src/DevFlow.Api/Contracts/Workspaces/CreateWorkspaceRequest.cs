@@ -1,3 +1,5 @@
+using DevFlow.Domain.Enums;
+
 namespace DevFlow.Api.Contracts.Workspaces;
 
 public sealed record CreateWorkspaceRequest(
@@ -6,3 +8,5 @@ public sealed record CreateWorkspaceRequest(
     string? Description);
 
 public sealed record WorkspaceCreatedResponse(Guid Id);
+
+public sealed record InviteMemberRequest(string Email, WorkspaceRole Role);

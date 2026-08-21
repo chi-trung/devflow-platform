@@ -45,13 +45,16 @@ public class Workspace : BaseEntity, IAuditableEntity
         return new Workspace(name.Trim(), slug.Trim().ToLowerInvariant(), description?.Trim());
     }
 
-    public void AddMember(Guid userId, WorkspaceRole role)
+    public WorkspaceMember AddMember(Guid userId, WorkspaceRole role)
     {
         if (_members.Any(member => member.UserId == userId))
         {
             throw new InvalidOperationException($"User {userId} is already a member of this workspace.");
         }
 
-        _members.Add(WorkspaceMember.Create(Id, userId, role));
+        var member = WorkspaceMember.Create(Id, userId, role);
+        _members.Add(member);
+
+        return member;
     }
 }

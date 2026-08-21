@@ -51,4 +51,25 @@ public sealed class WorkspacesController(ISender sender) : ControllerBase
 
         return Ok(workspace);
     }
+
+    [HttpPost("{id:guid}/members")]
+    [ProducesResponseType(typeof(Application.Features.Workspaces.InviteMembers.MemberResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> InviteMember(
+        Guid id,
+        InviteMemberRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new Application.Features.Workspaces.InviteMembers.InviteMemberCommand(
+            id,
+            request.Email,
+            request.Role);
+
+        var member = await sender.Send(command, cancellationToken);
+
+        return StatusCode(StatusCodes.Status201Created, member);
+    }
 }
