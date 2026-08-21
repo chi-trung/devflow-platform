@@ -52,6 +52,19 @@ public sealed class WorkspacesController(ISender sender) : ControllerBase
         return Ok(workspace);
     }
 
+    [HttpGet("{id:guid}/members")]
+    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Workspaces.ListMembers.WorkspaceMemberResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ListMembers(Guid id, CancellationToken cancellationToken)
+    {
+        var members = await sender.Send(
+            new Application.Features.Workspaces.ListMembers.ListWorkspaceMembersQuery(id),
+            cancellationToken);
+
+        return Ok(members);
+    }
+
     [HttpPost("{id:guid}/members")]
     [ProducesResponseType(typeof(Application.Features.Workspaces.InviteMembers.MemberResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
