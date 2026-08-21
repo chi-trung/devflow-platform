@@ -33,6 +33,11 @@ internal sealed class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
             .HasForeignKey(task => task.ProjectId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasOne<Sprint>()
+            .WithMany()
+            .HasForeignKey(task => task.SprintId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.HasIndex(task => new { task.ProjectId, task.Status });
     }
 }

@@ -24,6 +24,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<Comment> Comments => Set<Comment>();
 
+    public DbSet<Sprint> Sprints => Set<Sprint>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);

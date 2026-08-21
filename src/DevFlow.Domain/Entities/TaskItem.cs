@@ -34,6 +34,8 @@ public class TaskItem : BaseEntity, IAuditableEntity
 
     public Guid? AssigneeId { get; private set; }
 
+    public Guid? SprintId { get; private set; }
+
     public DateTimeOffset? DueDateUtc { get; private set; }
 
     public DateTimeOffset? CompletedAtUtc { get; private set; }
@@ -85,4 +87,8 @@ public class TaskItem : BaseEntity, IAuditableEntity
     }
 
     public void AssignTo(Guid? userId) => AssigneeId = userId;
+
+    public void AssignToSprint(Guid sprintId) => SprintId = sprintId;
+
+    public void RemoveFromSprint() => SprintId = null;
 }
