@@ -1,3 +1,4 @@
+using DevFlow.Application.Common.Behaviors;
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Domain.Enums;
 using MediatR;
@@ -8,4 +9,4 @@ namespace DevFlow.Application.Features.Tasks.Delete;
 public sealed record DeleteTaskItemCommand(
     Guid WorkspaceId,
     Guid ProjectId,
-    Guid TaskId) : IRequest, IWorkspaceRequest;
+    Guid TaskId) : IRequest, IWorkspaceRequest, IProjectEvent;

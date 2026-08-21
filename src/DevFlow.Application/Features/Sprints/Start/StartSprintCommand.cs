@@ -1,3 +1,4 @@
+using DevFlow.Application.Common.Behaviors;
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Domain.Enums;
 using MediatR;
@@ -10,4 +11,4 @@ public sealed record StartSprintCommand(
     Guid ProjectId,
     Guid SprintId,
     DateTimeOffset StartDateUtc,
-    DateTimeOffset EndDateUtc) : IRequest, IWorkspaceRequest;
+    DateTimeOffset EndDateUtc) : IRequest, IWorkspaceRequest, IProjectEvent;

@@ -1,3 +1,4 @@
+using DevFlow.Application.Common.Behaviors;
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Domain.Enums;
 using MediatR;
@@ -9,4 +10,4 @@ public sealed record CreateSprintCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     string Name,
-    string? Goal) : IRequest<SprintResponse>, IWorkspaceRequest;
+    string? Goal) : IRequest<SprintResponse>, IWorkspaceRequest, IProjectEvent;

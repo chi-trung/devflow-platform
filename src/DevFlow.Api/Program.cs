@@ -2,7 +2,9 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
 using DevFlow.Api.Auth;
+using DevFlow.Api.Hubs;
 using DevFlow.Api.Middleware;
+using DevFlow.Api.RealTime;
 using DevFlow.Application;
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Infrastructure;
@@ -30,6 +32,24 @@ builder.Services
     {
         options.MapInboundClaims = false;
 
+        options.Events = new JwtBearerEvents
+        {
+            // SignalR WebSockets cannot send an Authorization header,
+            // so the access token arrives via the query string.
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -43,6 +63,9 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IRealtimeNotifier, SignalRProjectNotifier>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, UserContext>();
@@ -126,6 +149,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<ProjectHub>("/hubs/projects");
 
 app.MapHealthChecks("/health");
 

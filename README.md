@@ -39,6 +39,7 @@ Built as a long-term learning project with a strong focus on architecture, testi
 - Workspaces with role-based access (Owner / Admin / Member) enforced server-side
 - Projects with keys, archive lifecycle
 - Kanban board: drag cards between Backlog → In Progress → In Review → Done
+- Realtime boards via SignalR — changes made by teammates appear instantly
 - Task detail panel with comments thread
 - Sprints API with single-active-sprint invariant per project
 - Declarative authorization via pipeline behavior (`[RequireWorkspaceRole]`)

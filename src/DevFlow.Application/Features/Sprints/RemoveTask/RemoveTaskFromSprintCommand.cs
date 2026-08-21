@@ -1,3 +1,4 @@
+using DevFlow.Application.Common.Behaviors;
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Domain.Enums;
 using MediatR;
@@ -9,4 +10,4 @@ public sealed record RemoveTaskFromSprintCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     Guid SprintId,
-    Guid TaskId) : IRequest, IWorkspaceRequest;
+    Guid TaskId) : IRequest, IWorkspaceRequest, IProjectEvent;

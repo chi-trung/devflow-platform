@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, SquareKanban, Search } from "lucide-react";
 import { api } from "../lib/api";
+import { createProjectConnection } from "../lib/realtime";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
 import { useToast } from "../components/ui/ToastProvider";
@@ -91,6 +92,35 @@ export function BoardPage() {
   useEffect(() => {
     if (data) setTasks(data);
   }, [data]);
+
+  // Live updates: any change made by anyone in this project triggers a
+  // debounced refetch, so open boards stay in sync across browsers.
+  useEffect(() => {
+    if (!projectId) return;
+
+    const connection = createProjectConnection();
+    let timer: number | undefined;
+    const scheduleReload = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        reload();
+        reloadSprints();
+      }, 400);
+    };
+
+    connection.on("project-event", scheduleReload);
+    connection
+      .start()
+      .then(() => connection.invoke("JoinProject", projectId))
+      .catch(() => {
+        /* board still works without realtime */
+      });
+
+    return () => {
+      window.clearTimeout(timer);
+      void connection.stop();
+    };
+  }, [projectId, reload, reloadSprints]);
 
   async function moveTask(taskId: string, status: TaskItemResponse["status"]) {
     const task = tasks.find((t) => t.id === taskId);
