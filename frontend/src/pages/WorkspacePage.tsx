@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, FolderKanban } from "lucide-react";
+import { ArrowLeft, Plus, FolderKanban, Users } from "lucide-react";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { AppShell } from "../components/AppShell";
@@ -8,11 +8,13 @@ import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { Input } from "../components/ui/Input";
 import { Badge } from "../components/ui/Badge";
+import { Avatar } from "../components/ui/Avatar";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import type {
   ProjectResponse,
   TaskItemResponse,
+  WorkspaceMemberResponse,
   WorkspaceResponse,
 } from "../types/api";
 
@@ -103,6 +105,53 @@ export function WorkspacePage() {
   const [description, setDescription] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const {
+    data: members,
+    error: membersError,
+    reload: reloadMembers,
+  } = useApi<WorkspaceMemberResponse[]>(
+    () => api(`/workspaces/${workspaceId}/members`),
+    [workspaceId],
+  );
+
+  const [inviting, setInviting] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("Member");
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteSubmitting, setInviteSubmitting] = useState(false);
+
+  const canManageMembers =
+    workspace?.role === "Owner" || workspace?.role === "Admin";
+
+  async function handleInvite(event: FormEvent) {
+    event.preventDefault();
+    setInviteError(null);
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteEmail.trim())) {
+      setInviteError("Enter a valid email address.");
+      return;
+    }
+
+    setInviteSubmitting(true);
+    try {
+      await api(`/workspaces/${workspaceId}/members`, {
+        method: "POST",
+        body: JSON.stringify({
+          email: inviteEmail.trim(),
+          role: inviteRole,
+        }),
+      });
+      setInviteEmail("");
+      setInviteRole("Member");
+      setInviting(false);
+      reloadMembers();
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : "Failed to invite.");
+    } finally {
+      setInviteSubmitting(false);
+    }
+  }
 
   const autoKey = useMemo(() => key || deriveKey(name), [key, name]);
 
@@ -302,6 +351,95 @@ export function WorkspacePage() {
                 })}
               </ul>
             )}
+
+            <section className="mt-12">
+              <div className="mb-4 flex items-end justify-between gap-4">
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    Team
+                  </p>
+                  <h2 className="mt-1 flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
+                    <Users className="size-5 text-primary" aria-hidden />
+                    Members
+                  </h2>
+                </div>
+                {canManageMembers && !inviting && (
+                  <Button variant="outline" onClick={() => setInviting(true)}>
+                    <Plus className="size-4" aria-hidden />
+                    Invite
+                  </Button>
+                )}
+              </div>
+
+              {inviting && (
+                <form
+                  onSubmit={handleInvite}
+                  className="mb-4 flex flex-col gap-4 rounded-xl border border-border bg-card p-5 rise"
+                  noValidate
+                >
+                  {inviteError && <ErrorAlert message={inviteError} />}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_150px]">
+                    <Field label="Email" htmlFor="invite-email">
+                      <Input
+                        id="invite-email"
+                        type="email"
+                        placeholder="teammate@company.dev"
+                        value={inviteEmail}
+                        onChange={(event) => setInviteEmail(event.target.value)}
+                        autoFocus
+                      />
+                    </Field>
+                    <Field label="Role" htmlFor="invite-role">
+                      <select
+                        id="invite-role"
+                        value={inviteRole}
+                        onChange={(event) => setInviteRole(event.target.value)}
+                        className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+                      >
+                        <option>Member</option>
+                        <option>Admin</option>
+                      </select>
+                    </Field>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={inviteSubmitting}>
+                      {inviteSubmitting ? "Inviting…" : "Send invite"}
+                    </Button>
+                    <Button variant="ghost" onClick={() => setInviting(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              )}
+
+              {membersError ? (
+                <ErrorAlert message={membersError} />
+              ) : !members ? (
+                <Skeleton className="h-16" />
+              ) : (
+                <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {members.map((member) => (
+                    <li
+                      key={member.userId}
+                      className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
+                    >
+                      <Avatar name={member.displayName || member.username} id={member.userId} size="md" />
+                      <div className="min-w-0 flex-1 leading-tight">
+                        <p className="truncate text-sm font-medium">
+                          {member.displayName || member.username}
+                        </p>
+                        <p className="truncate font-mono text-[11px] text-muted-foreground">
+                          {member.email}
+                        </p>
+                      </div>
+                      <Badge tone={member.role === "Member" ? "neutral" : "teal"}>
+                        {member.role}
+                      </Badge>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           </>
         )}
       </div>

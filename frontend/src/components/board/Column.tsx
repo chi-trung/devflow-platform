@@ -1,12 +1,13 @@
 import { Circle, CircleDot, Eye, CheckCircle2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { TaskItemResponse } from "../../types/api";
+import type { TaskItemResponse, WorkspaceMemberResponse } from "../../types/api";
 import { TaskCard } from "./TaskCard";
 
 interface ColumnProps {
   title: string;
   status: TaskItemResponse["status"];
   tasks: TaskItemResponse[];
+  members: WorkspaceMemberResponse[];
   onDropTask: (taskId: string, status: TaskItemResponse["status"]) => void;
   onDelete: (task: TaskItemResponse) => void;
   onSelect: (taskId: string) => void;
@@ -26,6 +27,7 @@ export function Column({
   title,
   status,
   tasks,
+  members,
   onDropTask,
   onDelete,
   onSelect,
@@ -70,6 +72,7 @@ export function Column({
           <TaskCard
             key={task.id}
             task={task}
+            members={members}
             onDelete={onDelete}
             onSelect={onSelect}
           />

@@ -1,4 +1,5 @@
-import type { TaskItemResponse } from "../../types/api";
+import type { TaskItemResponse, WorkspaceMemberResponse } from "../../types/api";
+import { Avatar } from "../ui/Avatar";
 
 const priorityMeta: Record<
   TaskItemResponse["priority"],
@@ -12,12 +13,14 @@ const priorityMeta: Record<
 
 interface TaskCardProps {
   task: TaskItemResponse;
+  members: WorkspaceMemberResponse[];
   onDelete: (task: TaskItemResponse) => void;
   onSelect: (taskId: string) => void;
 }
 
-export function TaskCard({ task, onDelete, onSelect }: TaskCardProps) {
+export function TaskCard({ task, members, onDelete, onSelect }: TaskCardProps) {
   const priority = priorityMeta[task.priority];
+  const assignee = members.find((m) => m.userId === task.assigneeId);
 
   return (
     <div
@@ -60,9 +63,12 @@ export function TaskCard({ task, onDelete, onSelect }: TaskCardProps) {
             })}
           </time>
         )}
-        {task.status === "Done" && (
-          <span className="ml-auto font-mono text-[11px] text-sky-300">
-            done
+        {assignee && (
+          <span
+            className="ml-auto"
+            title={`Assigned to ${assignee.displayName || assignee.username}`}
+          >
+            <Avatar name={assignee.displayName || assignee.username} id={assignee.userId} />
           </span>
         )}
       </div>
