@@ -10,12 +10,14 @@ const priorityStyles: Record<TaskItemResponse["priority"], string> = {
 interface TaskCardProps {
   task: TaskItemResponse;
   onDelete: (task: TaskItemResponse) => void;
+  onSelect: (taskId: string) => void;
 }
 
-export function TaskCard({ task, onDelete }: TaskCardProps) {
+export function TaskCard({ task, onDelete, onSelect }: TaskCardProps) {
   return (
     <div
       draggable
+      onClick={() => onSelect(task.id)}
       onDragStart={(event) => {
         event.dataTransfer.setData("text/plain", task.id);
         event.dataTransfer.effectAllowed = "move";

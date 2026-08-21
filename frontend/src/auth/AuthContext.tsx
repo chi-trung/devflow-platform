@@ -8,12 +8,20 @@ import {
   type ReactNode,
 } from "react";
 import { api, refreshSession, tokens } from "../lib/api";
+import { decodeJwt } from "../lib/jwt";
 import type { LoginResponse, RegisterResponse } from "../types/api";
 
 type AuthStatus = "loading" | "authenticated" | "anonymous";
 
+export interface CurrentUser {
+  id: string;
+  email: string;
+  username: string;
+}
+
 interface AuthContextValue {
   status: AuthStatus;
+  currentUser: CurrentUser | null;
   login: (email: string, password: string) => Promise<void>;
   register: (input: {
     email: string;
@@ -87,9 +95,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("anonymous");
   }, []);
 
+  const currentUser = useMemo<CurrentUser | null>(() => {
+    if (status !== "authenticated") return null;
+    const access = tokens.access;
+    const claims = access ? decodeJwt(access) : null;
+    if (!claims?.sub) return null;
+    return {
+      id: claims.sub,
+      email: claims.email,
+      username: claims.username ?? claims.email,
+    };
+  }, [status]);
+
   const value = useMemo(
-    () => ({ status, login, register, logout }),
-    [status, login, register, logout],
+    () => ({ status, currentUser, login, register, logout }),
+    [status, currentUser, login, register, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

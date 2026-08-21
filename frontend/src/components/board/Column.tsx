@@ -8,6 +8,7 @@ interface ColumnProps {
   tasks: TaskItemResponse[];
   onDropTask: (taskId: string, status: TaskItemResponse["status"]) => void;
   onDelete: (task: TaskItemResponse) => void;
+  onSelect: (taskId: string) => void;
 }
 
 export function Column({
@@ -16,6 +17,7 @@ export function Column({
   tasks,
   onDropTask,
   onDelete,
+  onSelect,
 }: ColumnProps) {
   const [dragOver, setDragOver] = useState(false);
 
@@ -51,7 +53,12 @@ export function Column({
 
       <div className="flex flex-col gap-2">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} onDelete={onDelete} />
+          <TaskCard
+            key={task.id}
+            task={task}
+            onDelete={onDelete}
+            onSelect={onSelect}
+          />
         ))}
         {tasks.length === 0 && (
           <p className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
