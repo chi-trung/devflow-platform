@@ -20,4 +20,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DevFlow.Domain\DevFlow.Domain.csproj" />
+    <ProjectReference Include="..\..\src\DevFlow.Application\DevFlow.Application.csproj" />
+  </ItemGroup>
+
 </Project>
