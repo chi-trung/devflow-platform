@@ -72,6 +72,15 @@ export interface ActivityResponse {
   createdAtUtc: string;
 }
 
+export interface TaskAttachmentResponse {
+  id: string;
+  taskItemId: string;
+  fileName: string;
+  contentType: string;
+  fileSize: number;
+  createdAtUtc: string;
+}
+
 export interface FieldErrors {
   [field: string]: string[];
 }
