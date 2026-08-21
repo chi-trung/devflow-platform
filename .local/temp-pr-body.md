@@ -1,18 +1,18 @@
 ## Description
 
-Adds task file attachments capability. Users can upload files (up to 10MB) directly to tasks, download them, or delete them. Uploads and deletions automatically log project activities.
+Adds robust integration test coverage for the API using `WebApplicationFactory`, `Testcontainers.PostgreSql` (for true Postgres testing in CI), and an intelligent EF InMemory fallback (allowing local test runs without requiring a local Docker daemon).
 
 ## What's inside
 
-- **Backend**: `TaskAttachment` entity, `task_attachments` table with cascade delete, repository, `UploadTaskAttachmentCommand`, `DeleteTaskAttachmentCommand`, `DownloadTaskAttachmentQuery`, `ListTaskAttachmentsQuery`, and controller endpoints in `TasksController`.
-- **Frontend**: Attachments section in `TaskDetailPanel` with file picker, size indicator, download trigger, and delete button.
+- **Test Infrastructure**: `DevFlowWebApplicationFactory` spins up a Postgres container via Testcontainers when Docker is active, or falls back gracefully to EF Core InMemory database when offline.
+- **Integration Tests**: `AuthAndWorkspaceIntegrationTests` tests the full auth registration, login, JWT token generation, workspace creation, and workspace listing flow end-to-end.
+- **API Robustness**: Guarded startup migrations in `Program.cs` to support non-relational providers (`EnsureCreated()` vs `Migrate()`).
 
 ## Type of change
 
-- [x] Feature
+- [x] Test / Infrastructure
 
 ## Checklist
 
-- [x] Backend build & unit tests pass
-- [x] Frontend build passes
-- [x] Verified multipart upload and file download
+- [x] Unit tests (57/57) pass
+- [x] Integration test passes successfully
