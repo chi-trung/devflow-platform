@@ -1,8 +1,9 @@
 # DevFlow
 
-> A project management platform for developers — a Jira/Linear clone built with ASP.NET Core.
+> A project management platform for developers — a Jira/Linear clone built with ASP.NET Core and React.
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
+[![React](https://img.shields.io/badge/React-19-087EA4)](https://react.dev/)
 [![Status](https://img.shields.io/badge/status-in%20development-orange)]()
 
 ## About
@@ -12,78 +13,67 @@ Built as a long-term learning project with a strong focus on architecture, testi
 
 ## Tech Stack
 
+**Backend**
+
 | Layer | Technology |
 |---|---|
 | Framework | ASP.NET Core 8 Web API |
 | Architecture | Clean Architecture, CQRS + MediatR |
 | Database | PostgreSQL + EF Core |
-| Caching | Redis |
-| Realtime | SignalR |
-| Background jobs | Hangfire |
-| Search | Elasticsearch |
-| File storage | MinIO (S3-compatible) |
-| Testing | xUnit, Testcontainers |
+| Auth | JWT access tokens + rotating refresh tokens |
+| Testing | xUnit (50 unit tests) |
 | DevOps | Docker Compose, GitHub Actions |
+
+**Frontend**
+
+| Layer | Technology |
+|---|---|
+| Framework | React 19 + TypeScript + Vite |
+| Styling | Tailwind CSS v4 with a generated design system |
+| Routing | React Router v7 |
+| Drag & drop | Native HTML5 DnD (no library) |
+
+## Features
+
+- JWT auth with silent refresh — page reloads keep you signed in
+- Workspaces with role-based access (Owner / Admin / Member) enforced server-side
+- Projects with keys, archive lifecycle
+- Kanban board: drag cards between Backlog → In Progress → In Review → Done
+- Task detail panel with comments thread
+- Sprints API with single-active-sprint invariant per project
+- Declarative authorization via pipeline behavior (`[RequireWorkspaceRole]`)
+
+## Quick Start
+
+### Backend
+
+```bash
+docker compose up -d          # Postgres + Redis
+dotnet run --project src/DevFlow.Api
+# API on http://localhost:5217, Swagger UI included
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev                   # http://localhost:3000, proxies /api to :5217
+```
 
 ## Roadmap
 
 - [x] Solution setup with Clean Architecture
 - [x] Docker Compose (Postgres + Redis)
 - [x] Health checks, structured logging (Serilog)
-- [ ] Authentication (JWT + Refresh Token)
-- [ ] Role-Based Authorization
-- [ ] Workspace / Project / Sprint
-- [ ] Kanban Board & Tasks
-- [ ] Comments & Mentions
+- [x] Authentication (JWT + Refresh Token)
+- [x] Role-Based Authorization
+- [x] Workspace / Project / Sprint
+- [x] Kanban Board & Tasks
+- [x] Comments
 - [ ] Realtime updates (SignalR)
 - [ ] Notifications & Activity Log
 - [ ] File Upload
-- [ ] Dashboard & Calendar
-- [ ] GitHub Integration
-- [ ] AI-powered task generation
-- [ ] CI/CD pipeline
-
-## Getting Started
-
-### Prerequisites
-
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [Docker](https://www.docker.com/)
-
-### Run with Docker Compose
-
-```bash
-docker compose up --build
-```
-
-| Service | URL |
-|---|---|
-| API | http://localhost:8080 |
-| Swagger UI | http://localhost:8080/swagger |
-| Health checks | http://localhost:8080/health |
-
-### Run locally
-
-```bash
-# start infrastructure (postgres + redis)
-docker compose up -d postgres redis
-
-# run the api
-dotnet run --project src/DevFlow.Api
-```
-
-## Project Structure
-
-```
-DevFlow/
-├── src/
-│   ├── DevFlow.Domain          # Enterprise business rules — entities, value objects, result pattern
-│   ├── DevFlow.Application     # Application business rules — use cases, CQRS
-│   ├── DevFlow.Infrastructure  # External concerns — JWT, Redis, email, file storage
-│   └── DevFlow.Api             # Presentation layer — controllers, middleware, health checks
-└── tests/
-    ├── DevFlow.UnitTests        # Fast, isolated unit tests
-    └── DevFlow.IntegrationTests # End-to-end API tests
-```
-
-Dependencies point inward: `Api → Infrastructure → Application → Domain`. The domain layer has zero dependencies.
+- [ ] Redis caching layer
+- [ ] Integration tests with Testcontainers
+- [ ] Sprint planning UI
