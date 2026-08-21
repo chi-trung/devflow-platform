@@ -33,6 +33,31 @@ public sealed class WorkspaceRepository(DevFlowDbContext dbContext) : IWorkspace
         return rows.Select(row => (row.Workspace, row.Role)).ToList();
     }
 
+    public async Task<IReadOnlyList<(Guid UserId, string Email, string Username, string DisplayName, WorkspaceRole Role)>>
+        GetMembersAsync(Guid workspaceId, CancellationToken cancellationToken = default)
+    {
+        var rows = await dbContext.WorkspaceMembers
+            .AsNoTracking()
+            .Where(member => member.WorkspaceId == workspaceId)
+            .Join(
+                dbContext.Users,
+                member => member.UserId,
+                user => user.Id,
+                (member, user) => new
+                {
+                    member.UserId,
+                    user.Email,
+                    user.Username,
+                    user.DisplayName,
+                    member.Role
+                })
+            .OrderBy(row => row.Role)
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(row =>
+            (row.UserId, row.Email, row.Username, row.DisplayName, row.Role)).ToList();
+    }
+
     public Task<WorkspaceRole?> GetMemberRoleAsync(
         Guid workspaceId, Guid userId, CancellationToken cancellationToken = default)
     {
