@@ -1,15 +1,20 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, FolderKanban } from "lucide-react";
+import { ArrowLeft, Plus, FolderKanban } from "lucide-react";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
-import { AppHeader } from "../components/AppHeader";
+import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { Input } from "../components/ui/Input";
 import { Badge } from "../components/ui/Badge";
+import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
-import type { ProjectResponse, WorkspaceResponse } from "../types/api";
+import type {
+  ProjectResponse,
+  TaskItemResponse,
+  WorkspaceResponse,
+} from "../types/api";
 
 function deriveKey(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
@@ -21,6 +26,11 @@ function deriveKey(name: string): string {
       .slice(0, 5);
   }
   return name.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 3);
+}
+
+interface ProjectWithStats extends ProjectResponse {
+  total: number;
+  done: number;
 }
 
 export function WorkspacePage() {
@@ -43,6 +53,48 @@ export function WorkspacePage() {
   } = useApi<ProjectResponse[]>(
     () => api(`/workspaces/${workspaceId}/projects`),
     [workspaceId],
+  );
+
+  const [stats, setStats] = useState<Record<string, { total: number; done: number }>>({});
+
+  useEffect(() => {
+    if (!projects) return;
+    let cancelled = false;
+
+    Promise.all(
+      projects.map(async (project) => {
+        const tasks = await api<TaskItemResponse[]>(
+          `/workspaces/${workspaceId}/projects/${project.id}/tasks`,
+        );
+        return [
+          project.id,
+          {
+            total: tasks.length,
+            done: tasks.filter((t) => t.status === "Done").length,
+          },
+        ] as const;
+      }),
+    )
+      .then((entries) => {
+        if (!cancelled) setStats(Object.fromEntries(entries));
+      })
+      .catch(() => {
+        // stats are decorative — board still works without them
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projects, workspaceId]);
+
+  const withStats: ProjectWithStats[] | null = useMemo(
+    () =>
+      projects?.map((p) => ({
+        ...p,
+        total: stats[p.id]?.total ?? 0,
+        done: stats[p.id]?.done ?? 0,
+      })) ?? null,
+    [projects, stats],
   );
 
   const [creating, setCreating] = useState(false);
@@ -86,34 +138,40 @@ export function WorkspacePage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <AppHeader />
-
-      <main className="mx-auto max-w-6xl px-4 py-8">
+    <AppShell>
+      <div className="mx-auto max-w-5xl px-6 py-10">
         <Link
           to="/"
-          className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
+          className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-150 hover:text-primary"
         >
           <ArrowLeft className="size-4" aria-hidden />
           All workspaces
         </Link>
 
         {wsLoading ? (
-          <p className="text-muted-foreground">Loading…</p>
+          <Skeleton className="h-20" />
         ) : wsError || !workspace ? (
           <ErrorAlert message={wsError ?? "Workspace not found."} />
         ) : (
           <>
-            <div className="mb-6 flex items-start justify-between gap-4">
+            <div className="mb-8 flex items-end justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-semibold">{workspace.name}</h1>
-                <p className="font-mono text-xs text-muted-foreground">
+                <div className="flex items-center gap-3">
+                  <h1 className="font-display text-3xl font-semibold tracking-tight">
+                    {workspace.name}
+                  </h1>
+                  <Badge tone={workspace.role === "Member" ? "neutral" : "teal"}>
+                    {workspace.role}
+                  </Badge>
+                </div>
+                <p className="mt-1 font-mono text-xs text-muted-foreground">
                   /{workspace.slug}
                   {workspace.description && ` — ${workspace.description}`}
                 </p>
               </div>
               {!creating && (
-                <Button variant="accent" onClick={() => setCreating(true)}>
+                <Button onClick={() => setCreating(true)}>
+                  <Plus className="size-4" aria-hidden />
                   New project
                 </Button>
               )}
@@ -122,7 +180,7 @@ export function WorkspacePage() {
             {creating && (
               <form
                 onSubmit={handleCreate}
-                className="mb-6 flex flex-col gap-4 rounded-lg border border-border bg-card p-5"
+                className="mb-8 flex flex-col gap-4 rounded-xl border border-border bg-card p-5 rise"
                 noValidate
               >
                 {formError && <ErrorAlert message={formError} />}
@@ -157,9 +215,9 @@ export function WorkspacePage() {
                 </Field>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={submitting}>
-                    {submitting ? "Creating…" : "Create"}
+                    {submitting ? "Creating…" : "Create project"}
                   </Button>
-                  <Button variant="outline" onClick={() => setCreating(false)}>
+                  <Button variant="ghost" onClick={() => setCreating(false)}>
                     Cancel
                   </Button>
                 </div>
@@ -167,54 +225,86 @@ export function WorkspacePage() {
             )}
 
             {projLoading ? (
-              <p className="text-muted-foreground">Loading projects…</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[0, 1].map((i) => (
+                  <Skeleton key={i} className="h-40" />
+                ))}
+              </div>
             ) : projError ? (
               <ErrorAlert message={projError} />
-            ) : !projects || projects.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border bg-card p-10 text-center">
-                <p className="font-medium">No projects yet</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Create a project to start tracking tasks.
+            ) : !withStats || withStats.length === 0 ? (
+              <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-card/50 px-8 py-16 text-center rise">
+                <span className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <FolderKanban className="size-6" aria-hidden />
+                </span>
+                <p className="font-display text-lg font-semibold">
+                  No projects yet
                 </p>
+                <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                  Projects hold your boards and tasks. Create the first one in
+                  this workspace.
+                </p>
+                <Button className="mt-5" onClick={() => setCreating(true)}>
+                  <Plus className="size-4" aria-hidden />
+                  New project
+                </Button>
               </div>
             ) : (
               <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {projects.map((project) => (
-                  <li key={project.id}>
-                    <Link
-                      to={`/workspaces/${workspaceId}/projects/${project.id}`}
-                      className="flex h-full flex-col rounded-lg border border-border bg-card p-5 transition-colors duration-150 hover:border-primary"
+                {withStats.map((project, index) => {
+                  const percent =
+                    project.total > 0
+                      ? Math.round((project.done / project.total) * 100)
+                      : 0;
+                  return (
+                    <li
+                      key={project.id}
+                      className="rise"
+                      style={{ animationDelay: `${index * 60}ms` }}
                     >
-                      <div className="mb-2 flex items-center justify-between gap-2">
-                        <Badge tone="teal">{project.key}</Badge>
-                        <Badge
-                          tone={
-                            project.status === "Active" ? "teal" : "neutral"
-                          }
-                        >
-                          {project.status}
-                        </Badge>
-                      </div>
-                      <h2 className="flex items-center gap-2 font-semibold">
-                        <FolderKanban
-                          className="size-4 text-primary"
-                          aria-hidden
-                        />
-                        {project.name}
-                      </h2>
-                      {project.description && (
-                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                          {project.description}
-                        </p>
-                      )}
-                    </Link>
-                  </li>
-                ))}
+                      <Link
+                        to={`/workspaces/${workspaceId}/projects/${project.id}`}
+                        className="group flex h-full flex-col rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40"
+                      >
+                        <div className="mb-3 flex items-center justify-between gap-2">
+                          <Badge tone="teal">{project.key}</Badge>
+                          <Badge
+                            tone={project.status === "Active" ? "teal" : "neutral"}
+                          >
+                            {project.status}
+                          </Badge>
+                        </div>
+                        <h2 className="font-display font-semibold">
+                          {project.name}
+                        </h2>
+                        {project.description && (
+                          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                            {project.description}
+                          </p>
+                        )}
+                        <div className="mt-auto pt-4">
+                          <div className="mb-1.5 flex justify-between font-mono text-[11px] text-muted-foreground">
+                            <span>
+                              {project.done}/{project.total} done
+                            </span>
+                            <span>{percent}%</span>
+                          </div>
+                          <div className="h-1.5 overflow-hidden rounded-full bg-elevated">
+                            <div
+                              className="h-full rounded-full bg-primary transition-all duration-500"
+                              style={{ width: `${percent}%` }}
+                            />
+                          </div>
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

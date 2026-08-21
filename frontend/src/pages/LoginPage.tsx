@@ -76,7 +76,7 @@ export function LoginPage() {
           />
         </Field>
 
-        <Button type="submit" variant="accent" disabled={submitting}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? "Signing in…" : "Sign in"}
         </Button>
       </form>

@@ -1,12 +1,15 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { Plus, ArrowUpRight, Boxes } from "lucide-react";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
-import { AppHeader } from "../components/AppHeader";
+import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { Input } from "../components/ui/Input";
 import { Badge } from "../components/ui/Badge";
+import { Avatar } from "../components/ui/Avatar";
+import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import type { WorkspaceResponse } from "../types/api";
 
@@ -62,19 +65,20 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <AppHeader />
-
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
+    <AppShell>
+      <div className="mx-auto max-w-5xl px-6 py-10">
+        <div className="mb-8 flex items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold">Workspaces</h1>
-            <p className="text-sm text-muted-foreground">
-              Pick a workspace to see its projects.
+            <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+              Dashboard
             </p>
+            <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">
+              Workspaces
+            </h1>
           </div>
           {!creating && (
-            <Button variant="accent" onClick={() => setCreating(true)}>
+            <Button onClick={() => setCreating(true)}>
+              <Plus className="size-4" aria-hidden />
               New workspace
             </Button>
           )}
@@ -83,11 +87,15 @@ export function DashboardPage() {
         {creating && (
           <form
             onSubmit={handleCreate}
-            className="mb-6 flex flex-col gap-4 rounded-lg border border-border bg-card p-5"
+            className="mb-8 flex flex-col gap-4 rounded-xl border border-border bg-card p-5 rise"
             noValidate
           >
             {formError && <ErrorAlert message={formError} />}
-            <Field label="Name" htmlFor="ws-name" hint="A short URL slug is generated automatically.">
+            <Field
+              label="Name"
+              htmlFor="ws-name"
+              hint="A short URL slug is generated automatically."
+            >
               <Input
                 id="ws-name"
                 placeholder="Acme Team"
@@ -106,9 +114,9 @@ export function DashboardPage() {
             </Field>
             <div className="flex gap-2">
               <Button type="submit" disabled={submitting}>
-                {submitting ? "Creating…" : "Create"}
+                {submitting ? "Creating…" : "Create workspace"}
               </Button>
-              <Button variant="outline" onClick={() => setCreating(false)}>
+              <Button variant="ghost" onClick={() => setCreating(false)}>
                 Cancel
               </Button>
             </div>
@@ -116,30 +124,46 @@ export function DashboardPage() {
         )}
 
         {loading ? (
-          <p className="text-muted-foreground">Loading workspaces…</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-36" />
+            ))}
+          </div>
         ) : error ? (
           <ErrorAlert message={error} />
         ) : !workspaces || workspaces.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border bg-card p-10 text-center">
-            <p className="font-medium">No workspaces yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Create your first workspace to start organizing projects.
+          <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-card/50 px-8 py-16 text-center rise">
+            <span className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Boxes className="size-6" aria-hidden />
+            </span>
+            <p className="font-display text-lg font-semibold">
+              No workspaces yet
             </p>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              A workspace holds your team, projects and boards. Create the first
+              one to get going.
+            </p>
+            <Button className="mt-5" onClick={() => setCreating(true)}>
+              <Plus className="size-4" aria-hidden />
+              New workspace
+            </Button>
           </div>
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {workspaces.map((workspace) => (
-              <li key={workspace.id}>
+            {workspaces.map((workspace, index) => (
+              <li key={workspace.id} className="rise" style={{ animationDelay: `${index * 60}ms` }}>
                 <Link
                   to={`/workspaces/${workspace.id}`}
-                  className="block rounded-lg border border-border bg-card p-5 transition-colors duration-150 hover:border-primary"
+                  className="group flex h-full flex-col rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40"
                 >
-                  <div className="mb-2 flex items-start justify-between gap-2">
-                    <h2 className="font-semibold">{workspace.name}</h2>
-                    <Badge tone={workspace.role === "Member" ? "neutral" : "teal"}>
-                      {workspace.role}
-                    </Badge>
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <Avatar name={workspace.name} id={workspace.id} size="md" />
+                    <ArrowUpRight
+                      className="size-4 text-muted-foreground opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                      aria-hidden
+                    />
                   </div>
+                  <h2 className="font-display font-semibold">{workspace.name}</h2>
                   <p className="font-mono text-xs text-muted-foreground">
                     /{workspace.slug}
                   </p>
@@ -148,12 +172,17 @@ export function DashboardPage() {
                       {workspace.description}
                     </p>
                   )}
+                  <div className="mt-auto pt-3">
+                    <Badge tone={workspace.role === "Member" ? "neutral" : "teal"}>
+                      {workspace.role}
+                    </Badge>
+                  </div>
                 </Link>
               </li>
             ))}
           </ul>
         )}
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }
