@@ -181,7 +181,10 @@ export function WorkspacePage() {
               <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {projects.map((project) => (
                   <li key={project.id}>
-                    <div className="flex h-full flex-col rounded-lg border border-border bg-card p-5 transition-colors duration-150 hover:border-primary">
+                    <Link
+                      to={`/workspaces/${workspaceId}/projects/${project.id}`}
+                      className="flex h-full flex-col rounded-lg border border-border bg-card p-5 transition-colors duration-150 hover:border-primary"
+                    >
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <Badge tone="teal">{project.key}</Badge>
                         <Badge
@@ -204,7 +207,7 @@ export function WorkspacePage() {
                           {project.description}
                         </p>
                       )}
-                    </div>
+                    </Link>
                   </li>
                 ))}
               </ul>
