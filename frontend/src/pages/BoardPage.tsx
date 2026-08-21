@@ -12,7 +12,11 @@ import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { Column } from "../components/board/Column";
 import { CreateTaskForm } from "../components/board/CreateTaskForm";
 import { TaskDetailPanel } from "../components/board/TaskDetailPanel";
-import type { ProjectResponse, TaskItemResponse } from "../types/api";
+import type {
+  ProjectResponse,
+  TaskItemResponse,
+  WorkspaceMemberResponse,
+} from "../types/api";
 
 const COLUMNS: { title: string; status: TaskItemResponse["status"] }[] = [
   { title: "Backlog", status: "Backlog" },
@@ -27,6 +31,11 @@ export function BoardPage() {
   const { data: project } = useApi<ProjectResponse>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}`),
     [workspaceId, projectId],
+  );
+
+  const { data: members } = useApi<WorkspaceMemberResponse[]>(
+    () => api(`/workspaces/${workspaceId}/members`),
+    [workspaceId],
   );
 
   const {
@@ -199,6 +208,7 @@ export function BoardPage() {
                   title={title}
                   status={status}
                   tasks={tasks.filter((t) => t.status === status)}
+                  members={members ?? []}
                   onDropTask={(taskId, next) => void moveTask(taskId, next)}
                   onDelete={(task) => void deleteTask(task)}
                   onSelect={setSelectedTaskId}
@@ -213,6 +223,7 @@ export function BoardPage() {
         <TaskDetailPanel
           task={selectedTask}
           currentUser={currentUser}
+          members={members ?? []}
           workspaceId={workspaceId}
           projectId={projectId}
           onClose={() => setSelectedTaskId(null)}

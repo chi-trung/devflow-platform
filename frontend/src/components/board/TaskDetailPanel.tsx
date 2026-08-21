@@ -3,12 +3,18 @@ import { X } from "lucide-react";
 import { api } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { ErrorAlert } from "../ui/ErrorAlert";
-import type { CommentResponse, TaskItemResponse } from "../../types/api";
+import { Avatar } from "../ui/Avatar";
+import type {
+  CommentResponse,
+  TaskItemResponse,
+  WorkspaceMemberResponse,
+} from "../../types/api";
 import type { CurrentUser } from "../../auth/AuthContext";
 
 interface TaskDetailPanelProps {
   task: TaskItemResponse;
   currentUser: CurrentUser | null;
+  members: WorkspaceMemberResponse[];
   workspaceId: string;
   projectId: string;
   onClose: () => void;
@@ -18,6 +24,7 @@ interface TaskDetailPanelProps {
 export function TaskDetailPanel({
   task,
   currentUser,
+  members,
   workspaceId,
   projectId,
   onClose,
@@ -25,6 +32,7 @@ export function TaskDetailPanel({
 }: TaskDetailPanelProps) {
   const [status, setStatus] = useState(task.status);
   const [priority, setPriority] = useState(task.priority);
+  const [assigneeId, setAssigneeId] = useState<string | null>(task.assigneeId);
   const [saving, setSaving] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
 
@@ -37,8 +45,9 @@ export function TaskDetailPanel({
   useEffect(() => {
     setStatus(task.status);
     setPriority(task.priority);
+    setAssigneeId(task.assigneeId);
     setDetailError(null);
-  }, [task.id, task.status, task.priority]);
+  }, [task.id, task.status, task.priority, task.assigneeId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,7 +88,7 @@ export function TaskDetailPanel({
             description: task.description,
             status,
             priority,
-            assigneeId: task.assigneeId,
+            assigneeId,
             dueDateUtc: task.dueDateUtc,
           }),
         },
@@ -131,7 +140,10 @@ export function TaskDetailPanel({
     }
   }
 
-  const dirty = status !== task.status || priority !== task.priority;
+  const dirty =
+    status !== task.status ||
+    priority !== task.priority ||
+    assigneeId !== task.assigneeId;
 
   return (
     <div className="fixed inset-0 z-40" role="dialog" aria-label="Task details">
@@ -192,6 +204,25 @@ export function TaskDetailPanel({
             </label>
           </div>
 
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Assignee
+            <select
+              value={assigneeId ?? ""}
+              onChange={(event) =>
+                setAssigneeId(event.target.value === "" ? null : event.target.value)
+              }
+              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            >
+              <option value="">Unassigned</option>
+              {members.map((member) => (
+                <option key={member.userId} value={member.userId}>
+                  {member.displayName || member.username}
+                  {member.role !== "Member" ? ` (${member.role})` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+
           {dirty && (
             <Button onClick={() => void saveChanges()} disabled={saving}>
               {saving ? "Saving…" : "Save changes"}
@@ -229,6 +260,9 @@ export function TaskDetailPanel({
               ) : (
                 comments.map((comment) => {
                   const mine = currentUser?.id === comment.authorId;
+                  const author = members.find(
+                    (m) => m.userId === comment.authorId,
+                  );
                   return (
                     <article
                       key={comment.id}
@@ -236,7 +270,19 @@ export function TaskDetailPanel({
                     >
                       <div className="mb-1 flex items-center justify-between gap-2">
                         <span className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
-                          {mine ? "you" : comment.authorId.slice(0, 8)}
+                          {mine ? (
+                            "you"
+                          ) : author ? (
+                            <span className="flex items-center gap-1.5">
+                              <Avatar
+                                name={author.displayName || author.username}
+                                id={author.userId}
+                              />
+                              {author.displayName || author.username}
+                            </span>
+                          ) : (
+                            comment.authorId.slice(0, 8)
+                          )}
                           {" · "}
                           {new Date(comment.createdAtUtc).toLocaleString()}
                         </span>

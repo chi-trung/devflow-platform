@@ -15,6 +15,14 @@ export interface WorkspaceResponse {
   role: string;
 }
 
+export interface WorkspaceMemberResponse {
+  userId: string;
+  email: string;
+  username: string;
+  displayName: string;
+  role: string;
+}
+
 export interface ProjectResponse {
   id: string;
   name: string;
