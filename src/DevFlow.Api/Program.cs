@@ -1,3 +1,4 @@
+using DevFlow.Api.Middleware;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
@@ -39,6 +40,8 @@ builder.Services.AddHealthChecks()
         tags: ["ready"]);
 
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 app.UseSerilogRequestLogging();
 
