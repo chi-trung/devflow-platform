@@ -29,6 +29,23 @@ services:
       timeout: 5s
       retries: 10
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devflow-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Database: Host=postgres;Port=5432;Database=${POSTGRES_DB:-devflow};Username=${POSTGRES_USER:-devflow};Password=${POSTGRES_PASSWORD:-devflow}
+      ConnectionStrings__Redis: redis:6379
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   devflow-pgdata:
   devflow-redisdata:
