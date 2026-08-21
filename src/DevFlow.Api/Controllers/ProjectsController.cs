@@ -93,4 +93,19 @@ public sealed class ProjectsController(ISender sender) : ControllerBase
 
         return NoContent();
     }
+
+    [HttpGet("{projectId:guid}/activities")]
+    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Activities.ActivityResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ListActivities(
+        Guid workspaceId,
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        var activities = await sender.Send(
+            new Application.Features.Activities.ListActivitiesQuery(workspaceId, projectId),
+            cancellationToken);
+
+        return Ok(activities);
+    }
 }

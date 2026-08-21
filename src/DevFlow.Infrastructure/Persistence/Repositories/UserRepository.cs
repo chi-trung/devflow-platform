@@ -30,4 +30,19 @@ public sealed class UserRepository(DevFlowDbContext dbContext) : IUserRepository
     {
         await dbContext.Users.AddAsync(user, cancellationToken);
     }
+
+    public async Task<IReadOnlyDictionary<Guid, string>> GetDisplayNamesAsync(
+        IEnumerable<Guid> userIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = userIds.ToList();
+
+        var names = await dbContext.Users
+            .AsNoTracking()
+            .Where(user => ids.Contains(user.Id))
+            .Select(user => new { user.Id, user.DisplayName })
+            .ToDictionaryAsync(entry => entry.Id, entry => entry.DisplayName, cancellationToken);
+
+        return names;
+    }
 }

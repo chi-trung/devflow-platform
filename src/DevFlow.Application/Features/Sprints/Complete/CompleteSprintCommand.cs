@@ -9,4 +9,9 @@ namespace DevFlow.Application.Features.Sprints.Complete;
 public sealed record CompleteSprintCommand(
     Guid WorkspaceId,
     Guid ProjectId,
-    Guid SprintId) : IRequest, IWorkspaceRequest, IProjectEvent;
+    Guid SprintId) : IRequest, IWorkspaceRequest, IProjectEvent
+{
+        public string ActivityVerb => "completed sprint";
+        public string ActivityLabel => "a sprint";
+        public Guid? ActivityTaskId => null;
+    }

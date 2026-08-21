@@ -9,4 +9,9 @@ namespace DevFlow.Application.Features.Tasks.Delete;
 public sealed record DeleteTaskItemCommand(
     Guid WorkspaceId,
     Guid ProjectId,
-    Guid TaskId) : IRequest, IWorkspaceRequest, IProjectEvent;
+    Guid TaskId) : IRequest, IWorkspaceRequest, IProjectEvent
+{
+        public string ActivityVerb => "deleted task";
+        public string ActivityLabel => "a task";
+        public Guid? ActivityTaskId => TaskId;
+    }

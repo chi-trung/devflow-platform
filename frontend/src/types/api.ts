@@ -63,6 +63,15 @@ export interface CommentResponse {
   createdAtUtc: string;
 }
 
+export interface ActivityResponse {
+  id: string;
+  taskItemId: string | null;
+  actorName: string;
+  action: string;
+  target: string;
+  createdAtUtc: string;
+}
+
 export interface FieldErrors {
   [field: string]: string[];
 }

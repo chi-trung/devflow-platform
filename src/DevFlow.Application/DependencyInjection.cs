@@ -15,6 +15,7 @@ public static class DependencyInjection
             options.AddOpenBehavior(typeof(LoggingBehavior<,>));
             options.AddOpenBehavior(typeof(ValidationBehavior<,>));
             options.AddOpenBehavior(typeof(WorkspaceAuthorizationBehavior<,>));
+            options.AddOpenBehavior(typeof(ActivityBehavior<,>));
             options.AddOpenBehavior(typeof(RealtimeBehavior<,>));
         });
 

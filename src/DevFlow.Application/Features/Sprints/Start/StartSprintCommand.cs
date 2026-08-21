@@ -11,4 +11,9 @@ public sealed record StartSprintCommand(
     Guid ProjectId,
     Guid SprintId,
     DateTimeOffset StartDateUtc,
-    DateTimeOffset EndDateUtc) : IRequest, IWorkspaceRequest, IProjectEvent;
+    DateTimeOffset EndDateUtc) : IRequest, IWorkspaceRequest, IProjectEvent
+{
+        public string ActivityVerb => "started sprint";
+        public string ActivityLabel => "a sprint";
+        public Guid? ActivityTaskId => null;
+    }

@@ -10,4 +10,9 @@ public sealed record CreateSprintCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     string Name,
-    string? Goal) : IRequest<SprintResponse>, IWorkspaceRequest, IProjectEvent;
+    string? Goal) : IRequest<SprintResponse>, IWorkspaceRequest, IProjectEvent
+{
+        public string ActivityVerb => "created sprint";
+        public string ActivityLabel => Name;
+        public Guid? ActivityTaskId => null;
+    }
