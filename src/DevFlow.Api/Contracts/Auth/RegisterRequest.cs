@@ -7,3 +7,5 @@ public sealed record RegisterRequest(
     string DisplayName);
 
 public sealed record RegisterResponse(Guid Id);
+
+public sealed record LoginRequest(string Email, string Password);
