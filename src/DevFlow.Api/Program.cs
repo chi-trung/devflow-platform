@@ -1,4 +1,5 @@
 using DevFlow.Api.Middleware;
+using DevFlow.Application;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
@@ -6,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
+
+builder.Services.AddApplication();
 
 builder.Services.AddControllers();
 

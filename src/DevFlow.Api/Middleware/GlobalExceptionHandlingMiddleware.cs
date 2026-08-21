@@ -66,6 +66,11 @@ public sealed class GlobalExceptionHandlingMiddleware
 
         problemDetails.Extensions["traceId"] = context.TraceIdentifier;
 
+        if (exception is ValidationException validationException)
+        {
+            problemDetails.Extensions["errors"] = validationException.Errors;
+        }
+
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/problem+json";
 
@@ -75,6 +80,7 @@ public sealed class GlobalExceptionHandlingMiddleware
     private static (int StatusCode, string Title) MapException(Exception exception) =>
         exception switch
         {
+            ValidationException => (StatusCodes.Status400BadRequest, "Validation failed"),
             NotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
             ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
             ForbiddenAccessException => (StatusCodes.Status403Forbidden, "Forbidden"),
