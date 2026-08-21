@@ -3,12 +3,14 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Plus } from "lucide-react";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
+import { useAuth } from "../auth/AuthContext";
 import { AppHeader } from "../components/AppHeader";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { Column } from "../components/board/Column";
 import { CreateTaskForm } from "../components/board/CreateTaskForm";
+import { TaskDetailPanel } from "../components/board/TaskDetailPanel";
 import type { ProjectResponse, TaskItemResponse } from "../types/api";
 
 const COLUMNS: { title: string; status: TaskItemResponse["status"] }[] = [
@@ -39,6 +41,11 @@ export function BoardPage() {
   const [tasks, setTasks] = useState<TaskItemResponse[]>([]);
   const [boardError, setBoardError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const { currentUser } = useAuth();
+
+  const selectedTask =
+    tasks.find((t) => t.id === selectedTaskId) ?? null;
 
   useEffect(() => {
     if (data) setTasks(data);
@@ -177,11 +184,23 @@ export function BoardPage() {
                 tasks={tasks.filter((t) => t.status === status)}
                 onDropTask={(taskId, next) => void moveTask(taskId, next)}
                 onDelete={(task) => void deleteTask(task)}
+                onSelect={setSelectedTaskId}
               />
             ))}
           </div>
         )}
       </main>
+
+      {selectedTask && (
+        <TaskDetailPanel
+          task={selectedTask}
+          currentUser={currentUser}
+          workspaceId={workspaceId}
+          projectId={projectId}
+          onClose={() => setSelectedTaskId(null)}
+          onTaskChanged={reload}
+        />
+      )}
     </div>
   );
 }
