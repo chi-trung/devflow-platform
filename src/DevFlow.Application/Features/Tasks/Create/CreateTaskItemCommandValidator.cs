@@ -1,0 +1,26 @@
+using DevFlow.Domain.Enums;
+using FluentValidation;
+
+namespace DevFlow.Application.Features.Tasks.Create;
+
+public sealed class CreateTaskItemCommandValidator : AbstractValidator<CreateTaskItemCommand>
+{
+    public CreateTaskItemCommandValidator()
+    {
+        RuleFor(command => command.WorkspaceId)
+            .NotEmpty();
+
+        RuleFor(command => command.ProjectId)
+            .NotEmpty();
+
+        RuleFor(command => command.Title)
+            .NotEmpty()
+            .MaximumLength(200);
+
+        RuleFor(command => command.Description)
+            .MaximumLength(5000);
+
+        RuleFor(command => command.Priority)
+            .IsInEnum();
+    }
+}

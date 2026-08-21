@@ -20,6 +20,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<Project> Projects => Set<Project>();
 
+    public DbSet<TaskItem> TaskItems => Set<TaskItem>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);

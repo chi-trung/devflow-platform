@@ -1,0 +1,18 @@
+using DevFlow.Domain.Entities;
+using DevFlow.Domain.Enums;
+
+namespace DevFlow.Application.Common.Interfaces;
+
+public interface ITaskItemRepository
+{
+    Task AddAsync(TaskItem task, CancellationToken cancellationToken = default);
+
+    Task<TaskItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<TaskItem>> GetForProjectAsync(
+        Guid projectId,
+        TaskItemStatus? status,
+        CancellationToken cancellationToken = default);
+
+    Task RemoveAsync(TaskItem task, CancellationToken cancellationToken = default);
+}
