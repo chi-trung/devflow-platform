@@ -1,0 +1,27 @@
+# VCS
+.git
+.gitignore
+.gitattributes
+
+# Build artifacts
+**/bin/
+**/obj/
+**/publish/
+
+# Local runtime output
+logs/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.vs/
+.idea/
+.vscode/
+*.user
+
+# Docs & misc
+README.md
+*.md
