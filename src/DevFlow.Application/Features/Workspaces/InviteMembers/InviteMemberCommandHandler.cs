@@ -9,6 +9,7 @@ namespace DevFlow.Application.Features.Workspaces.InviteMembers;
 public sealed class InviteMemberCommandHandler(
     IWorkspaceRepository workspaceRepository,
     IUserRepository userRepository,
+    ICacheService cacheService,
     IUnitOfWork unitOfWork) : IRequestHandler<InviteMemberCommand, MemberResponse>
 {
     public async Task<MemberResponse> Handle(InviteMemberCommand command, CancellationToken cancellationToken)
@@ -31,6 +32,8 @@ public sealed class InviteMemberCommandHandler(
 
         await workspaceRepository.AddMemberAsync(workspace, user.Id, command.Role, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await cacheService.RemoveAsync($"workspace-members:{command.WorkspaceId}", cancellationToken);
 
         return new MemberResponse(user.Id, user.Email, command.Role.ToString());
     }

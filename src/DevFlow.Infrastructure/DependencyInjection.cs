@@ -1,5 +1,7 @@
 using DevFlow.Application.Common.Interfaces;
-using DevFlow.Infrastructure.Authentication;using DevFlow.Infrastructure.Persistence;
+using DevFlow.Infrastructure.Authentication;
+using DevFlow.Infrastructure.Caching;
+using DevFlow.Infrastructure.Persistence;
 using DevFlow.Infrastructure.Persistence.Interceptors;
 using DevFlow.Infrastructure.Persistence.Repositories;
 using DevFlow.Infrastructure.Security;
@@ -39,6 +41,25 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ITokenProvider, JwtTokenProvider>();
+
+        var redisConnection = configuration.GetConnectionString("Redis");
+        if (!string.IsNullOrWhiteSpace(redisConnection))
+        {
+            try
+            {
+                var multiplexer = StackExchange.Redis.ConnectionMultiplexer.Connect(redisConnection);
+                services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(multiplexer);
+                services.AddSingleton<ICacheService, RedisCacheService>();
+            }
+            catch
+            {
+                services.AddSingleton<ICacheService, NullCacheService>();
+            }
+        }
+        else
+        {
+            services.AddSingleton<ICacheService, NullCacheService>();
+        }
 
         return services;
     }
