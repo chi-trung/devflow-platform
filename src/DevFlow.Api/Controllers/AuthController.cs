@@ -26,4 +26,21 @@ public sealed class AuthController(ISender sender) : ControllerBase
 
         return StatusCode(StatusCodes.Status201Created, new RegisterResponse(userId));
     }
+
+    [HttpPost("login")]
+    [ProducesResponseType(typeof(Application.Features.Auth.Login.LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Login(
+        LoginRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new Application.Features.Auth.Login.LoginCommand(
+            request.Email,
+            request.Password);
+
+        var response = await sender.Send(command, cancellationToken);
+
+        return Ok(response);
+    }
 }

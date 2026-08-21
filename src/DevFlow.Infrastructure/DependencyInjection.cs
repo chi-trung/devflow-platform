@@ -1,4 +1,5 @@
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Infrastructure.Authentication;
 using DevFlow.Infrastructure.Persistence;
 using DevFlow.Infrastructure.Persistence.Interceptors;
 using DevFlow.Infrastructure.Persistence.Repositories;
@@ -15,6 +16,8 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+
         services.AddSingleton<AuditableEntityInterceptor>();
 
         services.AddDbContext<DevFlowDbContext>((sp, options) =>
@@ -26,8 +29,10 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
+        services.AddScoped<ITokenProvider, JwtTokenProvider>();
 
         return services;
     }
