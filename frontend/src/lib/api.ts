@@ -2,7 +2,11 @@ import type { FieldErrors, LoginResponse } from "../types/api";
 
 // In dev the Vite proxy forwards /api to localhost; in production
 // VITE_API_URL points at the deployed backend (e.g. https://api.example.com).
-export const API_BASE = import.meta.env.VITE_API_URL ?? "";
+// Trailing slashes are stripped so `${API_BASE}/api/v1` never doubles up.
+export const API_BASE = (import.meta.env.VITE_API_URL ?? "").replace(
+  /\/+$/,
+  "",
+);
 const BASE = `${API_BASE}/api/v1`;
 const ACCESS_KEY = "devflow.accessToken";
 const REFRESH_KEY = "devflow.refreshToken";
