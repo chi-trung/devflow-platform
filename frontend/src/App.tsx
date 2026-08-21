@@ -4,6 +4,7 @@ import { RequireAuth } from "./auth/RequireAuth";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { BoardPage } from "./pages/BoardPage";
 import { WorkspacePage } from "./pages/WorkspacePage";
 
 export default function App() {
@@ -18,6 +19,10 @@ export default function App() {
             <Route
               path="/workspaces/:workspaceId"
               element={<WorkspacePage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId"
+              element={<BoardPage />}
             />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
