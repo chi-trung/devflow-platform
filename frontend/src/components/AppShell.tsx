@@ -1,23 +1,39 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   KanbanSquare,
   LogOut,
   Plus,
   FolderKanban,
+  Search,
 } from "lucide-react";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
 import { Avatar } from "./ui/Avatar";
+import { CommandPalette } from "./CommandPalette";
 import type { ProjectResponse, WorkspaceResponse } from "../types/api";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { logout, currentUser } = useAuth();
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   const workspaceId = location.pathname.match(
     /^\/workspaces\/([0-9a-f-]{36})/i,
   )?.[1];
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen((open) => !open);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const { data: workspaces } = useApi<WorkspaceResponse[]>(
     () => api("/workspaces"),
@@ -48,6 +64,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
 
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4">
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            className="flex w-full items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground"
+          >
+            <Search className="size-3.5" aria-hidden />
+            <span className="flex-1 text-left">Search…</span>
+            <kbd className="rounded border border-border bg-surface px-1 py-0.5 font-mono text-[10px]">
+              ⌃K
+            </kbd>
+          </button>
+
           <section>
             <h2 className="px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
               Workspaces
@@ -156,6 +184,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="flex-1 overflow-y-auto pt-14 lg:pt-0">{children}</main>
+
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        workspaceId={workspaceId}
+      />
     </div>
   );
 }
