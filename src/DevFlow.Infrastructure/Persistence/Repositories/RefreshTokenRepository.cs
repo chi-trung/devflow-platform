@@ -10,4 +10,10 @@ public sealed class RefreshTokenRepository(DevFlowDbContext dbContext) : IRefres
     {
         await dbContext.RefreshTokens.AddAsync(refreshToken, cancellationToken);
     }
+
+    public Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken = default)
+    {
+        return dbContext.RefreshTokens
+            .FirstOrDefaultAsync(refreshToken => refreshToken.Token == token, cancellationToken);
+    }
 }
