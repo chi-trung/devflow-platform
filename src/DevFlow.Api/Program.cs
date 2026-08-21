@@ -10,6 +10,7 @@ using DevFlow.Application.Common.Interfaces;
 using DevFlow.Infrastructure;
 using DevFlow.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -143,6 +144,15 @@ builder.Services.AddHealthChecks()
         tags: ["ready"]);
 
 var app = builder.Build();
+
+// Apply pending EF Core migrations so a fresh database (e.g. a managed
+// cloud instance) is ready on first boot.
+using (var scope = app.Services.CreateScope())
+{
+    var database = scope.ServiceProvider
+        .GetRequiredService<DevFlow.Infrastructure.Persistence.DevFlowDbContext>();
+    database.Database.Migrate();
+}
 
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
