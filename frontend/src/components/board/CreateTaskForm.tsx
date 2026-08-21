@@ -57,12 +57,12 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mb-6 flex flex-col gap-4 rounded-lg border border-border bg-card p-5"
+      className="mb-5 flex flex-col gap-4 rounded-xl border border-border bg-card p-5 rise"
       noValidate
     >
       {error && <ErrorAlert message={error} />}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_160px_160px]">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_150px_150px]">
         <Field label="Title" htmlFor="task-title">
           <Input
             id="task-title"
@@ -80,7 +80,7 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
             onChange={(event) =>
               setPriority(event.target.value as TaskItemResponse["priority"])
             }
-            className="w-full rounded-md border border-border bg-card px-3 py-2 focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
           >
             <option>Low</option>
             <option>Medium</option>
@@ -109,10 +109,10 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
       </Field>
 
       <div className="flex gap-2">
-        <Button type="submit" variant="accent" disabled={submitting}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? "Adding…" : "Add task"}
         </Button>
-        <Button variant="outline" onClick={onCancel}>
+        <Button variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
       </div>

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, SquareKanban } from "lucide-react";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
-import { AppHeader } from "../components/AppHeader";
+import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
+import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { Column } from "../components/board/Column";
 import { CreateTaskForm } from "../components/board/CreateTaskForm";
@@ -44,17 +45,13 @@ export function BoardPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const { currentUser } = useAuth();
 
-  const selectedTask =
-    tasks.find((t) => t.id === selectedTaskId) ?? null;
+  const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null;
 
   useEffect(() => {
     if (data) setTasks(data);
   }, [data]);
 
-  async function moveTask(
-    taskId: string,
-    status: TaskItemResponse["status"],
-  ) {
+  async function moveTask(taskId: string, status: TaskItemResponse["status"]) {
     const task = tasks.find((t) => t.id === taskId);
     if (!task || task.status === status) return;
 
@@ -89,9 +86,7 @@ export function BoardPage() {
       );
     } catch (err) {
       reload();
-      setBoardError(
-        err instanceof Error ? err.message : "Failed to move task.",
-      );
+      setBoardError(err instanceof Error ? err.message : "Failed to move task.");
     }
   }
 
@@ -125,32 +120,30 @@ export function BoardPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <AppHeader />
-
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+    <AppShell>
+      <div className="flex h-full flex-col px-6 py-6">
         <Link
           to={`/workspaces/${workspaceId}`}
-          className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
+          className="mb-3 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-150 hover:text-primary"
         >
           <ArrowLeft className="size-4" aria-hidden />
-          Back to projects
+          Projects
         </Link>
 
-        <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="mb-5 flex items-end justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-semibold">
-                {project?.name ?? "…"}
+            <div className="flex items-center gap-2.5">
+              <h1 className="font-display text-2xl font-semibold tracking-tight">
+                {project?.name ?? <Skeleton className="h-8 w-48" />}
               </h1>
               {project && <Badge tone="teal">{project.key}</Badge>}
             </div>
-            <p className="text-sm text-muted-foreground">
-              Drag cards between columns to update their status.
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Drag cards between columns — changes save instantly.
             </p>
           </div>
           {!creating && (
-            <Button variant="accent" onClick={() => setCreating(true)}>
+            <Button onClick={() => setCreating(true)}>
               <Plus className="size-4" aria-hidden />
               New task
             </Button>
@@ -171,25 +164,50 @@ export function BoardPage() {
         )}
 
         {loading ? (
-          <p className="text-muted-foreground">Loading board…</p>
+          <div className="flex flex-col gap-4 lg:flex-row">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-72 flex-1" />
+            ))}
+          </div>
         ) : error ? (
           <ErrorAlert message={error} />
+        ) : tasks.length === 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/40 px-8 py-16 text-center rise">
+            <span className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <SquareKanban className="size-6" aria-hidden />
+            </span>
+            <p className="font-display text-lg font-semibold">
+              This board is empty
+            </p>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              Add the first task and drag it across columns as work progresses.
+            </p>
+            <Button className="mt-5" onClick={() => setCreating(true)}>
+              <Plus className="size-4" aria-hidden />
+              New task
+            </Button>
+          </div>
         ) : (
-          <div className="flex flex-col gap-4 sm:flex-row">
-            {COLUMNS.map(({ title, status }) => (
-              <Column
+          <div className="flex flex-col gap-4 pb-4 lg:flex-row">
+            {COLUMNS.map(({ title, status }, index) => (
+              <div
                 key={status}
-                title={title}
-                status={status}
-                tasks={tasks.filter((t) => t.status === status)}
-                onDropTask={(taskId, next) => void moveTask(taskId, next)}
-                onDelete={(task) => void deleteTask(task)}
-                onSelect={setSelectedTaskId}
-              />
+                className="rise flex min-w-0 flex-1 flex-col"
+                style={{ animationDelay: `${index * 60}ms` }}
+              >
+                <Column
+                  title={title}
+                  status={status}
+                  tasks={tasks.filter((t) => t.status === status)}
+                  onDropTask={(taskId, next) => void moveTask(taskId, next)}
+                  onDelete={(task) => void deleteTask(task)}
+                  onSelect={setSelectedTaskId}
+                />
+              </div>
             ))}
           </div>
         )}
-      </main>
+      </div>
 
       {selectedTask && (
         <TaskDetailPanel
@@ -201,6 +219,6 @@ export function BoardPage() {
           onTaskChanged={reload}
         />
       )}
-    </div>
+    </AppShell>
   );
 }

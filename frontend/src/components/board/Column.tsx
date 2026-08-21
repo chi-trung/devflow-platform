@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { Circle, CircleDot, Eye, CheckCircle2 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { TaskItemResponse } from "../../types/api";
 import { TaskCard } from "./TaskCard";
 
@@ -11,6 +12,16 @@ interface ColumnProps {
   onSelect: (taskId: string) => void;
 }
 
+const COLUMN_META: Record<
+  TaskItemResponse["status"],
+  { icon: LucideIcon; accent: string }
+> = {
+  Backlog: { icon: Circle, accent: "text-muted-foreground" },
+  InProgress: { icon: CircleDot, accent: "text-primary" },
+  InReview: { icon: Eye, accent: "text-violet-300" },
+  Done: { icon: CheckCircle2, accent: "text-sky-300" },
+};
+
 export function Column({
   title,
   status,
@@ -19,7 +30,8 @@ export function Column({
   onDelete,
   onSelect,
 }: ColumnProps) {
-  const [dragOver, setDragOver] = useState(false);
+  const meta = COLUMN_META[status];
+  const Icon = meta.icon;
 
   return (
     <section
@@ -27,26 +39,28 @@ export function Column({
       onDragOver={(event) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = "move";
-        setDragOver(true);
+        event.currentTarget.dataset.dragOver = "true";
       }}
       onDragLeave={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node)) {
-          setDragOver(false);
+          delete event.currentTarget.dataset.dragOver;
         }
       }}
       onDrop={(event) => {
         event.preventDefault();
-        setDragOver(false);
+        delete event.currentTarget.dataset.dragOver;
         const taskId = event.dataTransfer.getData("text/plain");
         if (taskId) onDropTask(taskId, status);
       }}
-      className={`flex min-h-64 w-full flex-col gap-2 rounded-lg border p-3 transition-colors duration-150 sm:flex-1 ${
-        dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/50"
-      }`}
+      data-drag-over="false"
+      className="group/column flex min-h-72 w-full flex-1 flex-col gap-2 rounded-xl border border-border bg-surface p-3 transition-colors duration-200 data-[drag-over=true]:border-primary/50 data-[drag-over=true]:bg-primary/5"
     >
-      <header className="flex items-center justify-between px-1">
-        <h2 className="text-sm font-semibold">{title}</h2>
-        <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
+      <header className="flex items-center gap-2 px-1 pb-1">
+        <Icon className={`size-4 ${meta.accent}`} aria-hidden />
+        <h2 className="font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {title}
+        </h2>
+        <span className="ml-auto rounded-md bg-elevated px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
           {tasks.length}
         </span>
       </header>
@@ -61,7 +75,7 @@ export function Column({
           />
         ))}
         {tasks.length === 0 && (
-          <p className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
             Drop tasks here
           </p>
         )}

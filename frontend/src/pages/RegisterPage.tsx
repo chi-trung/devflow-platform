@@ -178,7 +178,7 @@ export function RegisterPage() {
           />
         </Field>
 
-        <Button type="submit" variant="accent" disabled={submitting}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? "Creating account…" : "Create account"}
         </Button>
       </form>

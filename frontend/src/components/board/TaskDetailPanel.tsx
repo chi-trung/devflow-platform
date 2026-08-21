@@ -142,9 +142,9 @@ export function TaskDetailPanel({
         className="absolute inset-0 cursor-default bg-foreground/20"
       />
 
-      <aside className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-border bg-card">
+      <aside className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-border bg-surface shadow-[0_0_60px_rgba(0,0,0,0.5)]">
         <header className="flex items-start justify-between gap-3 border-b border-border p-4">
-          <h2 className="font-semibold leading-snug">{task.title}</h2>
+          <h2 className="font-display font-semibold leading-snug">{task.title}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -166,7 +166,7 @@ export function TaskDetailPanel({
                 onChange={(event) =>
                   setStatus(event.target.value as TaskItemResponse["status"])
                 }
-                className="rounded-md border border-border bg-card px-2 py-1.5 focus:border-primary focus:outline-none"
+                className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
               >
                 <option value="Backlog">Backlog</option>
                 <option value="InProgress">In Progress</option>
@@ -182,7 +182,7 @@ export function TaskDetailPanel({
                 onChange={(event) =>
                   setPriority(event.target.value as TaskItemResponse["priority"])
                 }
-                className="rounded-md border border-border bg-card px-2 py-1.5 focus:border-primary focus:outline-none"
+                className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
               >
                 <option value="Low">Low</option>
                 <option value="Medium">Medium</option>
@@ -232,10 +232,10 @@ export function TaskDetailPanel({
                   return (
                     <article
                       key={comment.id}
-                      className="rounded-md border border-border bg-background p-3"
+                      className="rounded-lg border border-border bg-card p-3"
                     >
                       <div className="mb-1 flex items-center justify-between gap-2">
-                        <span className="font-mono text-xs text-muted-foreground">
+                        <span className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
                           {mine ? "you" : comment.authorId.slice(0, 8)}
                           {" · "}
                           {new Date(comment.createdAtUtc).toLocaleString()}
@@ -272,11 +272,10 @@ export function TaskDetailPanel({
             placeholder="Write a comment…"
             rows={2}
             maxLength={2000}
-            className="flex-1 resize-none rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
+            className="flex-1 resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
           />
           <Button
             type="submit"
-            variant="accent"
             size="sm"
             disabled={postingComment || !newComment.trim()}
           >

@@ -1,56 +1,98 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Fira Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Fira Code", ui-monospace, monospace;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Manrope", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  --color-primary: #0d9488;
-  --color-on-primary: #000000;
-  --color-secondary: #14b8a6;
-  --color-on-secondary: #0f172a;
-  --color-accent: #ea580c;
-  --color-on-accent: #000000;
-  --color-background: #f0fdfa;
-  --color-foreground: #134e4a;
-  --color-card: #ffffff;
-  --color-card-foreground: #134e4a;
-  --color-muted: #e8f1f4;
-  --color-muted-foreground: #475569;
-  --color-border: #99f6e4;
-  --color-destructive: #dc2626;
-  --color-on-destructive: #ffffff;
-  --color-ring: #0d9488;
+  --color-background: #0a0e14;
+  --color-surface: #0e131b;
+  --color-card: #131a24;
+  --color-elevated: #182130;
+  --color-border: #1f2a38;
+  --color-border-strong: #2c3a4d;
 
-  --transition-duration-fast: 150ms;
-  --transition-duration-normal: 200ms;
+  --color-foreground: #e6edf3;
+  --color-muted-foreground: #8b98a9;
+
+  --color-primary: #2dd4bf;
+  --color-primary-strong: #14b8a6;
+  --color-on-primary: #03211c;
+
+  --color-destructive: #f87171;
+
+  --color-ring: #2dd4bf;
 }
 
-@layer base {
-  html {
-    font-family: var(--font-sans);
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-  }
+html {
+  scroll-behavior: smooth;
+}
 
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: color-mix(in oklab, var(--color-primary) 30%, transparent);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 8px;
+  border: 2px solid var(--color-background);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.rise {
+  animation: rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.skeleton {
+  border-radius: 0.5rem;
+  background: linear-gradient(
+    100deg,
+    var(--color-card) 40%,
+    var(--color-elevated) 50%,
+    var(--color-card) 60%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
   *,
-  ::before,
-  ::after {
-    transition-property: color, background-color, border-color, opacity;
-    transition-duration: var(--transition-duration-fast);
-    transition-timing-function: ease;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    ::before,
-    ::after {
-      transition-duration: 0ms !important;
-      animation-duration: 0ms !important;
-    }
-  }
-
-  :focus-visible {
-    outline: 2px solid var(--color-ring);
-    outline-offset: 2px;
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

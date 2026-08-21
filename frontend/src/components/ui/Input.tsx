@@ -10,10 +10,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <input
         ref={ref}
         aria-invalid={invalid || undefined}
-        className={`w-full rounded-md border bg-card px-3 py-2 text-foreground placeholder:text-muted-foreground/60 focus:outline-none ${
+        className={`w-full rounded-lg border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 transition-colors duration-200 focus:outline-none ${
           invalid
-            ? "border-destructive"
-            : "border-border focus:border-primary"
+            ? "border-destructive/60"
+            : "border-border hover:border-border-strong focus:border-primary"
         } ${className}`}
         {...rest}
       />
