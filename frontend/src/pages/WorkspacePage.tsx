@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, FolderKanban, Users } from "lucide-react";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
+import { useToast } from "../components/ui/ToastProvider";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
@@ -120,6 +121,7 @@ export function WorkspacePage() {
   const [inviteRole, setInviteRole] = useState("Member");
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSubmitting, setInviteSubmitting] = useState(false);
+  const { push } = useToast();
 
   const canManageMembers =
     workspace?.role === "Owner" || workspace?.role === "Admin";
@@ -146,6 +148,7 @@ export function WorkspacePage() {
       setInviteRole("Member");
       setInviting(false);
       reloadMembers();
+      push(`Invitation sent to ${inviteEmail.trim()}`);
     } catch (err) {
       setInviteError(err instanceof Error ? err.message : "Failed to invite.");
     } finally {
