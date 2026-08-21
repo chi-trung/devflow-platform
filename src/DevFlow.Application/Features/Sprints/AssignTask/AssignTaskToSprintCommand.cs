@@ -1,0 +1,12 @@
+using DevFlow.Application.Common.Authorization;
+using DevFlow.Domain.Enums;
+using MediatR;
+
+namespace DevFlow.Application.Features.Sprints.AssignTask;
+
+[RequireWorkspaceRole(WorkspaceRole.Member)]
+public sealed record AssignTaskToSprintCommand(
+    Guid WorkspaceId,
+    Guid ProjectId,
+    Guid SprintId,
+    Guid TaskId) : IRequest, IWorkspaceRequest;
