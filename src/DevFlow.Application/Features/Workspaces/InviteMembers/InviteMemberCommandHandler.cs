@@ -29,7 +29,7 @@ public sealed class InviteMemberCommandHandler(
         var workspace = await workspaceRepository.GetByIdAsync(command.WorkspaceId, cancellationToken)
             ?? throw new NotFoundException(nameof(Workspace), command.WorkspaceId);
 
-        workspace.AddMember(user.Id, command.Role);
+        await workspaceRepository.AddMemberAsync(workspace, user.Id, command.Role, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new MemberResponse(user.Id, user.Email, command.Role.ToString());

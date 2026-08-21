@@ -46,4 +46,15 @@ public sealed class WorkspaceRepository(DevFlowDbContext dbContext) : IWorkspace
     {
         await dbContext.Workspaces.AddAsync(workspace, cancellationToken);
     }
+
+    public async Task AddMemberAsync(
+        Workspace workspace,
+        Guid userId,
+        WorkspaceRole role,
+        CancellationToken cancellationToken = default)
+    {
+        var member = workspace.AddMember(userId, role);
+
+        await dbContext.WorkspaceMembers.AddAsync(member, cancellationToken);
+    }
 }

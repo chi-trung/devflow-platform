@@ -15,4 +15,6 @@ public interface IWorkspaceRepository
     Task<WorkspaceRole?> GetMemberRoleAsync(Guid workspaceId, Guid userId, CancellationToken cancellationToken = default);
 
     Task AddAsync(Workspace workspace, CancellationToken cancellationToken = default);
+
+    Task AddMemberAsync(Workspace workspace, Guid userId, WorkspaceRole role, CancellationToken cancellationToken = default);
 }

@@ -59,7 +59,11 @@ public class InviteMemberCommandHandlerTests
 
         Assert.Equal(_invitedUser.Id, response.UserId);
         Assert.Equal("Admin", response.Role);
-        Assert.Contains(workspace.Members, member => member.UserId == _invitedUser.Id && member.Role == WorkspaceRole.Admin);
+        await _workspaceRepository.Received(1).AddMemberAsync(
+            workspace,
+            _invitedUser.Id,
+            WorkspaceRole.Admin,
+            Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }
