@@ -8,12 +8,15 @@ namespace DevFlow.UnitTests.Features.Workspaces;
 public class ListWorkspaceMembersQueryHandlerTests
 {
     private readonly IWorkspaceRepository _workspaceRepository = Substitute.For<IWorkspaceRepository>();
+    private readonly ICacheService _cacheService = Substitute.For<ICacheService>();
 
     private readonly ListWorkspaceMembersQueryHandler _handler;
 
     public ListWorkspaceMembersQueryHandlerTests()
     {
-        _handler = new ListWorkspaceMembersQueryHandler(_workspaceRepository);
+        _cacheService.GetAsync<IReadOnlyList<WorkspaceMemberResponse>>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((IReadOnlyList<WorkspaceMemberResponse>?)null);
+        _handler = new ListWorkspaceMembersQueryHandler(_workspaceRepository, _cacheService);
     }
 
     [Fact]

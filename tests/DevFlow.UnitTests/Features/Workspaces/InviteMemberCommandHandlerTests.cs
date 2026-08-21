@@ -11,6 +11,7 @@ public class InviteMemberCommandHandlerTests
 {
     private readonly IWorkspaceRepository _workspaceRepository = Substitute.For<IWorkspaceRepository>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
+    private readonly ICacheService _cacheService = Substitute.For<ICacheService>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private readonly InviteMemberCommandHandler _handler;
@@ -18,7 +19,7 @@ public class InviteMemberCommandHandlerTests
 
     public InviteMemberCommandHandlerTests()
     {
-        _handler = new InviteMemberCommandHandler(_workspaceRepository, _userRepository, _unitOfWork);
+        _handler = new InviteMemberCommandHandler(_workspaceRepository, _userRepository, _cacheService, _unitOfWork);
         _userRepository.GetByEmailAsync("member@test.io", Arg.Any<CancellationToken>())
             .Returns(_invitedUser);
     }
