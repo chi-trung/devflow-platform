@@ -22,6 +22,8 @@ public class WorkspaceMember : BaseEntity, IAuditableEntity
 
     public WorkspaceRole Role { get; private set; }
 
+    public Workspace Workspace { get; private set; } = null!;
+
     public DateTimeOffset CreatedAtUtc { get; set; }
 
     public DateTimeOffset? UpdatedAtUtc { get; set; }
