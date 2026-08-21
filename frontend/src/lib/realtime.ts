@@ -1,9 +1,9 @@
 import * as signalR from "@microsoft/signalr";
-import { tokens } from "./api";
+import { API_BASE, tokens } from "./api";
 
 export function createProjectConnection(): signalR.HubConnection {
   return new signalR.HubConnectionBuilder()
-    .withUrl("/hubs/projects", {
+    .withUrl(`${API_BASE}/hubs/projects`, {
       accessTokenFactory: () => tokens.access ?? "",
     })
     .withAutomaticReconnect()
