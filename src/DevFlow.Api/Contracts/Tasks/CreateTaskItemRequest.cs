@@ -15,3 +15,5 @@ public sealed record UpdateTaskItemRequest(
     TaskItemPriority Priority,
     Guid? AssigneeId,
     DateTimeOffset? DueDateUtc);
+
+public sealed record CreateCommentRequest(string Content);
