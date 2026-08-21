@@ -64,6 +64,18 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+const string CorsPolicy = "Frontend";
+builder.Services.AddCors(options =>
+    options.AddPolicy(CorsPolicy, policy =>
+        policy
+            .WithOrigins(
+                builder.Configuration
+                    .GetSection("Cors:AllowedOrigins")
+                    .Get<string[]>() ?? [])
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()));
+
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IRealtimeNotifier, SignalRProjectNotifier>();
 
@@ -143,6 +155,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(CorsPolicy);
 
 app.UseAuthentication();
 
