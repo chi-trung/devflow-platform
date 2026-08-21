@@ -1,5 +1,6 @@
 using DevFlow.Api.Middleware;
 using DevFlow.Application;
+using DevFlow.Infrastructure;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
@@ -9,6 +10,8 @@ builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddApplication();
+
+builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
 
