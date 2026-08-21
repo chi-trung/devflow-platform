@@ -1,6 +1,9 @@
+using System.Security.Claims;
 using System.Text;
+using DevFlow.Api.Auth;
 using DevFlow.Api.Middleware;
 using DevFlow.Application;
+using DevFlow.Application.Common.Interfaces;
 using DevFlow.Infrastructure;
 using DevFlow.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,6 +27,8 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -37,6 +42,9 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserContext, UserContext>();
 
 builder.Services.AddControllers();
 
