@@ -1,3 +1,4 @@
+using DevFlow.Application.Common.Behaviors;
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Domain.Enums;
 using MediatR;
@@ -11,6 +12,6 @@ public sealed record CreateTaskItemCommand(
     string Title,
     string? Description,
     TaskItemPriority Priority,
-    DateTimeOffset? DueDateUtc) : IRequest<TaskItemCreatedResponse>, IWorkspaceRequest;
+    DateTimeOffset? DueDateUtc) : IRequest<TaskItemCreatedResponse>, IWorkspaceRequest, IProjectEvent;
 
 public sealed record TaskItemCreatedResponse(Guid Id);

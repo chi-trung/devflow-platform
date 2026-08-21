@@ -1,3 +1,4 @@
+using DevFlow.Application.Common.Behaviors;
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Domain.Enums;
 using MediatR;
@@ -9,4 +10,4 @@ public sealed record CreateCommentCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     Guid TaskId,
-    string Content) : IRequest<CommentResponse>, IWorkspaceRequest;
+    string Content) : IRequest<CommentResponse>, IWorkspaceRequest, IProjectEvent;

@@ -1,3 +1,4 @@
+using DevFlow.Application.Common.Behaviors;
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Domain.Enums;
 using MediatR;
@@ -14,4 +15,4 @@ public sealed record UpdateTaskItemCommand(
     TaskItemStatus Status,
     TaskItemPriority Priority,
     Guid? AssigneeId,
-    DateTimeOffset? DueDateUtc) : IRequest, IWorkspaceRequest;
+    DateTimeOffset? DueDateUtc) : IRequest, IWorkspaceRequest, IProjectEvent;
