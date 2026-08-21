@@ -18,6 +18,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<WorkspaceMember> WorkspaceMembers => Set<WorkspaceMember>();
 
+    public DbSet<Project> Projects => Set<Project>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);
