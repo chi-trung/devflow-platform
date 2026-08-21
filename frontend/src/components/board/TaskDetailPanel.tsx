@@ -4,6 +4,7 @@ import { api } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { ErrorAlert } from "../ui/ErrorAlert";
 import { Avatar } from "../ui/Avatar";
+import { useToast } from "../ui/ToastProvider";
 import type {
   CommentResponse,
   SprintResponse,
@@ -33,6 +34,11 @@ export function TaskDetailPanel({
   onClose,
   onTaskChanged,
 }: TaskDetailPanelProps) {
+  const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description ?? "");
+  const [dueDate, setDueDate] = useState(
+    task.dueDateUtc ? task.dueDateUtc.slice(0, 10) : "",
+  );
   const [status, setStatus] = useState(task.status);
   const [priority, setPriority] = useState(task.priority);
   const [assigneeId, setAssigneeId] = useState<string | null>(task.assigneeId);
@@ -44,13 +50,25 @@ export function TaskDetailPanel({
   const [newComment, setNewComment] = useState("");
   const [commentError, setCommentError] = useState<string | null>(null);
   const [postingComment, setPostingComment] = useState(false);
+  const { push } = useToast();
 
   useEffect(() => {
+    setTitle(task.title);
+    setDescription(task.description ?? "");
+    setDueDate(task.dueDateUtc ? task.dueDateUtc.slice(0, 10) : "");
     setStatus(task.status);
     setPriority(task.priority);
     setAssigneeId(task.assigneeId);
     setDetailError(null);
-  }, [task.id, task.status, task.priority, task.assigneeId]);
+  }, [
+    task.id,
+    task.title,
+    task.description,
+    task.dueDateUtc,
+    task.status,
+    task.priority,
+    task.assigneeId,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,6 +97,11 @@ export function TaskDetailPanel({
   }, [task.id, workspaceId, projectId]);
 
   async function saveChanges() {
+    if (!title.trim()) {
+      setDetailError("Title can't be empty.");
+      return;
+    }
+
     setSaving(true);
     setDetailError(null);
     try {
@@ -87,16 +110,19 @@ export function TaskDetailPanel({
         {
           method: "PATCH",
           body: JSON.stringify({
-            title: task.title,
-            description: task.description,
+            title: title.trim(),
+            description: description.trim() || null,
             status,
             priority,
             assigneeId,
-            dueDateUtc: task.dueDateUtc,
+            dueDateUtc: dueDate
+              ? new Date(`${dueDate}T12:00:00`).toISOString()
+              : null,
           }),
         },
       );
       onTaskChanged();
+      push("Task updated");
     } catch (err) {
       setDetailError(
         err instanceof Error ? err.message : "Failed to update task.",
@@ -119,6 +145,7 @@ export function TaskDetailPanel({
       );
       setComments((current) => [...current, created]);
       setNewComment("");
+      push("Comment added");
     } catch (err) {
       setCommentError(
         err instanceof Error ? err.message : "Failed to add comment.",
@@ -144,6 +171,10 @@ export function TaskDetailPanel({
   }
 
   const dirty =
+    title.trim() !== task.title ||
+    (description.trim() || null) !== task.description ||
+    (dueDate ? new Date(`${dueDate}T12:00:00`).toISOString() : null) !==
+      task.dueDateUtc ||
     status !== task.status ||
     priority !== task.priority ||
     assigneeId !== task.assigneeId;
@@ -178,7 +209,12 @@ export function TaskDetailPanel({
 
       <aside className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-border bg-surface shadow-[0_0_60px_rgba(0,0,0,0.5)]">
         <header className="flex items-start justify-between gap-3 border-b border-border p-4">
-          <h2 className="font-display font-semibold leading-snug">{task.title}</h2>
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            aria-label="Task title"
+            className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 font-display text-base font-semibold leading-snug transition-colors duration-200 hover:border-border focus:border-primary focus:bg-surface focus:outline-none"
+          />
           <button
             type="button"
             onClick={onClose}
@@ -270,12 +306,26 @@ export function TaskDetailPanel({
             </Button>
           )}
 
-          {task.description && (
-            <section>
-              <h3 className="mb-1 text-sm font-medium">Description</h3>
-              <p className="text-sm text-muted-foreground">{task.description}</p>
-            </section>
-          )}
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Due date
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(event) => setDueDate(event.target.value)}
+              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Description
+            <textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              rows={3}
+              placeholder="Add more detail…"
+              className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            />
+          </label>
 
           <section className="flex min-h-0 flex-1 flex-col">
             <h3 className="mb-2 text-sm font-medium">

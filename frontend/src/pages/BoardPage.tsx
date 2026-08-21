@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, SquareKanban } from "lucide-react";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
+import { useToast } from "../components/ui/ToastProvider";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
@@ -61,6 +62,7 @@ export function BoardPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [sprintFilter, setSprintFilter] = useState<string>("all");
   const { currentUser } = useAuth();
+  const { push } = useToast();
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null;
 
@@ -111,9 +113,11 @@ export function BoardPage() {
           }),
         },
       );
+      push(`Moved to ${COLUMNS.find((c) => c.status === status)?.title}`);
     } catch (err) {
       reload();
       setBoardError(err instanceof Error ? err.message : "Failed to move task.");
+      push("Couldn't move that task", "error");
     }
   }
 
@@ -129,6 +133,7 @@ export function BoardPage() {
     );
     setCreating(false);
     reload();
+    push("Task created");
   }
 
   async function deleteTask(task: TaskItemResponse) {
@@ -139,10 +144,11 @@ export function BoardPage() {
         { method: "DELETE" },
       );
       reload();
+      push("Task deleted");
     } catch (err) {
-      setBoardError(
-        err instanceof Error ? err.message : "Failed to delete task.",
-      );
+      const message = err instanceof Error ? err.message : "Failed to delete task.";
+      setBoardError(message);
+      push(message, "error");
     }
   }
 
