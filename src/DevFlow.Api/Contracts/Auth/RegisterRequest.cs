@@ -9,3 +9,7 @@ public sealed record RegisterRequest(
 public sealed record RegisterResponse(Guid Id);
 
 public sealed record LoginRequest(string Email, string Password);
+
+public sealed record RefreshRequest(string RefreshToken);
+
+public sealed record LogoutRequest(string RefreshToken);

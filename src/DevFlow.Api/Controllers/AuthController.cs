@@ -43,4 +43,29 @@ public sealed class AuthController(ISender sender) : ControllerBase
 
         return Ok(response);
     }
+
+    [HttpPost("refresh")]
+    [ProducesResponseType(typeof(Application.Features.Auth.Login.LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Refresh(
+        RefreshRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new Application.Features.Auth.Refresh.RefreshCommand(request.RefreshToken);
+
+        var response = await sender.Send(command, cancellationToken);
+
+        return Ok(response);
+    }
+
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Logout(
+        LogoutRequest request,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(new Application.Features.Auth.Logout.LogoutCommand(request.RefreshToken), cancellationToken);
+
+        return NoContent();
+    }
 }
