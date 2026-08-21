@@ -1,0 +1,44 @@
+using DevFlow.Application.Common.Interfaces;
+using DevFlow.Domain.Entities;
+using DevFlow.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
+
+namespace DevFlow.Infrastructure.Persistence.Repositories;
+
+public sealed class TaskItemRepository(DevFlowDbContext dbContext) : ITaskItemRepository
+{
+    public async Task AddAsync(TaskItem task, CancellationToken cancellationToken = default)
+    {
+        await dbContext.TaskItems.AddAsync(task, cancellationToken);
+    }
+
+    public Task<TaskItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return dbContext.TaskItems.FirstOrDefaultAsync(task => task.Id == id, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<TaskItem>> GetForProjectAsync(
+        Guid projectId,
+        TaskItemStatus? status,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.TaskItems.AsNoTracking().Where(task => task.ProjectId == projectId);
+
+        if (status is not null)
+        {
+            query = query.Where(task => task.Status == status);
+        }
+
+        var tasks = await query
+            .OrderByDescending(task => task.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+
+        return tasks;
+    }
+
+    public async Task RemoveAsync(TaskItem task, CancellationToken cancellationToken = default)
+    {
+        dbContext.TaskItems.Remove(task);
+        await Task.CompletedTask;
+    }
+}
