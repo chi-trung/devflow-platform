@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
 import { RequireAuth } from "./auth/RequireAuth";
 import { ToastProvider } from "./components/ui/ToastProvider";
@@ -6,6 +6,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { BoardPage } from "./pages/BoardPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 import { WorkspacePage } from "./pages/WorkspacePage";
 
 export default function App() {
@@ -27,7 +28,7 @@ export default function App() {
               element={<BoardPage />}
             />
           </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </ToastProvider>
       </AuthProvider>
