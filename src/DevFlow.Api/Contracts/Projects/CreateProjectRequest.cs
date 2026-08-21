@@ -6,3 +6,7 @@ public sealed record CreateProjectRequest(
     string? Description);
 
 public sealed record ProjectCreatedResponse(Guid Id);
+
+public sealed record UpdateProjectRequest(
+    string Name,
+    string? Description);
