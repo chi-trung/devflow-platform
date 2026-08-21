@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, SquareKanban } from "lucide-react";
+import { ArrowLeft, Plus, SquareKanban, Search } from "lucide-react";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
 import { useToast } from "../components/ui/ToastProvider";
 import { AppShell } from "../components/AppShell";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Skeleton } from "../components/ui/Skeleton";
@@ -61,6 +62,10 @@ export function BoardPage() {
   const [creating, setCreating] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [sprintFilter, setSprintFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<TaskItemResponse | null>(
+    null,
+  );
   const { currentUser } = useAuth();
   const { push } = useToast();
 
@@ -69,12 +74,19 @@ export function BoardPage() {
   const myRole = members?.find((m) => m.userId === currentUser?.id)?.role;
   const canManageSprints = myRole === "Owner" || myRole === "Admin";
 
-  const visibleTasks =
-    sprintFilter === "all"
-      ? tasks
-      : sprintFilter === "none"
-        ? tasks.filter((t) => !t.sprintId)
-        : tasks.filter((t) => t.sprintId === sprintFilter);
+  const visibleTasks = tasks
+    .filter((task) =>
+      sprintFilter === "all"
+        ? true
+        : sprintFilter === "none"
+          ? !task.sprintId
+          : task.sprintId === sprintFilter,
+    )
+    .filter((task) =>
+      search.trim()
+        ? task.title.toLowerCase().includes(search.trim().toLowerCase())
+        : true,
+    );
 
   useEffect(() => {
     if (data) setTasks(data);
@@ -163,7 +175,7 @@ export function BoardPage() {
           Projects
         </Link>
 
-        <div className="mb-5 flex items-end justify-between gap-4">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="font-display text-2xl font-semibold tracking-tight">
@@ -175,12 +187,24 @@ export function BoardPage() {
               Drag cards between columns — changes save instantly.
             </p>
           </div>
-          {!creating && (
-            <Button onClick={() => setCreating(true)}>
-              <Plus className="size-4" aria-hidden />
-              New task
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 transition-colors duration-200 focus-within:border-primary">
+              <Search className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Filter tasks…"
+                aria-label="Filter tasks by title"
+                className="w-36 bg-transparent text-sm placeholder:text-muted-foreground/50 focus:outline-none"
+              />
+            </label>
+            {!creating && (
+              <Button onClick={() => setCreating(true)}>
+                <Plus className="size-4" aria-hidden />
+                New task
+              </Button>
+            )}
+          </div>
         </div>
 
         {sprints && sprints.length >= 0 && (
@@ -249,7 +273,7 @@ export function BoardPage() {
                   tasks={visibleTasks.filter((t) => t.status === status)}
                   members={members ?? []}
                   onDropTask={(taskId, next) => void moveTask(taskId, next)}
-                  onDelete={(task) => void deleteTask(task)}
+                  onDelete={setPendingDelete}
                   onSelect={setSelectedTaskId}
                 />
               </div>
@@ -257,6 +281,19 @@ export function BoardPage() {
           </div>
         )}
       </div>
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Delete this task?"
+          message={`“${pendingDelete.title}” will be permanently removed, along with its comments.`}
+          onConfirm={() => {
+            const task = pendingDelete;
+            setPendingDelete(null);
+            void deleteTask(task);
+          }}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
 
       {selectedTask && (
         <TaskDetailPanel

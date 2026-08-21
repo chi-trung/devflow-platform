@@ -21,6 +21,10 @@ interface TaskCardProps {
 export function TaskCard({ task, members, onDelete, onSelect }: TaskCardProps) {
   const priority = priorityMeta[task.priority];
   const assignee = members.find((m) => m.userId === task.assigneeId);
+  const overdue =
+    task.dueDateUtc !== null &&
+    task.status !== "Done" &&
+    new Date(task.dueDateUtc).getTime() < Date.now();
 
   return (
     <div
@@ -29,6 +33,10 @@ export function TaskCard({ task, members, onDelete, onSelect }: TaskCardProps) {
       onDragStart={(event) => {
         event.dataTransfer.setData("text/plain", task.id);
         event.dataTransfer.effectAllowed = "move";
+        event.currentTarget.classList.add("opacity-40");
+      }}
+      onDragEnd={(event) => {
+        event.currentTarget.classList.remove("opacity-40");
       }}
       className="group cursor-grab rounded-lg border border-border bg-card p-3 transition-all duration-200 hover:border-border-strong hover:bg-elevated active:cursor-grabbing active:scale-[0.99]"
       aria-label={`Task: ${task.title}`}
@@ -56,7 +64,10 @@ export function TaskCard({ task, members, onDelete, onSelect }: TaskCardProps) {
           {priority.label}
         </span>
         {task.dueDateUtc && (
-          <time className="font-mono text-[11px] text-muted-foreground">
+          <time
+            title={overdue ? "Overdue" : undefined}
+            className={`font-mono text-[11px] ${overdue ? "font-semibold text-destructive" : "text-muted-foreground"}`}
+          >
             {new Date(task.dueDateUtc).toLocaleDateString(undefined, {
               month: "short",
               day: "numeric",
