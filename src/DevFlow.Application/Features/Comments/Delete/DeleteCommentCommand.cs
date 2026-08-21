@@ -10,4 +10,9 @@ public sealed record DeleteCommentCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     Guid TaskId,
-    Guid CommentId) : IRequest, IWorkspaceRequest, IProjectEvent;
+    Guid CommentId) : IRequest, IWorkspaceRequest, IProjectEvent
+{
+        public string ActivityVerb => "removed comment from task";
+        public string ActivityLabel => "a comment";
+        public Guid? ActivityTaskId => TaskId;
+    }

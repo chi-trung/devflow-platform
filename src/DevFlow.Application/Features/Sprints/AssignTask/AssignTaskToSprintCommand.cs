@@ -10,4 +10,9 @@ public sealed record AssignTaskToSprintCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     Guid SprintId,
-    Guid TaskId) : IRequest, IWorkspaceRequest, IProjectEvent;
+    Guid TaskId) : IRequest, IWorkspaceRequest, IProjectEvent
+{
+        public string ActivityVerb => "scheduled task into sprint";
+        public string ActivityLabel => "a task";
+        public Guid? ActivityTaskId => TaskId;
+    }

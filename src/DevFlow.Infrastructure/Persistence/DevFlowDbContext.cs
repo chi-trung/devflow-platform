@@ -26,6 +26,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<Sprint> Sprints => Set<Sprint>();
 
+    public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);

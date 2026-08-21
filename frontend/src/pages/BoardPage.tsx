@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, SquareKanban, Search } from "lucide-react";
+import { ArrowLeft, Plus, SquareKanban, Search, History } from "lucide-react";
 import { api } from "../lib/api";
 import { createProjectConnection } from "../lib/realtime";
 import { useApi } from "../hooks/useApi";
@@ -16,7 +16,9 @@ import { Column } from "../components/board/Column";
 import { CreateTaskForm } from "../components/board/CreateTaskForm";
 import { TaskDetailPanel } from "../components/board/TaskDetailPanel";
 import { SprintBar } from "../components/board/SprintBar";
+import { ActivityDrawer } from "../components/board/ActivityDrawer";
 import type {
+  ActivityResponse,
   ProjectResponse,
   SprintResponse,
   TaskItemResponse,
@@ -58,10 +60,20 @@ export function BoardPage() {
     [workspaceId, projectId],
   );
 
+  const {
+    data: activities,
+    loading: activitiesLoading,
+    reload: reloadActivities,
+  } = useApi<ActivityResponse[]>(
+    () => api(`/workspaces/${workspaceId}/projects/${projectId}/activities`),
+    [workspaceId, projectId],
+  );
+
   const [tasks, setTasks] = useState<TaskItemResponse[]>([]);
   const [boardError, setBoardError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [activityOpen, setActivityOpen] = useState(false);
   const [sprintFilter, setSprintFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [pendingDelete, setPendingDelete] = useState<TaskItemResponse | null>(
@@ -105,6 +117,7 @@ export function BoardPage() {
       timer = window.setTimeout(() => {
         reload();
         reloadSprints();
+        reloadActivities();
       }, 400);
     };
 
@@ -120,7 +133,7 @@ export function BoardPage() {
       window.clearTimeout(timer);
       void connection.stop();
     };
-  }, [projectId, reload, reloadSprints]);
+  }, [projectId, reload, reloadSprints, reloadActivities]);
 
   async function moveTask(taskId: string, status: TaskItemResponse["status"]) {
     const task = tasks.find((t) => t.id === taskId);
@@ -217,8 +230,16 @@ export function BoardPage() {
               Drag cards between columns — changes save instantly.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 transition-colors duration-200 focus-within:border-primary">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setActivityOpen(true)}
+                title="View project activity log"
+              >
+                <History className="size-4" aria-hidden />
+                Activity
+              </Button>
+              <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 transition-colors duration-200 focus-within:border-primary">
               <Search className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
               <input
                 value={search}
@@ -340,6 +361,13 @@ export function BoardPage() {
           }}
         />
       )}
+
+      <ActivityDrawer
+        open={activityOpen}
+        onClose={() => setActivityOpen(false)}
+        activities={activities ?? null}
+        loading={activitiesLoading}
+      />
     </AppShell>
   );
 }
