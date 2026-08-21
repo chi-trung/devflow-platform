@@ -1,0 +1,25 @@
+name: Keep Alive
+
+# Pings the API every 10 minutes so the free-tier Render instance
+# doesn't spin down (and the Supabase database stays active).
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping API health endpoint
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 120 \
+            https://devflow-api-vd5h.onrender.com/health)
+          echo "Health check returned HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "::warning::API health check returned HTTP $code"
+          fi
