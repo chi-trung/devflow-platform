@@ -10,6 +10,7 @@ using DevFlow.Application.Common.Interfaces;
 using DevFlow.Infrastructure;
 using DevFlow.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -137,11 +138,16 @@ builder.Services.AddHealthChecks()
     .AddNpgSql(
         builder.Configuration.GetConnectionString("Database")!,
         name: "postgresql",
-        tags: ["ready"])
-    .AddRedis(
-        builder.Configuration.GetConnectionString("Redis")!,
-        name: "redis",
         tags: ["ready"]);
+
+// Redis is optional: only registered (and only part of readiness) when a
+// connection string is configured, so production can run without it.
+var redisConnection = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnection))
+{
+    builder.Services.AddHealthChecks()
+        .AddRedis(redisConnection, name: "redis", tags: ["redis"]);
+}
 
 var app = builder.Build();
 
@@ -176,6 +182,11 @@ app.MapControllers();
 
 app.MapHub<ProjectHub>("/hubs/projects");
 
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    // Readiness is gated on the database only; optional services like
+    // Redis report under their own tags.
+    Predicate = check => check.Tags.Contains("ready")
+});
 
 app.Run();
