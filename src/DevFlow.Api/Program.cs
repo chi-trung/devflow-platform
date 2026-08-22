@@ -126,6 +126,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IRealtimeNotifier, SignalRProjectNotifier>();
+builder.Services.AddSingleton<INotificationBroadcaster, NotificationBroadcaster>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, UserContext>();
@@ -232,6 +233,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapHub<ProjectHub>("/hubs/projects");
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
