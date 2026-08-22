@@ -50,4 +50,9 @@ public sealed class UserRepository(DevFlowDbContext dbContext) : IUserRepository
     {
         return dbContext.Users.AnyAsync(user => user.Username == username && user.Id != userId, cancellationToken);
     }
+
+    public Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Users.FirstOrDefaultAsync(user => user.Username == username, cancellationToken);
+    }
 }

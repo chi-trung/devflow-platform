@@ -56,6 +56,8 @@ public sealed record AddTaskDependencyCommand(
 public class AddTaskDependencyHandler(
     ITaskDependencyRepository dependencyRepository,
     ITaskItemRepository taskItemRepository,
+    IActivityLogRepository activityLog,
+    IUserContext userContext,
     IUnitOfWork unitOfWork)
     : IRequestHandler<AddTaskDependencyCommand>
 {
@@ -81,6 +83,17 @@ public class AddTaskDependencyHandler(
 
         var dependency = Domain.Entities.TaskDependency.Create(request.TaskId, request.BlockerTaskId);
         await dependencyRepository.AddAsync(dependency, cancellationToken);
+
+        // Log activity
+        var log = Domain.Entities.ActivityLog.Create(
+            request.WorkspaceId,
+            request.ProjectId,
+            request.TaskId,
+            userContext.UserId,
+            "added a dependency on",
+            blocker.Title);
+        await activityLog.AddAsync(log, cancellationToken);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
@@ -95,6 +108,9 @@ public sealed record RemoveTaskDependencyCommand(
 
 public class RemoveTaskDependencyHandler(
     ITaskDependencyRepository dependencyRepository,
+    ITaskItemRepository taskItemRepository,
+    IActivityLogRepository activityLog,
+    IUserContext userContext,
     IUnitOfWork unitOfWork)
     : IRequestHandler<RemoveTaskDependencyCommand>
 {
@@ -108,7 +124,22 @@ public class RemoveTaskDependencyHandler(
         if (dependency.BlockedTaskId != request.TaskId)
             throw new NotFoundException(nameof(Domain.Entities.TaskDependency), request.DependencyId);
 
+        var task = await taskItemRepository.GetByIdAsync(request.TaskId, cancellationToken);
         dependencyRepository.Remove(dependency);
+
+        // Log activity
+        if (task is not null)
+        {
+            var log = Domain.Entities.ActivityLog.Create(
+                request.WorkspaceId,
+                request.ProjectId,
+                request.TaskId,
+                userContext.UserId,
+                "removed a dependency from",
+                task.Title);
+            await activityLog.AddAsync(log, cancellationToken);
+        }
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

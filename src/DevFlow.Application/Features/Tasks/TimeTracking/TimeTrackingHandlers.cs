@@ -57,6 +57,7 @@ public sealed record LogTimeEntryCommand(
 public class LogTimeEntryHandler(
     ITimeEntryRepository timeEntryRepository,
     ITaskItemRepository taskItemRepository,
+    IActivityLogRepository activityLog,
     IUserContext userContext,
     IUnitOfWork unitOfWork)
     : IRequestHandler<LogTimeEntryCommand, Guid>
@@ -79,6 +80,16 @@ public class LogTimeEntryHandler(
             request.DateUtc);
 
         await timeEntryRepository.AddAsync(entry, cancellationToken);
+
+        var log = Domain.Entities.ActivityLog.Create(
+            request.WorkspaceId,
+            request.ProjectId,
+            request.TaskId,
+            userContext.UserId,
+            "logged time on",
+            task.Title);
+        await activityLog.AddAsync(log, cancellationToken);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return entry.Id;
@@ -95,6 +106,9 @@ public sealed record DeleteTimeEntryCommand(
 
 public class DeleteTimeEntryHandler(
     ITimeEntryRepository timeEntryRepository,
+    ITaskItemRepository taskItemRepository,
+    IActivityLogRepository activityLog,
+    IUserContext userContext,
     IUnitOfWork unitOfWork)
     : IRequestHandler<DeleteTimeEntryCommand>
 {
@@ -108,7 +122,21 @@ public class DeleteTimeEntryHandler(
         if (entry.TaskId != request.TaskId)
             throw new NotFoundException(nameof(Domain.Entities.TimeEntry), request.EntryId);
 
+        var task = await taskItemRepository.GetByIdAsync(request.TaskId, cancellationToken);
         timeEntryRepository.Remove(entry);
+
+        if (task is not null)
+        {
+            var log = Domain.Entities.ActivityLog.Create(
+                request.WorkspaceId,
+                request.ProjectId,
+                request.TaskId,
+                userContext.UserId,
+                "removed time entry from",
+                task.Title);
+            await activityLog.AddAsync(log, cancellationToken);
+        }
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

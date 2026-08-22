@@ -19,4 +19,6 @@ public interface IUserRepository
         CancellationToken cancellationToken = default);
 
     Task<bool> ExistsByUsernameExceptIdAsync(string username, Guid userId, CancellationToken cancellationToken = default);
+
+    Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default);
 }
