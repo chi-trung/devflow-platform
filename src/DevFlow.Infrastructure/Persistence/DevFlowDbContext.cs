@@ -30,6 +30,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<TaskAttachment> TaskAttachments => Set<TaskAttachment>();
 
+    public DbSet<Notification> Notifications => Set<Notification>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);
