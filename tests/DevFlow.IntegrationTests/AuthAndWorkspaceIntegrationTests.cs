@@ -1,12 +1,23 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace DevFlow.IntegrationTests;
 
 public class AuthAndWorkspaceIntegrationTests(DevFlowWebApplicationFactory factory) : IClassFixture<DevFlowWebApplicationFactory>
 {
     private readonly HttpClient client = factory.CreateClient();
+
+    private static async Task EnsureSuccessAsync(HttpResponseMessage response, string step)
+    {
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Step '{step}' failed with {(int)response.StatusCode} {response.StatusCode}: {body}");
+        }
+    }
 
     [Fact]
     public async Task Register_Login_CreateWorkspace_Flow()
@@ -28,12 +39,7 @@ public class AuthAndWorkspaceIntegrationTests(DevFlowWebApplicationFactory facto
             password,
             displayName = "Test User"
         });
-
-        if (!registerResponse.IsSuccessStatusCode)
-        {
-            var errorBody = await registerResponse.Content.ReadAsStringAsync();
-            throw new Exception($"Register failed with {registerResponse.StatusCode}: {errorBody}");
-        }
+        await EnsureSuccessAsync(registerResponse, "register");
 
         // 2. Login
         var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new
@@ -41,8 +47,8 @@ public class AuthAndWorkspaceIntegrationTests(DevFlowWebApplicationFactory facto
             email,
             password
         });
+        await EnsureSuccessAsync(loginResponse, "login");
 
-        Assert.True(loginResponse.IsSuccessStatusCode);
         var loginBody = await loginResponse.Content.ReadFromJsonAsync<JsonElement>();
         var accessToken = loginBody.GetProperty("accessToken").GetString();
         Assert.False(string.IsNullOrEmpty(accessToken));
@@ -53,17 +59,18 @@ public class AuthAndWorkspaceIntegrationTests(DevFlowWebApplicationFactory facto
         var wsResponse = await client.PostAsJsonAsync("/api/v1/workspaces", new
         {
             name = "Test Workspace",
+            slug = $"test-ws-{Guid.NewGuid():N}".Substring(0, 20),
             description = "Integration test workspace"
         });
+        await EnsureSuccessAsync(wsResponse, "create workspace");
 
-        Assert.True(wsResponse.IsSuccessStatusCode);
         var wsBody = await wsResponse.Content.ReadFromJsonAsync<JsonElement>();
         var wsId = wsBody.GetProperty("id").GetGuid();
         Assert.NotEqual(Guid.Empty, wsId);
 
         // 4. List Workspaces
         var listResponse = await client.GetAsync("/api/v1/workspaces");
-        Assert.True(listResponse.IsSuccessStatusCode);
+        await EnsureSuccessAsync(listResponse, "list workspaces");
         var workspaces = await listResponse.Content.ReadFromJsonAsync<JsonElement[]>();
         Assert.NotNull(workspaces);
         var createdWs = Assert.Single(workspaces);

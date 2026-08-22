@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
@@ -25,16 +26,19 @@ builder.Services.AddApplication();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
-var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
-    ?? throw new InvalidOperationException("Missing Jwt configuration section.");
-
+// JWT options are bound lazily through IOptions so that issuing (JwtTokenProvider)
+// and validating (JwtBearer) always see the exact same settings, regardless of
+// when configuration sources are applied (e.g. test factories overriding config).
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.MapInboundClaims = false;
+    .AddJwtBearer();
 
-        options.Events = new JwtBearerEvents
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IOptions<JwtSettings>>((bearer, jwtSettings) =>
+    {
+        bearer.MapInboundClaims = false;
+
+        bearer.Events = new JwtBearerEvents
         {
             // SignalR WebSockets cannot send an Authorization header,
             // so the access token arrives via the query string.
@@ -52,15 +56,16 @@ builder.Services
             }
         };
 
-        options.TokenValidationParameters = new TokenValidationParameters
+        bearer.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings.Issuer,
-            ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
+            ValidIssuer = jwtSettings.Value.Issuer,
+            ValidAudience = jwtSettings.Value.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtSettings.Value.Key))
         };
     });
 
@@ -157,7 +162,14 @@ using (var scope = app.Services.CreateScope())
 {
     var database = scope.ServiceProvider
         .GetRequiredService<DevFlow.Infrastructure.Persistence.DevFlowDbContext>();
-    database.Database.Migrate();
+    if (database.Database.IsRelational())
+    {
+        database.Database.Migrate();
+    }
+    else
+    {
+        database.Database.EnsureCreated();
+    }
 }
 
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
@@ -190,3 +202,5 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 });
 
 app.Run();
+
+public partial class Program { }
