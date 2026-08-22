@@ -1,62 +1,230 @@
-# Agent Communication Board
+# AGENT STATUS — Sprint 8+ Roadmap
+
+## 📊 Sprint 7 Summary
+| Agent | Feature | PR | Status |
+|-------|---------|-----|--------|
+| Codebuff | Task Dependencies + Time Tracking | #58 | ✅ MERGED |
+| OpenCode | Dependencies UI + Time Tracking UI | #59 | ✅ MERGED |
 
 ---
 
-## 🔍 PROD TRIAGE — 2026-08-22 (OpenCode)
+## 🎯 Sprint 8 — Reporting & Analytics
 
-**URL:** https://devflow-platform-kappa.vercel.app · **API:** https://devflow-api-vd5h.onrender.com
+### Agent: Codebuff (Backend)
 
-| Check | Kết quả |
-|-------|---------|
-| Frontend load | ✅ bundle mới `index-DtI5curp.js` (chứa fix trim VITE_API_URL + PagedResult) |
-| Backend `/health` | ✅ 200 "Healthy" |
-| CORS preflight từ kappa | ✅ 204 + Allow-Origin đúng |
-| POST /auth/login | ✅ 401 JSON chuẩn, ~800ms khi ấm |
-| Keep-alive Action | ✅ có trên main, cron 10 phút, toàn green |
+#### B1: Burndown Chart API
+- [ ] `GET /projects/{id}/burndown?startDate=&endDate=`
+  - Returns daily remaining story points
+  - Ideal line vs actual line
+  - Data points: `{ date: "2026-08-22", remaining: 45, ideal: 40 }`
 
-**Nguyên nhân sự cố:** (1) `VITE_API_URL` dính whitespace → `%20` trong mọi API call; (2) backend chuyển PagedResult → frontend crash các list view. Codebuff đã fix (b5999ac, 9c45158).
+#### B2: Velocity & Metrics API
+- [ ] `GET /projects/{id}/velocity`
+  - Returns points completed per sprint
+  - Average velocity, trend
+  - Data: `{ sprints: [{ name, completedPoints, plannedPoints }], average: 42 }`
 
-**⚠️ Còn sót → PR #57 (OpenCode, chờ merge):** `deriveDashboard` (lib/dashboard.ts) + notifications activity fallback vẫn expect array → **Dashboard Overview và bell chết ở chế độ fallback**. Đã vá qua `pagedItems()` của Codebuff. Merge xong Vercel tự redeploy.
+- [ ] `GET /projects/{id}/report`
+  - Completion rate, avg cycle time, overdue count
+  - Data: `{ completionRate: 0.85, avgCycleDays: 3.2, overdueCount: 2 }`
 
-**Lưu ý vận hành:** Render free tier cold-start 30-90s nếu keep-alive bị GitHub disable (sau 60 ngày repo idle) — theo dõi tab Actions.
+#### B3: Team Performance API
+- [ ] `GET /workspaces/{id}/team-report`
+  - Per-member stats: tasks completed, time logged, avg cycle time
+  - Data: `{ members: [{ userId, name, completed, timeLogged, avgCycle }] }`
 
----
+#### B4: Dashboard Enhancement
+- [ ] Add burndown data to existing dashboard endpoint
+- [ ] Add sprint progress metrics
+- [ ] Add team workload distribution
 
-## 🎉 SPRINT 6 HOÀN THÀNH!
+### Agent: OpenCode (Frontend)
 
-**Thời gian:** 2026-08-22
+#### F1: Burndown Chart Component
+- [ ] Canvas/SVG burndown chart
+- [ ] Ideal vs actual lines
+- [ ] Tooltip with daily details
+- [ ] Date range picker
 
----
+#### F2: Velocity Chart
+- [ ] Bar chart per sprint
+- [ ] Trend line
+- [ ] Compare planned vs completed
 
-## Kết quả
-
-| Agent | Task | PR | Status |
-|-------|------|-----|--------|
-| Codebuff | Labels + Dashboard API | #55 | ✅ MERGED |
-| OpenCode | Burndown Chart + Dashboard Stats | #56 | ✅ MERGED |
-
----
-
-## ✅ DEPLOYMENT HOÀN THÀNH!
-
-| Component | URL | Status |
-|-----------|-----|--------|
-| Frontend | https://devflow-platform-kappa.vercel.app | ✅ Live |
-| Backend | https://devflow-api-vd5h.onrender.com | ✅ Live |
-
----
-
-## 🎉 6 SPRINTS HOÀN THÀNH!
-
-| Sprint | Backend | Frontend |
-|--------|---------|----------|
-| 1 | Rate Limiting + CI Fix | Pagination |
-| 2 | Pagination | Sprint Planning UI |
-| 3 | User Profile + Search | Profile Page + Notifications |
-| 4 | Notifications API | Global Search + Polish |
-| 5 | Notification Events | Settings + Mobile Nav |
-| 6 | Labels + Dashboard | Burndown Chart + Dashboard Stats |
+#### F3: Team Dashboard
+- [ ] Member performance cards
+- [ ] Time logged breakdown
+- [ ] Task completion stats
 
 ---
 
-## 🎉 CẢ 2 AGENTS HOÀN THÀNH SPRINT 6 + DEPLOY LIVE!
+## 🎯 Sprint 9 — GitHub Integration & Email
+
+### Agent: Codebuff (Backend)
+
+#### B1: GitHub Integration
+- [ ] `POST /projects/{id}/github/link` — connect repo
+- [ ] `GET /projects/{id}/github/prs` — list PRs
+- [ ] Webhook handler for PR events
+- [ ] Auto-link tasks via regex (DEV-123 in PR title)
+- [ ] Add `githubUrl` field to TaskItem
+
+#### B2: Email Notifications
+- [ ] Add SendGrid/Resend integration
+- [ ] Send email on: task assigned, mentioned, sprint started
+- [ ] User email preferences (opt-in/out)
+- [ ] Queue-based background processing
+
+#### B3: Task Activity Feed Enhancement
+- [ ] Add dependency status changes to activity log
+- [ ] Add time tracking entries to activity log
+- [ ] Add GitHub PR links to activity
+
+### Agent: OpenCode (Frontend)
+
+#### F1: GitHub Integration UI
+- [ ] Link repo in project settings
+- [ ] Show linked PRs on task detail
+- [ ] PR status badges (open/merged/closed)
+- [ ] Click to open PR
+
+#### F2: Email Notification Settings
+- [ ] Toggle per event type (assigned, mentioned, sprint)
+- [ ] Email preview
+- [ ] Unsubscribe link
+
+#### F3: Activity Feed Enhancement
+- [ ] Show dependency changes
+- [ ] Show time entries
+- [ ] Show GitHub links
+
+---
+
+## 🎯 Sprint 10 — Power Features
+
+### Agent: Codebuff (Backend)
+
+#### B1: Bulk Operations API
+- [ ] `POST /projects/{id}/tasks/bulk` — bulk actions
+- [ ] Support: move, assign, label, delete
+- [ ] Transaction-safe bulk updates
+
+#### B2: Task Templates
+- [ ] `GET /projects/{id}/templates` — list templates
+- [ ] `POST /projects/{id}/templates` — create from task
+- [ ] `POST /templates/{id}/apply` — apply template
+- [ ] Template library per workspace
+
+#### B3: Custom Fields
+- [ ] `GET /projects/{id}/fields` — list custom fields
+- [ ] `POST /projects/{id}/fields` — create field
+- [ ] `PUT /tasks/{id}/fields` — set field values
+- [ ] Field types: text, number, date, select, multi-select
+
+### Agent: OpenCode (Frontend)
+
+#### F1: Bulk Selection UI
+- [ ] Checkbox on task cards
+- [ ] Bulk action toolbar
+- [ ] Keyboard shortcuts (Ctrl+A, Delete)
+
+#### F2: Template Library
+- [ ] Template manager in project settings
+- [ ] One-click apply
+- [ ] Template preview
+
+#### F3: Custom Fields UI
+- [ ] Field manager in project settings
+- [ ] Show on task cards (optional)
+- [ ] Filter by custom fields
+
+---
+
+## 🎯 Sprint 11 — Advanced Features
+
+### Both Agents
+
+#### Task Dependencies Visualization
+- [ ] Graph view of task dependencies
+- [ ] Critical path highlighting
+- [ ] Circular dependency detection
+
+#### Keyboard Shortcuts
+- [ ] Global shortcuts: Ctrl+K search, Ctrl+N new task
+- [ ] Board shortcuts: arrow keys navigate, Enter open
+- [ ] Shortcut help modal (?)
+
+#### Advanced Search
+- [ ] Full-text search across all fields
+- [ ] Saved searches
+- [ ] Search operators (status:Done assignee:me)
+
+#### Export & Import
+- [ ] Export project to CSV/JSON
+- [ ] Import from Jira/Linear
+- [ ] Backup/restore
+
+---
+
+## 📋 Priority Matrix
+
+| Priority | Feature | Sprint | Effort | Impact |
+|----------|---------|--------|--------|--------|
+| 🔴 P0 | Burndown Chart | 8 | 1 sprint | High — management visibility |
+| 🔴 P0 | Velocity Metrics | 8 | 0.5 sprint | High — planning accuracy |
+| 🔴 P0 | Team Performance | 8 | 0.5 sprint | High — accountability |
+| 🟡 P1 | GitHub Integration | 9 | 1 sprint | Medium — dev workflow |
+| 🟡 P1 | Email Notifications | 9 | 1 sprint | Medium — offline alerts |
+| 🟡 P1 | Bulk Operations | 10 | 0.5 sprint | Medium — productivity |
+| 🟢 P2 | Task Templates | 10 | 0.5 sprint | Low — speed |
+| 🟢 P2 | Custom Fields | 10 | 1 sprint | Low — flexibility |
+| 🟢 P2 | Keyboard Shortcuts | 11 | 0.5 sprint | Low — power users |
+| 🟢 P2 | Export/Import | 11 | 1 sprint | Low — portability |
+
+---
+
+## 🔄 Sprint Cycle (Established)
+
+### How We Work
+1. **Plan** — Codebuff writes plan to AGENT_STATUS.md
+2. **Execute** — Both agents work simultaneously on separate branches
+3. **Review** — Check CI, fix issues
+4. **Deploy** — Merge to main, verify production
+
+### Branch Strategy
+- **Codebuff**: `feat/backend-*` branch
+- **OpenCode**: `feat/frontend-*` branch (via worktree)
+
+### Communication
+- **AGENT_STATUS.md** — shared status file
+- Both agents update status after each task
+
+### CI/CD
+- Each PR runs: Build → Test → Deploy Preview
+- Auto-merge when CI passes
+
+---
+
+## 📈 Project Metrics (Current)
+
+| Metric | Value |
+|--------|-------|
+| Total Sprints | 7 |
+| Features Shipped | 14 |
+| PRs Merged | 58 |
+| Unit Tests | 57 |
+| API Endpoints | 35+ |
+| Frontend Pages | 9 |
+| Deployment | Vercel + Render |
+
+### Tech Stack
+- **Backend**: ASP.NET Core 8, Clean Architecture, CQRS + MediatR
+- **Frontend**: React 19, TypeScript, Tailwind CSS v4
+- **Database**: PostgreSQL + EF Core
+- **Auth**: JWT + Refresh Tokens
+- **Realtime**: SignalR
+- **Deploy**: Vercel (FE) + Render (BE)
+
+---
+
+*Last updated: Sprint 7 complete, Sprint 8 planning*
