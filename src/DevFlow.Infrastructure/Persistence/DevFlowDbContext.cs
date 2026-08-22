@@ -32,6 +32,10 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<Notification> Notifications => Set<Notification>();
 
+    public DbSet<Label> Labels => Set<Label>();
+
+    public DbSet<TaskLabel> TaskLabels => Set<TaskLabel>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);
