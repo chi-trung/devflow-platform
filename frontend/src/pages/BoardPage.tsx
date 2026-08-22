@@ -1,7 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Plus, SquareKanban, Search, History, CalendarRange, BarChart3 } from "lucide-react";
-import { api, pagedItems } from "../lib/api";
+import {
+  ArrowLeft,
+  Plus,
+  SquareKanban,
+  Search,
+  History,
+  CalendarRange,
+  BarChart3,
+  Network,
+  Keyboard,
+  X,
+} from "lucide-react";
+import {
+  api,
+  bulkAssignTasks,
+  bulkDeleteTasks,
+  bulkMoveTasks,
+  pagedItems,
+} from "../lib/api";
 import { createProjectConnection } from "../lib/realtime";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
@@ -19,6 +36,8 @@ import { TaskDetailPanel } from "../components/board/TaskDetailPanel";
 import { SprintBar } from "../components/board/SprintBar";
 import { ActivityDrawer } from "../components/board/ActivityDrawer";
 import { FilterBar } from "../components/board/FilterBar";
+import { GraphModal } from "../components/board/GraphModal";
+import { KeyboardHelpModal } from "../components/board/KeyboardHelpModal";
 import type {
   ActivityResponse,
   LabelResponse,
@@ -36,6 +55,62 @@ const COLUMNS: { title: string; status: TaskItemResponse["status"] }[] = [
   { title: "In Review", status: "InReview" },
   { title: "Done", status: "Done" },
 ];
+
+interface ParsedSearch {
+  text: string;
+  status: string;
+  priority: string;
+  assignee: string;
+  label: string;
+  blockedOnly: boolean;
+}
+
+function parseSearchQuery(raw: string): ParsedSearch {
+  const parsed: ParsedSearch = {
+    text: "",
+    status: "",
+    priority: "",
+    assignee: "",
+    label: "",
+    blockedOnly: false,
+  };
+  const textParts: string[] = [];
+
+  for (const token of raw.split(/\s+/).filter(Boolean)) {
+    const match = /^(status|priority|assignee|label|is):(.+)$/i.exec(token);
+    if (!match) {
+      textParts.push(token);
+      continue;
+    }
+    const key = match[1].toLowerCase();
+    const value = match[2].toLowerCase();
+
+    if (key === "is" && value === "blocked") {
+      parsed.blockedOnly = true;
+    } else if (key === "status") {
+      const normalized = value.replace(/[-_]/g, "");
+      if (normalized === "backlog") parsed.status = "Backlog";
+      else if (normalized === "inprogress" || normalized === "wip")
+        parsed.status = "InProgress";
+      else if (normalized === "inreview" || normalized === "review")
+        parsed.status = "InReview";
+      else if (normalized === "done" || normalized === "completed")
+        parsed.status = "Done";
+    } else if (key === "priority") {
+      const candidate =
+        value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+      if (["Low", "Medium", "High", "Critical"].includes(candidate))
+        parsed.priority = candidate;
+    } else if (key === "assignee") {
+      parsed.assignee = value;
+    } else if (key === "label") {
+      parsed.label = value;
+    }
+  }
+
+  parsed.text = textParts.join(" ");
+  return parsed;
+}
 
 export function BoardPage() {
   const { workspaceId = "", projectId = "" } = useParams();
@@ -98,6 +173,12 @@ export function BoardPage() {
   const [pendingDelete, setPendingDelete] = useState<TaskItemResponse | null>(
     null,
   );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState("");
+  const [bulkAssignee, setBulkAssignee] = useState("");
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [graphOpen, setGraphOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const { currentUser } = useAuth();
   const { push } = useToast();
 
@@ -105,6 +186,26 @@ export function BoardPage() {
 
   const myRole = members?.find((m) => m.userId === currentUser?.id)?.role;
   const canManageSprints = myRole === "Owner" || myRole === "Admin";
+
+  const parsedSearch = parseSearchQuery(search);
+  const operatorLabelId =
+    parsedSearch.label
+      ? (labels ?? []).find((label) =>
+          label.name.toLowerCase().includes(parsedSearch.label),
+        )?.id ?? "no-match"
+      : "";
+  const operatorAssigneeId =
+    parsedSearch.assignee === ""
+      ? ""
+      : parsedSearch.assignee === "me"
+        ? (currentUser?.id ?? "no-match")
+        : ((members ?? []).find(
+            (member) =>
+              member.username.toLowerCase().includes(parsedSearch.assignee) ||
+              (member.displayName || "")
+                .toLowerCase()
+                .includes(parsedSearch.assignee),
+          )?.userId ?? "no-match");
 
   const visibleTasks = tasks
     .filter((task) =>
@@ -135,8 +236,21 @@ export function BoardPage() {
     })
     .filter((task) => (blockedOnly ? !!task.isBlocked : true))
     .filter((task) =>
-      search.trim()
-        ? task.title.toLowerCase().includes(search.trim().toLowerCase())
+      parsedSearch.status ? task.status === parsedSearch.status : true,
+    )
+    .filter((task) =>
+      parsedSearch.priority ? task.priority === parsedSearch.priority : true,
+    )
+    .filter((task) =>
+      operatorAssigneeId ? task.assigneeId === operatorAssigneeId : true,
+    )
+    .filter((task) =>
+      operatorLabelId ? (task.labelIds ?? []).includes(operatorLabelId) : true,
+    )
+    .filter((task) => (parsedSearch.blockedOnly ? !!task.isBlocked : true))
+    .filter((task) =>
+      parsedSearch.text
+        ? task.title.toLowerCase().includes(parsedSearch.text.toLowerCase())
         : true,
     );
 
@@ -175,6 +289,97 @@ export function BoardPage() {
       setSearchParams({}, { replace: true });
     }
   }, [deepLinkTaskId, tasks, setSearchParams]);
+
+  // Keyboard shortcuts: n=new, / or f=focus filter, ?=help,
+  // Ctrl+A=select visible, Delete=bulk delete, Esc=step back.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        target.closest("input, textarea, select, [contenteditable=true]")
+      )
+        return;
+
+      if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+        if (event.key.toLowerCase() === "a" && !selectedTaskId) {
+          event.preventDefault();
+          setSelectedIds(new Set(visibleTasks.map((t) => t.id)));
+        }
+        return;
+      }
+
+      switch (event.key) {
+        case "n":
+          if (!creating && !selectedTaskId && !graphOpen && !helpOpen)
+            setCreating(true);
+          break;
+        case "/":
+        case "f": {
+          event.preventDefault();
+          document
+            .querySelector<HTMLInputElement>("input[data-board-search]")
+            ?.focus();
+          break;
+        }
+        case "?":
+          setHelpOpen((open) => !open);
+          break;
+        case "Delete":
+        case "Backspace":
+          if (selectedIds.size > 0 && !selectedTaskId) {
+            event.preventDefault();
+            setConfirmBulkDelete(true);
+          }
+          break;
+        case "Escape":
+          if (graphOpen) setGraphOpen(false);
+          else if (helpOpen) setHelpOpen(false);
+          else if (confirmBulkDelete) setConfirmBulkDelete(false);
+          else if (selectedIds.size > 0) setSelectedIds(new Set());
+          break;
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [
+    creating,
+    selectedTaskId,
+    selectedIds,
+    graphOpen,
+    helpOpen,
+    confirmBulkDelete,
+    visibleTasks,
+  ]);
+
+  function toggleSelect(taskId: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(taskId)) next.delete(taskId);
+      else next.add(taskId);
+      return next;
+    });
+  }
+
+  async function runBulk(
+    action: () => Promise<void>,
+    successMessage: string,
+  ) {
+    setBoardError(null);
+    try {
+      await action();
+      setSelectedIds(new Set());
+      setBulkStatus("");
+      setBulkAssignee("");
+      reload();
+      push(successMessage);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Bulk action failed.";
+      setBoardError(message);
+      push(message, "error");
+    }
+  }
 
   // Live updates: any change made by anyone in this project triggers a
   // debounced refetch, so open boards stay in sync across browsers.
@@ -331,15 +536,43 @@ export function BoardPage() {
                 <History className="size-4" aria-hidden />
                 Activity
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => setGraphOpen(true)}
+                title="Dependency graph"
+              >
+                <Network className="size-4" aria-hidden />
+                Graph
+              </Button>
+              <button
+                type="button"
+                onClick={() => setHelpOpen(true)}
+                aria-label="Keyboard shortcuts"
+                title="Keyboard shortcuts (?)"
+                className="rounded-lg border border-border p-2 text-muted-foreground transition-all duration-200 hover:border-border-strong hover:text-foreground active:scale-[0.98]"
+              >
+                <Keyboard className="size-4" aria-hidden />
+              </button>
               <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 transition-colors duration-200 focus-within:border-primary">
               <Search className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Filter tasks…"
-                aria-label="Filter tasks by title"
-                className="w-36 bg-transparent text-sm placeholder:text-muted-foreground/50 focus:outline-none"
+                placeholder="Filter tasks…  status:done is:blocked"
+                data-board-search
+                aria-label="Filter tasks by title or search operators"
+                className="w-44 bg-transparent text-sm placeholder:text-muted-foreground/50 focus:outline-none"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  aria-label="Clear filter"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-3.5" aria-hidden />
+                </button>
+              )}
             </label>
             {!creating && (
               <Button onClick={() => setCreating(true)}>
@@ -446,6 +679,9 @@ export function BoardPage() {
                     onDropTask={(taskId, next) => void moveTask(taskId, next)}
                     onDelete={setPendingDelete}
                     onSelect={setSelectedTaskId}
+                    selectionMode={selectedIds.size > 0}
+                    selectedIds={selectedIds}
+                    onToggleSelect={toggleSelect}
                   />
                 </div>
               ))}
@@ -476,6 +712,110 @@ export function BoardPage() {
           onCancel={() => setPendingDelete(null)}
         />
       )}
+
+      {confirmBulkDelete && selectedIds.size > 0 && (
+        <ConfirmDialog
+          title={`Delete ${selectedIds.size} task${selectedIds.size === 1 ? "" : "s"}?`}
+          message="Selected tasks will be permanently removed, along with their comments."
+          onConfirm={() => {
+            setConfirmBulkDelete(false);
+            void runBulk(
+              () =>
+                bulkDeleteTasks(workspaceId, projectId, [...selectedIds]),
+              `Deleted ${selectedIds.size} task${selectedIds.size === 1 ? "" : "s"}`,
+            );
+          }}
+          onCancel={() => setConfirmBulkDelete(false)}
+        />
+      )}
+
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rise">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
+            <span className="rounded-md bg-primary/15 px-2 py-1 font-mono text-xs font-semibold text-primary">
+              {selectedIds.size} selected
+            </span>
+            <select
+              aria-label="Bulk move to status"
+              value={bulkStatus}
+              onChange={(event) => {
+                const status = event.target.value;
+                setBulkStatus(status);
+                if (status)
+                  void runBulk(
+                    () =>
+                      bulkMoveTasks(workspaceId, projectId, [...selectedIds], status as TaskItemResponse["status"]),
+                    `Moved ${selectedIds.size} task${selectedIds.size === 1 ? "" : "s"}`,
+                  );
+              }}
+              className="rounded-md border border-border bg-card px-2 py-1.5 text-xs focus:border-primary focus:outline-none"
+            >
+              <option value="">Move to…</option>
+              {COLUMNS.map((column) => (
+                <option key={column.status} value={column.status}>
+                  {column.title}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Bulk assign member"
+              value={bulkAssignee}
+              onChange={(event) => {
+                const assignee = event.target.value;
+                setBulkAssignee(assignee);
+                if (assignee)
+                  void runBulk(
+                    () =>
+                      bulkAssignTasks(
+                        workspaceId,
+                        projectId,
+                        [...selectedIds],
+                        assignee === "none" ? null : assignee,
+                      ),
+                    `Updated ${selectedIds.size} task${selectedIds.size === 1 ? "" : "s"}`,
+                  );
+              }}
+              className="max-w-36 rounded-md border border-border bg-card px-2 py-1.5 text-xs focus:border-primary focus:outline-none"
+            >
+              <option value="">Assign to…</option>
+              <option value="none">Unassigned</option>
+              {(members ?? []).map((member) => (
+                <option key={member.userId} value={member.userId}>
+                  {member.displayName || member.username}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setConfirmBulkDelete(true)}
+              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:border-destructive hover:text-destructive"
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds(new Set())}
+              aria-label="Clear selection"
+              title="Clear selection (Esc)"
+              className="rounded p-1 text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-4" aria-hidden />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {graphOpen && (
+        <GraphModal
+          tasks={tasks}
+          workspaceId={workspaceId}
+          projectId={projectId}
+          onSelectTask={setSelectedTaskId}
+          onClose={() => setGraphOpen(false)}
+        />
+      )}
+
+      {helpOpen && <KeyboardHelpModal onClose={() => setHelpOpen(false)} />}
 
       {selectedTask && (
         <TaskDetailPanel

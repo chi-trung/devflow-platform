@@ -1,4 +1,4 @@
-import { Clock, Link2 } from "lucide-react";
+import { Check, Clock, Link2 } from "lucide-react";
 import type { TaskItemResponse, WorkspaceMemberResponse } from "../../types/api";
 import { formatMinutes } from "../../lib/format";
 import { Avatar } from "../ui/Avatar";
@@ -18,9 +18,20 @@ interface TaskCardProps {
   members: WorkspaceMemberResponse[];
   onDelete: (task: TaskItemResponse) => void;
   onSelect: (taskId: string) => void;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (taskId: string) => void;
 }
 
-export function TaskCard({ task, members, onDelete, onSelect }: TaskCardProps) {
+export function TaskCard({
+  task,
+  members,
+  onDelete,
+  onSelect,
+  selectionMode = false,
+  selected = false,
+  onToggleSelect,
+}: TaskCardProps) {
   const priority = priorityMeta[task.priority];
   const assignee = members.find((m) => m.userId === task.assigneeId);
   const overdue =
@@ -40,11 +51,34 @@ export function TaskCard({ task, members, onDelete, onSelect }: TaskCardProps) {
       onDragEnd={(event) => {
         event.currentTarget.classList.remove("opacity-40");
       }}
-      className="group cursor-grab rounded-lg border border-border bg-card p-3 transition-all duration-200 hover:border-border-strong hover:bg-elevated active:cursor-grabbing active:scale-[0.99]"
+      className={`group cursor-grab rounded-lg border bg-card p-3 transition-all duration-200 hover:bg-elevated active:cursor-grabbing active:scale-[0.99] ${
+        selected
+          ? "border-primary ring-1 ring-primary/40"
+          : "border-border hover:border-border-strong"
+      }`}
       aria-label={`Task: ${task.title}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium leading-snug">{task.title}</p>
+        {(selectionMode || selected) && onToggleSelect && (
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={selected}
+            aria-label={`Select task ${task.title}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleSelect(task.id);
+            }}
+            className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border transition-colors duration-150 ${
+              selected
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border-strong bg-surface hover:border-primary"
+            }`}
+          >
+            {selected && <Check className="size-3" strokeWidth={3} aria-hidden />}
+          </button>
+        )}
+        <p className="min-w-0 flex-1 text-sm font-medium leading-snug">{task.title}</p>
         <button
           type="button"
           onClick={(event) => {

@@ -225,3 +225,48 @@ export interface TeamReportResponse {
   totalCompleted: number;
   totalMinutesLogged: number;
 }
+
+export interface GitHubIntegrationResponse {
+  id: string;
+  projectId: string;
+  repositoryUrl: string;
+  isActive: boolean;
+  createdAtUtc: string;
+}
+
+export interface PullRequestResponse {
+  id: string;
+  title: string;
+  url: string;
+  status: string;
+  author: string | null;
+  linkedTaskId: string | null;
+  createdAtUtc: string;
+}
+
+export interface TemplateResponse {
+  id: string;
+  projectId: string;
+  name: string;
+  title: string | null;
+  description: string | null;
+  priority: string;
+  estimateMinutes: number | null;
+}
+
+export interface CustomFieldResponse {
+  id: string;
+  projectId: string;
+  name: string;
+  fieldType: "text" | "number" | "date" | "select";
+  options: string | null;
+  isRequired: boolean;
+  sortOrder: number;
+}
+
+export interface CustomFieldValueResponse {
+  fieldId: string;
+  fieldName: string;
+  fieldType: CustomFieldResponse["fieldType"];
+  value: string | null;
+}

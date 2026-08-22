@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { X, Paperclip, Download, Trash2 } from "lucide-react";
-import { api, tokens } from "../../lib/api";
+import { X, Paperclip, Download, Trash2, BookmarkPlus } from "lucide-react";
+import { api, createTemplate, tokens } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { ErrorAlert } from "../ui/ErrorAlert";
 import { Avatar } from "../ui/Avatar";
@@ -14,6 +14,8 @@ import type {
 } from "../../types/api";
 import { DependencySection } from "./DependencySection";
 import { TimeTrackingSection } from "./TimeTrackingSection";
+import { TaskFieldsSection } from "../fields/TaskFieldsSection";
+import { TaskPullRequests } from "../github/TaskPullRequests";
 import type { CurrentUser } from "../../auth/AuthContext";
 
 interface TaskDetailPanelProps {
@@ -270,6 +272,28 @@ export function TaskDetailPanel({
     priority !== task.priority ||
     assigneeId !== task.assigneeId;
 
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  async function saveAsTemplate() {
+    setSavingTemplate(true);
+    try {
+      await createTemplate(workspaceId, projectId, {
+        name: task.title.slice(0, 60),
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        estimateMinutes: task.estimateMinutes ?? null,
+      });
+      push("Saved as template");
+    } catch (err) {
+      push(
+        err instanceof Error ? err.message : "Failed to save template.",
+        "error",
+      );
+    } finally {
+      setSavingTemplate(false);
+    }
+  }
+
   async function changeSprint(sprintId: string | null) {
     setDetailError(null);
     const base = `/workspaces/${workspaceId}/projects/${projectId}/sprints`;
@@ -306,6 +330,16 @@ export function TaskDetailPanel({
             aria-label="Task title"
             className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 font-display text-base font-semibold leading-snug transition-colors duration-200 hover:border-border focus:border-primary focus:bg-surface focus:outline-none"
           />
+          <button
+            type="button"
+            onClick={() => void saveAsTemplate()}
+            disabled={savingTemplate}
+            aria-label="Save as template"
+            title="Save as task template"
+            className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-primary"
+          >
+            <BookmarkPlus className="size-4" aria-hidden />
+          </button>
           <button
             type="button"
             onClick={onClose}
@@ -432,6 +466,18 @@ export function TaskDetailPanel({
             task={task}
             members={members}
             onChanged={onTaskChanged}
+          />
+
+          <TaskFieldsSection
+            workspaceId={workspaceId}
+            projectId={projectId}
+            taskId={task.id}
+          />
+
+          <TaskPullRequests
+            workspaceId={workspaceId}
+            projectId={projectId}
+            taskId={task.id}
           />
 
           <section className="space-y-2">
