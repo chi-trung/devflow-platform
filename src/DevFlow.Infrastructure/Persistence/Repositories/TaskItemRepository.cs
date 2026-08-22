@@ -79,4 +79,13 @@ public sealed class TaskItemRepository(DevFlowDbContext dbContext) : ITaskItemRe
         dbContext.TaskItems.Remove(task);
         await Task.CompletedTask;
     }
+
+    public async Task<IReadOnlyList<TaskItem>> GetByAssigneeIdAsync(Guid assigneeId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.TaskItems
+            .AsNoTracking()
+            .Where(t => t.AssigneeId == assigneeId)
+            .OrderByDescending(t => t.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
 }

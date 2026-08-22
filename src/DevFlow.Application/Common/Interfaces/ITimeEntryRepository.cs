@@ -13,4 +13,6 @@ public interface ITimeEntryRepository
     Task AddAsync(TimeEntry entry, CancellationToken cancellationToken = default);
 
     void Remove(TimeEntry entry);
+
+    Task<int> GetTotalMinutesByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
 }
