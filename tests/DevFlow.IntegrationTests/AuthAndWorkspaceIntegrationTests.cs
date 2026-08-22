@@ -53,6 +53,7 @@ public class AuthAndWorkspaceIntegrationTests(DevFlowWebApplicationFactory facto
         var wsResponse = await client.PostAsJsonAsync("/api/v1/workspaces", new
         {
             name = "Test Workspace",
+            slug = $"test-ws-{Guid.NewGuid():N}",
             description = "Integration test workspace"
         });
 

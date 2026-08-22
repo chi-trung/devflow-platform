@@ -10,11 +10,15 @@ using DevFlow.Application.Common.Interfaces;
 using DevFlow.Infrastructure;
 using DevFlow.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,16 +29,16 @@ builder.Services.AddApplication();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
-var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
-    ?? throw new InvalidOperationException("Missing Jwt configuration section.");
-
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.MapInboundClaims = false;
+    .AddJwtBearer();
 
-        options.Events = new JwtBearerEvents
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IOptions<JwtSettings>>((bearer, jwtSettings) =>
+    {
+        bearer.MapInboundClaims = false;
+
+        bearer.Events = new JwtBearerEvents
         {
             // SignalR WebSockets cannot send an Authorization header,
             // so the access token arrives via the query string.
@@ -52,19 +56,61 @@ builder.Services
             }
         };
 
-        options.TokenValidationParameters = new TokenValidationParameters
+        bearer.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings.Issuer,
-            ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
+            ValidIssuer = jwtSettings.Value.Issuer,
+            ValidAudience = jwtSettings.Value.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtSettings.Value.Key))
         };
     });
 
 builder.Services.AddAuthorization();
+
+// Rate limiting configuration
+var rateLimitConfig = builder.Configuration.GetSection("RateLimiting");
+var rateLimitEnabled = rateLimitConfig.GetValue("Enabled", true);
+var permitLimit = rateLimitConfig.GetValue("PermitLimit", 100);
+var windowSeconds = rateLimitConfig.GetValue("WindowSeconds", 60);
+var queueLimit = rateLimitConfig.GetValue("QueueLimit", 10);
+
+if (rateLimitEnabled)
+{
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+        options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        {
+            var endpoint = context.GetEndpoint();
+
+            // Auth endpoints get stricter limits to prevent brute-force attacks.
+            var isAuthEndpoint = endpoint?.Metadata
+                .GetMetadata<AuthorizeAttribute>() is null &&
+                context.Request.Path.StartsWithSegments("/api/v1/auth");
+
+            var permit = isAuthEndpoint ? 10 : permitLimit;
+            var window = isAuthEndpoint ? TimeSpan.FromMinutes(1) : TimeSpan.FromSeconds(windowSeconds);
+
+            // Use IP address as partition key for rate limiting.
+            var partitionKey = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+            return RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: partitionKey,
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = permit,
+                    Window = window,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = queueLimit
+                });
+        });
+    });
+}
 
 const string CorsPolicy = "Frontend";
 builder.Services.AddCors(options =>
@@ -174,6 +220,11 @@ app.UseHttpsRedirection();
 
 app.UseCors(CorsPolicy);
 
+if (rateLimitEnabled)
+{
+    app.UseRateLimiter();
+}
+
 app.UseAuthentication();
 
 app.UseAuthorization();
@@ -190,3 +241,5 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 });
 
 app.Run();
+
+public partial class Program { }
