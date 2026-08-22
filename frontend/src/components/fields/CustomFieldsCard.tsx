@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { ListPlus, Trash2 } from "lucide-react";
 import { createCustomField, deleteCustomField, getCustomFields } from "../../lib/api";
 import { useToast } from "../ui/ToastProvider";
@@ -13,6 +14,7 @@ interface CustomFieldsCardProps {
 }
 
 export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFieldsCardProps) {
+  const { t } = useTranslation();
   const [fields, setFields] = useState<CustomFieldResponse[] | null>(null);
   const [name, setName] = useState("");
   const [fieldType, setFieldType] = useState<(typeof FIELD_TYPES)[number]>("text");
@@ -76,7 +78,7 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
     <section className="rounded-xl border border-border bg-surface p-4">
       <div className="mb-3 flex items-center gap-2">
         <ListPlus className="size-4 text-primary" aria-hidden />
-        <h3 className="font-display text-sm font-semibold">Custom fields</h3>
+        <h3 className="font-display text-sm font-semibold">{t("field.customFields")}</h3>
         <span className="ml-auto font-mono text-[11px] text-muted-foreground">
           ({fields?.length ?? 0})
         </span>
@@ -86,8 +88,8 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Field name…"
-          aria-label="Field name"
+          placeholder={t("field.fieldNamePlaceholder")}
+          aria-label={t("field.fieldName")}
           maxLength={40}
           className="min-w-28 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
         />
@@ -96,7 +98,7 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
           onChange={(event) =>
             setFieldType(event.target.value as (typeof FIELD_TYPES)[number])
           }
-          aria-label="Field type"
+          aria-label={t("field.fieldType")}
           className="rounded-md border border-border bg-card px-1.5 py-1.5 text-sm focus:border-primary focus:outline-none"
         >
           {FIELD_TYPES.map((type) => (
@@ -109,8 +111,8 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
           <input
             value={options}
             onChange={(event) => setOptions(event.target.value)}
-            placeholder="Options, comma separated"
-            aria-label="Select options"
+            placeholder={t("field.optionsPlaceholder")}
+            aria-label={t("field.select")}
             maxLength={200}
             className="min-w-32 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
           />
@@ -120,7 +122,7 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
           disabled={busy || !name.trim()}
           className="shrink-0 rounded-md border border-border bg-card px-2 py-1.5 text-xs font-medium transition-colors duration-150 hover:border-primary disabled:opacity-40"
         >
-          Add
+          {t("common.create")}
         </button>
       </form>
 
@@ -128,7 +130,7 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
         <p className="text-xs text-muted-foreground">Loading…</p>
       ) : fields.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          No custom fields — add one and it appears on every task.
+          {t("field.noFields")}
         </p>
       ) : (
         <div className="flex flex-wrap gap-1.5">

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Bell, CheckCheck } from "lucide-react";
 import { useNotifications } from "../../hooks/useNotifications";
 import { NotificationItem } from "./NotificationItem";
@@ -13,6 +14,7 @@ export function NotificationsPanel({
   workspaceId,
   direction = "down",
 }: NotificationsPanelProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -85,7 +87,7 @@ export function NotificationsPanel({
           if (!open) refresh();
           setOpen((value) => !value);
         }}
-        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+        aria-label={`${t("notification.notifications")}${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
         aria-expanded={open}
         className="relative rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
       >
@@ -102,11 +104,11 @@ export function NotificationsPanel({
           style={getDropdownStyle()}
           className="w-80 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise"
           role="dialog"
-          aria-label="Notifications"
+          aria-label={t("notification.notifications")}
         >
           <div className="flex items-center justify-between border-b border-border px-3 py-2">
             <h2 className="font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Notifications
+              {t("notification.notifications")}
             </h2>
             <button
               type="button"
@@ -115,7 +117,7 @@ export function NotificationsPanel({
               className="inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground transition-colors duration-150 hover:text-primary disabled:pointer-events-none disabled:opacity-40"
             >
               <CheckCheck className="size-3.5" aria-hidden />
-              Mark all read
+              {t("notification.markAllRead")}
             </button>
           </div>
 
@@ -130,7 +132,7 @@ export function NotificationsPanel({
               <div className="flex flex-col items-center gap-1.5 px-6 py-10 text-center">
                 <Bell className="size-5 text-muted-foreground/60" aria-hidden />
                 <p className="text-sm text-muted-foreground">
-                  No notifications yet
+                  {t("notification.noNotifications")}
                 </p>
               </div>
             ) : (

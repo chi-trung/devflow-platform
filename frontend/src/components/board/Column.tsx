@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Circle, CircleDot, Eye, CheckCircle2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { TaskItemResponse, WorkspaceMemberResponse } from "../../types/api";
@@ -40,6 +41,8 @@ export function Column({
 }: ColumnProps) {
   const meta = COLUMN_META[status];
   const Icon = meta.icon;
+
+  const { t } = useTranslation();
 
   return (
     <section
@@ -88,7 +91,7 @@ export function Column({
         ))}
         {tasks.length === 0 && (
           <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
-            Drop tasks here
+            {t("board.dropHere")}
           </p>
         )}
       </div>

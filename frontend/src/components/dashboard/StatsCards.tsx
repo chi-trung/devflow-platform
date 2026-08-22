@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { CheckCircle2, Clock, Layers, Play } from "lucide-react";
 import type { DashboardData } from "../../types/api";
 
@@ -12,6 +13,7 @@ function share(part: number, total: number): string {
 }
 
 export function StatsCards({ data, className = "" }: StatsCardsProps) {
+  const { t } = useTranslation();
   const inProgress = data.tasksByStatus.InProgress ?? 0;
   const done = data.tasksByStatus.Done ?? 0;
   const overdue = data.overdueCount ?? 0;
@@ -19,41 +21,41 @@ export function StatsCards({ data, className = "" }: StatsCardsProps) {
   const cards = [
     {
       key: "total",
-      label: "Total Tasks",
+      label: t("dashboard.totalTasks"),
       value: data.totalTasks,
-      sub: `${share(done, data.totalTasks)} completed`,
+      sub: t("dashboard.completedPct", { pct: share(done, data.totalTasks) }),
       icon: Layers,
       chip: "bg-primary/10 text-primary",
       valueClass: "text-foreground",
     },
     {
       key: "progress",
-      label: "In Progress",
+      label: t("dashboard.inProgress"),
       value: inProgress,
-      sub: `${share(inProgress, data.totalTasks)} of total`,
+      sub: t("dashboard.ofTotal", { pct: share(inProgress, data.totalTasks) }),
       icon: Play,
       chip: "bg-sky-400/10 text-sky-400",
       valueClass: "text-sky-400",
     },
     {
       key: "done",
-      label: "Completed",
+      label: t("dashboard.completed"),
       value: done,
-      sub: `${share(done, data.totalTasks)} of total`,
+      sub: t("dashboard.ofTotal", { pct: share(done, data.totalTasks) }),
       icon: CheckCircle2,
       chip: "bg-teal-400/10 text-teal-400",
       valueClass: "text-teal-400",
     },
     {
       key: "overdue",
-      label: "Overdue",
+      label: t("dashboard.overdue"),
       value: overdue,
       sub:
         overdue > 0
-          ? "needs attention"
+          ? t("dashboard.needsAttention")
           : share(overdue, data.totalTasks) === "0%" && data.totalTasks > 0
-            ? "all on track"
-            : "no tasks yet",
+            ? t("dashboard.allOnTrack")
+            : t("dashboard.noTasksYet"),
       icon: Clock,
       chip:
         overdue > 0

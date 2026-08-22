@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { FileStack, Play, Plus, Trash2 } from "lucide-react";
 import {
   applyTemplate,
@@ -16,6 +17,7 @@ interface TemplatesCardProps {
 }
 
 export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCardProps) {
+  const { t } = useTranslation();
   const [templates, setTemplates] = useState<TemplateResponse[] | null>(null);
   const [name, setName] = useState("");
   const [priority, setPriority] = useState("Medium");
@@ -80,7 +82,7 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
     <section className="rounded-xl border border-border bg-surface p-4">
       <div className="mb-3 flex items-center gap-2">
         <FileStack className="size-4 text-primary" aria-hidden />
-        <h3 className="font-display text-sm font-semibold">Task templates</h3>
+        <h3 className="font-display text-sm font-semibold">{t("template.taskTemplates")}</h3>
         <span className="ml-auto font-mono text-[11px] text-muted-foreground">
           ({templates?.length ?? 0})
         </span>
@@ -90,7 +92,7 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Template name…"
+          placeholder={t("template.namePlaceholder")}
           aria-label="Template name"
           maxLength={60}
           className="min-w-0 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
@@ -98,7 +100,7 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
         <select
           value={priority}
           onChange={(event) => setPriority(event.target.value)}
-          aria-label="Default priority"
+          aria-label={t("template.defaultPriority")}
           className="rounded-md border border-border bg-card px-1.5 py-1.5 text-sm focus:border-primary focus:outline-none"
         >
           {["Low", "Medium", "High", "Critical"].map((p) => (
@@ -111,14 +113,14 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
           className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-card px-2 py-1.5 text-xs font-medium transition-colors duration-150 hover:border-primary disabled:opacity-40"
         >
           <Plus className="size-3.5" aria-hidden />
-          Add
+          {t("common.create")}
         </button>
       </form>
 
       {!templates ? (
         <p className="text-xs text-muted-foreground">Loading…</p>
       ) : templates.length === 0 ? (
-        <p className="text-xs text-muted-foreground">No templates yet.</p>
+        <p className="text-xs text-muted-foreground">{t("template.noTemplates")}</p>
       ) : (
         <div className="flex flex-col gap-1.5">
           {templates.map((template) => (

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ChevronDown, CircleUserRound, LogOut, Settings, UserRound } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { Avatar } from "../ui/Avatar";
@@ -10,6 +11,7 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ direction = "down", compact = false }: UserMenuProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -54,7 +56,6 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
     if (!triggerRef.current) return {};
     const rect = triggerRef.current.getBoundingClientRect();
     const dropdownWidth = 224; // w-56
-    // If trigger is near right edge, align dropdown to right
     const alignRight = rect.right + dropdownWidth > window.innerWidth;
     const left = alignRight ? rect.right - dropdownWidth : rect.left;
     if (direction === "up") {
@@ -87,7 +88,7 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
             />
             <span className="min-w-0 max-w-[120px] flex-1 leading-tight">
               <span className="block truncate text-sm font-medium">
-                {currentUser?.username ?? "Account"}
+                {currentUser?.username ?? t("auth.displayName")}
               </span>
               <span className="block truncate font-mono text-[11px] text-muted-foreground">
                 {currentUser?.email}
@@ -109,12 +110,12 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
         >
           <MenuItem
             icon={<UserRound className="size-4" aria-hidden />}
-            label="Profile"
+            label={t("userMenu.profile")}
             onClick={() => goTo("/profile")}
           />
           <MenuItem
             icon={<Settings className="size-4" aria-hidden />}
-            label="Settings"
+            label={t("userMenu.settings")}
             onClick={() => goTo("/settings")}
           />
           <div className="my-1 border-t border-border/60" />
@@ -125,7 +126,7 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
             className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive transition-colors duration-150 hover:bg-destructive/10"
           >
             <LogOut className="size-4" aria-hidden />
-            Logout
+            {t("userMenu.logout")}
           </button>
         </div>
       )}

@@ -1,20 +1,25 @@
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 
-const SHORTCUTS: { keys: string; action: string }[] = [
-  { keys: "Ctrl + K", action: "Global search / command palette" },
-  { keys: "N", action: "New task" },
-  { keys: "/", action: "Focus board filter" },
-  { keys: "?", action: "Show this help" },
-  { keys: "Ctrl + A", action: "Select all visible tasks" },
-  { keys: "Delete", action: "Delete selected tasks" },
-  { keys: "Esc", action: "Clear selection / close panels" },
-];
+function getShortcuts(t: (key: string) => string) {
+  return [
+    { keys: "Ctrl + K", action: t("nav.search") },
+    { keys: "N", action: t("board.newTask") },
+    { keys: "/", action: t("filter.filters") },
+    { keys: "?", action: "?" },
+    { keys: "Ctrl + A", action: t("common.confirm") },
+    { keys: "Delete", action: t("common.delete") },
+    { keys: "Esc", action: t("common.cancel") },
+  ];
+}
 
 interface KeyboardHelpModalProps {
   onClose: () => void;
 }
 
 export function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
+  const { t } = useTranslation();
+  const SHORTCUTS = getShortcuts(t);
   return (
     <div className="fixed inset-0 z-50" role="dialog" aria-label="Keyboard shortcuts">
       <button
@@ -25,7 +30,7 @@ export function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
       />
       <div className="absolute left-1/2 top-1/2 w-[min(92vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface p-5 shadow-[0_0_60px_rgba(0,0,0,0.5)]">
         <header className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-base font-semibold">Keyboard shortcuts</h2>
+          <h2 className="font-display text-base font-semibold">{t("nav.sprints")}</h2>
           <button
             type="button"
             onClick={onClose}

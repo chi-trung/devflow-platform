@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Plus, ArrowUpRight, Boxes } from "lucide-react";
 import { api, pagedItems } from "../lib/api";
@@ -25,6 +26,7 @@ function slugify(name: string): string {
 }
 
 export function DashboardPage() {
+  const { t } = useTranslation();
   const {
     data: workspacesRaw,
     error,
@@ -63,7 +65,7 @@ export function DashboardPage() {
     setFormError(null);
 
     if (!name.trim()) {
-      setFormError("Workspace name is required.");
+      setFormError(t("dashboard.workspaceRequired"));
       return;
     }
 
@@ -82,7 +84,7 @@ export function DashboardPage() {
       setCreating(false);
       reload();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Failed to create.");
+      setFormError(err instanceof Error ? err.message : t("common.error"));
     } finally {
       setSubmitting(false);
     }
@@ -94,16 +96,16 @@ export function DashboardPage() {
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
             <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              Dashboard
+              {t("dashboard.dashboard")}
             </p>
             <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">
-              Workspaces
+              {t("dashboard.title")}
             </h1>
           </div>
           {!creating && (
             <Button onClick={() => setCreating(true)}>
               <Plus className="size-4" aria-hidden />
-              New workspace
+              {t("dashboard.newWorkspace")}
             </Button>
           )}
         </div>
@@ -116,32 +118,32 @@ export function DashboardPage() {
           >
             {formError && <ErrorAlert message={formError} />}
             <Field
-              label="Name"
+              label={t("dashboard.name")}
               htmlFor="ws-name"
-              hint="A short URL slug is generated automatically."
+              hint={t("dashboard.nameHint")}
             >
               <Input
                 id="ws-name"
-                placeholder="Acme Team"
+                placeholder={t("dashboard.namePlaceholder")}
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 autoFocus
               />
             </Field>
-            <Field label="Description" htmlFor="ws-desc">
+            <Field label={t("dashboard.description")} htmlFor="ws-desc">
               <Input
                 id="ws-desc"
-                placeholder="What is this workspace for?"
+                placeholder={t("dashboard.descPlaceholder")}
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
               />
             </Field>
             <div className="flex gap-2">
               <Button type="submit" disabled={submitting}>
-                {submitting ? "Creating…" : "Create workspace"}
+                {submitting ? t("dashboard.creating") : t("dashboard.createWorkspace")}
               </Button>
               <Button variant="ghost" onClick={() => setCreating(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </div>
           </form>
@@ -151,7 +153,7 @@ export function DashboardPage() {
           <section aria-label="Overview" className="mb-10">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display text-lg font-semibold tracking-tight">
-                Overview
+                {t("dashboard.overview")}
               </h2>
               <select
                 aria-label="Workspace"
@@ -183,7 +185,7 @@ export function DashboardPage() {
               <div className="space-y-2">
                 <ErrorAlert message={dashboardError} />
                 <Button variant="outline" size="sm" onClick={reloadDashboard}>
-                  Retry
+                  {t("common.retry")}
                 </Button>
               </div>
             ) : dashboard ? (
@@ -215,15 +217,14 @@ export function DashboardPage() {
               <Boxes className="size-6" aria-hidden />
             </span>
             <p className="font-display text-lg font-semibold">
-              No workspaces yet
+              {t("dashboard.noWorkspaces")}
             </p>
             <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              A workspace holds your team, projects and boards. Create the first
-              one to get going.
+              {t("dashboard.noWorkspacesDesc")}
             </p>
             <Button className="mt-5" onClick={() => setCreating(true)}>
               <Plus className="size-4" aria-hidden />
-              New workspace
+              {t("dashboard.newWorkspace")}
             </Button>
           </div>
         ) : (

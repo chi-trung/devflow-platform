@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ChartPie } from "lucide-react";
 import type { DashboardData, TaskPriority, TaskStatus } from "../../types/api";
 
@@ -13,13 +14,6 @@ const STATUS_COLORS: Record<TaskStatus, string> = {
   InProgress: "#38bdf8",
   InReview: "#a78bfa",
   Done: "#14b8a6",
-};
-
-const STATUS_LABELS: Record<TaskStatus, string> = {
-  Backlog: "Backlog",
-  InProgress: "In Progress",
-  InReview: "In Review",
-  Done: "Done",
 };
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
@@ -44,7 +38,15 @@ interface TaskDistributionProps {
 }
 
 export function TaskDistribution({ data }: TaskDistributionProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+
+  const STATUS_LABELS: Record<TaskStatus, string> = {
+    Backlog: t("board.backlog"),
+    InProgress: t("board.inProgress"),
+    InReview: t("board.inReview"),
+    Done: t("board.done"),
+  };
 
   const statusEntries = useMemo(
     () =>
@@ -84,12 +86,12 @@ export function TaskDistribution({ data }: TaskDistributionProps) {
     >
       <h2 className="mb-4 inline-flex items-center gap-1.5 font-display font-semibold">
         <ChartPie className="size-4 text-primary" aria-hidden />
-        Distribution
+        {t("dashboard.distribution")}
       </h2>
 
       {total === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
-          No tasks yet — create a few to see the breakdown.
+          {t("dashboard.noTasksCreate")}
         </p>
       ) : (
         <div className="flex flex-col items-center gap-6 sm:flex-row">
@@ -149,7 +151,7 @@ export function TaskDistribution({ data }: TaskDistributionProps) {
                 fill="var(--color-muted-foreground)"
                 fontFamily="var(--font-mono)"
               >
-                tasks
+                {t("dashboard.tasks")}
               </text>
             </svg>
           </div>

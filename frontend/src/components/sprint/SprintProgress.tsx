@@ -4,11 +4,14 @@ interface SprintProgressProps {
   className?: string;
 }
 
+import { useTranslation } from "react-i18next";
+
 export function SprintProgress({
   total,
   completed,
   className = "",
 }: SprintProgressProps) {
+  const { t } = useTranslation();
   const pct = total === 0 ? 0 : Math.round((completed / total) * 100);
   const barColor =
     pct < 30 ? "bg-destructive" : pct <= 70 ? "bg-amber-400" : "bg-primary";
@@ -17,7 +20,7 @@ export function SprintProgress({
     <div className={className}>
       <div className="mb-1 flex items-center justify-between font-mono text-[11px] text-muted-foreground">
         <span>
-          {completed}/{total} tasks done
+          {completed}/{total} {t("sprint.done")}
         </span>
         <span>{pct}%</span>
       </div>

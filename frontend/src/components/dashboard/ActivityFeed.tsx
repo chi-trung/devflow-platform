@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -23,6 +24,7 @@ interface ActivityFeedProps {
 }
 
 export function ActivityFeed({ items, workspaceId }: ActivityFeedProps) {
+  const { t } = useTranslation();
   return (
     <section
       aria-label="Recent activity"
@@ -30,12 +32,12 @@ export function ActivityFeed({ items, workspaceId }: ActivityFeedProps) {
     >
       <h2 className="mb-4 inline-flex items-center gap-1.5 font-display font-semibold">
         <Activity className="size-4 text-primary" aria-hidden />
-        Recent activity
+        {t("dashboard.recentActivity")}
       </h2>
 
       {items.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
-          No recent activity in this workspace.
+          {t("dashboard.noActivity")}
         </p>
       ) : (
         <ul className="space-y-1">

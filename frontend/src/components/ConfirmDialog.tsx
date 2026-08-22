@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "./ui/Button";
 
@@ -12,15 +13,16 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({
   title,
   message,
-  confirmLabel = "Delete",
+  confirmLabel,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation();
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" role="alertdialog" aria-label={title}>
       <button
         type="button"
-        aria-label="Cancel"
+        aria-label={t("confirm.cancel")}
         onClick={onCancel}
         className="absolute inset-0 cursor-default bg-black/50"
       />
@@ -34,10 +36,10 @@ export function ConfirmDialog({
         <p className="text-sm text-muted-foreground">{message}</p>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="ghost" onClick={onCancel}>
-            Cancel
+            {t("confirm.cancel")}
           </Button>
           <Button variant="danger" onClick={onConfirm}>
-            {confirmLabel}
+            {confirmLabel ?? t("common.delete")}
           </Button>
         </div>
       </div>
