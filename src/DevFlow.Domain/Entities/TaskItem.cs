@@ -42,6 +42,8 @@ public class TaskItem : BaseEntity, IAuditableEntity
 
     public int? EstimateMinutes { get; private set; }
 
+    public int Position { get; set; }
+
     public DateTimeOffset CreatedAtUtc { get; set; }
 
     public DateTimeOffset? UpdatedAtUtc { get; set; }

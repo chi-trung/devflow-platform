@@ -1,4 +1,5 @@
 using DevFlow.Api.Contracts.Tasks;
+using DevFlow.Application.Features.Tasks.Reorder;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -284,4 +285,22 @@ public sealed class TasksController(ISender sender) : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPut("reorder")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Reorder(
+        Guid workspaceId,
+        Guid projectId,
+        [FromBody] ReorderTasksRequest request,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Tasks.Reorder.ReorderTasksCommand(
+                workspaceId, projectId, request.Tasks),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    public sealed record ReorderTasksRequest(IReadOnlyList<ReorderTaskItem> Tasks);
 }

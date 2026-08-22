@@ -52,6 +52,10 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<Webhook> Webhooks => Set<Webhook>();
 
+    public DbSet<NotificationPreferences> NotificationPreferences => Set<NotificationPreferences>();
+
+    public DbSet<SavedSearch> SavedSearches => Set<SavedSearch>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);

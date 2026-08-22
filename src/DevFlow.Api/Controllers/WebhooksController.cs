@@ -1,5 +1,6 @@
 using DevFlow.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace DevFlow.Api.Controllers;
 
@@ -99,8 +100,74 @@ public sealed class WebhooksController(
         return NoContent();
     }
 
+    [HttpPost("{id:guid}/test")]
+    [ProducesResponseType(typeof(WebhookTestResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> TestFire(
+        Guid workspaceId,
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var webhook = await webhookRepository.GetByIdAsync(id, cancellationToken);
+        if (webhook is null || webhook.WorkspaceId != workspaceId)
+            return NotFound();
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        bool delivered = false;
+        int statusCode = 0;
+        string? error = null;
+
+        try
+        {
+            var payload = JsonSerializer.Serialize(new
+            {
+                event_name = "task.created",
+                timestamp = DateTimeOffset.UtcNow,
+                data = new { title = "Test webhook", description = "This is a test" },
+            });
+
+            using var httpClient = new HttpClient();
+            var content = new StringContent(payload, System.Text.Encoding.UTF8, new System.Net.Http.Headers.MediaTypeHeaderValue("application/json"));
+
+            if (!string.IsNullOrEmpty(webhook.Secret))
+            {
+                var keyBytes = System.Text.Encoding.UTF8.GetBytes(webhook.Secret);
+                var bodyBytes = System.Text.Encoding.UTF8.GetBytes(payload);
+                using var hmac = new System.Security.Cryptography.HMACSHA256(keyBytes);
+                var hash = hmac.ComputeHash(bodyBytes);
+                content.Headers.TryAddWithoutValidation("X-Webhook-Signature", Convert.ToHexString(hash).ToLowerInvariant());
+            }
+
+            content.Headers.TryAddWithoutValidation("X-Webhook-Event", "task.created");
+
+            var response = await httpClient.PostAsync(webhook.Url, content, cancellationToken);
+            stopwatch.Stop();
+
+            statusCode = (int)response.StatusCode;
+            delivered = response.IsSuccessStatusCode;
+
+            if (!delivered)
+            {
+                error = $"HTTP {statusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            error = ex.Message;
+        }
+
+        return Ok(new WebhookTestResponse(delivered, statusCode, stopwatch.ElapsedMilliseconds, error));
+    }
+
     public sealed record CreateWebhookRequest(
         string Url,
         string[] Events,
         string? Secret);
+
+    public sealed record WebhookTestResponse(
+        bool Delivered,
+        int StatusCode,
+        long LatencyMs,
+        string? Error);
 }
