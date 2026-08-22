@@ -4,6 +4,7 @@ import {
   getNotifications,
   markAllNotificationsRead as markAllReadApi,
   markNotificationRead as markReadApi,
+  pagedItems,
 } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
 import type {
@@ -83,8 +84,8 @@ function fromActivity(
 }
 
 async function fetchActivityNotifications(workspaceId: string) {
-  const projects = await api<ProjectResponse[]>(
-    `/workspaces/${workspaceId}/projects`,
+  const projects = pagedItems<ProjectResponse>(
+    await api<unknown>(`/workspaces/${workspaceId}/projects`),
   );
   const lists = await Promise.all(
     projects.map((project) =>
