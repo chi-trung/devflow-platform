@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Plus, SquareKanban, Search, History, CalendarRange } from "lucide-react";
+import { ArrowLeft, Plus, SquareKanban, Search, History, CalendarRange, X } from "lucide-react";
 import { api } from "../lib/api";
 import { createProjectConnection } from "../lib/realtime";
 import { useApi } from "../hooks/useApi";
@@ -79,6 +79,7 @@ export function BoardPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [activityOpen, setActivityOpen] = useState(false);
   const [sprintFilter, setSprintFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pendingDelete, setPendingDelete] = useState<TaskItemResponse | null>(
@@ -101,6 +102,9 @@ export function BoardPage() {
           : task.sprintId === sprintFilter,
     )
     .filter((task) =>
+      priorityFilter ? task.priority === priorityFilter : true,
+    )
+    .filter((task) =>
       search.trim()
         ? task.title.toLowerCase().includes(search.trim().toLowerCase())
         : true,
@@ -115,13 +119,24 @@ export function BoardPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [sprintFilter, search]);
+  }, [sprintFilter, search, priorityFilter]);
 
   useEffect(() => {
     if (data) setTasks(data);
   }, [data]);
 
   const deepLinkTaskId = searchParams.get("task");
+  const deepLinkPriority = searchParams.get("priority");
+
+  useEffect(() => {
+    if (
+      deepLinkPriority &&
+      ["Low", "Medium", "High", "Critical"].includes(deepLinkPriority)
+    ) {
+      setPriorityFilter(deepLinkPriority);
+    }
+    setSearchParams({}, { replace: true });
+  }, [deepLinkPriority, setSearchParams]);
 
   useEffect(() => {
     if (!deepLinkTaskId) return;
@@ -304,6 +319,20 @@ export function BoardPage() {
             workspaceId={workspaceId}
             projectId={projectId}
           />
+        )}
+
+        {priorityFilter && (
+          <div className="mb-3">
+            <button
+              type="button"
+              onClick={() => setPriorityFilter(null)}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-elevated px-3 py-1 text-xs font-medium text-foreground transition-colors duration-150 hover:border-border-strong"
+              title="Clear priority filter"
+            >
+              Priority: {priorityFilter}
+              <X className="size-3.5 text-muted-foreground" aria-hidden />
+            </button>
+          </div>
         )}
 
         {creating && (

@@ -1,5 +1,8 @@
 import type {
+  CreateLabelRequest,
+  DashboardData,
   FieldErrors,
+  LabelResponse,
   LoginResponse,
   NotificationResponse,
   SearchResponse,
@@ -249,4 +252,28 @@ export async function updateSettings(input: AppSettings): Promise<void> {
   try {
     localStorage.setItem("devflow.settings", JSON.stringify(input));
   } catch {}
+}
+
+export function getDashboard(workspaceId: string): Promise<DashboardData> {
+  return api<DashboardData>(`/workspaces/${workspaceId}/dashboard`);
+}
+
+export function getLabels(
+  workspaceId: string,
+  projectId: string,
+): Promise<LabelResponse[]> {
+  return api<LabelResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/labels`,
+  );
+}
+
+export function createLabel(
+  workspaceId: string,
+  projectId: string,
+  data: CreateLabelRequest,
+): Promise<LabelResponse> {
+  return api<LabelResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/labels`,
+    { method: "POST", body: JSON.stringify(data) },
+  );
 }

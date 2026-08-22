@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Plus, ArrowUpRight, Boxes } from "lucide-react";
 import { api } from "../lib/api";
+import { loadDashboard, type DashboardResult } from "../lib/dashboard";
 import { useApi } from "../hooks/useApi";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
@@ -11,6 +12,9 @@ import { Badge } from "../components/ui/Badge";
 import { Avatar } from "../components/ui/Avatar";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
+import { StatsCards } from "../components/dashboard/StatsCards";
+import { TaskDistribution } from "../components/dashboard/TaskDistribution";
+import { ActivityFeed } from "../components/dashboard/ActivityFeed";
 import type { WorkspaceResponse } from "../types/api";
 
 function slugify(name: string): string {
@@ -33,6 +37,25 @@ export function DashboardPage() {
   const [description, setDescription] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedWsId, setSelectedWsId] = useState("");
+
+  useEffect(() => {
+    if (workspaces && workspaces.length > 0) {
+      setSelectedWsId((current) =>
+        workspaces.some((w) => w.id === current) ? current : workspaces[0].id,
+      );
+    }
+  }, [workspaces]);
+
+  const {
+    data: dashboard,
+    loading: dashboardLoading,
+    error: dashboardError,
+    reload: reloadDashboard,
+  } = useApi<DashboardResult | null>(
+    () => (selectedWsId ? loadDashboard(selectedWsId) : Promise.resolve(null)),
+    [selectedWsId],
+  );
 
   async function handleCreate(event: FormEvent) {
     event.preventDefault();
@@ -121,6 +144,60 @@ export function DashboardPage() {
               </Button>
             </div>
           </form>
+        )}
+
+        {selectedWsId && workspaces && workspaces.length > 0 && (
+          <section aria-label="Overview" className="mb-10">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-display text-lg font-semibold tracking-tight">
+                Overview
+              </h2>
+              <select
+                aria-label="Workspace"
+                value={selectedWsId}
+                onChange={(event) => setSelectedWsId(event.target.value)}
+                className="cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                {workspaces.map((workspace) => (
+                  <option key={workspace.id} value={workspace.id}>
+                    {workspace.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {dashboardLoading ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                  {[0, 1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-28" />
+                  ))}
+                </div>
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <Skeleton className="h-72" />
+                  <Skeleton className="h-72" />
+                </div>
+              </div>
+            ) : dashboardError ? (
+              <div className="space-y-2">
+                <ErrorAlert message={dashboardError} />
+                <Button variant="outline" size="sm" onClick={reloadDashboard}>
+                  Retry
+                </Button>
+              </div>
+            ) : dashboard ? (
+              <>
+                <StatsCards data={dashboard.data} className="mb-4" />
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <TaskDistribution data={dashboard.data} />
+                  <ActivityFeed
+                    items={dashboard.data.recentActivity}
+                    workspaceId={selectedWsId}
+                  />
+                </div>
+              </>
+            ) : null}
+          </section>
         )}
 
         {loading ? (
