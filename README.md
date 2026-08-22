@@ -72,9 +72,9 @@ npm run dev                   # http://localhost:3000, proxies /api to :5217
 - [x] Workspace / Project / Sprint
 - [x] Kanban Board & Tasks
 - [x] Comments
-- [ ] Realtime updates (SignalR)
-- [ ] Notifications & Activity Log
-- [ ] File Upload
-- [ ] Redis caching layer
-- [ ] Integration tests with Testcontainers
+- [x] Realtime updates (SignalR)
+- [x] Notifications & Activity Log
+- [x] File Upload
+- [x] Redis caching layer
+- [x] Integration tests with Testcontainers
 - [ ] Sprint planning UI
