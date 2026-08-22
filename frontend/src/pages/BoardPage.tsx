@@ -10,6 +10,7 @@ import { AppShell } from "../components/AppShell";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
+import { Pagination } from "../components/ui/Pagination";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { Column } from "../components/board/Column";
@@ -24,6 +25,8 @@ import type {
   TaskItemResponse,
   WorkspaceMemberResponse,
 } from "../types/api";
+
+const TASKS_PER_PAGE = 8;
 
 const COLUMNS: { title: string; status: TaskItemResponse["status"] }[] = [
   { title: "Backlog", status: "Backlog" },
@@ -76,6 +79,7 @@ export function BoardPage() {
   const [activityOpen, setActivityOpen] = useState(false);
   const [sprintFilter, setSprintFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [pendingDelete, setPendingDelete] = useState<TaskItemResponse | null>(
     null,
   );
@@ -100,6 +104,17 @@ export function BoardPage() {
         ? task.title.toLowerCase().includes(search.trim().toLowerCase())
         : true,
     );
+
+  const pageCount = Math.max(1, Math.ceil(visibleTasks.length / TASKS_PER_PAGE));
+  const safePage = Math.min(page, pageCount);
+  const pagedTasks = visibleTasks.slice(
+    (safePage - 1) * TASKS_PER_PAGE,
+    safePage * TASKS_PER_PAGE,
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [sprintFilter, search]);
 
   useEffect(() => {
     if (data) setTasks(data);
@@ -311,25 +326,37 @@ export function BoardPage() {
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col gap-4 pb-4 lg:flex-row">
-            {COLUMNS.map(({ title, status }, index) => (
-              <div
-                key={status}
-                className="rise flex min-w-0 flex-1 flex-col"
-                style={{ animationDelay: `${index * 60}ms` }}
-              >
-                <Column
-                  title={title}
-                  status={status}
-                  tasks={visibleTasks.filter((t) => t.status === status)}
-                  members={members ?? []}
-                  onDropTask={(taskId, next) => void moveTask(taskId, next)}
-                  onDelete={setPendingDelete}
-                  onSelect={setSelectedTaskId}
-                />
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="flex flex-col gap-4 pb-4 lg:flex-row">
+              {COLUMNS.map(({ title, status }, index) => (
+                <div
+                  key={status}
+                  className="rise flex min-w-0 flex-1 flex-col"
+                  style={{ animationDelay: `${index * 60}ms` }}
+                >
+                  <Column
+                    title={title}
+                    status={status}
+                    tasks={pagedTasks.filter((t) => t.status === status)}
+                    members={members ?? []}
+                    onDropTask={(taskId, next) => void moveTask(taskId, next)}
+                    onDelete={setPendingDelete}
+                    onSelect={setSelectedTaskId}
+                  />
+                </div>
+              ))}
+            </div>
+            {pageCount > 1 && (
+              <Pagination
+                page={safePage}
+                pageCount={pageCount}
+                onChange={setPage}
+                total={visibleTasks.length}
+                pageSize={TASKS_PER_PAGE}
+                className="mt-auto border-t border-border pt-4"
+              />
+            )}
+          </>
         )}
       </div>
 
