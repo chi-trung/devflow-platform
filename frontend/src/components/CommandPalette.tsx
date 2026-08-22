@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, CornerDownLeft, LogOut } from "lucide-react";
-import { api } from "../lib/api";
+import { Search, CornerDownLeft, LogOut, Loader2 } from "lucide-react";
+import { api, searchWorkspace } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
-import type { ProjectResponse, WorkspaceResponse } from "../types/api";
+import type {
+  ProjectResponse,
+  SearchResponse,
+  WorkspaceResponse,
+} from "../types/api";
 
 interface Command {
   id: string;
@@ -29,6 +33,10 @@ export function CommandPalette({
   const { logout } = useAuth();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
+  const [remoteResults, setRemoteResults] = useState<SearchResponse | null>(
+    null,
+  );
+  const [searching, setSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -43,6 +51,35 @@ export function CommandPalette({
         : Promise.resolve([]),
     [open, workspaceId],
   );
+
+  useEffect(() => {
+    const keyword = query.trim();
+    if (!open || !workspaceId || keyword.length < 2) {
+      setRemoteResults(null);
+      setSearching(false);
+      return;
+    }
+
+    let cancelled = false;
+    setSearching(true);
+    const timer = window.setTimeout(() => {
+      searchWorkspace(workspaceId, keyword)
+        .then((data) => {
+          if (!cancelled) {
+            setRemoteResults(data);
+            setSearching(false);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setSearching(false);
+        });
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [open, query, workspaceId]);
 
   const commands = useMemo<Command[]>(() => {
     const list: Command[] = [];
@@ -80,13 +117,56 @@ export function CommandPalette({
     return list;
   }, [workspaces, projects, workspaceId, navigate, logout]);
 
-  const results = useMemo(() => {
+  const projectIdByKey = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const project of projects ?? []) {
+      map.set(project.key.toUpperCase(), project.id);
+    }
+    return map;
+  }, [projects]);
+
+  const results = useMemo<Command[]>(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return commands;
-    return commands.filter((command) =>
-      `${command.label} ${command.keywords}`.toLowerCase().includes(q),
+    const localMatches = commands.filter((command) =>
+      q
+        ? `${command.label} ${command.keywords}`.toLowerCase().includes(q)
+        : true,
     );
-  }, [commands, query]);
+
+    if (!q || !remoteResults) {
+      return localMatches;
+    }
+
+    const taskCommands: Command[] = remoteResults.tasks.flatMap((task) => {
+      const projectId = projectIdByKey.get(task.projectKey.toUpperCase());
+      if (!projectId || !workspaceId) return [];
+      return [
+        {
+          id: `task-${task.id}`,
+          label: `${task.projectKey} · ${task.title}`,
+          group: "Tasks",
+          keywords: task.status,
+          run: () =>
+            navigate(
+              `/workspaces/${workspaceId}/projects/${projectId}?task=${task.id}`,
+            ),
+        },
+      ];
+    });
+
+    const remoteProjects: Command[] = remoteResults.projects.map((project) => ({
+      id: `sproj-${project.id}`,
+      label: `${project.key} · ${project.name}`,
+      group: "Projects",
+      keywords: project.status,
+      run: () =>
+        navigate(`/workspaces/${workspaceId}/projects/${project.id}`),
+    }));
+
+    const others = localMatches.filter((command) => command.group !== "Projects");
+
+    return [...remoteProjects, ...taskCommands, ...others];
+  }, [commands, query, remoteResults, projectIdByKey, workspaceId, navigate]);
 
   useEffect(() => {
     if (open) {
@@ -99,6 +179,10 @@ export function CommandPalette({
   useEffect(() => {
     setSelected(0);
   }, [query]);
+
+  useEffect(() => {
+    setSelected((index) => Math.min(index, Math.max(0, results.length - 1)));
+  }, [results]);
 
   useEffect(() => {
     const item = listRef.current?.children[selected] as HTMLElement | undefined;
@@ -149,7 +233,7 @@ export function CommandPalette({
             ref={inputRef}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Jump to a workspace or project…"
+            placeholder="Search workspaces, projects, tasks…"
             className="w-full bg-transparent py-3.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none"
           />
           <kbd className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
@@ -158,9 +242,15 @@ export function CommandPalette({
         </div>
 
         <ul ref={listRef} className="max-h-80 overflow-y-auto p-2">
-          {results.length === 0 && (
+          {results.length === 0 && !searching && (
             <li className="px-3 py-8 text-center text-sm text-muted-foreground">
               Nothing matches “{query}”.
+            </li>
+          )}
+          {searching && (
+            <li className="flex items-center gap-2 px-3 py-2 font-mono text-[11px] text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" aria-hidden />
+              Searching tasks & projects…
             </li>
           )}
           {results.map((command, index) => {

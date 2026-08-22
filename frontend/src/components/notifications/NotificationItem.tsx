@@ -1,5 +1,6 @@
 import { ArrowRightLeft, Bell, MessageSquare, UserPlus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { Avatar } from "../ui/Avatar";
 import type { AppNotification } from "../../hooks/useNotifications";
 
 const kindMeta: Record<
@@ -49,12 +50,18 @@ export function NotificationItem({
         unread ? "bg-primary/5" : ""
       }`}
     >
-      <span
-        className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-elevated ${meta.accent}`}
-        aria-hidden
-      >
-        <Icon className="size-3.5" />
-      </span>
+      {notification.actorName ? (
+        <span className="mt-0.5 shrink-0" aria-hidden>
+          <Avatar name={notification.actorName} size="sm" />
+        </span>
+      ) : (
+        <span
+          className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-elevated ${meta.accent}`}
+          aria-hidden
+        >
+          <Icon className="size-3.5" />
+        </span>
+      )}
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm leading-snug">
           {notification.message}

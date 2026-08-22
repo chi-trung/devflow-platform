@@ -57,7 +57,7 @@ function fromApi(n: NotificationResponse): AppNotification {
     createdAtUtc: n.createdAtUtc,
     kind: kindFromText(n.type || n.message),
     taskId: n.taskId ?? null,
-    workspaceId: null,
+    workspaceId: n.workspaceId ?? null,
     projectId: n.projectId ?? null,
   };
 }
