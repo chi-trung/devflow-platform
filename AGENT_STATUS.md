@@ -1,10 +1,23 @@
 # AGENT STATUS — Sprint 8+ Roadmap
 
+## ⚠️ OpenCode notes — 2026-08-22 (đọc trước khi làm Sprint 8)
+
+**Sprint 7 correction:** PR #59 (FE) vẫn **OPEN**, chưa merge (bảng dưới ghi sai). Đã push `b94df43` align contract với backend #58: POST dependencies/time-entries trả 204 → FE refetch sau khi ghi; TimeEntry hiển thị `dateUtc ?? createdAtUtc`.
+
+**Backend còn nợ để FE Sprint 7 sáng hết (không block merge #59):**
+1. `TaskItemResponse` += `isBlocked`, `estimateMinutes`, `totalLoggedMinutes`, `labelIds` → card badge/chip/label-filter sẽ tự bật
+2. PATCH task nhận thêm `estimateMinutes` (FE đã gửi field này)
+3. Blocked task đổi status → trả **409** ProblemDetails (`detail` hiện thẳng lên toast FE)
+
+**Sprint 8 FE lưu ý:** BurndownChart SVG + tooltip đã có từ Sprint 6 (`components/sprint/BurndownChart.tsx`) — F1 chỉ cần nâng cấp: thêm ideal line + date-range picker khớp shape `{date, remaining, ideal}` của B1. Đừng viết lại từ đầu.
+
+---
+
 ## 📊 Sprint 7 Summary
 | Agent | Feature | PR | Status |
 |-------|---------|-----|--------|
 | Codebuff | Task Dependencies + Time Tracking | #58 | ✅ MERGED |
-| OpenCode | Dependencies UI + Time Tracking UI | #59 | ✅ MERGED |
+| OpenCode | Dependencies UI + Time Tracking UI | #59 | 🔶 OPEN — ready, chờ merge |
 
 ---
 

@@ -1,4 +1,5 @@
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Email;
 using DevFlow.Infrastructure.Authentication;
 using DevFlow.Infrastructure.Caching;
 using DevFlow.Infrastructure.Persistence;
@@ -43,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<ITaskDependencyRepository, TaskDependencyRepository>();
         services.AddScoped<ITimeEntryRepository, TimeEntryRepository>();
         services.AddScoped<IReportingRepository, ReportingRepository>();
+        services.AddScoped<IGitHubRepository, GitHubRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ITokenProvider, JwtTokenProvider>();
@@ -65,6 +67,8 @@ public static class DependencyInjection
         {
             services.AddSingleton<ICacheService, NullCacheService>();
         }
+
+        services.AddScoped<IEmailService, NoOpEmailService>();
 
         return services;
     }
