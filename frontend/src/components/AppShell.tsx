@@ -145,7 +145,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-dvh overflow-hidden">
       <aside
-        className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col overflow-hidden border-r border-border bg-surface transition-transform duration-300 ease-out lg:static lg:z-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface transition-transform duration-300 ease-out lg:static lg:z-auto lg:translate-x-0 ${
           drawerOpen
             ? "translate-x-0 shadow-[0_24px_80px_rgba(0,0,0,0.7)] lg:shadow-none"
             : "-translate-x-full"
@@ -252,9 +252,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </section>
         </nav>
 
-        <div className="shrink-0 overflow-hidden border-t border-border px-3 py-2.5">
+        <div className="shrink-0 border-t border-border px-3 py-2.5">
           {currentUser && (
-            <div className="flex items-center gap-1 overflow-hidden">
+            <div className="flex items-center gap-1">
               <NotificationsPanel
                 workspaceId={workspaceId}
                 direction="up"

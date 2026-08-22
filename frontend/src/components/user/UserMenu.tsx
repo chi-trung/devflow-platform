@@ -56,7 +56,7 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
         className={
           compact
             ? "flex items-center gap-1 rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
-            : "flex min-w-0 w-full items-center gap-2 rounded-lg px-1 py-1 text-left transition-colors duration-150 hover:bg-elevated overflow-hidden"
+            : "flex min-w-0 items-center gap-2 rounded-lg px-1 py-1 text-left transition-colors duration-150 hover:bg-elevated"
         }
       >
         {compact ? (
@@ -67,7 +67,7 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
               name={currentUser?.username ?? "?"}
               id={currentUser?.id}
             />
-            <span className="min-w-0 flex-1 leading-tight">
+            <span className="min-w-0 max-w-[120px] flex-1 leading-tight">
               <span className="block truncate text-sm font-medium">
                 {currentUser?.username ?? "Account"}
               </span>
