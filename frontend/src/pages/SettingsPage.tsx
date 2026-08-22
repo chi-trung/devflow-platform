@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   BellRing,
+  Globe,
   LogOut,
   Palette,
   TriangleAlert,
@@ -215,6 +217,8 @@ export function SettingsPage() {
           </div>
         </section>
 
+        <LanguageSection />
+
         <section
           aria-label="Notification preferences"
           className="rounded-xl border border-border bg-surface p-5"
@@ -299,5 +303,58 @@ export function SettingsPage() {
         />
       )}
     </AppShell>
+  );
+}
+
+function LanguageSection() {
+  const { i18n } = useTranslation();
+  const { push } = useToast();
+
+  const languages = [
+    { code: "en", label: "English" },
+    { code: "vi", label: "Tiếng Việt" },
+  ];
+
+  return (
+    <section
+      aria-label="Language"
+      className="rounded-xl border border-border bg-surface p-5"
+    >
+      <div className="mb-4 flex items-center gap-2.5">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Globe className="size-4" aria-hidden />
+        </span>
+        <h2 className="font-display font-semibold">Language</h2>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium">Language</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Choose your preferred language for the interface.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {languages.map((lang) => (
+            <button
+              key={lang.code}
+              type="button"
+              onClick={() => {
+                void i18n.changeLanguage(lang.code);
+                localStorage.setItem("devflow.language", lang.code);
+                push(`Language changed to ${lang.label}`);
+              }}
+              className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors duration-150 ${
+                i18n.language === lang.code
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:border-border-strong hover:text-foreground"
+              }`}
+            >
+              {lang.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
