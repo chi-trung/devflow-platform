@@ -270,3 +270,12 @@ export interface CustomFieldValueResponse {
   fieldType: CustomFieldResponse["fieldType"];
   value: string | null;
 }
+
+export interface WebhookResponse {
+  id: string;
+  url: string;
+  events: string[];
+  isActive: boolean;
+  secret?: string;
+  createdAtUtc: string;
+}

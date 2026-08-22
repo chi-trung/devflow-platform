@@ -19,6 +19,7 @@ import type {
   TimeEntryResponse,
   UserProfileResponse,
   VelocityResponse,
+  WebhookResponse,
 } from "../types/api";
 
 // In dev the Vite proxy forwards /api to localhost; in production
@@ -683,4 +684,34 @@ export function deleteFilterPreset(
   try {
     localStorage.setItem(filterPresetsKey(projectId), JSON.stringify(presets));
   } catch {}
+}
+
+export function getWebhooks(workspaceId: string): Promise<WebhookResponse[]> {
+  return api<WebhookResponse[]>(`/workspaces/${workspaceId}/webhooks`);
+}
+
+export function createWebhook(
+  workspaceId: string,
+  input: { url: string; events: string[]; secret?: string },
+): Promise<WebhookResponse> {
+  return api<WebhookResponse>(`/workspaces/${workspaceId}/webhooks`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function getWebhook(
+  workspaceId: string,
+  id: string,
+): Promise<WebhookResponse> {
+  return api<WebhookResponse>(`/workspaces/${workspaceId}/webhooks/${id}`);
+}
+
+export async function deleteWebhook(
+  workspaceId: string,
+  id: string,
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}/webhooks/${id}`, {
+    method: "DELETE",
+  });
 }

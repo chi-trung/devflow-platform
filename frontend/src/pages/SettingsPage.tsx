@@ -18,6 +18,7 @@ import { Avatar } from "../components/ui/Avatar";
 import { Button } from "../components/ui/Button";
 import { ThemeToggle } from "../components/ui/ThemeToggle";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { WebhooksSection } from "../components/settings/WebhooksSection";
 
 function Switch({
   checked,
@@ -264,6 +265,8 @@ export function SettingsPage() {
             </div>
           )}
         </section>
+
+        <WebhooksSection />
 
         <section
           aria-label="Danger zone"
