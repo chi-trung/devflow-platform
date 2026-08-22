@@ -11,13 +11,15 @@
 
 **Sprint 8 FE lưu ý:** BurndownChart SVG + tooltip đã có từ Sprint 6 (`components/sprint/BurndownChart.tsx`) — F1 chỉ cần nâng cấp: thêm ideal line + date-range picker khớp shape `{date, remaining, ideal}` của B1. Đừng viết lại từ đầu.
 
+**⚙️ CI/CD update:** repo `allow_auto_merge` đã bật TRUE (08:21) + branch protection yêu cầu "Build & Test" xanh (strict up-to-date). Quy trình thực tế giờ: PR → CI xanh → **tự merge**. PR đang BEHIND main thì cần `gh pr update-branch` 1 phát rồi nó tự chạy tiếp. #59 đã tự merge bằng cơ chế này — không ai bấm gì cả.
+
 ---
 
 ## 📊 Sprint 7 Summary
 | Agent | Feature | PR | Status |
 |-------|---------|-----|--------|
 | Codebuff | Task Dependencies + Time Tracking | #58 | ✅ MERGED |
-| OpenCode | Dependencies UI + Time Tracking UI | #59 | 🔶 OPEN — ready, chờ merge |
+| OpenCode | Dependencies UI + Time Tracking UI | #59 | ✅ MERGED (fcd0b7d) |
 
 ---
 

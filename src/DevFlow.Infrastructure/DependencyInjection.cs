@@ -45,6 +45,9 @@ public static class DependencyInjection
         services.AddScoped<ITimeEntryRepository, TimeEntryRepository>();
         services.AddScoped<IReportingRepository, ReportingRepository>();
         services.AddScoped<IGitHubRepository, GitHubRepository>();
+        services.AddScoped<ITemplateRepository, TemplateRepository>();
+        services.AddScoped<ICustomFieldRepository, CustomFieldRepository>();
+        services.AddScoped<IEmailService, NoOpEmailService>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ITokenProvider, JwtTokenProvider>();
@@ -67,8 +70,6 @@ public static class DependencyInjection
         {
             services.AddSingleton<ICacheService, NullCacheService>();
         }
-
-        services.AddScoped<IEmailService, NoOpEmailService>();
 
         return services;
     }
