@@ -32,14 +32,22 @@ public sealed class ProjectsController(ISender sender) : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Projects.ProjectResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> List(Guid workspaceId, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(Application.Common.Models.PagedResult<Application.Features.Projects.ProjectResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> List(
+        Guid workspaceId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
     {
-        var projects = await sender.Send(
-            new Application.Features.Projects.List.ListProjectsQuery(workspaceId),
+        var result = await sender.Send(
+            new Application.Features.Projects.List.ListProjectsQuery(workspaceId, page, pageSize),
             cancellationToken);
 
-        return Ok(projects);
+        Response.Headers.Append("X-Total-Count", result.TotalCount.ToString());
+        Response.Headers.Append("X-Total-Pages", result.TotalPages.ToString());
+        Response.Headers.Append("X-Current-Page", result.Page.ToString());
+
+        return Ok(result);
     }
 
     [HttpGet("{projectId:guid}")]

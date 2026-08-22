@@ -36,6 +36,44 @@ public sealed class TaskItemRepository(DevFlowDbContext dbContext) : ITaskItemRe
         return tasks;
     }
 
+    public async Task<IReadOnlyList<TaskItem>> GetForProjectPagedAsync(
+        Guid projectId,
+        TaskItemStatus? status,
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.TaskItems.AsNoTracking().Where(task => task.ProjectId == projectId);
+
+        if (status is not null)
+        {
+            query = query.Where(task => task.Status == status);
+        }
+
+        var tasks = await query
+            .OrderByDescending(task => task.CreatedAtUtc)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+
+        return tasks;
+    }
+
+    public async Task<int> GetCountForProjectAsync(
+        Guid projectId,
+        TaskItemStatus? status,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.TaskItems.AsNoTracking().Where(task => task.ProjectId == projectId);
+
+        if (status is not null)
+        {
+            query = query.Where(task => task.Status == status);
+        }
+
+        return await query.CountAsync(cancellationToken);
+    }
+
     public async Task RemoveAsync(TaskItem task, CancellationToken cancellationToken = default)
     {
         dbContext.TaskItems.Remove(task);

@@ -36,11 +36,12 @@ public class ProjectLifecycleHandlerTests
 
         var handler = new ListProjectsQueryHandler(_projectRepository);
 
-        var projects = await handler.Handle(new ListProjectsQuery(_workspaceId), CancellationToken.None);
+        var result = await handler.Handle(new ListProjectsQuery(_workspaceId), CancellationToken.None);
 
-        Assert.Equal(2, projects.Count);
-        Assert.Contains(projects, project => project.Status == "Active");
-        Assert.Contains(projects, project => project.Status == "Archived");
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(2, result.Items.Count);
+        Assert.Contains(result.Items, project => project.Status == "Active");
+        Assert.Contains(result.Items, project => project.Status == "Archived");
     }
 
     [Fact]

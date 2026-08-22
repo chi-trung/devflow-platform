@@ -1,6 +1,7 @@
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Common.Models;
 using DevFlow.Domain.Entities;
 using MediatR;
 
@@ -8,9 +9,9 @@ namespace DevFlow.Application.Features.Tasks.List;
 
 public sealed class ListTaskItemsQueryHandler(
     IProjectRepository projectRepository,
-    ITaskItemRepository taskItemRepository) : IRequestHandler<ListTaskItemsQuery, IReadOnlyList<TaskItemResponse>>
+    ITaskItemRepository taskItemRepository) : IRequestHandler<ListTaskItemsQuery, PagedResult<TaskItemResponse>>
 {
-    public async Task<IReadOnlyList<TaskItemResponse>> Handle(
+    public async Task<PagedResult<TaskItemResponse>> Handle(
         ListTaskItemsQuery query,
         CancellationToken cancellationToken)
     {
@@ -21,9 +22,18 @@ public sealed class ListTaskItemsQueryHandler(
             throw new NotFoundException(nameof(Project), query.ProjectId);
         }
 
-        var tasks = await taskItemRepository.GetForProjectAsync(query.ProjectId, query.Status, cancellationToken);
+        // Clamp page values
+        var page = Math.Max(1, query.Page);
+        var pageSize = Math.Clamp(query.PageSize, 1, 100);
+        var skip = (page - 1) * pageSize;
 
-        return tasks
+        var totalCount = await taskItemRepository.GetCountForProjectAsync(
+            query.ProjectId, query.Status, cancellationToken);
+
+        var tasks = await taskItemRepository.GetForProjectPagedAsync(
+            query.ProjectId, query.Status, skip, pageSize, cancellationToken);
+
+        var items = tasks
             .Select(task => new TaskItemResponse(
                 task.Id,
                 task.ProjectId,
@@ -36,5 +46,7 @@ public sealed class ListTaskItemsQueryHandler(
                 task.DueDateUtc,
                 task.CompletedAtUtc))
             .ToList();
+
+        return new PagedResult<TaskItemResponse>(items, totalCount, page, pageSize);
     }
 }
