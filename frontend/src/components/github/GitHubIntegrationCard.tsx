@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { GitBranch, GitPullRequest, Link2, Unlink } from "lucide-react";
 import {
   getGitHubIntegration,
@@ -23,6 +24,7 @@ interface GitHubCardProps {
 }
 
 export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProps) {
+  const { t } = useTranslation();
   const [integration, setIntegration] = useState<GitHubIntegrationResponse | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [prs, setPrs] = useState<PullRequestResponse[]>([]);
@@ -87,7 +89,7 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
     <section className="rounded-xl border border-border bg-surface p-4">
       <div className="mb-3 flex items-center gap-2">
         <GitBranch className="size-4 text-primary" aria-hidden />
-        <h3 className="font-display text-sm font-semibold">GitHub</h3>
+        <h3 className="font-display text-sm font-semibold">{t("github.title")}</h3>
         {integration && (
           <button
             type="button"
@@ -97,7 +99,7 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
             className="ml-auto inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors duration-150 hover:border-destructive hover:text-destructive disabled:opacity-40"
           >
             <Unlink className="size-3" aria-hidden />
-            Unlink
+            {t("github.unlink")}
           </button>
         )}
       </div>
@@ -119,7 +121,7 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
             className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium transition-colors duration-150 hover:border-primary disabled:opacity-40"
           >
             <Link2 className="size-3.5" aria-hidden />
-            {busy ? "…" : "Link repo"}
+            {busy ? "…" : t("github.linkRepo")}
           </button>
         </form>
       ) : (
@@ -136,10 +138,10 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
           <div className="flex flex-col gap-1">
             <p className="flex items-center gap-1.5 pt-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               <GitPullRequest className="size-3" aria-hidden />
-              Pull requests ({prs.length})
+              {t("github.pullRequests", { count: prs.length })}
             </p>
             {prs.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No PRs tracked yet.</p>
+              <p className="text-xs text-muted-foreground">{t("github.noPrs")}</p>
             ) : (
               prs.slice(0, 6).map((pr) => (
                 <a

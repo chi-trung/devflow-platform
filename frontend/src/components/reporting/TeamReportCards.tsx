@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Users } from "lucide-react";
 import { formatMinutes } from "../../lib/format";
 import type { TeamReportResponse, WorkspaceMemberResponse } from "../../types/api";
@@ -10,12 +11,13 @@ interface TeamReportCardsProps {
 }
 
 export function TeamReportCards({ data, members, className = "" }: TeamReportCardsProps) {
+  const { t } = useTranslation();
   if (data.members.length === 0) {
     return (
       <div
         className={`flex items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-sm text-muted-foreground ${className}`}
       >
-        No team activity yet.
+        {t("reports.noTeamActivity")}
       </div>
     );
   }
@@ -27,7 +29,7 @@ export function TeamReportCards({ data, members, className = "" }: TeamReportCar
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <h3 className="inline-flex items-center gap-1.5 font-display text-sm font-semibold">
           <Users className="size-4 text-primary" aria-hidden />
-          Team workload
+          {t("reports.teamWorkload")}
         </h3>
         <span className="ml-auto font-mono text-[11px] text-muted-foreground">
           {data.totalCompleted}/{data.totalTasks} done ·{" "}
@@ -62,8 +64,8 @@ export function TeamReportCards({ data, members, className = "" }: TeamReportCar
               </div>
 
               <div className="mt-2.5 flex items-center justify-between font-mono text-[11px] text-muted-foreground">
-                <span>{member.tasksCompleted} completed</span>
-                <span>{member.tasksAssigned} assigned</span>
+                <span>{member.tasksCompleted} {t("reports.completed")}</span>
+                <span>{member.tasksAssigned} {t("reports.assigned")}</span>
               </div>
 
               <div

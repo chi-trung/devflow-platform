@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthContext";
 import { AuthLayout } from "../components/AuthLayout";
 import { Button } from "../components/ui/Button";
@@ -9,6 +10,7 @@ import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { ApiError } from "../lib/api";
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -22,7 +24,7 @@ export function LoginPage() {
     setError(null);
 
     if (!email.trim() || !password) {
-      setError("Please fill in both email and password.");
+      setError(t("auth.fillBothFields"));
       return;
     }
 
@@ -33,10 +35,10 @@ export function LoginPage() {
     } catch (err) {
       setError(
         err instanceof ApiError && err.status === 401
-          ? "Email or password is incorrect."
+          ? t("auth.incorrectCredentials")
           : err instanceof Error
             ? err.message
-            : "Something went wrong. Please try again.",
+            : t("auth.somethingWrong"),
       );
     } finally {
       setSubmitting(false);
@@ -45,16 +47,16 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to your DevFlow account."
-      footerText="No account yet?"
+      title={t("auth.welcomeBack")}
+      subtitle={t("auth.signInToAccount")}
+      footerText={t("auth.noAccount")}
       footerLinkTo="/register"
-      footerLinkLabel="Create one"
+      footerLinkLabel={t("auth.createOne")}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         {error && <ErrorAlert message={error} />}
 
-        <Field label="Email" htmlFor="email">
+        <Field label={t("auth.email")} htmlFor="email">
           <Input
             id="email"
             type="email"
@@ -65,7 +67,7 @@ export function LoginPage() {
           />
         </Field>
 
-        <Field label="Password" htmlFor="password">
+        <Field label={t("auth.password")} htmlFor="password">
           <Input
             id="password"
             type="password"
@@ -77,7 +79,7 @@ export function LoginPage() {
         </Field>
 
         <Button type="submit" disabled={submitting}>
-          {submitting ? "Signing in…" : "Sign in"}
+          {submitting ? t("auth.signingIn") : t("auth.signIn")}
         </Button>
       </form>
     </AuthLayout>

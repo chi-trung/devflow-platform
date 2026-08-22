@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Search, CornerDownLeft, LogOut, Loader2 } from "lucide-react";
 import { api, pagedItems, searchWorkspace } from "../lib/api";
 import { useApi } from "../hooks/useApi";
@@ -29,6 +30,7 @@ export function CommandPalette({
   onClose,
   workspaceId,
 }: CommandPaletteProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { logout } = useAuth();
   const [query, setQuery] = useState("");
@@ -90,7 +92,7 @@ export function CommandPalette({
       list.push({
         id: `ws-${workspace.id}`,
         label: workspace.name,
-        group: "Workspaces",
+        group: t("nav.workspaces"),
         keywords: `${workspace.slug} ${workspace.description ?? ""}`,
         run: () => navigate(`/workspaces/${workspace.id}`),
       });
@@ -101,7 +103,7 @@ export function CommandPalette({
         list.push({
           id: `proj-${project.id}`,
           label: `${project.key} · ${project.name}`,
-          group: "Projects",
+          group: t("nav.projects"),
           keywords: project.description ?? "",
           run: () => navigate(`/workspaces/${workspaceId}/projects/${project.id}`),
         });
@@ -110,14 +112,14 @@ export function CommandPalette({
 
     list.push({
       id: "signout",
-      label: "Sign out",
+      label: t("userMenu.logout"),
       group: "Actions",
       keywords: "logout exit",
       run: () => void logout(),
     });
 
     return list;
-  }, [workspaces, projects, workspaceId, navigate, logout]);
+  }, [workspaces, projects, workspaceId, navigate, logout, t]);
 
   const projectIdByKey = useMemo(() => {
     const map = new Map<string, string>();
@@ -159,16 +161,16 @@ export function CommandPalette({
     const remoteProjects: Command[] = remoteResults.projects.map((project) => ({
       id: `sproj-${project.id}`,
       label: `${project.key} · ${project.name}`,
-      group: "Projects",
+      group: t("nav.projects"),
       keywords: project.status,
       run: () =>
         navigate(`/workspaces/${workspaceId}/projects/${project.id}`),
     }));
 
-    const others = localMatches.filter((command) => command.group !== "Projects");
+    const others = localMatches.filter((command) => command.group !== t("nav.projects"));
 
     return [...remoteProjects, ...taskCommands, ...others];
-  }, [commands, query, remoteResults, projectIdByKey, workspaceId, navigate]);
+  }, [commands, query, remoteResults, projectIdByKey, workspaceId, navigate, t]);
 
   useEffect(() => {
     if (open) {
@@ -235,7 +237,7 @@ export function CommandPalette({
             ref={inputRef}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search workspaces, projects, tasks…"
+            placeholder={t("commandPalette.placeholder")}
             className="w-full bg-transparent py-3.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none"
           />
           <kbd className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
@@ -246,13 +248,13 @@ export function CommandPalette({
         <ul ref={listRef} className="max-h-80 overflow-y-auto p-2">
           {results.length === 0 && !searching && (
             <li className="px-3 py-8 text-center text-sm text-muted-foreground">
-              Nothing matches “{query}”.
+              {t("commandPalette.noResults")}
             </li>
           )}
           {searching && (
             <li className="flex items-center gap-2 px-3 py-2 font-mono text-[11px] text-muted-foreground">
               <Loader2 className="size-3 animate-spin" aria-hidden />
-              Searching tasks & projects…
+              {t("common.loading")}
             </li>
           )}
           {results.map((command, index) => {
@@ -290,7 +292,7 @@ export function CommandPalette({
           <span>↵ open</span>
           <span className="ml-auto flex items-center gap-1">
             <LogOut className="size-3" aria-hidden />
-            sign out is in Actions
+            {t("userMenu.logout")}
           </span>
         </footer>
       </div>

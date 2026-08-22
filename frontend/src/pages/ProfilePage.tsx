@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { KeyRound, UserRound } from "lucide-react";
 import { ApiError, changePassword, updateProfile } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
@@ -18,6 +19,7 @@ function messageFrom(err: unknown, fallback: string): string {
 }
 
 export function ProfilePage() {
+  const { t } = useTranslation();
   const { currentUser, refreshUser } = useAuth();
   const { push } = useToast();
 
@@ -37,7 +39,7 @@ export function ProfilePage() {
   async function handleProfileSubmit(event: FormEvent) {
     event.preventDefault();
     if (!username.trim()) {
-      setProfileError("Username is required.");
+      setProfileError(t("profile.usernameRequired"));
       return;
     }
     setSavingProfile(true);
@@ -48,9 +50,9 @@ export function ProfilePage() {
         displayName: displayName.trim() || undefined,
       });
       await refreshUser();
-      push("Profile saved");
+      push(t("profile.profileSaved"));
     } catch (err) {
-      setProfileError(messageFrom(err, "Failed to save profile."));
+      setProfileError(messageFrom(err, t("common.error")));
     } finally {
       setSavingProfile(false);
     }
@@ -59,15 +61,15 @@ export function ProfilePage() {
   async function handlePasswordSubmit(event: FormEvent) {
     event.preventDefault();
     if (!currentPassword) {
-      setPasswordError("Current password is required.");
+      setPasswordError(t("profile.currentPasswordRequired"));
       return;
     }
     if (newPassword.length < 8) {
-      setPasswordError("New password must be at least 8 characters.");
+      setPasswordError(t("profile.newPasswordMin"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError("Passwords do not match.");
+      setPasswordError(t("profile.passwordsNoMatch"));
       return;
     }
     setSavingPassword(true);
@@ -77,9 +79,9 @@ export function ProfilePage() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      push("Password changed");
+      push(t("profile.passwordChanged"));
     } catch (err) {
-      setPasswordError(messageFrom(err, "Failed to change password."));
+      setPasswordError(messageFrom(err, t("common.error")));
     } finally {
       setSavingPassword(false);
     }
@@ -112,21 +114,21 @@ export function ProfilePage() {
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <UserRound className="size-4" aria-hidden />
             </span>
-            <h2 className="font-display font-semibold">Account details</h2>
+            <h2 className="font-display font-semibold">{t("profile.accountDetails")}</h2>
           </div>
 
           <form onSubmit={handleProfileSubmit} noValidate className="flex flex-col gap-3">
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium">Display name</span>
+              <span className="text-xs font-medium">{t("profile.displayName")}</span>
               <Input
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
-                placeholder="How your name appears across the app"
+                placeholder={t("profile.displayNamePlaceholder")}
                 disabled={savingProfile}
               />
             </label>
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium">Username</span>
+              <span className="text-xs font-medium">{t("profile.username")}</span>
               <Input
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
@@ -139,7 +141,7 @@ export function ProfilePage() {
 
             <div className="mt-1 flex justify-end">
               <Button type="submit" disabled={savingProfile}>
-                {savingProfile ? "Saving…" : "Save changes"}
+                {savingProfile ? t("profile.saving") : t("profile.saveChanges")}
               </Button>
             </div>
           </form>
@@ -153,12 +155,12 @@ export function ProfilePage() {
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <KeyRound className="size-4" aria-hidden />
             </span>
-            <h2 className="font-display font-semibold">Change password</h2>
+            <h2 className="font-display font-semibold">{t("profile.changePassword")}</h2>
           </div>
 
           <form onSubmit={handlePasswordSubmit} noValidate className="flex flex-col gap-3">
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium">Current password</span>
+              <span className="text-xs font-medium">{t("profile.currentPassword")}</span>
               <Input
                 type="password"
                 value={currentPassword}
@@ -169,18 +171,18 @@ export function ProfilePage() {
             </label>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium">New password</span>
+                <span className="text-xs font-medium">{t("profile.newPassword")}</span>
                 <Input
                   type="password"
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
                   autoComplete="new-password"
-                  placeholder="At least 8 characters"
+                  placeholder={t("profile.passwordPlaceholder")}
                   disabled={savingPassword}
                 />
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium">Confirm new password</span>
+                <span className="text-xs font-medium">{t("profile.confirmNewPassword")}</span>
                 <Input
                   type="password"
                   value={confirmPassword}
@@ -195,7 +197,7 @@ export function ProfilePage() {
 
             <div className="mt-1 flex justify-end">
               <Button type="submit" disabled={savingPassword}>
-                {savingPassword ? "Changing…" : "Change password"}
+                {savingPassword ? t("profile.changing") : t("profile.changePasswordBtn")}
               </Button>
             </div>
           </form>

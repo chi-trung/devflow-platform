@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthContext";
 import { AuthLayout } from "../components/AuthLayout";
 import { Button } from "../components/ui/Button";
@@ -22,37 +23,37 @@ const initialForm: FormState = {
   password: "",
 };
 
-function validate(form: FormState): Partial<Record<keyof FormState, string>> {
+function validate(form: FormState, t: (key: string) => string): Partial<Record<keyof FormState, string>> {
   const errors: Partial<Record<keyof FormState, string>> = {};
 
   if (!form.displayName.trim()) {
-    errors.displayName = "Display name is required.";
+    errors.displayName = t("auth.displayNameRequired");
   } else if (form.displayName.trim().length > 100) {
-    errors.displayName = "Display name must be at most 100 characters.";
+    errors.displayName = t("auth.displayNameMax");
   }
 
   if (!form.username.trim()) {
-    errors.username = "Username is required.";
+    errors.username = t("auth.usernameRequired");
   } else if (
     form.username.trim().length < 3 ||
     !/^[a-zA-Z0-9_]+$/.test(form.username.trim())
   ) {
-    errors.username =
-      "Username needs at least 3 characters — letters, digits and underscores only.";
+    errors.username = t("auth.usernameFormat");
   }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-    errors.email = "Enter a valid email address.";
+    errors.email = t("auth.validEmail");
   }
 
   if (form.password.length < 8) {
-    errors.password = "Password must be at least 8 characters.";
+    errors.password = t("auth.passwordMin");
   }
 
   return errors;
 }
 
 export function RegisterPage() {
+  const { t } = useTranslation();
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -71,7 +72,7 @@ export function RegisterPage() {
     event.preventDefault();
     setFormError(null);
 
-    const errors = validate(form);
+    const errors = validate(form, t);
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
@@ -100,7 +101,7 @@ export function RegisterPage() {
         setFormError(
           err instanceof Error
             ? err.message
-            : "Something went wrong. Please try again.",
+            : t("auth.somethingWrong"),
         );
       }
     } finally {
@@ -110,17 +111,17 @@ export function RegisterPage() {
 
   return (
     <AuthLayout
-      title="Create your account"
-      subtitle="Start managing your team's work in minutes."
-      footerText="Already have an account?"
+      title={t("auth.createAccount")}
+      subtitle={t("auth.startManaging")}
+      footerText={t("auth.hasAccount")}
       footerLinkTo="/login"
-      footerLinkLabel="Sign in"
+      footerLinkLabel={t("auth.signIn")}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         {formError && <ErrorAlert message={formError} />}
 
         <Field
-          label="Display name"
+          label={t("auth.displayName")}
           htmlFor="displayName"
           error={fieldErrors.displayName}
         >
@@ -134,10 +135,10 @@ export function RegisterPage() {
         </Field>
 
         <Field
-          label="Username"
+          label={t("auth.username")}
           htmlFor="username"
           error={fieldErrors.username}
-          hint="Letters, digits and underscores."
+          hint={t("auth.usernameHint")}
         >
           <Input
             id="username"
@@ -149,7 +150,7 @@ export function RegisterPage() {
           />
         </Field>
 
-        <Field label="Email" htmlFor="email" error={fieldErrors.email}>
+        <Field label={t("auth.email")} htmlFor="email" error={fieldErrors.email}>
           <Input
             id="email"
             type="email"
@@ -162,10 +163,10 @@ export function RegisterPage() {
         </Field>
 
         <Field
-          label="Password"
+          label={t("auth.password")}
           htmlFor="password"
           error={fieldErrors.password}
-          hint="At least 8 characters."
+          hint={t("auth.passwordHint")}
         >
           <Input
             id="password"
@@ -179,7 +180,7 @@ export function RegisterPage() {
         </Field>
 
         <Button type="submit" disabled={submitting}>
-          {submitting ? "Creating account…" : "Create account"}
+          {submitting ? t("auth.creatingAccount") : t("auth.createAccountBtn")}
         </Button>
       </form>
     </AuthLayout>
