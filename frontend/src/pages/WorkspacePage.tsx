@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, FolderKanban, Users } from "lucide-react";
-import { api } from "../lib/api";
+import { api, pagedItems } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useToast } from "../components/ui/ToastProvider";
 import { AppShell } from "../components/AppShell";
@@ -49,14 +49,15 @@ export function WorkspacePage() {
   );
 
   const {
-    data: projects,
+    data: projectsRaw,
     error: projError,
     loading: projLoading,
     reload,
-  } = useApi<ProjectResponse[]>(
+  } = useApi<unknown>(
     () => api(`/workspaces/${workspaceId}/projects`),
     [workspaceId],
   );
+  const projects = pagedItems<ProjectResponse>(projectsRaw);
 
   const [stats, setStats] = useState<Record<string, { total: number; done: number }>>({});
 
@@ -66,9 +67,10 @@ export function WorkspacePage() {
 
     Promise.all(
       projects.map(async (project) => {
-        const tasks = await api<TaskItemResponse[]>(
+        const tasksRaw = await api<unknown>(
           `/workspaces/${workspaceId}/projects/${project.id}/tasks`,
         );
+        const tasks = pagedItems<TaskItemResponse>(tasksRaw);
         return [
           project.id,
           {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, CornerDownLeft, LogOut, Loader2 } from "lucide-react";
-import { api, searchWorkspace } from "../lib/api";
+import { api, pagedItems, searchWorkspace } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
 import type {
@@ -40,17 +40,19 @@ export function CommandPalette({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
-  const { data: workspaces } = useApi<WorkspaceResponse[]>(
+  const { data: workspacesRaw } = useApi<unknown>(
     () => (open ? api("/workspaces") : Promise.resolve([])),
     [open],
   );
-  const { data: projects } = useApi<ProjectResponse[]>(
+  const workspaces = pagedItems<WorkspaceResponse>(workspacesRaw);
+  const { data: projectsRaw } = useApi<unknown>(
     () =>
       open && workspaceId
         ? api(`/workspaces/${workspaceId}/projects`)
         : Promise.resolve([]),
     [open, workspaceId],
   );
+  const projects = pagedItems<ProjectResponse>(projectsRaw);
 
   useEffect(() => {
     const keyword = query.trim();

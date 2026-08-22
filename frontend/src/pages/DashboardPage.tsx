@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Plus, ArrowUpRight, Boxes } from "lucide-react";
-import { api } from "../lib/api";
+import { api, pagedItems } from "../lib/api";
 import { loadDashboard, type DashboardResult } from "../lib/dashboard";
 import { useApi } from "../hooks/useApi";
 import { AppShell } from "../components/AppShell";
@@ -26,11 +26,12 @@ function slugify(name: string): string {
 
 export function DashboardPage() {
   const {
-    data: workspaces,
+    data: workspacesRaw,
     error,
     loading,
     reload,
-  } = useApi<WorkspaceResponse[]>(() => api("/workspaces"), []);
+  } = useApi<unknown>(() => api("/workspaces"), []);
+  const workspaces = pagedItems<WorkspaceResponse>(workspacesRaw);
 
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");

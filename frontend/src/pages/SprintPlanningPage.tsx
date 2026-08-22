@@ -14,6 +14,7 @@ import {
   assignTaskToSprint,
   completeSprint,
   getSprints,
+  pagedItems,
   removeTaskFromSprint,
   startSprint,
 } from "../lib/api";
@@ -78,14 +79,15 @@ export function SprintPlanningPage() {
   );
 
   const {
-    data: taskData,
+    data: taskDataRaw,
     error,
     loading,
     reload,
-  } = useApi<TaskItemResponse[]>(
+  } = useApi<unknown>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/tasks`),
     [workspaceId, projectId],
   );
+  const taskData = pagedItems<TaskItemResponse>(taskDataRaw);
 
   const [tasks, setTasks] = useState<TaskItemResponse[]>([]);
   const [boardError, setBoardError] = useState<string | null>(null);

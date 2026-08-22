@@ -11,7 +11,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { api } from "../lib/api";
+import { api, pagedItems } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
 import { Avatar } from "./ui/Avatar";
@@ -72,17 +72,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const { data: workspaces } = useApi<WorkspaceResponse[]>(
+  const { data: workspacesRaw } = useApi<unknown>(
     () => api("/workspaces"),
     [],
   );
-  const { data: projects } = useApi<ProjectResponse[]>(
+  const workspaces = pagedItems<WorkspaceResponse>(workspacesRaw);
+  const { data: projectsRaw } = useApi<unknown>(
     () =>
       workspaceId
         ? api(`/workspaces/${workspaceId}/projects`)
         : Promise.resolve([]),
     [workspaceId],
   );
+  const projects = pagedItems<ProjectResponse>(projectsRaw);
 
   const onBoardRoute =
     /^\/workspaces\/[0-9a-f-]{36}\/projects\/[0-9a-f-]{36}$/i.test(

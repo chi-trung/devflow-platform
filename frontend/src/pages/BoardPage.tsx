@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Plus, SquareKanban, Search, History, CalendarRange, X } from "lucide-react";
-import { api } from "../lib/api";
+import { api, pagedItems } from "../lib/api";
 import { createProjectConnection } from "../lib/realtime";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
@@ -55,14 +55,15 @@ export function BoardPage() {
   );
 
   const {
-    data,
+    data: tasksRaw,
     error,
     loading,
     reload,
-  } = useApi<TaskItemResponse[]>(
+  } = useApi<unknown>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/tasks`),
     [workspaceId, projectId],
   );
+  const data = pagedItems<TaskItemResponse>(tasksRaw);
 
   const {
     data: activities,

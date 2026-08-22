@@ -233,6 +233,15 @@ export async function markAllNotificationsRead(): Promise<void> {
   await api("/notifications/read-all", { method: "POST" });
 }
 
+// Helper to extract items from PagedResult responses
+export function pagedItems<T>(response: unknown): T[] {
+  if (Array.isArray(response)) return response;
+  if (response && typeof response === "object" && "items" in response) {
+    return (response as { items: T[] }).items ?? [];
+  }
+  return [];
+}
+
 export function searchWorkspace(
   workspaceId: string,
   query: string,
