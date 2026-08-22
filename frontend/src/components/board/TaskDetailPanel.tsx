@@ -12,6 +12,8 @@ import type {
   TaskAttachmentResponse,
   WorkspaceMemberResponse,
 } from "../../types/api";
+import { DependencySection } from "./DependencySection";
+import { TimeTrackingSection } from "./TimeTrackingSection";
 import type { CurrentUser } from "../../auth/AuthContext";
 
 interface TaskDetailPanelProps {
@@ -19,6 +21,7 @@ interface TaskDetailPanelProps {
   currentUser: CurrentUser | null;
   members: WorkspaceMemberResponse[];
   sprints: SprintResponse[];
+  allTasks: TaskItemResponse[];
   workspaceId: string;
   projectId: string;
   onClose: () => void;
@@ -30,6 +33,7 @@ export function TaskDetailPanel({
   currentUser,
   members,
   sprints,
+  allTasks,
   workspaceId,
   projectId,
   onClose,
@@ -413,6 +417,22 @@ export function TaskDetailPanel({
               className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
             />
           </label>
+
+          <DependencySection
+            workspaceId={workspaceId}
+            projectId={projectId}
+            task={task}
+            allTasks={allTasks}
+            onChanged={onTaskChanged}
+          />
+
+          <TimeTrackingSection
+            workspaceId={workspaceId}
+            projectId={projectId}
+            task={task}
+            members={members}
+            onChanged={onTaskChanged}
+          />
 
           <section className="space-y-2">
             <div className="flex items-center justify-between">

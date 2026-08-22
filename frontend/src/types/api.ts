@@ -53,6 +53,30 @@ export interface TaskItemResponse {
   sprintId: string | null;
   dueDateUtc: string | null;
   completedAtUtc: string | null;
+  isBlocked?: boolean;
+  estimateMinutes?: number | null;
+  totalLoggedMinutes?: number;
+  labelIds?: string[];
+}
+
+export interface TaskDependencyResponse {
+  id: string;
+  blockerTaskId: string;
+  blockerTitle: string;
+  blockerStatus: TaskItemResponse["status"];
+  blockedTaskId?: string;
+  isResolved?: boolean;
+}
+
+export interface TimeEntryResponse {
+  id: string;
+  taskId: string;
+  userId: string;
+  userName: string;
+  minutes: number;
+  description: string | null;
+  dateUtc?: string;
+  createdAtUtc?: string;
 }
 
 export interface CommentResponse {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Plus, SquareKanban, Search, History, CalendarRange, X } from "lucide-react";
+import { ArrowLeft, Plus, SquareKanban, Search, History, CalendarRange } from "lucide-react";
 import { api, pagedItems } from "../lib/api";
 import { createProjectConnection } from "../lib/realtime";
 import { useApi } from "../hooks/useApi";
@@ -18,8 +18,10 @@ import { CreateTaskForm } from "../components/board/CreateTaskForm";
 import { TaskDetailPanel } from "../components/board/TaskDetailPanel";
 import { SprintBar } from "../components/board/SprintBar";
 import { ActivityDrawer } from "../components/board/ActivityDrawer";
+import { FilterBar } from "../components/board/FilterBar";
 import type {
   ActivityResponse,
+  LabelResponse,
   ProjectResponse,
   SprintResponse,
   TaskItemResponse,
@@ -54,6 +56,11 @@ export function BoardPage() {
     [workspaceId, projectId],
   );
 
+  const { data: labels } = useApi<LabelResponse[]>(
+    () => api(`/workspaces/${workspaceId}/projects/${projectId}/labels`),
+    [workspaceId, projectId],
+  );
+
   const {
     data: tasksRaw,
     error,
@@ -81,6 +88,11 @@ export function BoardPage() {
   const [activityOpen, setActivityOpen] = useState(false);
   const [sprintFilter, setSprintFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
+  const [assigneeFilter, setAssigneeFilter] = useState("");
+  const [labelFilter, setLabelFilter] = useState("");
+  const [dueFrom, setDueFrom] = useState("");
+  const [dueTo, setDueTo] = useState("");
+  const [blockedOnly, setBlockedOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pendingDelete, setPendingDelete] = useState<TaskItemResponse | null>(
@@ -105,6 +117,23 @@ export function BoardPage() {
     .filter((task) =>
       priorityFilter ? task.priority === priorityFilter : true,
     )
+    .filter((task) => {
+      if (!assigneeFilter) return true;
+      if (assigneeFilter === "none") return !task.assigneeId;
+      return task.assigneeId === assigneeFilter;
+    })
+    .filter((task) =>
+      labelFilter ? (task.labelIds ?? []).includes(labelFilter) : true,
+    )
+    .filter((task) => {
+      if (!dueFrom && !dueTo) return true;
+      if (!task.dueDateUtc) return false;
+      const due = new Date(task.dueDateUtc).getTime();
+      if (dueFrom && due < new Date(`${dueFrom}T00:00:00`).getTime()) return false;
+      if (dueTo && due > new Date(`${dueTo}T23:59:59`).getTime()) return false;
+      return true;
+    })
+    .filter((task) => (blockedOnly ? !!task.isBlocked : true))
     .filter((task) =>
       search.trim()
         ? task.title.toLowerCase().includes(search.trim().toLowerCase())
@@ -120,7 +149,7 @@ export function BoardPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [sprintFilter, search, priorityFilter]);
+  }, [sprintFilter, search, priorityFilter, assigneeFilter, labelFilter, dueFrom, dueTo, blockedOnly]);
 
   useEffect(() => {
     if (data) setTasks(data);
@@ -180,6 +209,13 @@ export function BoardPage() {
   async function moveTask(taskId: string, status: TaskItemResponse["status"]) {
     const task = tasks.find((t) => t.id === taskId);
     if (!task || task.status === status) return;
+
+    if (task.isBlocked) {
+      const message = `"${task.title}" is blocked — resolve its blockers first.`;
+      setBoardError(message);
+      push("Task is blocked", "error");
+      return;
+    }
 
     setBoardError(null);
     setTasks((current) =>
@@ -322,19 +358,32 @@ export function BoardPage() {
           />
         )}
 
-        {priorityFilter && (
-          <div className="mb-3">
-            <button
-              type="button"
-              onClick={() => setPriorityFilter(null)}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-elevated px-3 py-1 text-xs font-medium text-foreground transition-colors duration-150 hover:border-border-strong"
-              title="Clear priority filter"
-            >
-              Priority: {priorityFilter}
-              <X className="size-3.5 text-muted-foreground" aria-hidden />
-            </button>
-          </div>
-        )}
+        <FilterBar
+          projectId={projectId}
+          members={members ?? []}
+          labels={labels ?? []}
+          current={{
+            sprint: sprintFilter,
+            search,
+            priority: priorityFilter ?? "",
+            assignee: assigneeFilter,
+            label: labelFilter,
+            dueFrom,
+            dueTo,
+            blockedOnly,
+          }}
+          onChange={(patch) => {
+            if (patch.sprint !== undefined) setSprintFilter(patch.sprint);
+            if (patch.search !== undefined) setSearch(patch.search);
+            if (patch.priority !== undefined)
+              setPriorityFilter(patch.priority === "" ? null : patch.priority);
+            if (patch.assignee !== undefined) setAssigneeFilter(patch.assignee);
+            if (patch.label !== undefined) setLabelFilter(patch.label);
+            if (patch.dueFrom !== undefined) setDueFrom(patch.dueFrom);
+            if (patch.dueTo !== undefined) setDueTo(patch.dueTo);
+            if (patch.blockedOnly !== undefined) setBlockedOnly(patch.blockedOnly);
+          }}
+        />
 
         {creating && (
           <CreateTaskForm
@@ -427,6 +476,7 @@ export function BoardPage() {
           currentUser={currentUser}
           members={members ?? []}
           sprints={(sprints ?? []).filter((s) => s.status !== "Completed")}
+          allTasks={tasks}
           workspaceId={workspaceId}
           projectId={projectId}
           onClose={() => setSelectedTaskId(null)}
