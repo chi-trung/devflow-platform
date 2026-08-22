@@ -146,6 +146,12 @@ export interface SearchResponse {
   projects: SearchProjectResult[];
 }
 
+export interface ImportResultResponse {
+  imported: number;
+  skipped: number;
+  errors: string[];
+}
+
 export type TaskStatus = TaskItemResponse["status"];
 export type TaskPriority = TaskItemResponse["priority"];
 

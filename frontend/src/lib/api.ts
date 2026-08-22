@@ -6,6 +6,7 @@ import type {
   DashboardData,
   FieldErrors,
   GitHubIntegrationResponse,
+  ImportResultResponse,
   LabelResponse,
   LoginResponse,
   NotificationResponse,
@@ -311,12 +312,45 @@ export function pagedItems<T>(response: unknown): T[] {
   return [];
 }
 
+export interface SearchFilters {
+  status?: string;
+  priority?: string;
+  assigneeId?: string;
+  labelId?: string;
+  dueBefore?: string;
+  dueAfter?: string;
+}
+
 export function searchWorkspace(
   workspaceId: string,
   query: string,
+  filters: SearchFilters = {},
 ): Promise<SearchResponse> {
+  const params = new URLSearchParams();
+  if (query) params.set("q", query);
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) params.set(key, value);
+  }
+  const qs = params.toString();
   return api<SearchResponse>(
-    `/workspaces/${workspaceId}/search?q=${encodeURIComponent(query)}`,
+    `/workspaces/${workspaceId}/search${qs ? `?${qs}` : ""}`,
+  );
+}
+
+export async function importTasks(
+  workspaceId: string,
+  projectId: string,
+  file: File,
+): Promise<ImportResultResponse> {
+  const isCsv = file.name.toLowerCase().endsWith(".csv");
+  const text = await file.text();
+  return api<ImportResultResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/import/tasks`,
+    {
+      method: "POST",
+      body: text,
+      headers: { "Content-Type": isCsv ? "text/csv" : "application/json" },
+    },
   );
 }
 

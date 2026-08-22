@@ -39,6 +39,7 @@ import { ActivityDrawer } from "../components/board/ActivityDrawer";
 import { FilterBar } from "../components/board/FilterBar";
 import { GraphModal } from "../components/board/GraphModal";
 import { KeyboardHelpModal } from "../components/board/KeyboardHelpModal";
+import { ImportTasksModal } from "../components/board/ImportTasksModal";
 import type {
   ActivityResponse,
   LabelResponse,
@@ -164,6 +165,7 @@ export function BoardPage() {
   const [tasks, setTasks] = useState<TaskItemResponse[]>([]);
   const [boardError, setBoardError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [activityOpen, setActivityOpen] = useState(false);
   const [sprintFilter, setSprintFilter] = useState<string>("all");
@@ -580,10 +582,19 @@ export function BoardPage() {
               )}
             </label>
             {!creating && (
-              <Button onClick={() => setCreating(true)}>
-                <Plus className="size-4" aria-hidden />
-                {t("board.newTask")}
-              </Button>
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => setImporting(true)}
+                  disabled={loading}
+                >
+                  {t("board.importTasks")}
+                </Button>
+                <Button onClick={() => setCreating(true)}>
+                  <Plus className="size-4" aria-hidden />
+                  {t("board.newTask")}
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -821,6 +832,18 @@ export function BoardPage() {
       )}
 
       {helpOpen && <KeyboardHelpModal onClose={() => setHelpOpen(false)} />}
+
+      {importing && (
+        <ImportTasksModal
+          workspaceId={workspaceId}
+          projectId={projectId}
+          onClose={() => setImporting(false)}
+          onImported={() => {
+            reload();
+            reloadSprints();
+          }}
+        />
+      )}
 
       {selectedTask && (
         <TaskDetailPanel

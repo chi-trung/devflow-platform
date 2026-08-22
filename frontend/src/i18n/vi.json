@@ -50,6 +50,7 @@
     "inReview": "Đang review",
     "done": "Hoàn thành",
     "newTask": "Task mới",
+    "importTasks": "Nhập file",
     "filterTasks": "Lọc tasks…  status:done is:blocked",
     "empty": "Bảng này trống",
     "emptyDesc": "Thêm task đầu tiên và kéo qua các cột khi làm việc tiến triển.",
@@ -376,7 +377,29 @@
   },
   "commandPalette": {
     "placeholder": "Nhập lệnh hoặc tìm kiếm…",
-    "noResults": "Không tìm thấy kết quả."
+    "noResults": "Không tìm thấy kết quả.",
+    "filters": "Bộ lọc tìm kiếm",
+    "statusFilter": "Lọc theo trạng thái",
+    "priorityFilter": "Lọc theo độ ưu tiên",
+    "dueFilter": "Lọc theo hạn chót",
+    "anyStatus": "Mọi trạng thái",
+    "anyPriority": "Mọi độ ưu tiên",
+    "anyDue": "Mọi hạn chót",
+    "dueOverdue": "Quá hạn",
+    "dueToday": "Đến hạn hôm nay",
+    "dueWeek": "Đến hạn tuần này"
+  },
+  "import": {
+    "title": "Nhập task từ file",
+    "pickFile": "Chọn file .csv hoặc .json",
+    "noFile": "Vui lòng chọn file trước.",
+    "failed": "Nhập thất bại.",
+    "importing": "Đang nhập…",
+    "submit": "Nhập",
+    "importedCount": "Đã nhập {{count}} task",
+    "skippedCount": "bỏ qua {{count}}",
+    "errors": "Các dòng gặp lỗi:",
+    "statusHint": "status: Backlog/InProgress/InReview/Done, priority: Low/Medium/High/Critical"
   },
   "common": {
     "save": "Lưu",
@@ -395,6 +418,7 @@
     "owner": "Chủ sở hữu",
     "admin": "Quản trị viên",
     "member": "Thành viên",
-    "retry": "Thử lại"
+    "retry": "Thử lại",
+    "done": "Xong"
   }
 }
