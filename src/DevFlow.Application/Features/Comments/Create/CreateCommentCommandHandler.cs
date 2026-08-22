@@ -88,6 +88,6 @@ public sealed partial class CreateCommentCommandHandler(
         return usernames.ToList();
     }
 
-    [GeneratedRegex(@"@([a-zA-Z0-9_]+)")]
+    [GeneratedRegex(@"(?<![a-zA-Z0-9_])@([a-zA-Z0-9_]+)")]
     private static partial Regex MentionRegex();
 }
