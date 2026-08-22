@@ -1,6 +1,6 @@
 # DevFlow
 
-> A project management platform for developers — a Jira/Linear clone built with ASP.NET Core and React.
+> A project management platform for developers — a Jira/Linear clone built with ASP.NET Core and React. Features real-time collaboration, task dependencies, time tracking, and more.
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
 [![React](https://img.shields.io/badge/React-19-087EA4)](https://react.dev/)
@@ -35,6 +35,7 @@ Built as a long-term learning project with a strong focus on architecture, testi
 
 ## Features
 
+### Core
 - JWT auth with silent refresh — page reloads keep you signed in
 - Workspaces with role-based access (Owner / Admin / Member) enforced server-side
 - Projects with keys, archive lifecycle
@@ -43,6 +44,22 @@ Built as a long-term learning project with a strong focus on architecture, testi
 - Task detail panel with comments thread
 - Sprints API with single-active-sprint invariant per project
 - Declarative authorization via pipeline behavior (`[RequireWorkspaceRole]`)
+
+### Task Intelligence
+- **Task Dependencies** — Block tasks with blockers, prevent status change
+- **Time Tracking** — Log time on tasks, estimate vs actual
+- **Labels** — Color-coded labels for task categorization
+
+### Collaboration
+- **Notifications** — In-app notifications with real-time updates
+- **Activity Log** — Track all changes across projects
+- **Comments** — Threaded discussions on tasks
+- **Search** — Global search (Ctrl+K) across tasks and projects
+
+### UI/UX
+- **Dark/Light Theme** — Toggle with persistent preference
+- **Mobile Navigation** — Responsive sidebar with bottom bar
+- **Settings** — Profile, appearance, notification preferences
 
 ## Quick Start
 
@@ -77,4 +94,19 @@ npm run dev                   # http://localhost:3000, proxies /api to :5217
 - [x] File Upload
 - [x] Redis caching layer
 - [x] Integration tests with Testcontainers
-- [ ] Sprint planning UI
+- [x] Sprint planning UI
+- [x] Task Dependencies
+- [x] Time Tracking
+- [x] Labels
+- [x] Notifications
+- [x] Activity Log
+- [x] Search
+- [x] Settings
+- [x] Mobile Navigation
+- [ ] Burndown Charts
+- [ ] Velocity Metrics
+- [ ] GitHub Integration
+- [ ] Email Notifications
+- [ ] Bulk Operations
+- [ ] Task Templates
+- [ ] Custom Fields

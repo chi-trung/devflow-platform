@@ -1,158 +1,195 @@
-# AGENT STATUS — Sprint 7+ Improvement Plan
+# AGENT STATUS — Sprint 8+ Roadmap
 
-## 📊 Current Project Analysis
-
-### ✅ What Works (6 sprints, 12 features)
-| Category | Features |
-|----------|----------|
-| **Core** | Auth, Workspaces, Projects, Tasks, Sprints |
-| **Board** | Kanban drag-drop, Task detail panel, Comments |
-| **Realtime** | SignalR live updates |
-| **Notifications** | In-app notifications, Activity log |
-| **Search** | Global search (Ctrl+K) |
-| **Settings** | Profile, Theme, Mobile nav |
-| **Dashboard** | Basic stats, Activity feed |
-| **Labels** | CRUD + assign to tasks |
-
-### ❌ What's Missing (Real Business Value)
-| Gap | Impact | Why It Matters |
-|-----|--------|----------------|
-| **No task dependencies** | 🔴 High | Can't show blockers or critical path |
-| **No time tracking** | 🔴 High | Teams need estimate vs actual |
-| **No custom fields** | 🟡 Medium | Every team has unique metadata |
-| **No email notifications** | 🔴 High | Can't notify offline users |
-| **No GitHub integration** | 🟡 Medium | Dev teams need PR linking |
-| **No reporting** | 🔴 High | No burndown, velocity, metrics |
-| **No bulk operations** | 🟡 Medium | Slow to manage many tasks |
-| **No task templates** | 🟢 Low | Repetitive task creation |
-| **No keyboard shortcuts** | 🟡 Medium | Power users need speed |
+## 📊 Sprint 7 Summary
+| Agent | Feature | PR | Status |
+|-------|---------|-----|--------|
+| Codebuff | Task Dependencies + Time Tracking | #58 | ✅ MERGED |
+| OpenCode | Dependencies UI + Time Tracking UI | #59 | ✅ MERGED |
 
 ---
 
-## 🎯 Sprint 7 — Task Intelligence (High Impact)
+## 🎯 Sprint 8 — Reporting & Analytics
 
 ### Agent: Codebuff (Backend)
 
-#### B1: Task Dependencies
-- [ ] Create `TaskDependency` entity (Blocker → Blocked relationship)
-- [ ] Add `GET /tasks/{id}/dependencies` endpoint
-- [ ] Add `POST /tasks/{id}/dependencies` (add blocker)
-- [ ] Add `DELETE /tasks/{id}/dependencies/{depId}` (remove blocker)
-- [ ] Prevent status change if task is blocked
-- [ ] Add `GET /projects/{id}/critical-path` endpoint
+#### B1: Burndown Chart API
+- [ ] `GET /projects/{id}/burndown?startDate=&endDate=`
+  - Returns daily remaining story points
+  - Ideal line vs actual line
+  - Data points: `{ date: "2026-08-22", remaining: 45, ideal: 40 }`
 
-#### B2: Time Tracking
-- [ ] Create `TimeEntry` entity (taskId, userId, minutes, description, date)
-- [ ] Add `GET /tasks/{id}/time-entries` endpoint
-- [ ] Add `POST /tasks/{id}/time-entries` (log time)
-- [ ] Add `DELETE /time-entries/{id}` (remove entry)
-- [ ] Add `estimateMinutes` field to TaskItem
-- [ ] Add `totalLoggedMinutes` to task response
+#### B2: Velocity & Metrics API
+- [ ] `GET /projects/{id}/velocity`
+  - Returns points completed per sprint
+  - Average velocity, trend
+  - Data: `{ sprints: [{ name, completedPoints, plannedPoints }], average: 42 }`
 
-#### B3: Advanced Filtering API
-- [ ] Extend task list endpoint with filters: `assigneeId`, `priority`, `labelIds`, `dueBefore`, `dueAfter`, `blocked`
-- [ ] Add `GET /projects/{id}/labels/count` for label usage stats
-- [ ] Add sorting options: `sortBy=dueDate|priority|created|updated`
+- [ ] `GET /projects/{id}/report`
+  - Completion rate, avg cycle time, overdue count
+  - Data: `{ completionRate: 0.85, avgCycleDays: 3.2, overdueCount: 2 }`
 
-### Agent: OpenCode (Frontend)
+#### B3: Team Performance API
+- [ ] `GET /workspaces/{id}/team-report`
+  - Per-member stats: tasks completed, time logged, avg cycle time
+  - Data: `{ members: [{ userId, name, completed, timeLogged, avgCycle }] }`
 
-#### F1: Task Dependencies UI
-- [ ] Show blocked/blocking indicators on task cards
-- [ ] Add "Blocked by" section in TaskDetailPanel
-- [ ] Add dependency picker (search tasks to link)
-- [ ] Visual blocker warning when trying to move blocked task
-
-#### F2: Time Tracking UI
-- [ ] Add "Time" tab in TaskDetailPanel
-- [ ] Time entry form (hours, description)
-- [ ] Show total logged vs estimate progress bar
-- [ ] Timer button (start/stop tracking)
-
-#### F3: Enhanced Board Filters
-- [ ] Filter bar with assignee dropdown, priority, labels
-- [ ] Filter by due date range
-- [ ] Show "blocked" badge on filtered tasks
-- [ ] Save filter presets
-
----
-
-## 🎯 Sprint 8 — Reporting & Integration
-
-### Agent: Codebuff (Backend)
-
-#### B1: Reporting API
-- [ ] `GET /projects/{id}/burndown?startDate=&endDate=` — daily remaining points
-- [ ] `GET /projects/{id}/velocity` — story points per sprint
-- [ ] `GET /projects/{id}/report` — completion rate, avg cycle time
-- [ ] `GET /workspaces/{id}/team-report` — per-member stats
-
-#### B2: GitHub Integration
-- [ ] `POST /projects/{id}/github/link` — connect GitHub repo
-- [ ] `GET /projects/{id}/github/prs` — list open PRs
-- [ ] Webhook handler for PR events (auto-link to tasks via regex)
-- [ ] Add `githubUrl` field to TaskItem
-
-#### B3: Email Notifications
-- [ ] Add SendGrid/Resend integration
-- [ ] Send email on: task assigned, mentioned in comment, sprint started
-- [ ] User email preferences (opt-in/out per event type)
-- [ ] Queue-based background processing
+#### B4: Dashboard Enhancement
+- [ ] Add burndown data to existing dashboard endpoint
+- [ ] Add sprint progress metrics
+- [ ] Add team workload distribution
 
 ### Agent: OpenCode (Frontend)
 
-#### F1: Burndown Chart
-- [ ] Canvas/SVG burndown chart component
-- [ ] Show ideal vs actual line
+#### F1: Burndown Chart Component
+- [ ] Canvas/SVG burndown chart
+- [ ] Ideal vs actual lines
 - [ ] Tooltip with daily details
+- [ ] Date range picker
 
 #### F2: Velocity Chart
-- [ ] Bar chart showing points completed per sprint
+- [ ] Bar chart per sprint
 - [ ] Trend line
+- [ ] Compare planned vs completed
 
-#### F3: GitHub Integration UI
+#### F3: Team Dashboard
+- [ ] Member performance cards
+- [ ] Time logged breakdown
+- [ ] Task completion stats
+
+---
+
+## 🎯 Sprint 9 — GitHub Integration & Email
+
+### Agent: Codebuff (Backend)
+
+#### B1: GitHub Integration
+- [ ] `POST /projects/{id}/github/link` — connect repo
+- [ ] `GET /projects/{id}/github/prs` — list PRs
+- [ ] Webhook handler for PR events
+- [ ] Auto-link tasks via regex (DEV-123 in PR title)
+- [ ] Add `githubUrl` field to TaskItem
+
+#### B2: Email Notifications
+- [ ] Add SendGrid/Resend integration
+- [ ] Send email on: task assigned, mentioned, sprint started
+- [ ] User email preferences (opt-in/out)
+- [ ] Queue-based background processing
+
+#### B3: Task Activity Feed Enhancement
+- [ ] Add dependency status changes to activity log
+- [ ] Add time tracking entries to activity log
+- [ ] Add GitHub PR links to activity
+
+### Agent: OpenCode (Frontend)
+
+#### F1: GitHub Integration UI
 - [ ] Link repo in project settings
 - [ ] Show linked PRs on task detail
 - [ ] PR status badges (open/merged/closed)
+- [ ] Click to open PR
+
+#### F2: Email Notification Settings
+- [ ] Toggle per event type (assigned, mentioned, sprint)
+- [ ] Email preview
+- [ ] Unsubscribe link
+
+#### F3: Activity Feed Enhancement
+- [ ] Show dependency changes
+- [ ] Show time entries
+- [ ] Show GitHub links
 
 ---
 
-## 🎯 Sprint 9 — Power Features
+## 🎯 Sprint 10 — Power Features
 
-### Both Agents
+### Agent: Codebuff (Backend)
 
-#### Bulk Operations
-- [ ] Multi-select tasks (checkbox)
-- [ ] Bulk move, assign, label, delete
-- [ ] Keyboard shortcuts (Ctrl+A, Delete, etc.)
+#### B1: Bulk Operations API
+- [ ] `POST /projects/{id}/tasks/bulk` — bulk actions
+- [ ] Support: move, assign, label, delete
+- [ ] Transaction-safe bulk updates
 
-#### Task Templates
-- [ ] Create template from existing task
-- [ ] Template library per project
-- [ ] One-click template apply
+#### B2: Task Templates
+- [ ] `GET /projects/{id}/templates` — list templates
+- [ ] `POST /projects/{id}/templates` — create from task
+- [ ] `POST /templates/{id}/apply` — apply template
+- [ ] Template library per workspace
 
-#### Custom Fields
-- [ ] Define custom fields per project (text, number, date, select)
-- [ ] Show on task cards and detail panel
+#### B3: Custom Fields
+- [ ] `GET /projects/{id}/fields` — list custom fields
+- [ ] `POST /projects/{id}/fields` — create field
+- [ ] `PUT /tasks/{id}/fields` — set field values
+- [ ] Field types: text, number, date, select, multi-select
+
+### Agent: OpenCode (Frontend)
+
+#### F1: Bulk Selection UI
+- [ ] Checkbox on task cards
+- [ ] Bulk action toolbar
+- [ ] Keyboard shortcuts (Ctrl+A, Delete)
+
+#### F2: Template Library
+- [ ] Template manager in project settings
+- [ ] One-click apply
+- [ ] Template preview
+
+#### F3: Custom Fields UI
+- [ ] Field manager in project settings
+- [ ] Show on task cards (optional)
 - [ ] Filter by custom fields
 
 ---
 
-## 📋 Priority Order
+## 🎯 Sprint 11 — Advanced Features
 
-| Priority | Feature | Effort | Value |
-|----------|---------|--------|-------|
-| 🔴 P0 | Task Dependencies | 2 sprints | Blockers, critical path |
-| 🔴 P0 | Time Tracking | 1 sprint | Estimate vs actual |
-| 🔴 P0 | Reporting | 1 sprint | Burndown, velocity |
-| 🟡 P1 | GitHub Integration | 1 sprint | Dev workflow |
-| 🟡 P1 | Email Notifications | 1 sprint | Offline alerts |
-| 🟡 P1 | Bulk Operations | 0.5 sprint | Productivity |
-| 🟢 P2 | Custom Fields | 1 sprint | Flexibility |
-| 🟢 P2 | Task Templates | 0.5 sprint | Speed |
+### Both Agents
+
+#### Task Dependencies Visualization
+- [ ] Graph view of task dependencies
+- [ ] Critical path highlighting
+- [ ] Circular dependency detection
+
+#### Keyboard Shortcuts
+- [ ] Global shortcuts: Ctrl+K search, Ctrl+N new task
+- [ ] Board shortcuts: arrow keys navigate, Enter open
+- [ ] Shortcut help modal (?)
+
+#### Advanced Search
+- [ ] Full-text search across all fields
+- [ ] Saved searches
+- [ ] Search operators (status:Done assignee:me)
+
+#### Export & Import
+- [ ] Export project to CSV/JSON
+- [ ] Import from Jira/Linear
+- [ ] Backup/restore
 
 ---
 
-## 🔄 How We Work
+## 📋 Priority Matrix
+
+| Priority | Feature | Sprint | Effort | Impact |
+|----------|---------|--------|--------|--------|
+| 🔴 P0 | Burndown Chart | 8 | 1 sprint | High — management visibility |
+| 🔴 P0 | Velocity Metrics | 8 | 0.5 sprint | High — planning accuracy |
+| 🔴 P0 | Team Performance | 8 | 0.5 sprint | High — accountability |
+| 🟡 P1 | GitHub Integration | 9 | 1 sprint | Medium — dev workflow |
+| 🟡 P1 | Email Notifications | 9 | 1 sprint | Medium — offline alerts |
+| 🟡 P1 | Bulk Operations | 10 | 0.5 sprint | Medium — productivity |
+| 🟢 P2 | Task Templates | 10 | 0.5 sprint | Low — speed |
+| 🟢 P2 | Custom Fields | 10 | 1 sprint | Low — flexibility |
+| 🟢 P2 | Keyboard Shortcuts | 11 | 0.5 sprint | Low — power users |
+| 🟢 P2 | Export/Import | 11 | 1 sprint | Low — portability |
+
+---
+
+## 🔄 Sprint Cycle (Established)
+
+### How We Work
+1. **Plan** — Codebuff writes plan to AGENT_STATUS.md
+2. **Execute** — Both agents work simultaneously on separate branches
+3. **Review** — Check CI, fix issues
+4. **Deploy** — Merge to main, verify production
 
 ### Branch Strategy
 - **Codebuff**: `feat/backend-*` branch
@@ -166,12 +203,28 @@
 - Each PR runs: Build → Test → Deploy Preview
 - Auto-merge when CI passes
 
-### Sprint Cycle
-1. Plan (10 min) — Codebuff writes plan to AGENT_STATUS.md
-2. Execute (parallel) — Both agents work simultaneously
-3. Review (5 min) — Check CI, fix issues
-4. Deploy (2 min) — Merge to main, verify production
+---
+
+## 📈 Project Metrics (Current)
+
+| Metric | Value |
+|--------|-------|
+| Total Sprints | 7 |
+| Features Shipped | 14 |
+| PRs Merged | 58 |
+| Unit Tests | 57 |
+| API Endpoints | 35+ |
+| Frontend Pages | 9 |
+| Deployment | Vercel + Render |
+
+### Tech Stack
+- **Backend**: ASP.NET Core 8, Clean Architecture, CQRS + MediatR
+- **Frontend**: React 19, TypeScript, Tailwind CSS v4
+- **Database**: PostgreSQL + EF Core
+- **Auth**: JWT + Refresh Tokens
+- **Realtime**: SignalR
+- **Deploy**: Vercel (FE) + Render (BE)
 
 ---
 
-*Last updated: Sprint 7 planning*
+*Last updated: Sprint 7 complete, Sprint 8 planning*
