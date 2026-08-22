@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "skills": {
+    "code-craft": {
+      "source": "jssblck/agents",
+      "sourceType": "github",
+      "skillPath": "skills/code-craft/SKILL.md",
+      "computedHash": "8d58c17a2171ce18191bcf7e8a98b32c65182b84c042c0e0a6b8a2da6ac2e920"
+    },
+    "gh-stack": {
+      "source": "jssblck/agents",
+      "sourceType": "github",
+      "skillPath": "skills/gh-stack/SKILL.md",
+      "computedHash": "be36b271ae2f7b55cb830524b475d5766b4f9eab980e6db9b4539f3aa3852475"
+    },
+    "merge-open-prs": {
+      "source": "jssblck/agents",
+      "sourceType": "github",
+      "skillPath": "skills/merge-open-prs/SKILL.md",
+      "computedHash": "8dce7839cc5f9cf999f43cb768efa023df8f2d5ee4a38b3030bfea7cccab47a8"
+    },
+    "parallel-agents": {
+      "source": "jssblck/agents",
+      "sourceType": "github",
+      "skillPath": "skills/parallel-agents/SKILL.md",
+      "computedHash": "565c723b8d2ae27f1d85239e8bbc08307e4dab97c1ee56ceeb2b403f62b7fe81"
+    },
+    "ship-it": {
+      "source": "jssblck/agents",
+      "sourceType": "github",
+      "skillPath": "skills/ship-it/SKILL.md",
+      "computedHash": "f1f6606878c0a1e57ebf2778e0ea26ce73ac3b0d29908de5339d5db68138ff1c"
+    },
+    "stop-slop": {
+      "source": "jssblck/agents",
+      "sourceType": "github",
+      "skillPath": "skills/stop-slop/SKILL.md",
+      "computedHash": "0343a29fdfb485a65e8cc38d6934c5811411659d61dc6f035ae03121b09b4d72"
+    },
+    "tag-release": {
+      "source": "jssblck/agents",
+      "sourceType": "github",
+      "skillPath": "skills/tag-release/SKILL.md",
+      "computedHash": "538611a7b589a33adf1866e758fbfee3ab038966b15a5952a51c31682294248d"
+    },
+    "using-sops": {
+      "source": "jssblck/agents",
+      "sourceType": "github",
+      "skillPath": "skills/using-sops/SKILL.md",
+      "computedHash": "97717c565ff7507edc3c527bfdcad7c137516c9fcc16fc48fba2ff311ed3e442"
+    }
+  }
+}
