@@ -45,4 +45,9 @@ public sealed class UserRepository(DevFlowDbContext dbContext) : IUserRepository
 
         return names;
     }
+
+    public Task<bool> ExistsByUsernameExceptIdAsync(string username, Guid userId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Users.AnyAsync(user => user.Username == username && user.Id != userId, cancellationToken);
+    }
 }

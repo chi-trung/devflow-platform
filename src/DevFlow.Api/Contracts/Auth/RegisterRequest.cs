@@ -13,3 +13,7 @@ public sealed record LoginRequest(string Email, string Password);
 public sealed record RefreshRequest(string RefreshToken);
 
 public sealed record LogoutRequest(string RefreshToken);
+
+public sealed record UpdateProfileRequest(string DisplayName, string Username);
+
+public sealed record ChangePasswordRequest(string CurrentPassword, string NewPassword);

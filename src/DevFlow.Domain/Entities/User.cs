@@ -52,4 +52,30 @@ public class User : BaseEntity, IAuditableEntity
 
         return new User(email.Trim().ToLowerInvariant(), username.Trim(), passwordHash, displayName.Trim());
     }
+
+    public void UpdateProfile(string displayName, string username)
+    {
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            throw new ArgumentException("Display name is required.", nameof(displayName));
+        }
+
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            throw new ArgumentException("Username is required.", nameof(username));
+        }
+
+        DisplayName = displayName.Trim();
+        Username = username.Trim();
+    }
+
+    public void UpdatePasswordHash(string newPasswordHash)
+    {
+        if (string.IsNullOrWhiteSpace(newPasswordHash))
+        {
+            throw new ArgumentException("Password hash is required.", nameof(newPasswordHash));
+        }
+
+        PasswordHash = newPasswordHash;
+    }
 }
