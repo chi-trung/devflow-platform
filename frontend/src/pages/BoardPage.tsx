@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Plus, SquareKanban, Search, History, CalendarRange } from "lucide-react";
+import { ArrowLeft, Plus, SquareKanban, Search, History, CalendarRange, BarChart3 } from "lucide-react";
 import { api, pagedItems } from "../lib/api";
 import { createProjectConnection } from "../lib/realtime";
 import { useApi } from "../hooks/useApi";
@@ -315,6 +315,13 @@ export function BoardPage() {
               >
                 <CalendarRange className="size-4" aria-hidden />
                 Sprints
+              </Link>
+              <Link
+                to={`/workspaces/${workspaceId}/projects/${projectId}/reports`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98]"
+              >
+                <BarChart3 className="size-4" aria-hidden />
+                Reports
               </Link>
               <Button
                 variant="outline"

@@ -1,4 +1,5 @@
 import type {
+  BurndownResponse,
   CreateLabelRequest,
   DashboardData,
   FieldErrors,
@@ -8,8 +9,10 @@ import type {
   SearchResponse,
   SprintResponse,
   TaskDependencyResponse,
+  TeamReportResponse,
   TimeEntryResponse,
   UserProfileResponse,
+  VelocityResponse,
 } from "../types/api";
 
 // In dev the Vite proxy forwards /api to localhost; in production
@@ -269,6 +272,32 @@ export async function updateSettings(input: AppSettings): Promise<void> {
 
 export function getDashboard(workspaceId: string): Promise<DashboardData> {
   return api<DashboardData>(`/workspaces/${workspaceId}/dashboard`);
+}
+
+export function getBurndown(
+  workspaceId: string,
+  projectId: string,
+  startDate: string,
+  endDate: string,
+): Promise<BurndownResponse> {
+  return api<BurndownResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/reporting/burndown?startDate=${startDate}&endDate=${endDate}`,
+  );
+}
+
+export function getVelocity(
+  workspaceId: string,
+  projectId: string,
+): Promise<VelocityResponse> {
+  return api<VelocityResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/reporting/velocity`,
+  );
+}
+
+export function getTeamReport(
+  workspaceId: string,
+): Promise<TeamReportResponse> {
+  return api<TeamReportResponse>(`/workspaces/${workspaceId}/reporting/team`);
 }
 
 export function getLabels(

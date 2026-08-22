@@ -9,6 +9,7 @@ import { BoardPage } from "./pages/BoardPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SprintPlanningPage } from "./pages/SprintPlanningPage";
+import { ReportsPage } from "./pages/ReportsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { WorkspacePage } from "./pages/WorkspacePage";
 
@@ -35,6 +36,10 @@ export default function App() {
             <Route
               path="/workspaces/:workspaceId/projects/:projectId/sprints"
               element={<SprintPlanningPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId/reports"
+              element={<ReportsPage />}
             />
           </Route>
           <Route path="*" element={<NotFoundPage />} />

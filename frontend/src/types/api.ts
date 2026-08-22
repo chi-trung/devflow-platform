@@ -184,3 +184,44 @@ export interface CreateLabelRequest {
   name: string;
   color: string;
 }
+
+export interface BurndownPoint {
+  date: string;
+  remainingTasks: number;
+  idealRemaining: number;
+}
+
+export interface BurndownResponse {
+  startDate: string;
+  endDate: string;
+  totalTasks: number;
+  points: BurndownPoint[];
+}
+
+export interface SprintVelocity {
+  sprintId: string;
+  sprintName: string;
+  completedTasks: number;
+  totalTasks: number;
+  completionRate: number;
+}
+
+export interface VelocityResponse {
+  sprints: SprintVelocity[];
+  averageCompletionRate: number;
+}
+
+export interface TeamMemberStats {
+  userId: string;
+  userName: string;
+  tasksAssigned: number;
+  tasksCompleted: number;
+  totalMinutesLogged: number;
+}
+
+export interface TeamReportResponse {
+  members: TeamMemberStats[];
+  totalTasks: number;
+  totalCompleted: number;
+  totalMinutesLogged: number;
+}
