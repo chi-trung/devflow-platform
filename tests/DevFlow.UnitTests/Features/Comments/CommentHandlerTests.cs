@@ -13,6 +13,8 @@ public class CommentHandlerTests
     private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
     private readonly ICommentRepository _commentRepository = Substitute.For<ICommentRepository>();
+    private readonly INotificationRepository _notificationRepository = Substitute.For<INotificationRepository>();
+    private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly IWorkspaceRepository _workspaceRepository = Substitute.For<IWorkspaceRepository>();
     private readonly IUserContext _userContext = Substitute.For<IUserContext>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
@@ -36,7 +38,8 @@ public class CommentHandlerTests
     public async Task Create_ShouldPersistCommentWithCurrentUserAsAuthor()
     {
         var handler = new CreateCommentCommandHandler(
-            _projectRepository, _taskItemRepository, _commentRepository, _userContext, _unitOfWork);
+            _projectRepository, _taskItemRepository, _commentRepository,
+            _userRepository, _notificationRepository, _unitOfWork, _userContext);
         var command = new CreateCommentCommand(_workspaceId, _project.Id, _task.Id, "Looks good to me!");
 
         var response = await handler.Handle(command, CancellationToken.None);
