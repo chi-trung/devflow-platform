@@ -387,7 +387,9 @@
     "anyDue": "Mọi hạn chót",
     "dueOverdue": "Quá hạn",
     "dueToday": "Đến hạn hôm nay",
-    "dueWeek": "Đến hạn tuần này"
+    "dueWeek": "Đến hạn tuần này",
+    "saveSearch": "Lưu tìm kiếm này",
+    "searchName": "Đặt tên cho tìm kiếm…"
   },
   "import": {
     "title": "Nhập task từ file",

@@ -1,12 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Search, CornerDownLeft, LogOut, Loader2 } from "lucide-react";
-import { api, pagedItems, searchWorkspace } from "../lib/api";
+import { Search, CornerDownLeft, LogOut, Loader2, Plus, X } from "lucide-react";
+import {
+  api,
+  createSavedSearch,
+  deleteSavedSearch,
+  getSavedSearches,
+  pagedItems,
+  searchWorkspace,
+} from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
 import type {
   ProjectResponse,
+  SavedSearchFilters,
+  SavedSearchResponse,
   SearchResponse,
   WorkspaceResponse,
 } from "../types/api";
@@ -42,6 +51,8 @@ export function CommandPalette({
   const [statusFilter, setStatusFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
   const [dueFilter, setDueFilter] = useState("");
+  const [savedSearches, setSavedSearches] = useState<SavedSearchResponse[]>([]);
+  const [savingName, setSavingName] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -71,6 +82,84 @@ export function CommandPalette({
     const week = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     return { dueBefore: week.toISOString() };
   }, [dueFilter]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    getSavedSearches()
+      .then((list) => {
+        if (!cancelled) setSavedSearches(list);
+      })
+      .catch(() => {
+        /* saved searches are optional — palette works without them */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  const workspaceSaved = useMemo(
+    () => savedSearches.filter((entry) => entry.workspaceId === workspaceId),
+    [savedSearches, workspaceId],
+  );
+
+  const hasActiveFilters =
+    query.trim().length > 0 ||
+    statusFilter !== "" ||
+    priorityFilter !== "" ||
+    dueFilter !== "";
+
+  function dueLabelFromFilters(filters: SavedSearchFilters): string {
+    const { dueAfter, dueBefore } = filters;
+    if (!dueBefore) return "";
+    if (dueAfter) {
+      const span =
+        new Date(dueBefore).getTime() - new Date(dueAfter).getTime();
+      return span <= 26 * 60 * 60 * 1000 ? "today" : "week";
+    }
+    return "overdue";
+  }
+
+  function applySaved(entry: SavedSearchResponse) {
+    setQuery(entry.query ?? "");
+    setStatusFilter(entry.filters.status ?? "");
+    setPriorityFilter(entry.filters.priority ?? "");
+    setDueFilter(dueLabelFromFilters(entry.filters));
+  }
+
+  async function handleSaveSearch() {
+    if (!workspaceId || savingName === null) return;
+    const name = savingName.trim();
+    setSavingName(null);
+    if (!name) return;
+    try {
+      const created = await createSavedSearch({
+        name,
+        workspaceId,
+        query: query.trim(),
+        filters: {
+          status: statusFilter || null,
+          priority: priorityFilter || null,
+          assigneeId: null,
+          labelId: null,
+          dueBefore: dueRange.dueBefore ?? null,
+          dueAfter: dueRange.dueAfter ?? null,
+        },
+      });
+      setSavedSearches((current) => [created, ...current]);
+    } catch {
+      /* saving is best-effort */
+    }
+  }
+
+  async function handleDeleteSaved(id: string) {
+    try {
+      await deleteSavedSearch(id);
+      setSavedSearches((current) => current.filter((e) => e.id !== id));
+    } catch {
+      /* ignore */
+    }
+  }
 
   useEffect(() => {
     const keyword = query.trim();
@@ -327,6 +416,64 @@ export function CommandPalette({
               <option value="today">{t("commandPalette.dueToday")}</option>
               <option value="week">{t("commandPalette.dueWeek")}</option>
             </select>
+          </div>
+        )}
+
+        {workspaceId && workspaceSaved.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 border-b border-border px-3 py-2">
+            {workspaceSaved.map((entry) => (
+              <span
+                key={entry.id}
+                className="group/chip flex items-center gap-0.5 rounded-full border border-border bg-surface pl-2.5 pr-1 text-[11px]"
+              >
+                <button
+                  type="button"
+                  onClick={() => applySaved(entry)}
+                  className="max-w-40 truncate text-muted-foreground transition-colors duration-150 hover:text-primary"
+                >
+                  {entry.name}
+                </button>
+                <button
+                  type="button"
+                  aria-label={`${t("common.delete")} ${entry.name}`}
+                  onClick={() => void handleDeleteSaved(entry.id)}
+                  className="rounded-full p-0.5 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-destructive group-hover/chip:opacity-100"
+                >
+                  <X className="size-3" aria-hidden />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {workspaceId && hasActiveFilters && (
+          <div className="flex items-center gap-2 border-b border-border px-4 py-1.5">
+            {savingName === null ? (
+              <button
+                type="button"
+                onClick={() => setSavingName("")}
+                className="flex items-center gap-1 text-[11px] font-medium text-primary transition-colors duration-150 hover:text-primary/80"
+              >
+                <Plus className="size-3" aria-hidden />
+                {t("commandPalette.saveSearch")}
+              </button>
+            ) : (
+              <input
+                autoFocus
+                value={savingName}
+                onChange={(event) => setSavingName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void handleSaveSearch();
+                  } else if (event.key === "Escape") {
+                    setSavingName(null);
+                  }
+                }}
+                placeholder={t("commandPalette.searchName")}
+                className="w-full bg-transparent font-mono text-[11px] placeholder:text-muted-foreground/50 focus:outline-none"
+              />
+            )}
           </div>
         )}
 

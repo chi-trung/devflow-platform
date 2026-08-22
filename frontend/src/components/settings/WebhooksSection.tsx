@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
-import { Cable, Copy, Eye, EyeOff, Trash2 } from "lucide-react";
+import { Cable, Copy, Eye, EyeOff, Send, Trash2 } from "lucide-react";
 import {
   api,
+  ApiError,
   createWebhook,
   deleteWebhook,
   getWebhook,
   getWebhooks,
   pagedItems,
+  testWebhook,
 } from "../../lib/api";
-import type { WebhookResponse, WorkspaceResponse } from "../../types/api";
+import type {
+  WebhookResponse,
+  WebhookTestResultResponse,
+  WorkspaceResponse,
+} from "../../types/api";
 import { useToast } from "../ui/ToastProvider";
 import { Button } from "../ui/Button";
 import { ConfirmDialog } from "../ConfirmDialog";
@@ -43,6 +49,10 @@ export function WebhooksSection() {
   const [pendingDelete, setPendingDelete] = useState<WebhookResponse | null>(
     null,
   );
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<
+    Record<string, WebhookTestResultResponse>
+  >({});
 
   useEffect(() => {
     let cancelled = false;
@@ -146,6 +156,30 @@ export function WebhooksSection() {
       push("Secret copied");
     } catch {
       push("Clipboard unavailable.", "error");
+    }
+  }
+
+  async function handleTest(webhook: WebhookResponse) {
+    if (!workspaceId) return;
+    setTestingId(webhook.id);
+    try {
+      const result = await testWebhook(workspaceId, webhook.id);
+      setTestResults((current) => ({ ...current, [webhook.id]: result }));
+      push(
+        result.delivered
+          ? `Test delivered (${result.statusCode}, ${result.latencyMs}ms)`
+          : "Delivery failed — check the endpoint.",
+        result.delivered ? undefined : "error",
+      );
+    } catch (err) {
+      push(
+        err instanceof ApiError && err.status === 404
+          ? "Test endpoint isn't available yet."
+          : "Couldn't send test event.",
+        "error",
+      );
+    } finally {
+      setTestingId(null);
     }
   }
 
@@ -266,6 +300,16 @@ export function WebhooksSection() {
                     <div className="flex shrink-0 items-center gap-1">
                       <button
                         type="button"
+                        aria-label="Send test event"
+                        title="Send a test event to this URL"
+                        disabled={testingId === webhook.id}
+                        onClick={() => void handleTest(webhook)}
+                        className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-primary disabled:opacity-40"
+                      >
+                        <Send className="size-3.5" aria-hidden />
+                      </button>
+                      <button
+                        type="button"
                         aria-label="Toggle signing secret"
                         onClick={() => void handleRevealSecret(webhook)}
                         className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-foreground"
@@ -296,6 +340,19 @@ export function WebhooksSection() {
                       </span>
                     ))}
                   </div>
+                  {testResults[webhook.id] && (
+                    <p
+                      className={`font-mono text-[10px] ${
+                        testResults[webhook.id].delivered
+                          ? "text-primary"
+                          : "text-destructive"
+                      }`}
+                    >
+                      {testResults[webhook.id].delivered
+                        ? `✓ delivered · ${testResults[webhook.id].statusCode} · ${testResults[webhook.id].latencyMs}ms`
+                        : `✗ failed${testResults[webhook.id].statusCode ? ` · HTTP ${testResults[webhook.id].statusCode}` : ""}${testResults[webhook.id].error ? ` · ${testResults[webhook.id].error}` : ""}`}
+                    </p>
+                  )}
                   {revealedSecrets[webhook.id] !== undefined && (
                     <div className="flex items-center gap-2 rounded-lg border border-border bg-elevated px-2.5 py-1.5">
                       <code className="min-w-0 flex-1 truncate font-mono text-[11px] text-foreground">

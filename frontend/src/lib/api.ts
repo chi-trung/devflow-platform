@@ -9,8 +9,11 @@ import type {
   ImportResultResponse,
   LabelResponse,
   LoginResponse,
+  NotificationPreferencesResponse,
   NotificationResponse,
   PullRequestResponse,
+  SavedSearchFilters,
+  SavedSearchResponse,
   SearchResponse,
   SprintResponse,
   TaskDependencyResponse,
@@ -21,6 +24,7 @@ import type {
   UserProfileResponse,
   VelocityResponse,
   WebhookResponse,
+  WebhookTestResultResponse,
 } from "../types/api";
 
 // In dev the Vite proxy forwards /api to localhost; in production
@@ -352,6 +356,68 @@ export async function importTasks(
       headers: { "Content-Type": isCsv ? "text/csv" : "application/json" },
     },
   );
+}
+
+export function getNotificationPreferences(): Promise<NotificationPreferencesResponse> {
+  return api<NotificationPreferencesResponse>(
+    "/users/me/notification-preferences",
+  );
+}
+
+export async function updateNotificationPreferences(
+  prefs: NotificationPreferencesResponse,
+): Promise<void> {
+  await api("/users/me/notification-preferences", {
+    method: "PUT",
+    body: JSON.stringify(prefs),
+  });
+}
+
+export function testWebhook(
+  workspaceId: string,
+  webhookId: string,
+): Promise<WebhookTestResultResponse> {
+  return api<WebhookTestResultResponse>(
+    `/workspaces/${workspaceId}/webhooks/${webhookId}/test`,
+    { method: "POST" },
+  );
+}
+
+export interface ReorderTaskEntry {
+  id: string;
+  status: TaskItemResponse["status"];
+  position: number;
+}
+
+export async function reorderTasks(
+  workspaceId: string,
+  projectId: string,
+  entries: ReorderTaskEntry[],
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/reorder`,
+    { method: "PUT", body: JSON.stringify({ tasks: entries }) },
+  );
+}
+
+export function getSavedSearches(): Promise<SavedSearchResponse[]> {
+  return api<SavedSearchResponse[]>("/users/me/saved-searches");
+}
+
+export function createSavedSearch(data: {
+  name: string;
+  workspaceId: string;
+  query: string;
+  filters: SavedSearchFilters;
+}): Promise<SavedSearchResponse> {
+  return api<SavedSearchResponse>("/users/me/saved-searches", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteSavedSearch(id: string): Promise<void> {
+  await api(`/users/me/saved-searches/${id}`, { method: "DELETE" });
 }
 
 export interface AppSettings {

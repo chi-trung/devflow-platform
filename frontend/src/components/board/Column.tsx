@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Circle, CircleDot, Eye, CheckCircle2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -9,7 +10,11 @@ interface ColumnProps {
   status: TaskItemResponse["status"];
   tasks: TaskItemResponse[];
   members: WorkspaceMemberResponse[];
-  onDropTask: (taskId: string, status: TaskItemResponse["status"]) => void;
+  onDropTask: (
+    taskId: string,
+    status: TaskItemResponse["status"],
+    beforeTaskId: string | null,
+  ) => void;
   onDelete: (task: TaskItemResponse) => void;
   onSelect: (taskId: string) => void;
   selectionMode?: boolean;
@@ -43,6 +48,14 @@ export function Column({
   const Icon = meta.icon;
 
   const { t } = useTranslation();
+  const [dropTarget, setDropTarget] = useState<{
+    id: string;
+    below: boolean;
+  } | null>(null);
+
+  const indicator = (
+    <div className="h-0.5 shrink-0 rounded-full bg-primary/70" aria-hidden />
+  );
 
   return (
     <section
@@ -55,13 +68,27 @@ export function Column({
       onDragLeave={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node)) {
           delete event.currentTarget.dataset.dragOver;
+          setDropTarget(null);
         }
       }}
       onDrop={(event) => {
         event.preventDefault();
         delete event.currentTarget.dataset.dragOver;
         const taskId = event.dataTransfer.getData("text/plain");
-        if (taskId) onDropTask(taskId, status);
+        const target =
+          dropTarget && tasks.some((task) => task.id === dropTarget.id)
+            ? dropTarget
+            : null;
+        setDropTarget(null);
+        if (taskId) {
+          const beforeTaskId = target
+            ? (target.below
+              ? (tasks[tasks.findIndex((t) => t.id === target.id) + 1]?.id ??
+                null)
+              : target.id)
+            : null;
+          onDropTask(taskId, status, beforeTaskId);
+        }
       }}
       data-drag-over="false"
       className="group/column flex min-h-72 w-full flex-1 flex-col gap-2 rounded-xl border border-border bg-surface p-3 transition-colors duration-200 data-[drag-over=true]:border-primary/50 data-[drag-over=true]:bg-primary/5"
@@ -77,19 +104,40 @@ export function Column({
       </header>
 
       <div className="flex flex-col gap-2">
-        {tasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            members={members}
-            onDelete={onDelete}
-            onSelect={onSelect}
-            selectionMode={selectionMode}
-            selected={selectedIds?.has(task.id) ?? false}
-            onToggleSelect={onToggleSelect}
-          />
-        ))}
-        {tasks.length === 0 && (
+        {tasks.map((task) => {
+          const showAbove =
+            dropTarget?.id === task.id && !dropTarget.below;
+          const showBelow = dropTarget?.id === task.id && dropTarget.below;
+          return (
+            <div key={task.id} className="flex flex-col">
+              {showAbove && indicator}
+              <div
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  setDropTarget({
+                    id: task.id,
+                    below: event.clientY > rect.top + rect.height / 2,
+                  });
+                }}
+                className="min-w-0"
+              >
+                <TaskCard
+                  task={task}
+                  members={members}
+                  onDelete={onDelete}
+                  onSelect={onSelect}
+                  selectionMode={selectionMode}
+                  selected={selectedIds?.has(task.id) ?? false}
+                  onToggleSelect={onToggleSelect}
+                />
+              </div>
+              {showBelow && indicator}
+            </div>
+          );
+        })}
+        {dropTarget === null && tasks.length === 0 && (
           <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
             {t("board.dropHere")}
           </p>

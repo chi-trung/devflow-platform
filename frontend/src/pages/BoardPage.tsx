@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import {
   api,
+  ApiError,
   bulkAssignTasks,
   bulkDeleteTasks,
   bulkMoveTasks,
@@ -215,6 +216,13 @@ export function BoardPage() {
           )?.userId ?? "no-match");
 
   const visibleTasks = tasks
+    .slice()
+    .sort(
+      (a, b) =>
+        (a.position ?? Number.MAX_SAFE_INTEGER) -
+          (b.position ?? Number.MAX_SAFE_INTEGER) ||
+        (a.createdAtUtc ?? "").localeCompare(b.createdAtUtc ?? ""),
+    )
     .filter((task) =>
       sprintFilter === "all"
         ? true
@@ -418,9 +426,13 @@ export function BoardPage() {
     };
   }, [projectId, reload, reloadSprints, reloadActivities]);
 
-  async function moveTask(taskId: string, status: TaskItemResponse["status"]) {
+  async function moveTask(
+    taskId: string,
+    status: TaskItemResponse["status"],
+    beforeTaskId: string | null = null,
+  ) {
     const task = tasks.find((t) => t.id === taskId);
-    if (!task || task.status === status) return;
+    if (!task) return;
 
     if (task.isBlocked) {
       const message = `"${task.title}" is blocked — resolve its blockers first.`;
@@ -429,40 +441,110 @@ export function BoardPage() {
       return;
     }
 
+    const byPosition = (
+      a: TaskItemResponse,
+      b: TaskItemResponse,
+    ): number =>
+      (a.position ?? Number.MAX_SAFE_INTEGER) -
+        (b.position ?? Number.MAX_SAFE_INTEGER) ||
+      (a.createdAtUtc ?? "").localeCompare(b.createdAtUtc ?? "");
+
+    const sameColumn = task.status === status;
+    const source = tasks
+      .filter((t) => t.status === task.status)
+      .sort(byPosition);
+
+    // Dropping at the end of the column it already sits at the end of = no-op
+    if (
+      sameColumn &&
+      !beforeTaskId &&
+      source[source.length - 1]?.id === taskId
+    ) {
+      return;
+    }
+
+    const target = tasks
+      .filter((t) => t.status === status && t.id !== taskId)
+      .sort(byPosition);
+    const insertIdx = beforeTaskId
+      ? target.findIndex((t) => t.id === beforeTaskId)
+      : -1;
+    const moved: TaskItemResponse = {
+      ...task,
+      status,
+      completedAtUtc:
+        status === "Done" ? new Date().toISOString() : null,
+    };
+    if (insertIdx >= 0) {
+      target.splice(insertIdx, 0, moved);
+    } else {
+      target.push(moved);
+    }
+
     setBoardError(null);
+    const resequenced = target.map((t, index) => ({
+      ...t,
+      position: index,
+    }));
+    const sourceResequenced = sameColumn
+      ? []
+      : source
+          .filter((t) => t.id !== taskId)
+          .map((t, index) => ({ ...t, position: index }));
     setTasks((current) =>
-      current.map((t) =>
-        t.id === taskId
-          ? {
-              ...t,
-              status,
-              completedAtUtc:
-                status === "Done" ? new Date().toISOString() : null,
-            }
-          : t,
-      ),
+      current.map((t) => {
+        const hit =
+          resequenced.find((r) => r.id === t.id) ??
+          sourceResequenced.find((r) => r.id === t.id);
+        return hit ?? t;
+      }),
     );
 
     try {
+      if (!sameColumn) {
+        await api(
+          `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}`,
+          {
+            method: "PATCH",
+            body: JSON.stringify({
+              title: task.title,
+              description: task.description,
+              status,
+              priority: task.priority,
+              assigneeId: task.assigneeId,
+              dueDateUtc: task.dueDateUtc,
+            }),
+          },
+        );
+      }
       await api(
-        `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}`,
+        `/workspaces/${workspaceId}/projects/${projectId}/tasks/reorder`,
         {
-          method: "PATCH",
+          method: "PUT",
           body: JSON.stringify({
-            title: task.title,
-            description: task.description,
-            status,
-            priority: task.priority,
-            assigneeId: task.assigneeId,
-            dueDateUtc: task.dueDateUtc,
+            tasks: [...resequenced, ...sourceResequenced].map(
+              ({ id, status: entryStatus, position }) => ({
+                id,
+                status: entryStatus,
+                position,
+              }),
+            ),
           }),
         },
       );
-      push(`Moved to ${COLUMNS.find((c) => c.status === status)?.title}`);
+      push(
+        sameColumn
+          ? "Order updated"
+          : `Moved to ${COLUMNS.find((c) => c.status === status)?.title}`,
+      );
     } catch (err) {
       reload();
-      setBoardError(err instanceof Error ? err.message : "Failed to move task.");
-      push("Couldn't move that task", "error");
+      // A 404 means the reorder endpoint hasn't shipped yet — the PATCH
+      // above already persisted cross-column moves, so stay quiet.
+      if (!(err instanceof ApiError && err.status === 404)) {
+        setBoardError(err instanceof Error ? err.message : "Failed to move task.");
+        push("Couldn't move that task", "error");
+      }
     }
   }
 
@@ -692,7 +774,9 @@ export function BoardPage() {
                     status={status}
                     tasks={pagedTasks.filter((t) => t.status === status)}
                     members={members ?? []}
-                    onDropTask={(taskId, next) => void moveTask(taskId, next)}
+                    onDropTask={(taskId, next, beforeId) =>
+                      void moveTask(taskId, next, beforeId)
+                    }
                     onDelete={setPendingDelete}
                     onSelect={setSelectedTaskId}
                     selectionMode={selectedIds.size > 0}

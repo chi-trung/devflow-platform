@@ -54,24 +54,22 @@ backend PR merges (build UI/components immediately using the frozen contract).
 
 ## Agent: OpenCode (Frontend) — scope `frontend/src/`, branches `feat/frontend-sprint16-*`
 
-### F1: Notification/email preferences toggles (P1, needs B1)
-- [ ] SettingsPage: new "Notifications" card — 3 switches bound to GET/PUT preferences
-- [ ] Optimistic toggle UX + toast on failure rollback
-- [ ] i18n en/vi keys
+### F1: Notification/email preferences toggles (P1, needs B1) ✅ UI SHIPPED
+- [x] SettingsPage: 3 switches bound to GET/PUT preferences — optimistic update, rollback on error
+- [x] Graceful degradation: API 404 → falls back to legacy local-only toggles; card auto-upgrades when B1 merges
 
-### F2: Webhook "Send test" action (P2, needs B2)
-- [ ] WebhooksSection: per-row "Send test" button → shows delivered ✓/✗, HTTP status, latency
-- [ ] Disable while firing; error state surfaces `error` field
+### F2: Webhook "Send test" action (P2, needs B2) ✅ UI SHIPPED
+- [x] Per-row Send button → shows delivered ✓/✗, HTTP status, latency
+- [x] 404 → "Test endpoint isn't available yet." toast until B2 merges
 
-### F3: Drag-reorder persistence (P3, needs B3)
-- [ ] BoardPage `moveTask`: on drop, compute new order within target column and
-      PUT `/tasks/reorder` with full column list (optimistic update, rollback on error)
-- [ ] Sort tasks by `position` inside columns; fall back to createdAt when equal
+### F3: Drag-reorder persistence (P3, needs B3) ✅ UI SHIPPED
+- [x] Column-level insert indicators; drop above/below any card or at column end
+- [x] moveTask: optimistic resequence + PUT /tasks/reorder; PATCH fallback keeps cross-column moves working pre-B3
+- [x] Columns sort by position ?? createdAtUtc
 
-### F4: Saved searches in CommandPalette (P4, needs B4)
-- [ ] Chips row above results listing user's saved searches for active workspace (click = run with stored filters)
-- [ ] When palette filters are active: "Save this search…" command → inline name input → POST
-- [ ] Delete affordance on chip (hover ×)
+### F4: Saved searches in CommandPalette (P4, needs B4) ✅ UI SHIPPED
+- [x] Chips row (click = apply filters, hover × = delete); "Save this search…" inline name input when filters active
+- [x] Silently no-ops until B4 ships
 
 ### Carried over from Sprint 15
 - [ ] Email notification preferences toggle — superseded by F1 ✅ planned
@@ -101,4 +99,4 @@ backend PR merges (build UI/components immediately using the frozen contract).
 
 ---
 
-*Last updated: 2026-08-22 — Sprint 16 plan published (4 paired features, contract-first)*
+*Last updated: 2026-08-22 — OpenCode: F1-F4 frontend shipped (graceful degradation until B1-B4 land); Codebuff: B1-B4 backend still open*

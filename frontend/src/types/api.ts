@@ -57,6 +57,39 @@ export interface TaskItemResponse {
   estimateMinutes?: number | null;
   totalLoggedMinutes?: number;
   labelIds?: string[];
+  position?: number;
+  createdAtUtc?: string;
+}
+
+export interface NotificationPreferencesResponse {
+  emailOnAssignment: boolean;
+  emailOnMention: boolean;
+  emailOnSprintStarted: boolean;
+}
+
+export interface WebhookTestResultResponse {
+  delivered: boolean;
+  statusCode: number;
+  latencyMs: number;
+  error: string | null;
+}
+
+export interface SavedSearchFilters {
+  status?: string | null;
+  priority?: string | null;
+  assigneeId?: string | null;
+  labelId?: string | null;
+  dueBefore?: string | null;
+  dueAfter?: string | null;
+}
+
+export interface SavedSearchResponse {
+  id: string;
+  name: string;
+  workspaceId: string;
+  query: string;
+  filters: SavedSearchFilters;
+  createdAtUtc?: string;
 }
 
 export interface TaskDependencyResponse {

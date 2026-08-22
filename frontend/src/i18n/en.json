@@ -387,7 +387,9 @@
     "anyDue": "Any due date",
     "dueOverdue": "Overdue",
     "dueToday": "Due today",
-    "dueWeek": "Due this week"
+    "dueWeek": "Due this week",
+    "saveSearch": "Save this search",
+    "searchName": "Name this search…"
   },
   "import": {
     "title": "Import tasks",

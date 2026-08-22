@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -9,7 +9,15 @@ import {
   TriangleAlert,
   UserRound,
 } from "lucide-react";
-import { updateSettings, type AppSettings } from "../lib/api";
+import {
+  getNotificationPreferences,
+  updateNotificationPreferences,
+  updateSettings,
+  type AppSettings,
+} from "../lib/api";
+import type {
+  NotificationPreferencesResponse,
+} from "../types/api";
 import type { Theme } from "../lib/theme";
 import { useAuth } from "../auth/AuthContext";
 import { useToast } from "../components/ui/ToastProvider";
@@ -79,6 +87,28 @@ function EmailEventRow({
   );
 }
 
+function PrefRow({
+  label,
+  hint,
+  value,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <p className="text-sm font-medium">{label}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
+      </div>
+      <Switch checked={value} onChange={onChange} label={label} />
+    </div>
+  );
+}
+
 export function SettingsPage() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
@@ -94,6 +124,46 @@ export function SettingsPage() {
     return false;
   });
   const [confirmSignOut, setConfirmSignOut] = useState(false);
+
+  // Server-backed preferences (B1 contract). When the API isn't deployed
+  // yet we fall back to the legacy local-only toggles below.
+  const [serverPrefs, setServerPrefs] =
+    useState<NotificationPreferencesResponse | null>(null);
+  const [prefsAvailable, setPrefsAvailable] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getNotificationPreferences()
+      .then((prefs) => {
+        if (!cancelled) {
+          setServerPrefs(prefs);
+          setPrefsAvailable(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPrefsAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handlePrefChange(
+    key: keyof NotificationPreferencesResponse,
+    value: boolean,
+  ) {
+    if (!serverPrefs) return;
+    const previous = serverPrefs;
+    const next = { ...previous, [key]: value };
+    setServerPrefs(next);
+    try {
+      await updateNotificationPreferences(next);
+      push("Preference saved");
+    } catch {
+      setServerPrefs(previous);
+      push("Couldn't save preference.", "error");
+    }
+  }
 
   const EMAIL_EVENTS: { key: string; label: string; hint: string }[] = [
     { key: "assigned", label: "Task assigned to me", hint: "Someone assigns you a task" },
@@ -246,24 +316,60 @@ export function SettingsPage() {
             />
           </div>
 
-          {emailNotifications && (
-            <div className="rise mt-4 flex flex-col gap-3 rounded-lg border border-border bg-card p-3.5">
-              {EMAIL_EVENTS.map((event) => (
-                <EmailEventRow
-                  key={event.key}
-                  label={event.label}
-                  hint={event.hint}
-                  read={() => readEmailEvent(event.key)}
-                  onChange={(value) => {
-                    writeEmailEvent(event.key, value);
-                  }}
-                />
-              ))}
-              <p className="font-mono text-[10px] text-muted-foreground">
-                Saved locally — server-side delivery lands with the email-preferences API.
-              </p>
-            </div>
-          )}
+          {emailNotifications &&
+            (prefsAvailable && serverPrefs ? (
+              <div className="rise mt-4 flex flex-col gap-3 rounded-lg border border-border bg-card p-3.5">
+                {(
+                  [
+                    {
+                      key: "emailOnAssignment",
+                      label: "Task assigned to me",
+                      hint: "Someone assigns you a task",
+                    },
+                    {
+                      key: "emailOnMention",
+                      label: "I'm mentioned",
+                      hint: "Your name appears in a comment",
+                    },
+                    {
+                      key: "emailOnSprintStarted",
+                      label: "Sprint started",
+                      hint: "A sprint in your workspace kicks off",
+                    },
+                  ] as const
+                ).map((event) => (
+                  <PrefRow
+                    key={event.key}
+                    label={event.label}
+                    hint={event.hint}
+                    value={serverPrefs[event.key]}
+                    onChange={(value) =>
+                      void handlePrefChange(event.key, value)
+                    }
+                  />
+                ))}
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  Synced to your account — applies everywhere you sign in.
+                </p>
+              </div>
+            ) : (
+              <div className="rise mt-4 flex flex-col gap-3 rounded-lg border border-border bg-card p-3.5">
+                {EMAIL_EVENTS.map((event) => (
+                  <EmailEventRow
+                    key={event.key}
+                    label={event.label}
+                    hint={event.hint}
+                    read={() => readEmailEvent(event.key)}
+                    onChange={(value) => {
+                      writeEmailEvent(event.key, value);
+                    }}
+                  />
+                ))}
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  Saved locally — server-side delivery lands with the email-preferences API.
+                </p>
+              </div>
+            ))}
         </section>
 
         <WebhooksSection />
