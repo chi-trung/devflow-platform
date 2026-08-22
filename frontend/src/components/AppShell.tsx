@@ -252,15 +252,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </section>
         </nav>
 
-        <div className="flex items-center gap-1 border-t border-border px-3 py-2.5">
+        <div className="shrink-0 border-t border-border px-3 py-2.5">
           {currentUser && (
-            <>
+            <div className="flex items-center gap-1">
               <NotificationsPanel
                 workspaceId={workspaceId}
                 direction="up"
               />
               <UserMenu direction="up" />
-            </>
+            </div>
           )}
         </div>
       </aside>
