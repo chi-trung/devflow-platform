@@ -1,4 +1,8 @@
-import type { FieldErrors, LoginResponse } from "../types/api";
+import type {
+  FieldErrors,
+  LoginResponse,
+  SprintResponse,
+} from "../types/api";
 
 // In dev the Vite proxy forwards /api to localhost; in production
 // VITE_API_URL points at the deployed backend (e.g. https://api.example.com).
@@ -123,4 +127,71 @@ export async function api<T>(
 
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
+}
+
+export function getSprints(
+  workspaceId: string,
+  projectId: string,
+): Promise<SprintResponse[]> {
+  return api<SprintResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/sprints`,
+  );
+}
+
+export function createSprint(
+  workspaceId: string,
+  projectId: string,
+  input: { name: string; goal: string | null },
+): Promise<{ id: string }> {
+  return api<{ id: string }>(
+    `/workspaces/${workspaceId}/projects/${projectId}/sprints`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function startSprint(
+  workspaceId: string,
+  projectId: string,
+  sprintId: string,
+  input: { startDateUtc: string; endDateUtc: string },
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/sprints/${sprintId}/start`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function completeSprint(
+  workspaceId: string,
+  projectId: string,
+  sprintId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/sprints/${sprintId}/complete`,
+    { method: "POST" },
+  );
+}
+
+export async function assignTaskToSprint(
+  workspaceId: string,
+  projectId: string,
+  sprintId: string,
+  taskId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/sprints/${sprintId}/tasks/${taskId}`,
+    { method: "PUT" },
+  );
+}
+
+export async function removeTaskFromSprint(
+  workspaceId: string,
+  projectId: string,
+  sprintId: string,
+  taskId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/sprints/${sprintId}/tasks/${taskId}`,
+    { method: "DELETE" },
+  );
 }
