@@ -50,6 +50,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<TaskCustomFieldValue> TaskCustomFieldValues => Set<TaskCustomFieldValue>();
 
+    public DbSet<Webhook> Webhooks => Set<Webhook>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);

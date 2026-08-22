@@ -22,4 +22,10 @@ public sealed record ProjectResult(
 
 public sealed record SearchQuery(
     Guid WorkspaceId,
-    string Keyword) : IRequest<SearchResult>, IWorkspaceRequest;
+    string Keyword,
+    string? Status = null,
+    string? Priority = null,
+    Guid? AssigneeId = null,
+    Guid? LabelId = null,
+    DateTime? DueBefore = null,
+    DateTime? DueAfter = null) : IRequest<SearchResult>, IWorkspaceRequest;

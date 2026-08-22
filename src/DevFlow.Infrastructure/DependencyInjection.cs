@@ -47,6 +47,9 @@ public static class DependencyInjection
         services.AddScoped<IGitHubRepository, GitHubRepository>();
         services.AddScoped<ITemplateRepository, TemplateRepository>();
         services.AddScoped<ICustomFieldRepository, CustomFieldRepository>();
+        services.AddScoped<IWebhookRepository, WebhookRepository>();
+        services.AddScoped<IWebhookDispatcher, WebhookDispatcher>();
+        services.AddHttpClient("Webhooks");
         services.AddScoped<IEmailService, NoOpEmailService>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
