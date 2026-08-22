@@ -1,12 +1,19 @@
 # AGENT STATUS — Sprint 13
 
-## ✅ Backend B1+B2 DONE (2026-08-22)
+## ✅ ALL BACKEND DONE (2026-08-22)
 
-### What Codebuff completed:
-1. **@Mention Notifications** — CreateCommentHandler parses @username, creates Notification + saves to DB
-2. **Activity Log** — dependency added/removed, time entry logged/removed now tracked
-3. Added `GetByUsernameAsync` to IUserRepository
-4. Commit: `d066e38` on main, deploying to Render
+| Task | Status | Commit |
+|------|--------|--------|
+| B1: @Mention Notifications | ✅ | d066e38 |
+| B2: Activity Log Improvements | ✅ | d066e38 |
+| B3: User Search + Role | ✅ | a99c466 |
+| B4: Dashboard Per-Project Stats | ✅ | a99c466 |
+
+### Backend API Changes:
+- **POST /comments** — now parses @username mentions, creates Notification
+- **GET /users/search** — now returns `role` field
+- **GET /dashboard** — now returns `projectStats[]` + `upcomingDeadlines[]` with project info
+- **Dependencies/Time entries** — now log activity events
 
 ---
 
@@ -15,27 +22,25 @@
 **Branch:** feat/frontend-sprint13
 **Worktree:** Desktop/devflow-frontend
 
-### F1: Finish i18n for Remaining Pages 🔴 HIGH
-- [ ] BoardPage.tsx — replace hardcoded strings with useTranslation() (columns, bulk actions, empty states, toasts)
-- [ ] WorkspacePage.tsx — project creation, member invite, delete dialogs
-- [ ] SprintPlanningPage.tsx — sprint creation, drag/drop labels, status badges
-- [ ] ReportsPage.tsx — chart titles, date labels, export buttons
-- [ ] TaskDetailPanel.tsx — status/priority select labels, comment section
+### F1: Finish i18n 🔴 HIGH
+- [ ] BoardPage.tsx — hardcoded strings
+- [ ] WorkspacePage.tsx — project/member management
+- [ ] SprintPlanningPage.tsx — sprint creation, labels
+- [ ] ReportsPage.tsx — chart titles, dates
+- [ ] TaskDetailPanel.tsx — status/priority labels
 
 ### F2: Code Splitting 🔴 HIGH
-- [ ] Lazy load Routes in App.tsx
-- [ ] Lazy load GraphModal, BurndownChart, VelocityChart
-- [ ] Target: bundle < 200KB gzipped
+- [ ] Lazy load Routes
+- [ ] Lazy load heavy components
 
 ### F3: UX Bug Fixes
-- [ ] Board empty state — show "Create first project" when workspace has no projects
-- [ ] Sprint page — "No tasks yet" message links to board
+- [ ] Board empty state when no projects
 
 ### Instructions:
 ```
-/ask Read AGENT_STATUS.md — Sprint 13 plan. Backend B1-B2 DONE. Start F1: Finish i18n for remaining pages. Begin with BoardPage.tsx — replace ALL hardcoded strings with useTranslation(). Branch: feat/frontend-sprint13. Worktree: Desktop/devflow-frontend
+/ask Read AGENT_STATUS.md — ALL backend done. Start F1: Finish i18n for remaining pages. Begin with BoardPage.tsx. Branch: feat/frontend-sprint13. Worktree: Desktop/devflow-frontend
 ```
 
 ---
 
-*Last updated: 2026-08-22 by Codebuff*
+*Last updated: 2026-08-22 by Codebuff — all Sprint 13 backend complete*
