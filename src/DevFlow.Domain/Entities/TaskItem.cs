@@ -40,6 +40,8 @@ public class TaskItem : BaseEntity, IAuditableEntity
 
     public DateTimeOffset? CompletedAtUtc { get; private set; }
 
+    public int? EstimateMinutes { get; private set; }
+
     public DateTimeOffset CreatedAtUtc { get; set; }
 
     public DateTimeOffset? UpdatedAtUtc { get; set; }
@@ -91,4 +93,9 @@ public class TaskItem : BaseEntity, IAuditableEntity
     public void AssignToSprint(Guid sprintId) => SprintId = sprintId;
 
     public void RemoveFromSprint() => SprintId = null;
+
+    public void SetEstimate(int? estimateMinutes)
+    {
+        EstimateMinutes = estimateMinutes;
+    }
 }

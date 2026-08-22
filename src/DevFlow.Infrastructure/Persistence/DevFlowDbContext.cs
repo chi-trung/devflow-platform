@@ -36,6 +36,10 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<TaskLabel> TaskLabels => Set<TaskLabel>();
 
+    public DbSet<TaskDependency> TaskDependencies => Set<TaskDependency>();
+
+    public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);
