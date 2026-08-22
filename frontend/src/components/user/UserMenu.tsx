@@ -56,7 +56,7 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
         className={
           compact
             ? "flex items-center gap-1 rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
-            : "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-1 py-1 text-left transition-colors duration-150 hover:bg-elevated"
+            : "flex min-w-0 w-full items-center gap-2 rounded-lg px-1 py-1 text-left transition-colors duration-150 hover:bg-elevated overflow-hidden"
         }
       >
         {compact ? (
