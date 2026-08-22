@@ -1,10 +1,12 @@
 name: Keep Alive
 
-# Pings the API every 10 minutes so the free-tier Render instance
+# Pings the API every 5 minutes so the free-tier Render instance
 # doesn't spin down (and the Supabase database stays active).
+# NOTE: GitHub often delays/skips scheduled runs under load, so the
+# effective interval can still drift longer than the cron value.
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 permissions:
