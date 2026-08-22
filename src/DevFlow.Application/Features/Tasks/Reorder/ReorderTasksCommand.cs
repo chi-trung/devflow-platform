@@ -8,4 +8,9 @@ public sealed record ReorderTasksCommand(
     Guid ProjectId,
     IReadOnlyList<ReorderTaskItem> Tasks) : IRequest;
 
-public sealed record ReorderTaskItem(Guid Id, string Status, int Position);
+public sealed class ReorderTaskItem
+{
+    public Guid Id { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public int Position { get; set; }
+}
