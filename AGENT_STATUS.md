@@ -1,69 +1,46 @@
-# AGENT STATUS — Sprint 12 Plan
+# AGENT STATUS — Sprint 13
 
-## 🎯 Sprint 12 — UX Polish & Real-time
+## ✅ ALL BACKEND DONE (2026-08-22)
 
-### Agent: Codebuff (Backend)
+| Task | Status | Commit |
+|------|--------|--------|
+| B1: @Mention Notifications | ✅ | d066e38 |
+| B2: Activity Log Improvements | ✅ | d066e38 |
+| B3: User Search + Role | ✅ | a99c466 |
+| B4: Dashboard Per-Project Stats | ✅ | a99c466 |
 
-#### B1: Real-time Notifications via SignalR
-- [ ] Create NotificationHub for push notifications
-- [ ] Notify user when: task assigned, mentioned, sprint started
-- [ ] Frontend auto-receives notification without polling
-
-#### B2: Task Comments with @Mentions
-- [ ] Parse @username in comment content
-- [ ] Create notification for mentioned users
-- [ ] GET /users/search?q= for mention autocomplete
-
-#### B3: Task Activity Improvements
-- [ ] Log: dependency added/removed
-- [ ] Log: time entry added/removed
-- [ ] Log: label added/removed
-
-### Agent: OpenCode (Frontend)
-
-#### F1: Keyboard Shortcuts
-- [ ] N — New task (when on board)
-- [ ] E — Edit task (when task selected)
-- [ ] ? — Show shortcuts help modal
-
-#### F2: @Mention in Comments
-- [ ] Type @ in comment box → show user dropdown
-- [ ] Autocomplete username
-- [ ] Highlight mentions in comment display
-
-#### F3: Notification Push
-- [ ] Connect to SignalR NotificationHub
-- [ ] Show toast when new notification arrives
-- [ ] Update bell badge in real-time
+### Backend API Changes:
+- **POST /comments** — now parses @username mentions, creates Notification
+- **GET /users/search** — now returns `role` field
+- **GET /dashboard** — now returns `projectStats[]` + `upcomingDeadlines[]` with project info
+- **Dependencies/Time entries** — now log activity events
 
 ---
 
-## 🎯 Sprint 13 — Advanced Analytics
+## ⏳ OpenCode — START NOW
 
-### Codebuff
-- [ ] Sprint Report API
-- [ ] Cumulative Flow Diagram API
-- [ ] Workload Distribution API
+**Branch:** feat/frontend-sprint13
+**Worktree:** Desktop/devflow-frontend
 
-### OpenCode
-- [ ] Cumulative Flow Chart (stacked area)
-- [ ] Sprint Report Page
-- [ ] Workload Heatmap
+### F1: Finish i18n 🔴 HIGH
+- [ ] BoardPage.tsx — hardcoded strings
+- [ ] WorkspacePage.tsx — project/member management
+- [ ] SprintPlanningPage.tsx — sprint creation, labels
+- [ ] ReportsPage.tsx — chart titles, dates
+- [ ] TaskDetailPanel.tsx — status/priority labels
 
----
+### F2: Code Splitting 🔴 HIGH
+- [ ] Lazy load Routes
+- [ ] Lazy load heavy components
 
-## 🎯 Sprint 14 — Developer Experience
+### F3: UX Bug Fixes
+- [ ] Board empty state when no projects
 
-### Codebuff
-- [ ] Webhook System
-- [ ] API Versioning
-- [ ] Rate Limiting Improvements
-
-### OpenCode
-- [ ] Drag & Drop Improvements
-- [ ] Infinite Scroll
-- [ ] PWA Support
+### Instructions:
+```
+/ask Read AGENT_STATUS.md — ALL backend done. Start F1: Finish i18n for remaining pages. Begin with BoardPage.tsx. Branch: feat/frontend-sprint13. Worktree: Desktop/devflow-frontend
+```
 
 ---
 
-*Last updated: Sprint 12 planning*
+*Last updated: 2026-08-22 by Codebuff — all Sprint 13 backend complete*
