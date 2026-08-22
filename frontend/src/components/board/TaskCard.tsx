@@ -1,4 +1,6 @@
+import { Clock, Link2 } from "lucide-react";
 import type { TaskItemResponse, WorkspaceMemberResponse } from "../../types/api";
+import { formatMinutes } from "../../lib/format";
 import { Avatar } from "../ui/Avatar";
 
 const priorityMeta: Record<
@@ -73,6 +75,21 @@ export function TaskCard({ task, members, onDelete, onSelect }: TaskCardProps) {
               day: "numeric",
             })}
           </time>
+        )}
+        {task.isBlocked && (
+          <span
+            title="Blocked by dependencies"
+            className="flex items-center gap-1 rounded-md bg-destructive/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-destructive"
+          >
+            <Link2 className="size-3" aria-hidden />
+            Blocked
+          </span>
+        )}
+        {(task.totalLoggedMinutes ?? 0) > 0 && (
+          <span className="flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
+            <Clock className="size-3" aria-hidden />
+            {formatMinutes(task.totalLoggedMinutes ?? 0)}
+          </span>
         )}
         {assignee && (
           <span

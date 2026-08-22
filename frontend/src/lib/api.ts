@@ -7,6 +7,8 @@ import type {
   NotificationResponse,
   SearchResponse,
   SprintResponse,
+  TaskDependencyResponse,
+  TimeEntryResponse,
   UserProfileResponse,
 } from "../types/api";
 
@@ -287,4 +289,120 @@ export function createLabel(
     `/workspaces/${workspaceId}/projects/${projectId}/labels`,
     { method: "POST", body: JSON.stringify(data) },
   );
+}
+
+export function getTaskDependencies(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+): Promise<TaskDependencyResponse[]> {
+  return api<TaskDependencyResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/dependencies`,
+  );
+}
+
+export function addTaskDependency(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+  blockerTaskId: string,
+): Promise<{ id: string }> {
+  return api<{ id: string }>(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/dependencies`,
+    { method: "POST", body: JSON.stringify({ blockerTaskId }) },
+  );
+}
+
+export async function removeTaskDependency(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+  dependencyId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/dependencies/${dependencyId}`,
+    { method: "DELETE" },
+  );
+}
+
+export function getTimeEntries(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+): Promise<TimeEntryResponse[]> {
+  return api<TimeEntryResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/time-entries`,
+  );
+}
+
+export function logTimeEntry(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+  input: { minutes: number; description: string | null },
+): Promise<TimeEntryResponse> {
+  return api<TimeEntryResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/time-entries`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function deleteTimeEntry(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+  entryId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/time-entries/${entryId}`,
+    { method: "DELETE" },
+  );
+}
+
+export interface BoardFilterState {
+  sprint: string;
+  search: string;
+  priority: string;
+  assignee: string;
+  label: string;
+  dueFrom: string;
+  dueTo: string;
+  blockedOnly: boolean;
+}
+
+const filterPresetsKey = (projectId: string) =>
+  `devflow.boardFilters.${projectId}`;
+
+export function loadFilterPresets(
+  projectId: string,
+): Record<string, BoardFilterState> {
+  try {
+    const raw = localStorage.getItem(filterPresetsKey(projectId));
+    return raw ? (JSON.parse(raw) as Record<string, BoardFilterState>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveFilterPreset(
+  projectId: string,
+  name: string,
+  state: BoardFilterState,
+): void {
+  const presets = loadFilterPresets(projectId);
+  presets[name] = state;
+  try {
+    localStorage.setItem(filterPresetsKey(projectId), JSON.stringify(presets));
+  } catch {}
+}
+
+export function deleteFilterPreset(
+  projectId: string,
+  name: string,
+): void {
+  const presets = loadFilterPresets(projectId);
+  delete presets[name];
+  try {
+    localStorage.setItem(filterPresetsKey(projectId), JSON.stringify(presets));
+  } catch {}
 }
