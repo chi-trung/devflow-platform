@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -49,12 +50,14 @@ import type {
 
 const TASKS_PER_PAGE = 8;
 
-const COLUMNS: { title: string; status: TaskItemResponse["status"] }[] = [
-  { title: "Backlog", status: "Backlog" },
-  { title: "In Progress", status: "InProgress" },
-  { title: "In Review", status: "InReview" },
-  { title: "Done", status: "Done" },
-];
+function getColumns(t: (key: string) => string): { title: string; status: TaskItemResponse["status"] }[] {
+  return [
+    { title: t("board.backlog"), status: "Backlog" },
+    { title: t("board.inProgress"), status: "InProgress" },
+    { title: t("board.inReview"), status: "InReview" },
+    { title: t("board.done"), status: "Done" },
+  ];
+}
 
 interface ParsedSearch {
   text: string;
@@ -113,6 +116,8 @@ function parseSearchQuery(raw: string): ParsedSearch {
 }
 
 export function BoardPage() {
+  const { t } = useTranslation();
+  const COLUMNS = getColumns(t);
   const { workspaceId = "", projectId = "" } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -498,7 +503,7 @@ export function BoardPage() {
           className="mb-3 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-150 hover:text-primary"
         >
           <ArrowLeft className="size-4" aria-hidden />
-          Projects
+          {t("board.projects")}
         </Link>
 
         <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
@@ -510,7 +515,7 @@ export function BoardPage() {
               {project && <Badge tone="teal">{project.key}</Badge>}
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Drag cards between columns — changes save instantly.
+              {t("board.dragHint")}
             </p>
           </div>
             <div className="flex items-center gap-2">
@@ -519,14 +524,14 @@ export function BoardPage() {
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98]"
               >
                 <CalendarRange className="size-4" aria-hidden />
-                Sprints
+                {t("nav.sprints")}
               </Link>
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/reports`}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98]"
               >
                 <BarChart3 className="size-4" aria-hidden />
-                Reports
+                {t("nav.reports")}
               </Link>
               <Button
                 variant="outline"
@@ -534,7 +539,7 @@ export function BoardPage() {
                 title="View project activity log"
               >
                 <History className="size-4" aria-hidden />
-                Activity
+                {t("activity.projectActivity")}
               </Button>
               <Button
                 variant="outline"
@@ -542,7 +547,7 @@ export function BoardPage() {
                 title="Dependency graph"
               >
                 <Network className="size-4" aria-hidden />
-                Graph
+                {t("reports.burndown")}
               </Button>
               <button
                 type="button"
@@ -558,7 +563,7 @@ export function BoardPage() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Filter tasks…  status:done is:blocked"
+                placeholder={t("board.filterTasks")}
                 data-board-search
                 aria-label="Filter tasks by title or search operators"
                 className="w-44 bg-transparent text-sm placeholder:text-muted-foreground/50 focus:outline-none"
@@ -577,7 +582,7 @@ export function BoardPage() {
             {!creating && (
               <Button onClick={() => setCreating(true)}>
                 <Plus className="size-4" aria-hidden />
-                New task
+                {t("board.newTask")}
               </Button>
             )}
           </div>
@@ -652,14 +657,14 @@ export function BoardPage() {
               <SquareKanban className="size-6" aria-hidden />
             </span>
             <p className="font-display text-lg font-semibold">
-              This board is empty
+              {t("board.empty")}
             </p>
             <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              Add the first task and drag it across columns as work progresses.
+              {t("board.emptyDesc")}
             </p>
             <Button className="mt-5" onClick={() => setCreating(true)}>
               <Plus className="size-4" aria-hidden />
-              New task
+              {t("board.newTask")}
             </Button>
           </div>
         ) : (
@@ -702,8 +707,8 @@ export function BoardPage() {
 
       {pendingDelete && (
         <ConfirmDialog
-          title="Delete this task?"
-          message={`“${pendingDelete.title}” will be permanently removed, along with its comments.`}
+          title={t("task.delete") + "?"}
+          message={`${pendingDelete.title} ${t("task.deleteConfirm")}`}
           onConfirm={() => {
             const task = pendingDelete;
             setPendingDelete(null);
@@ -715,8 +720,8 @@ export function BoardPage() {
 
       {confirmBulkDelete && selectedIds.size > 0 && (
         <ConfirmDialog
-          title={`Delete ${selectedIds.size} task${selectedIds.size === 1 ? "" : "s"}?`}
-          message="Selected tasks will be permanently removed, along with their comments."
+          title={`${t("common.delete")} ${selectedIds.size} task${selectedIds.size === 1 ? "" : "s"}?`}
+          message={t("task.deleteConfirm")}
           onConfirm={() => {
             setConfirmBulkDelete(false);
             void runBulk(
@@ -733,7 +738,7 @@ export function BoardPage() {
         <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rise">
           <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
             <span className="rounded-md bg-primary/15 px-2 py-1 font-mono text-xs font-semibold text-primary">
-              {selectedIds.size} selected
+              {selectedIds.size} {t("common.confirm")}
             </span>
             <select
               aria-label="Bulk move to status"
@@ -750,7 +755,7 @@ export function BoardPage() {
               }}
               className="rounded-md border border-border bg-card px-2 py-1.5 text-xs focus:border-primary focus:outline-none"
             >
-              <option value="">Move to…</option>
+              <option value="">{t("task.status")}…</option>
               {COLUMNS.map((column) => (
                 <option key={column.status} value={column.status}>
                   {column.title}
@@ -777,8 +782,8 @@ export function BoardPage() {
               }}
               className="max-w-36 rounded-md border border-border bg-card px-2 py-1.5 text-xs focus:border-primary focus:outline-none"
             >
-              <option value="">Assign to…</option>
-              <option value="none">Unassigned</option>
+              <option value="">{t("task.assignee")}…</option>
+              <option value="none">{t("task.unassigned")}</option>
               {(members ?? []).map((member) => (
                 <option key={member.userId} value={member.userId}>
                   {member.displayName || member.username}
@@ -790,7 +795,7 @@ export function BoardPage() {
               onClick={() => setConfirmBulkDelete(true)}
               className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:border-destructive hover:text-destructive"
             >
-              Delete
+              {t("common.delete")}
             </button>
             <button
               type="button"
