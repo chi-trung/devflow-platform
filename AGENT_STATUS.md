@@ -1,69 +1,83 @@
-# AGENT STATUS — Sprint 12 Plan
+# AGENT STATUS — Sprint 13 Plan
 
-## 🎯 Sprint 12 — UX Polish & Real-time
+## 🎯 Sprint 13 — Final Polish & Production Readiness
 
-### Agent: Codebuff (Backend)
-
-#### B1: Real-time Notifications via SignalR
-- [ ] Create NotificationHub for push notifications
-- [ ] Notify user when: task assigned, mentioned, sprint started
-- [ ] Frontend auto-receives notification without polling
-
-#### B2: Task Comments with @Mentions
-- [ ] Parse @username in comment content
-- [ ] Create notification for mentioned users
-- [ ] GET /users/search?q= for mention autocomplete
-
-#### B3: Task Activity Improvements
-- [ ] Log: dependency added/removed
-- [ ] Log: time entry added/removed
-- [ ] Log: label added/removed
-
-### Agent: OpenCode (Frontend)
-
-#### F1: Keyboard Shortcuts
-- [ ] N — New task (when on board)
-- [ ] E — Edit task (when task selected)
-- [ ] ? — Show shortcuts help modal
-
-#### F2: @Mention in Comments
-- [ ] Type @ in comment box → show user dropdown
-- [ ] Autocomplete username
-- [ ] Highlight mentions in comment display
-
-#### F3: Notification Push
-- [ ] Connect to SignalR NotificationHub
-- [ ] Show toast when new notification arrives
-- [ ] Update bell badge in real-time
+### Current Status (2026-08-22)
+- **Backend**: Sprint 8-12 APIs all merged (55+ endpoints)
+- **Frontend**: Sprint 8-11 UI merged, i18n partially applied
+- **Deploy**: Vercel (FE) + Render (BE) — both live
+- **Known issues**: @Mention parsing not wired, notification broadcaster not called, bundle too large (582KB)
 
 ---
 
-## 🎯 Sprint 13 — Advanced Analytics
+### Agent: Codebuff (Backend) — Branch: `feat/backend-sprint13`
 
-### Codebuff
-- [ ] Sprint Report API
-- [ ] Cumulative Flow Diagram API
-- [ ] Workload Distribution API
+#### B1: Wire Up @Mention Notifications ⚠️ CRITICAL
+- [ ] In `CreateCommentHandler` — parse `@username` in comment content
+- [ ] For each mention → create Notification (type=Mention) + call `INotificationBroadcaster`
+- [ ] Verify: comment "hey @user" creates a notification + real-time push
 
-### OpenCode
-- [ ] Cumulative Flow Chart (stacked area)
-- [ ] Sprint Report Page
-- [ ] Workload Heatmap
+#### B2: Activity Log Improvements
+- [ ] Log dependency added/removed events
+- [ ] Log time entry added/removed events
+- [ ] Log label added/removed events
+- [ ] Log template applied events
 
----
+#### B3: User Search Improvements
+- [ ] GET /users/search — return avatar URL + role in response
+- [ ] Add debounced search support (min 2 chars)
 
-## 🎯 Sprint 14 — Developer Experience
-
-### Codebuff
-- [ ] Webhook System
-- [ ] API Versioning
-- [ ] Rate Limiting Improvements
-
-### OpenCode
-- [ ] Drag & Drop Improvements
-- [ ] Infinite Scroll
-- [ ] PWA Support
+#### B4: Dashboard Improvements
+- [ ] Add upcoming deadlines to /dashboard response (with project info)
+- [ ] Add per-project task counts to /dashboard response
 
 ---
 
-*Last updated: Sprint 12 planning*
+### Agent: OpenCode (Frontend) — Branch: `feat/frontend-sprint13`
+
+#### F1: Finish i18n for Remaining Pages 🔴 HIGH
+- [ ] BoardPage — all hardcoded strings (columns, bulk actions, empty states)
+- [ ] WorkspacePage — project creation, member management, delete
+- [ ] SprintPlanningPage — sprint creation, drag/drop labels
+- [ ] ReportsPage — chart titles, date labels
+- [ ] TaskDetailPanel — status/priority labels, comment section
+
+#### F2: Code Splitting (Bundle Optimization) 🔴 HIGH
+- [ ] Lazy load Routes (Dashboard, Board, Sprint, Reports, Settings, Profile)
+- [ ] Lazy load heavy components (GraphModal, BurndownChart, VelocityChart)
+- [ ] Target: bundle < 200KB gzipped
+
+#### F3: UX Bug Fixes
+- [ ] Notification bell — persist toggle state to API (not just localStorage)
+- [ ] Board empty state — show "Create first project" when no projects exist
+- [ ] Workspace page — show loading skeleton while stats load
+- [ ] Sprint page — fix "No tasks yet" message to link to board correctly
+
+---
+
+### Sprint 13 Success Criteria
+| Metric | Target |
+|--------|--------|
+| @Mention notifications | Working end-to-end |
+| i18n coverage | 100% of UI strings |
+| Bundle size | < 200KB gzipped |
+| Activity log events | 10+ event types tracked |
+| Bug fixes | 4+ UX issues resolved |
+
+---
+
+### How to Start
+
+**Paste into Codebuff terminal:**
+```
+/ask Read AGENT_STATUS.md — Sprint 13 plan. Start with B1: Wire up @Mention notifications in CreateCommentHandler. Parse @username in comment content, create Notification + call INotificationBroadcaster. Branch: feat/backend-sprint13
+```
+
+**Paste into OpenCode terminal:**
+```
+/ask Read AGENT_STATUS.md — Sprint 13 plan. Start with F1: Finish i18n for remaining pages. Begin with BoardPage.tsx — replace all hardcoded strings with useTranslation(). Branch: feat/frontend-sprint13. Worktree: Desktop/devflow-frontend
+```
+
+---
+
+*Last updated: 2026-08-22 — Sprint 13 planning*
