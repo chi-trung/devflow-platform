@@ -35,4 +35,11 @@ public sealed class TimeEntryRepository(DevFlowDbContext dbContext) : ITimeEntry
     {
         dbContext.TimeEntries.Remove(entry);
     }
+
+    public async Task<int> GetTotalMinutesByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.TimeEntries
+            .Where(te => te.UserId == userId)
+            .SumAsync(te => te.Minutes, cancellationToken);
+    }
 }
