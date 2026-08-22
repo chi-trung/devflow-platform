@@ -40,6 +40,8 @@ public static class DependencyInjection
         services.AddScoped<ITaskAttachmentRepository, TaskAttachmentRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<ILabelRepository, LabelRepository>();
+        services.AddScoped<ITaskDependencyRepository, TaskDependencyRepository>();
+        services.AddScoped<ITimeEntryRepository, TimeEntryRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ITokenProvider, JwtTokenProvider>();

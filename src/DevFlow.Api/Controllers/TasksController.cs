@@ -183,4 +183,105 @@ public sealed class TasksController(ISender sender) : ControllerBase
 
         return NoContent();
     }
+
+    // ===== TASK DEPENDENCIES =====
+
+    [HttpGet("{taskId:guid}/dependencies")]
+    [ProducesResponseType(typeof(List<Application.Features.Tasks.Dependencies.TaskDependencyResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetDependencies(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        CancellationToken cancellationToken)
+    {
+        var dependencies = await sender.Send(
+            new Application.Features.Tasks.Dependencies.GetTaskDependenciesQuery(workspaceId, projectId, taskId),
+            cancellationToken);
+
+        return Ok(dependencies);
+    }
+
+    [HttpPost("{taskId:guid}/dependencies")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> AddDependency(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        AddDependencyRequest request,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Tasks.Dependencies.AddTaskDependencyCommand(workspaceId, projectId, taskId, request.BlockerTaskId),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpDelete("{taskId:guid}/dependencies/{dependencyId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> RemoveDependency(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        Guid dependencyId,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Tasks.Dependencies.RemoveTaskDependencyCommand(workspaceId, projectId, taskId, dependencyId),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    // ===== TIME TRACKING =====
+
+    [HttpGet("{taskId:guid}/time-entries")]
+    [ProducesResponseType(typeof(List<Application.Features.Tasks.TimeTracking.TimeEntryResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetTimeEntries(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        CancellationToken cancellationToken)
+    {
+        var entries = await sender.Send(
+            new Application.Features.Tasks.TimeTracking.GetTimeEntriesQuery(workspaceId, projectId, taskId),
+            cancellationToken);
+
+        return Ok(entries);
+    }
+
+    [HttpPost("{taskId:guid}/time-entries")]
+    [ProducesResponseType(typeof(Guid), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> LogTime(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        LogTimeEntryRequest request,
+        CancellationToken cancellationToken)
+    {
+        var entryId = await sender.Send(
+            new Application.Features.Tasks.TimeTracking.LogTimeEntryCommand(
+                workspaceId, projectId, taskId, request.Minutes, request.Description, request.DateUtc ?? DateTimeOffset.UtcNow),
+            cancellationToken);
+
+        return StatusCode(StatusCodes.Status201Created, entryId);
+    }
+
+    [HttpDelete("{taskId:guid}/time-entries/{entryId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeleteTimeEntry(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        Guid entryId,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Tasks.TimeTracking.DeleteTimeEntryCommand(workspaceId, projectId, taskId, entryId),
+            cancellationToken);
+
+        return NoContent();
+    }
 }

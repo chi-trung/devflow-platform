@@ -72,6 +72,25 @@ public sealed class AuthController(ISender sender, IUserContext userContext) : C
     }
 
     [Authorize]
+    [HttpGet("me")]
+    [ProducesResponseType(typeof(UserProfileResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetMe(
+        IUserRepository userRepository,
+        CancellationToken cancellationToken)
+    {
+        var user = await userRepository.GetByIdAsync(userContext.UserId, cancellationToken);
+        if (user is null)
+            return NotFound();
+
+        return Ok(new UserProfileResponse(
+            user.Id,
+            user.Email,
+            user.Username,
+            user.DisplayName));
+    }
+
+    [Authorize]
     [HttpPatch("profile")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

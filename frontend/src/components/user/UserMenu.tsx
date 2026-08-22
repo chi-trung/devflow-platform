@@ -24,11 +24,16 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
     }
+    function onScroll() {
+      setOpen(false);
+    }
     document.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("scroll", onScroll, true);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("scroll", onScroll, true);
     };
   }, []);
 
@@ -43,12 +48,21 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
     navigate(path);
   }
 
-  const menuPosition =
-    direction === "up" ? "bottom-full mb-2" : "top-full mt-2";
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  function getDropdownStyle(): React.CSSProperties {
+    if (!triggerRef.current) return {};
+    const rect = triggerRef.current.getBoundingClientRect();
+    if (direction === "up") {
+      return { position: "fixed" as const, left: rect.left, bottom: window.innerHeight - rect.top + 8, zIndex: 80 };
+    }
+    return { position: "fixed" as const, left: rect.left, top: rect.bottom + 8, zIndex: 80 };
+  }
 
   return (
     <div ref={containerRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-label="User menu"
@@ -56,7 +70,7 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
         className={
           compact
             ? "flex items-center gap-1 rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
-            : "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-1 py-1 text-left transition-colors duration-150 hover:bg-elevated"
+            : "flex min-w-0 items-center gap-2 rounded-lg px-1 py-1 text-left transition-colors duration-150 hover:bg-elevated"
         }
       >
         {compact ? (
@@ -67,7 +81,7 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
               name={currentUser?.username ?? "?"}
               id={currentUser?.id}
             />
-            <span className="min-w-0 flex-1 leading-tight">
+            <span className="min-w-0 max-w-[120px] flex-1 leading-tight">
               <span className="block truncate text-sm font-medium">
                 {currentUser?.username ?? "Account"}
               </span>
@@ -86,7 +100,8 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
       {open && (
         <div
           role="menu"
-          className={`absolute right-0 z-[80] w-48 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise ${menuPosition}`}
+          style={getDropdownStyle()}
+          className="w-56 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise"
         >
           <MenuItem
             icon={<UserRound className="size-4" aria-hidden />}

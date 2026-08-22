@@ -17,3 +17,5 @@ public sealed record LogoutRequest(string RefreshToken);
 public sealed record UpdateProfileRequest(string DisplayName, string Username);
 
 public sealed record ChangePasswordRequest(string CurrentPassword, string NewPassword);
+
+public sealed record UserProfileResponse(Guid Id, string Email, string Username, string? DisplayName);

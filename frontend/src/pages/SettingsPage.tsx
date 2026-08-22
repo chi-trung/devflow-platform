@@ -51,9 +51,15 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const { push } = useToast();
 
-  const [emailNotifications, setEmailNotifications] = useState<boolean>(
-    () => localStorage.getItem("devflow.settings.email") === "true",
-  );
+  const [emailNotifications, setEmailNotifications] = useState<boolean>(() => {
+    const savedEmail = localStorage.getItem("devflow.settings.email");
+    if (savedEmail !== null) return savedEmail === "true";
+    try {
+      const raw = localStorage.getItem("devflow.settings");
+      if (raw) return JSON.parse(raw).emailNotifications === true;
+    } catch {}
+    return false;
+  });
   const [confirmSignOut, setConfirmSignOut] = useState(false);
 
   function saveSettings(patch: Partial<AppSettings>, emailPref: boolean) {

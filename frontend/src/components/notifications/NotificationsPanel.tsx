@@ -35,11 +35,16 @@ export function NotificationsPanel({
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
     }
+    function onScroll() {
+      setOpen(false);
+    }
     document.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("scroll", onScroll, true);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("scroll", onScroll, true);
     };
   }, []);
 
@@ -57,12 +62,21 @@ export function NotificationsPanel({
     }
   }
 
-  const panelPosition =
-    direction === "up" ? "bottom-full mb-2" : "top-full mt-2";
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  function getDropdownStyle(): React.CSSProperties {
+    if (!triggerRef.current) return {};
+    const rect = triggerRef.current.getBoundingClientRect();
+    if (direction === "up") {
+      return { position: "fixed" as const, left: rect.left, bottom: window.innerHeight - rect.top + 8, zIndex: 80 };
+    }
+    return { position: "fixed" as const, left: rect.left, top: rect.bottom + 8, zIndex: 80 };
+  }
 
   return (
     <div ref={containerRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => {
           if (!open) refresh();
@@ -82,7 +96,8 @@ export function NotificationsPanel({
 
       {open && (
         <div
-          className={`absolute right-0 ${panelPosition} z-[80] w-80 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise`}
+          style={getDropdownStyle()}
+          className="w-80 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise"
           role="dialog"
           aria-label="Notifications"
         >

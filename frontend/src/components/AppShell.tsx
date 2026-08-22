@@ -150,6 +150,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ? "translate-x-0 shadow-[0_24px_80px_rgba(0,0,0,0.7)] lg:shadow-none"
             : "-translate-x-full"
         }`}
+        style={{ overflow: 'visible' }}
       >
         <div className="flex items-center justify-between pr-2">
           <Link
@@ -252,7 +253,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </section>
         </nav>
 
-        <div className="shrink-0 border-t border-border px-3 py-2.5">
+        <div className="relative shrink-0 border-t border-border px-3 py-2.5">
           {currentUser && (
             <div className="flex items-center gap-1">
               <NotificationsPanel
@@ -300,7 +301,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto pt-14 pb-16 lg:pt-0 lg:pb-0">
+      <main className="min-w-0 flex-1 overflow-y-auto pt-14 pb-16 lg:pt-0 lg:pb-0">
         {children}
       </main>
 

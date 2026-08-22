@@ -20,4 +20,6 @@ public interface IWorkspaceRepository
     Task AddAsync(Workspace workspace, CancellationToken cancellationToken = default);
 
     Task AddMemberAsync(Workspace workspace, Guid userId, WorkspaceRole role, CancellationToken cancellationToken = default);
+
+    void Delete(Workspace workspace);
 }
