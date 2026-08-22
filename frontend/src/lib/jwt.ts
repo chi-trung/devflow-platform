@@ -2,6 +2,7 @@ export interface JwtClaims {
   sub: string;
   email: string;
   username?: string;
+  displayName?: string;
 }
 
 export function decodeJwt(token: string): JwtClaims | null {

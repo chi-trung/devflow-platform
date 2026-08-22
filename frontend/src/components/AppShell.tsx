@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   KanbanSquare,
-  LogOut,
   Plus,
   FolderKanban,
   Search,
@@ -12,11 +11,13 @@ import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
 import { Avatar } from "./ui/Avatar";
 import { CommandPalette } from "./CommandPalette";
+import { NotificationsPanel } from "./notifications/NotificationsPanel";
+import { UserMenu } from "./user/UserMenu";
 import type { ProjectResponse, WorkspaceResponse } from "../types/api";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const { logout, currentUser } = useAuth();
+  const { currentUser } = useAuth();
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   const workspaceId = location.pathname.match(
@@ -141,28 +142,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </section>
         </nav>
 
-        <div className="flex items-center gap-2 border-t border-border px-4 py-3">
+        <div className="flex items-center gap-1 border-t border-border px-3 py-2.5">
           {currentUser && (
             <>
-              <Avatar name={currentUser.username} id={currentUser.id} />
-              <div className="min-w-0 flex-1 leading-tight">
-                <p className="truncate text-sm font-medium">
-                  {currentUser.username}
-                </p>
-                <p className="truncate font-mono text-[11px] text-muted-foreground">
-                  {currentUser.email}
-                </p>
-              </div>
+              <NotificationsPanel
+                workspaceId={workspaceId}
+                direction="up"
+              />
+              <UserMenu direction="up" />
             </>
           )}
-          <button
-            type="button"
-            onClick={() => void logout()}
-            aria-label="Sign out"
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-destructive"
-          >
-            <LogOut className="size-4" aria-hidden />
-          </button>
         </div>
       </aside>
 
@@ -173,14 +162,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </span>
           <span className="font-display font-semibold">DevFlow</span>
         </Link>
-        <button
-          type="button"
-          onClick={() => void logout()}
-          aria-label="Sign out"
-          className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive"
-        >
-          <LogOut className="size-4" aria-hidden />
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationsPanel
+            workspaceId={workspaceId}
+            direction="down"
+          />
+          <UserMenu compact direction="down" />
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto pt-14 lg:pt-0">{children}</main>

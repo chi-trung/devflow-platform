@@ -17,6 +17,7 @@ export interface CurrentUser {
   id: string;
   email: string;
   username: string;
+  displayName: string | null;
 }
 
 interface AuthContextValue {
@@ -30,12 +31,14 @@ interface AuthContextValue {
     displayName: string;
   }) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
+  const [claimsTick, setClaimsTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,6 +98,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("anonymous");
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    const ok = await refreshSession();
+    if (ok) setClaimsTick((tick) => tick + 1);
+    return ok;
+  }, []);
+
   const currentUser = useMemo<CurrentUser | null>(() => {
     if (status !== "authenticated") return null;
     const access = tokens.access;
@@ -104,12 +113,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       id: claims.sub,
       email: claims.email,
       username: claims.username ?? claims.email,
+      displayName: claims.displayName ?? null,
     };
-  }, [status]);
+  }, [status, claimsTick]);
 
   const value = useMemo(
-    () => ({ status, currentUser, login, register, logout }),
-    [status, currentUser, login, register, logout],
+    () => ({ status, currentUser, login, register, logout, refreshUser }),
+    [status, currentUser, login, register, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

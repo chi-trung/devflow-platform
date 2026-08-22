@@ -6,6 +6,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { BoardPage } from "./pages/BoardPage";
+import { ProfilePage } from "./pages/ProfilePage";
 import { SprintPlanningPage } from "./pages/SprintPlanningPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { WorkspacePage } from "./pages/WorkspacePage";
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route element={<RequireAuth />}>
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route
               path="/workspaces/:workspaceId"
               element={<WorkspacePage />}

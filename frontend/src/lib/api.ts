@@ -1,7 +1,9 @@
 import type {
   FieldErrors,
   LoginResponse,
+  NotificationResponse,
   SprintResponse,
+  UserProfileResponse,
 } from "../types/api";
 
 // In dev the Vite proxy forwards /api to localhost; in production
@@ -194,4 +196,36 @@ export async function removeTaskFromSprint(
     `/workspaces/${workspaceId}/projects/${projectId}/sprints/${sprintId}/tasks/${taskId}`,
     { method: "DELETE" },
   );
+}
+
+export function updateProfile(input: {
+  displayName?: string;
+  username?: string;
+}): Promise<UserProfileResponse> {
+  return api<UserProfileResponse>("/auth/profile", {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function changePassword(input: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<void> {
+  await api("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function getNotifications(): Promise<NotificationResponse[]> {
+  return api<NotificationResponse[]>("/notifications");
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  await api(`/notifications/${id}/read`, { method: "POST" });
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await api("/notifications/read-all", { method: "POST" });
 }
