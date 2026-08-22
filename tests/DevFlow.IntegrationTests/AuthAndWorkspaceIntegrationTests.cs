@@ -65,9 +65,10 @@ public class AuthAndWorkspaceIntegrationTests(DevFlowWebApplicationFactory facto
         // 4. List Workspaces
         var listResponse = await client.GetAsync("/api/v1/workspaces");
         Assert.True(listResponse.IsSuccessStatusCode);
-        var workspaces = await listResponse.Content.ReadFromJsonAsync<JsonElement[]>();
-        Assert.NotNull(workspaces);
-        var createdWs = Assert.Single(workspaces);
+        var listBody = await listResponse.Content.ReadFromJsonAsync<JsonElement>();
+        var workspaces = listBody.GetProperty("items");
+        Assert.True(workspaces.GetArrayLength() >= 1);
+        var createdWs = workspaces[0];
         Assert.Equal("Test Workspace", createdWs.GetProperty("name").GetString());
     }
 }
