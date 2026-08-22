@@ -62,6 +62,21 @@ export const tokens = {
 
 let refreshInFlight: Promise<boolean> | null = null;
 
+// ── Request deduplication & short-lived cache ──────────────────────
+// Prevents multiple components from firing the same GET request
+// simultaneously.  Responses are cached for 5 s so rapid re-mounts
+// (e.g. StrictMode double-render, or navigating back) don't hit the
+// network again.
+const inflight = new Map<string, Promise<unknown>>();
+const cache = new Map<string, { data: unknown; ts: number }>();
+const CACHE_TTL = 5_000; // 5 seconds
+
+function cacheKey(path: string, opts: RequestInit): string {
+  const method = (opts.method ?? "GET").toUpperCase();
+  const body = typeof opts.body === "string" ? opts.body : "";
+  return `${method}:${path}:${body}`;
+}
+
 async function requestRefresh(): Promise<boolean> {
   const refresh = tokens.refresh;
   if (!refresh) return false;
@@ -127,6 +142,48 @@ export async function api<T>(
         ...options.headers,
       },
     });
+
+  const method = (options.method ?? "GET").toUpperCase();
+  const key = cacheKey(path, options);
+
+  // Only cache GET requests (no body)
+  if (method === "GET" && !options.body) {
+    const hit = cache.get(key);
+    if (hit && Date.now() - hit.ts < CACHE_TTL) {
+      return hit.data as T;
+    }
+
+    const existing = inflight.get(key);
+    if (existing) {
+      return existing as Promise<T>;
+    }
+
+    const promise = send()
+      .then(async (response) => {
+        if (response.status === 401 && tokens.refresh) {
+          const refreshed = await refreshSession();
+          if (refreshed) {
+            const retry = await send();
+            if (!retry.ok) throw await parseProblemDetails(retry);
+            if (retry.status === 204) return undefined as T;
+            const data = (await retry.json()) as T;
+            cache.set(key, { data, ts: Date.now() });
+            return data;
+          }
+        }
+        if (!response.ok) throw await parseProblemDetails(response);
+        if (response.status === 204) return undefined as T;
+        const data = (await response.json()) as T;
+        cache.set(key, { data, ts: Date.now() });
+        return data;
+      })
+      .finally(() => {
+        inflight.delete(key);
+      });
+
+    inflight.set(key, promise);
+    return promise as Promise<T>;
+  }
 
   let response = await send();
 
