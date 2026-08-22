@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Email;
 using DevFlow.Domain.Entities;
 using MediatR;
 
@@ -13,8 +14,9 @@ public sealed partial class CreateCommentCommandHandler(
     ICommentRepository commentRepository,
     IUserRepository userRepository,
     INotificationRepository notificationRepository,
-    IUnitOfWork unitOfWork,
-    IUserContext userContext) : IRequestHandler<CreateCommentCommand, CommentResponse>
+    IEmailService emailService,
+    IUserContext userContext,
+    IUnitOfWork unitOfWork) : IRequestHandler<CreateCommentCommand, CommentResponse>
 {
     public async Task<CommentResponse> Handle(
         CreateCommentCommand command,
@@ -58,6 +60,15 @@ public sealed partial class CreateCommentCommandHandler(
                 project.WorkspaceId);
 
             await notificationRepository.AddAsync(notification, cancellationToken);
+
+            // Send email notification (fire-and-forget)
+            if (!string.IsNullOrWhiteSpace(mentionedUser.Email))
+            {
+                var author = await userRepository.GetByIdAsync(userContext.UserId, cancellationToken);
+                var authorName = author?.DisplayName ?? author?.Username ?? "Someone";
+                _ = emailService.SendMentionEmailAsync(mentionedUser.Email, task.Title, command.Content, authorName)
+                    .ContinueWith(_ => Task.CompletedTask, TaskContinuationOptions.OnlyOnCanceled);
+            }
         }
 
         if (mentionedUsernames.Count > 0)

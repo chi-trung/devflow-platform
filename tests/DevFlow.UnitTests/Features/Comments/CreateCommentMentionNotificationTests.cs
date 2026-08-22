@@ -2,6 +2,7 @@ using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Comments;
 using DevFlow.Application.Features.Comments.Create;
+using DevFlow.Application.Features.Email;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
 using NSubstitute;
@@ -15,6 +16,7 @@ public class CreateCommentMentionNotificationTests
     private readonly ICommentRepository _commentRepository = Substitute.For<ICommentRepository>();
     private readonly INotificationRepository _notificationRepository = Substitute.For<INotificationRepository>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
+    private readonly IEmailService _emailService = Substitute.For<IEmailService>();
     private readonly IUserContext _userContext = Substitute.For<IUserContext>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
@@ -144,8 +146,9 @@ public class CreateCommentMentionNotificationTests
             _commentRepository,
             _userRepository,
             _notificationRepository,
-            _unitOfWork,
-            _userContext);
+            _emailService,
+            _userContext,
+            _unitOfWork);
         var command = new CreateCommentCommand(
             _workspaceId, _project.Id, taskId ?? _task.Id, content);
 

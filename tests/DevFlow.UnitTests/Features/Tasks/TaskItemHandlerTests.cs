@@ -1,5 +1,6 @@
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Email;
 using DevFlow.Application.Features.Tasks.Create;
 using DevFlow.Application.Features.Tasks.Delete;
 using DevFlow.Application.Features.Tasks.Update;
@@ -14,6 +15,8 @@ public class TaskItemHandlerTests
     private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
     private readonly IWorkspaceRepository _workspaceRepository = Substitute.For<IWorkspaceRepository>();
+    private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
+    private readonly IEmailService _emailService = Substitute.For<IEmailService>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
@@ -65,7 +68,7 @@ public class TaskItemHandlerTests
         _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>()).Returns(task);
 
         var handler = new UpdateTaskItemCommandHandler(
-            _projectRepository, _taskItemRepository, _workspaceRepository, _unitOfWork);
+            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _emailService, _unitOfWork);
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, task.Id, "Existing", null,
             TaskItemStatus.InProgress, TaskItemPriority.Low, Guid.NewGuid(), null);
@@ -84,7 +87,7 @@ public class TaskItemHandlerTests
         _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>()).Returns(task);
 
         var handler = new UpdateTaskItemCommandHandler(
-            _projectRepository, _taskItemRepository, _workspaceRepository, _unitOfWork);
+            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _emailService, _unitOfWork);
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, task.Id, "Updated title", "desc",
             TaskItemStatus.Done, TaskItemPriority.Critical, assigneeId, null);

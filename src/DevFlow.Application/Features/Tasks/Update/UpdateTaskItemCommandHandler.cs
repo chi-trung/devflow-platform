@@ -1,6 +1,7 @@
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Email;
 using DevFlow.Domain.Entities;
 using MediatR;
 
@@ -10,6 +11,8 @@ public sealed class UpdateTaskItemCommandHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
     IWorkspaceRepository workspaceRepository,
+    IUserRepository userRepository,
+    IEmailService emailService,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateTaskItemCommand>
 {
     public async Task Handle(UpdateTaskItemCommand command, CancellationToken cancellationToken)
@@ -42,10 +45,27 @@ public sealed class UpdateTaskItemCommandHandler(
             }
         }
 
+        var oldAssigneeId = task.AssigneeId;
+
         task.UpdateDetails(command.Title, command.Description, command.Priority, command.DueDateUtc);
         task.ChangeStatus(command.Status);
         task.AssignTo(command.AssigneeId);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Send email when a new user is assigned
+        if (command.AssigneeId is not null && command.AssigneeId != oldAssigneeId)
+        {
+            var assignee = await userRepository.GetByIdAsync(command.AssigneeId.Value, cancellationToken);
+            if (assignee is not null && !string.IsNullOrWhiteSpace(assignee.Email))
+            {
+                _ = emailService.SendTaskAssignedEmailAsync(
+                    assignee.Email,
+                    command.Title,
+                    project.Name,
+                    "A team member")
+                    .ContinueWith(_ => Task.CompletedTask, TaskContinuationOptions.OnlyOnCanceled);
+            }
+        }
     }
 }

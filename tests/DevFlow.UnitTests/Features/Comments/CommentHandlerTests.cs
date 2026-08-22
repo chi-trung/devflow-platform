@@ -2,6 +2,7 @@ using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Comments.Create;
 using DevFlow.Application.Features.Comments.Delete;
+using DevFlow.Application.Features.Email;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
 using NSubstitute;
@@ -16,6 +17,7 @@ public class CommentHandlerTests
     private readonly INotificationRepository _notificationRepository = Substitute.For<INotificationRepository>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly IWorkspaceRepository _workspaceRepository = Substitute.For<IWorkspaceRepository>();
+    private readonly IEmailService _emailService = Substitute.For<IEmailService>();
     private readonly IUserContext _userContext = Substitute.For<IUserContext>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
@@ -39,7 +41,7 @@ public class CommentHandlerTests
     {
         var handler = new CreateCommentCommandHandler(
             _projectRepository, _taskItemRepository, _commentRepository,
-            _userRepository, _notificationRepository, _unitOfWork, _userContext);
+            _userRepository, _notificationRepository, _emailService, _userContext, _unitOfWork);
         var command = new CreateCommentCommand(_workspaceId, _project.Id, _task.Id, "Looks good to me!");
 
         var response = await handler.Handle(command, CancellationToken.None);

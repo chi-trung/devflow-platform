@@ -4,6 +4,7 @@ using DevFlow.Infrastructure.Authentication;
 using DevFlow.Infrastructure.Caching;
 using DevFlow.Infrastructure.Persistence;
 using DevFlow.Infrastructure.Persistence.Interceptors;
+using DevFlow.Infrastructure.Email;
 using DevFlow.Infrastructure.Persistence.Repositories;
 using DevFlow.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
@@ -50,7 +51,14 @@ public static class DependencyInjection
         services.AddScoped<IWebhookRepository, WebhookRepository>();
         services.AddScoped<IWebhookDispatcher, WebhookDispatcher>();
         services.AddHttpClient("Webhooks");
-        services.AddScoped<IEmailService, NoOpEmailService>();
+        if (!string.IsNullOrWhiteSpace(configuration["RESEND_API_KEY"]))
+        {
+            services.AddHttpClient<IEmailService, ResendEmailService>();
+        }
+        else
+        {
+            services.AddScoped<IEmailService, NoOpEmailService>();
+        }
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ITokenProvider, JwtTokenProvider>();
