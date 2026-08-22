@@ -71,14 +71,15 @@ export function SprintPlanningPage() {
   );
 
   const {
-    data: sprints,
+    data: sprintsRaw,
     error: sprintsError,
     loading: sprintsLoading,
     reload: reloadSprints,
-  } = useApi<SprintResponse[]>(
+  } = useApi<unknown>(
     () => getSprints(workspaceId, projectId),
     [workspaceId, projectId],
   );
+  const sprints = pagedItems<SprintResponse>(sprintsRaw);
 
   const {
     data: taskDataRaw,

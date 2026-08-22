@@ -132,15 +132,17 @@ export function BoardPage() {
     [workspaceId],
   );
 
-  const { data: sprints, reload: reloadSprints } = useApi<SprintResponse[]>(
+  const { data: sprintsRaw, reload: reloadSprints } = useApi<unknown>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/sprints`),
     [workspaceId, projectId],
   );
+  const sprints = pagedItems<SprintResponse>(sprintsRaw);
 
-  const { data: labels } = useApi<LabelResponse[]>(
+  const { data: labelsRaw } = useApi<unknown>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/labels`),
     [workspaceId, projectId],
   );
+  const labels = pagedItems<LabelResponse>(labelsRaw);
 
   const {
     data: tasksRaw,
