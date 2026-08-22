@@ -1,43 +1,50 @@
-# AGENT STATUS — All Sprints Complete
+# AGENT STATUS — Sprint 15
 
-## 🎉 Project Status: PRODUCTION READY
+## 🎯 Sprint 15 — Power Features & Developer Experience
 
-### Sprint Summary (1-14)
-| Sprint | Backend | Frontend | Status |
-|--------|---------|----------|--------|
-| 1-6 | Core API | Core UI | ✅ Merged |
-| 7 | Dependencies + Time Tracking | UI | ✅ Merged |
-| 8 | Reporting APIs | Charts UI | ✅ Merged |
-| 9 | GitHub + Email | Integration UI | ✅ Merged |
-| 10 | Templates + Custom Fields | Fields UI | ✅ Merged |
-| 11 | Bulk Operations + Export | Bulk UI | ✅ Merged |
-| 12 | SignalR + @Mentions | Settings + Mobile | ✅ Merged |
-| 13 | @Mention Notifications + Activity Logs | i18n Board/Workspace | ✅ Merged |
-| 14 | — | Code Splitting + i18n Sprint/Reports/TaskDetail | ✅ Merged |
+### Agent: Codebuff (Backend)
 
-### Metrics
-| Metric | Value |
-|--------|-------|
-| Sprints | 14 |
-| API Endpoints | 60+ |
-| Unit Tests | 65/65 ✅ |
-| Frontend Pages | 10 (all lazy-loaded) |
-| i18n Languages | 2 (EN/VI) |
-| Bundle Size | 85KB gzipped (main) |
-| PRs Merged | 68 |
-| Dependabot PRs | Closed (packages updated manually) |
+#### B1: Webhook System
+- [ ] POST /webhooks — register webhook URL for workspace
+- [ ] GET /webhooks — list registered webhooks
+- [ ] DELETE /webhooks/{id} — remove webhook
+- [ ] Trigger on: task.created, task.updated, task.completed, comment.created
+- [ ] Payload: { event, timestamp, data }
 
-### Deploy
-- **Backend**: Render (auto-deploy from main)
-- **Frontend**: Vercel (auto-deploy from main)
+#### B2: Email Notifications
+- [ ] Send email when: task assigned, mentioned, due soon
+- [ ] GET /settings/notifications — get notification preferences
+- [ ] PATCH /settings/notifications — update preferences
+- [ ] Use SendGrid or SMTP
 
-### How to Run
-```bash
-# Backend
-dotnet run --project src/DevFlow.Api
+#### B3: Advanced Search API
+- [ ] GET /search?q=&status=&priority=&assignee=&label=&dueBefore=&dueAfter=
+- [ ] Full-text search on task titles + descriptions
+- [ ] Return: tasks, projects, users
 
-# Frontend
-cd frontend && npm run dev
-```
+#### B4: Task Import
+- [ ] POST /import/tasks — import from CSV/JSON
+- [ ] Validate: title required, status must be valid
+- [ ] Return: { imported, skipped, errors }
 
-*Last updated: 2026-08-22 — All sprints complete*
+### Agent: OpenCode (Frontend)
+
+#### F1: Keyboard Shortcuts
+- [ ] Ctrl+K — Command palette (already exists)
+- [ ] Ctrl+N — New task
+- [ ] ? — Show shortcuts help
+- [ ] Arrow keys — Navigate board columns
+
+#### F2: PWA Support
+- [ ] manifest.json — app name, icons, theme
+- [ ] Service worker — cache static assets
+- [ ] Install prompt — "Add to Home Screen"
+
+#### F3: Drag & Drop Improvements
+- [ ] Visual feedback during drag (ghost element)
+- [ ] Snap to column center
+- [ ] Touch support for mobile
+
+---
+
+*Last updated: 2026-08-22 — Sprint 15 planning*
