@@ -78,22 +78,9 @@ export function DependencySection({
     setAddingId(blockerTaskId);
     setError(null);
     try {
-      const created = await addTaskDependency(
-        workspaceId,
-        projectId,
-        task.id,
-        blockerTaskId,
-      );
-      const blocker = allTasks.find((t) => t.id === blockerTaskId);
-      setDependencies((current) => [
-        ...(current ?? []),
-        {
-          id: created.id,
-          blockerTaskId,
-          blockerTitle: blocker?.title ?? "task",
-          blockerStatus: blocker?.status ?? "Backlog",
-        },
-      ]);
+      await addTaskDependency(workspaceId, projectId, task.id, blockerTaskId);
+      const fresh = await getTaskDependencies(workspaceId, projectId, task.id);
+      setDependencies(fresh);
       setQuery("");
       setPickerOpen(false);
       onChanged();

@@ -301,13 +301,13 @@ export function getTaskDependencies(
   );
 }
 
-export function addTaskDependency(
+export async function addTaskDependency(
   workspaceId: string,
   projectId: string,
   taskId: string,
   blockerTaskId: string,
-): Promise<{ id: string }> {
-  return api<{ id: string }>(
+): Promise<void> {
+  await api(
     `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/dependencies`,
     { method: "POST", body: JSON.stringify({ blockerTaskId }) },
   );
@@ -335,13 +335,13 @@ export function getTimeEntries(
   );
 }
 
-export function logTimeEntry(
+export async function logTimeEntry(
   workspaceId: string,
   projectId: string,
   taskId: string,
   input: { minutes: number; description: string | null },
-): Promise<TimeEntryResponse> {
-  return api<TimeEntryResponse>(
+): Promise<void> {
+  await api(
     `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/time-entries`,
     { method: "POST", body: JSON.stringify(input) },
   );

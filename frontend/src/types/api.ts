@@ -64,6 +64,8 @@ export interface TaskDependencyResponse {
   blockerTaskId: string;
   blockerTitle: string;
   blockerStatus: TaskItemResponse["status"];
+  blockedTaskId?: string;
+  isResolved?: boolean;
 }
 
 export interface TimeEntryResponse {
@@ -73,7 +75,8 @@ export interface TimeEntryResponse {
   userName: string;
   minutes: number;
   description: string | null;
-  loggedAtUtc: string;
+  dateUtc?: string;
+  createdAtUtc?: string;
 }
 
 export interface CommentResponse {

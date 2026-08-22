@@ -143,11 +143,12 @@ export function TimeTrackingSection({
     setLogging(true);
     setError(null);
     try {
-      const created = await logTimeEntry(workspaceId, projectId, task.id, {
+      await logTimeEntry(workspaceId, projectId, task.id, {
         minutes: total,
         description: entryDescription.trim() || null,
       });
-      setEntries((current) => [created, ...(current ?? [])]);
+      const fresh = await getTimeEntries(workspaceId, projectId, task.id);
+      setEntries(fresh);
       setHours("");
       setExtraMinutes("");
       setEntryDescription("");
@@ -329,7 +330,10 @@ export function TimeTrackingSection({
                   </p>
                   <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
                     {author?.displayName || author?.username || entry.userName || "user"}{" "}
-                    · {new Date(entry.loggedAtUtc).toLocaleString()}
+                    ·{" "}
+                    {new Date(
+                      entry.dateUtc ?? entry.createdAtUtc ?? Date.now(),
+                    ).toLocaleString()}
                   </p>
                 </div>
                 <span className="flex shrink-0 items-center gap-1">
