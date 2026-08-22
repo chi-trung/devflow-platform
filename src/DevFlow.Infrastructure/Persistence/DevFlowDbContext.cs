@@ -44,6 +44,12 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<PullRequest> PullRequests => Set<PullRequest>();
 
+    public DbSet<TaskTemplate> TaskTemplates => Set<TaskTemplate>();
+
+    public DbSet<CustomField> CustomFields => Set<CustomField>();
+
+    public DbSet<TaskCustomFieldValue> TaskCustomFieldValues => Set<TaskCustomFieldValue>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);
