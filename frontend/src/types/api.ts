@@ -121,3 +121,42 @@ export interface SearchResponse {
   tasks: SearchTaskResult[];
   projects: SearchProjectResult[];
 }
+
+export type TaskStatus = TaskItemResponse["status"];
+export type TaskPriority = TaskItemResponse["priority"];
+
+export interface DashboardDeadlineTask {
+  id: string;
+  title: string;
+  projectId: string;
+  projectKey?: string | null;
+  status: string;
+  priority: string;
+  dueDateUtc: string;
+}
+
+export interface DashboardActivityItem extends ActivityResponse {
+  projectId?: string | null;
+}
+
+export interface DashboardData {
+  totalTasks: number;
+  tasksByStatus: Record<TaskStatus, number>;
+  tasksByPriority: Record<TaskPriority, number>;
+  overdueCount?: number | null;
+  recentActivity: DashboardActivityItem[];
+  upcomingDeadlines: DashboardDeadlineTask[];
+}
+
+export interface LabelResponse {
+  id: string;
+  projectId: string;
+  name: string;
+  color: string;
+  createdAtUtc?: string;
+}
+
+export interface CreateLabelRequest {
+  name: string;
+  color: string;
+}

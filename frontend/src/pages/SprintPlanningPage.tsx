@@ -29,6 +29,7 @@ import { Input } from "../components/ui/Input";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { CreateSprintModal } from "../components/sprint/CreateSprintModal";
+import { BurndownChart } from "../components/sprint/BurndownChart";
 import { SprintBoard } from "../components/sprint/SprintBoard";
 import { SprintProgress } from "../components/sprint/SprintProgress";
 import type {
@@ -357,6 +358,14 @@ export function SprintPlanningPage() {
                     </Button>
                   )}
                 </div>
+                {active.startDateUtc && active.endDateUtc && (
+                  <BurndownChart
+                    className="mt-4"
+                    startDateUtc={active.startDateUtc}
+                    endDateUtc={active.endDateUtc}
+                    tasks={tasks.filter((t) => t.sprintId === active.id)}
+                  />
+                )}
               </section>
             )}
 
