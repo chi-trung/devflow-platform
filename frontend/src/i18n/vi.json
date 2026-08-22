@@ -362,7 +362,8 @@
   "notification": {
     "notifications": "Thông báo",
     "markAllRead": "Đánh dấu đã đọc",
-    "noNotifications": "Chưa có thông báo"
+    "noNotifications": "Chưa có thông báo",
+    "newNotification": "Bạn có thông báo mới"
   },
   "userMenu": {
     "profile": "Hồ sơ",

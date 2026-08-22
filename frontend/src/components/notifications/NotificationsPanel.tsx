@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Bell, CheckCheck } from "lucide-react";
 import { useNotifications } from "../../hooks/useNotifications";
+import type { IncomingNotification } from "../../lib/realtime";
+import { useToast } from "../ui/ToastProvider";
 import { NotificationItem } from "./NotificationItem";
 
 interface NotificationsPanelProps {
@@ -18,6 +20,15 @@ export function NotificationsPanel({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { push } = useToast();
+
+  const handleIncoming = useCallback(
+    (notification: IncomingNotification) => {
+      push(notification.message ?? t("notification.newNotification"), "info");
+    },
+    [push, t],
+  );
+
   const {
     notifications,
     unreadCount,
@@ -26,7 +37,7 @@ export function NotificationsPanel({
     refresh,
     markRead,
     markAllRead,
-  } = useNotifications(workspaceId);
+  } = useNotifications(workspaceId, true, { onIncoming: handleIncoming });
 
   useEffect(() => {
     function onPointerDown(event: PointerEvent) {

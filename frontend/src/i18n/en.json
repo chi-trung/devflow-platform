@@ -362,7 +362,8 @@
   "notification": {
     "notifications": "Notifications",
     "markAllRead": "Mark all read",
-    "noNotifications": "No notifications yet"
+    "noNotifications": "No notifications yet",
+    "newNotification": "New notification"
   },
   "userMenu": {
     "profile": "Profile",
