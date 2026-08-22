@@ -84,3 +84,20 @@ export interface TaskAttachmentResponse {
 export interface FieldErrors {
   [field: string]: string[];
 }
+
+export interface UserProfileResponse {
+  id: string;
+  email: string;
+  username: string;
+  displayName: string | null;
+}
+
+export interface NotificationResponse {
+  id: string;
+  type: string;
+  message: string;
+  createdAtUtc: string;
+  readAtUtc: string | null;
+  taskId: string | null;
+  projectId: string | null;
+}
