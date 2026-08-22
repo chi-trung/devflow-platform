@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  KanbanSquare,
-  Plus,
+  CalendarRange,
+  CircleUserRound,
   FolderKanban,
+  House,
+  KanbanSquare,
+  Menu,
+  Plus,
   Search,
+  X,
 } from "lucide-react";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
@@ -15,14 +20,45 @@ import { NotificationsPanel } from "./notifications/NotificationsPanel";
 import { UserMenu } from "./user/UserMenu";
 import type { ProjectResponse, WorkspaceResponse } from "../types/api";
 
+const BOARD_PATH_KEY = "devflow.lastBoardPath";
+const SPRINT_PATH_KEY = "devflow.lastSprintPath";
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const workspaceId = location.pathname.match(
     /^\/workspaces\/([0-9a-f-]{36})/i,
   )?.[1];
+
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setDrawerOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [drawerOpen]);
+
+  useEffect(() => {
+    const match = location.pathname.match(
+      /^\/workspaces\/([0-9a-f-]{36})\/projects\/([0-9a-f-]{36})(\/sprints)?$/i,
+    );
+    if (!match) return;
+    try {
+      localStorage.setItem(
+        match[3] ? SPRINT_PATH_KEY : BOARD_PATH_KEY,
+        location.pathname,
+      );
+    } catch {}
+  }, [location.pathname]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -48,27 +84,99 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     [workspaceId],
   );
 
+  const onBoardRoute =
+    /^\/workspaces\/[0-9a-f-]{36}\/projects\/[0-9a-f-]{36}$/i.test(
+      location.pathname,
+    );
+  const onSprintsRoute = /\/sprints$/i.test(location.pathname);
+
+  const mobileNavItems = [
+    {
+      key: "home",
+      label: "Home",
+      icon: House,
+      active: location.pathname === "/",
+      onClick: () => navigate("/"),
+    },
+    {
+      key: "board",
+      label: "Board",
+      icon: KanbanSquare,
+      active: onBoardRoute,
+      onClick: () =>
+        navigate(
+          localStorage.getItem(BOARD_PATH_KEY) ??
+            (workspaceId && projects?.length
+              ? `/workspaces/${workspaceId}/projects/${projects[0].id}`
+              : "/"),
+        ),
+    },
+    {
+      key: "sprints",
+      label: "Sprints",
+      icon: CalendarRange,
+      active: onSprintsRoute,
+      onClick: () =>
+        navigate(
+          localStorage.getItem(SPRINT_PATH_KEY) ??
+            (onBoardRoute || workspaceId
+              ? `${location.pathname.replace(/\/sprints$/i, "")}/sprints`
+              : "/"),
+        ),
+    },
+    {
+      key: "search",
+      label: "Search",
+      icon: Search,
+      active: false,
+      onClick: () => setPaletteOpen(true),
+    },
+    {
+      key: "profile",
+      label: "Profile",
+      icon: CircleUserRound,
+      active: location.pathname === "/profile",
+      onClick: () => navigate("/profile"),
+    },
+  ];
+
   return (
     <div className="flex h-dvh overflow-hidden">
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-surface lg:flex">
-        <Link
-          to="/"
-          className="flex items-center gap-2 px-4 py-4"
-          aria-label="DevFlow home"
-        >
-          <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-on-primary">
-            <KanbanSquare className="size-4" aria-hidden />
-          </span>
-          <span className="font-display text-base font-semibold tracking-tight">
-            DevFlow
-          </span>
-        </Link>
+      <aside
+        className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface transition-transform duration-300 ease-out lg:static lg:z-auto lg:translate-x-0 ${
+          drawerOpen
+            ? "translate-x-0 shadow-[0_24px_80px_rgba(0,0,0,0.7)] lg:shadow-none"
+            : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between pr-2">
+          <Link
+            to="/"
+            className="flex items-center gap-2 px-4 py-4"
+            aria-label="DevFlow home"
+          >
+            <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-on-primary">
+              <KanbanSquare className="size-4" aria-hidden />
+            </span>
+            <span className="font-display text-base font-semibold tracking-tight">
+              DevFlow
+            </span>
+          </Link>
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setDrawerOpen(false)}
+            className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground lg:hidden"
+          >
+            <X className="size-5" aria-hidden />
+          </button>
+        </div>
 
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4">
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
-            className="flex w-full items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground"
+            className="flex w-full cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground"
           >
             <Search className="size-3.5" aria-hidden />
             <span className="flex-1 text-left">Search…</span>
@@ -155,13 +263,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
+      {drawerOpen && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          onClick={() => setDrawerOpen(false)}
+          className="fixed inset-0 z-[55] cursor-default bg-black/50 backdrop-blur-sm lg:hidden"
+        />
+      )}
+
       <header className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-border bg-surface px-4 py-3 lg:hidden">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-on-primary">
-            <KanbanSquare className="size-4" aria-hidden />
-          </span>
-          <span className="font-display font-semibold">DevFlow</span>
-        </Link>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-label="Open menu"
+            onClick={() => setDrawerOpen(true)}
+            className="-ml-1 cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
+          >
+            <Menu className="size-5" aria-hidden />
+          </button>
+          <Link to="/" className="flex items-center gap-2">
+            <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-on-primary">
+              <KanbanSquare className="size-4" aria-hidden />
+            </span>
+            <span className="font-display font-semibold">DevFlow</span>
+          </Link>
+        </div>
         <div className="flex items-center gap-1">
           <NotificationsPanel
             workspaceId={workspaceId}
@@ -171,7 +298,31 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto pt-14 lg:pt-0">{children}</main>
+      <main className="flex-1 overflow-y-auto pt-14 pb-16 lg:pt-0 lg:pb-0">
+        {children}
+      </main>
+
+      <nav
+        aria-label="Primary"
+        className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      >
+        {mobileNavItems.map(({ key, label, icon: Icon, active, onClick }) => (
+          <button
+            key={key}
+            type="button"
+            aria-current={active ? "page" : undefined}
+            onClick={onClick}
+            className={`flex flex-1 cursor-pointer flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors duration-150 ${
+              active
+                ? "text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Icon className="size-5" aria-hidden />
+            {label}
+          </button>
+        ))}
+      </nav>
 
       <CommandPalette
         open={paletteOpen}

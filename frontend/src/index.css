@@ -24,6 +24,26 @@
   --color-ring: #2dd4bf;
 }
 
+html.light {
+  --color-background: #f5f7fa;
+  --color-surface: #eceff4;
+  --color-card: #ffffff;
+  --color-elevated: #e3e8ef;
+  --color-border: #d4dbe4;
+  --color-border-strong: #b9c4d1;
+
+  --color-foreground: #16212c;
+  --color-muted-foreground: #5a6a7c;
+
+  --color-primary: #0d9488;
+  --color-primary-strong: #0f766e;
+  --color-on-primary: #ffffff;
+
+  --color-destructive: #dc2626;
+
+  --color-ring: #0d9488;
+}
+
 html {
   scroll-behavior: smooth;
 }

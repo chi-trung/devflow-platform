@@ -96,7 +96,7 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
           <MenuItem
             icon={<Settings className="size-4" aria-hidden />}
             label="Settings"
-            onClick={() => goTo("/profile")}
+            onClick={() => goTo("/settings")}
           />
           <div className="my-1 border-t border-border/60" />
           <button
