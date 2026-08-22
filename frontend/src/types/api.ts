@@ -100,4 +100,24 @@ export interface NotificationResponse {
   readAtUtc: string | null;
   taskId: string | null;
   projectId: string | null;
+  workspaceId: string | null;
+}
+
+export interface SearchTaskResult {
+  id: string;
+  title: string;
+  status: string;
+  projectKey: string;
+}
+
+export interface SearchProjectResult {
+  id: string;
+  name: string;
+  key: string;
+  status: string;
+}
+
+export interface SearchResponse {
+  tasks: SearchTaskResult[];
+  projects: SearchProjectResult[];
 }

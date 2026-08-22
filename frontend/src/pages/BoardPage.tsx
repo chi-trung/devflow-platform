@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Plus, SquareKanban, Search, History, CalendarRange } from "lucide-react";
 import { api } from "../lib/api";
 import { createProjectConnection } from "../lib/realtime";
@@ -37,6 +37,7 @@ const COLUMNS: { title: string; status: TaskItemResponse["status"] }[] = [
 
 export function BoardPage() {
   const { workspaceId = "", projectId = "" } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: project } = useApi<ProjectResponse>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}`),
@@ -119,6 +120,16 @@ export function BoardPage() {
   useEffect(() => {
     if (data) setTasks(data);
   }, [data]);
+
+  const deepLinkTaskId = searchParams.get("task");
+
+  useEffect(() => {
+    if (!deepLinkTaskId) return;
+    if (tasks.some((task) => task.id === deepLinkTaskId)) {
+      setSelectedTaskId(deepLinkTaskId);
+      setSearchParams({}, { replace: true });
+    }
+  }, [deepLinkTaskId, tasks, setSearchParams]);
 
   // Live updates: any change made by anyone in this project triggers a
   // debounced refetch, so open boards stay in sync across browsers.

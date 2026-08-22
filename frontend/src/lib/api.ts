@@ -2,6 +2,7 @@ import type {
   FieldErrors,
   LoginResponse,
   NotificationResponse,
+  SearchResponse,
   SprintResponse,
   UserProfileResponse,
 } from "../types/api";
@@ -228,4 +229,13 @@ export async function markNotificationRead(id: string): Promise<void> {
 
 export async function markAllNotificationsRead(): Promise<void> {
   await api("/notifications/read-all", { method: "POST" });
+}
+
+export function searchWorkspace(
+  workspaceId: string,
+  query: string,
+): Promise<SearchResponse> {
+  return api<SearchResponse>(
+    `/workspaces/${workspaceId}/search?q=${encodeURIComponent(query)}`,
+  );
 }
