@@ -86,7 +86,7 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
       {open && (
         <div
           role="menu"
-          className={`absolute right-0 z-[80] w-48 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise ${menuPosition}`}
+          className={`absolute left-0 z-[80] w-56 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise ${menuPosition}`}
         >
           <MenuItem
             icon={<UserRound className="size-4" aria-hidden />}

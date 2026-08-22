@@ -82,7 +82,7 @@ export function NotificationsPanel({
 
       {open && (
         <div
-          className={`absolute right-0 ${panelPosition} z-[80] w-80 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise`}
+          className={`absolute left-0 ${panelPosition} z-[80] w-80 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise`}
           role="dialog"
           aria-label="Notifications"
         >
