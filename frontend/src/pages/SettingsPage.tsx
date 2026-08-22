@@ -46,6 +46,36 @@ function Switch({
   );
 }
 
+function EmailEventRow({
+  label,
+  hint,
+  read,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  read: () => boolean;
+  onChange: (value: boolean) => void;
+}) {
+  const [checked, setChecked] = useState(read);
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <p className="text-sm font-medium">{label}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
+      </div>
+      <Switch
+        checked={checked}
+        onChange={(value) => {
+          setChecked(value);
+          onChange(value);
+        }}
+        label={label}
+      />
+    </div>
+  );
+}
+
 export function SettingsPage() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
@@ -61,6 +91,33 @@ export function SettingsPage() {
     return false;
   });
   const [confirmSignOut, setConfirmSignOut] = useState(false);
+
+  const EMAIL_EVENTS: { key: string; label: string; hint: string }[] = [
+    { key: "assigned", label: "Task assigned to me", hint: "Someone assigns you a task" },
+    { key: "mentioned", label: "I'm mentioned", hint: "Your name appears in a comment" },
+    { key: "statusChanged", label: "Status changed on my tasks", hint: "A task you own moves columns" },
+    { key: "dueSoon", label: "Due date reminders", hint: "24h before a task of yours is due" },
+    { key: "sprintStarted", label: "Sprint started", hint: "A sprint in your workspace kicks off" },
+  ];
+
+  function readEmailEvent(key: string): boolean {
+    try {
+      const raw = localStorage.getItem("devflow.settings.emailEvents");
+      if (!raw) return true;
+      return (JSON.parse(raw) as Record<string, boolean>)[key] !== false;
+    } catch {
+      return true;
+    }
+  }
+
+  function writeEmailEvent(key: string, value: boolean) {
+    let map: Record<string, boolean> = {};
+    try {
+      map = JSON.parse(localStorage.getItem("devflow.settings.emailEvents") ?? "{}");
+    } catch {}
+    map[key] = value;
+    localStorage.setItem("devflow.settings.emailEvents", JSON.stringify(map));
+  }
 
   function saveSettings(patch: Partial<AppSettings>, emailPref: boolean) {
     void updateSettings({
@@ -183,6 +240,25 @@ export function SettingsPage() {
               label="Email notifications"
             />
           </div>
+
+          {emailNotifications && (
+            <div className="rise mt-4 flex flex-col gap-3 rounded-lg border border-border bg-card p-3.5">
+              {EMAIL_EVENTS.map((event) => (
+                <EmailEventRow
+                  key={event.key}
+                  label={event.label}
+                  hint={event.hint}
+                  read={() => readEmailEvent(event.key)}
+                  onChange={(value) => {
+                    writeEmailEvent(event.key, value);
+                  }}
+                />
+              ))}
+              <p className="font-mono text-[10px] text-muted-foreground">
+                Saved locally — server-side delivery lands with the email-preferences API.
+              </p>
+            </div>
+          )}
         </section>
 
         <section

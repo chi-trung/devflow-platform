@@ -11,6 +11,9 @@ interface ColumnProps {
   onDropTask: (taskId: string, status: TaskItemResponse["status"]) => void;
   onDelete: (task: TaskItemResponse) => void;
   onSelect: (taskId: string) => void;
+  selectionMode?: boolean;
+  selectedIds?: ReadonlySet<string>;
+  onToggleSelect?: (taskId: string) => void;
 }
 
 const COLUMN_META: Record<
@@ -31,6 +34,9 @@ export function Column({
   onDropTask,
   onDelete,
   onSelect,
+  selectionMode = false,
+  selectedIds,
+  onToggleSelect,
 }: ColumnProps) {
   const meta = COLUMN_META[status];
   const Icon = meta.icon;
@@ -75,6 +81,9 @@ export function Column({
             members={members}
             onDelete={onDelete}
             onSelect={onSelect}
+            selectionMode={selectionMode}
+            selected={selectedIds?.has(task.id) ?? false}
+            onToggleSelect={onToggleSelect}
           />
         ))}
         {tasks.length === 0 && (

@@ -1,15 +1,21 @@
 import type {
   BurndownResponse,
   CreateLabelRequest,
+  CustomFieldResponse,
+  CustomFieldValueResponse,
   DashboardData,
   FieldErrors,
+  GitHubIntegrationResponse,
   LabelResponse,
   LoginResponse,
   NotificationResponse,
+  PullRequestResponse,
   SearchResponse,
   SprintResponse,
   TaskDependencyResponse,
+  TaskItemResponse,
   TeamReportResponse,
+  TemplateResponse,
   TimeEntryResponse,
   UserProfileResponse,
   VelocityResponse,
@@ -298,6 +304,192 @@ export function getTeamReport(
   workspaceId: string,
 ): Promise<TeamReportResponse> {
   return api<TeamReportResponse>(`/workspaces/${workspaceId}/reporting/team`);
+}
+
+export function exportTasks(
+  workspaceId: string,
+  projectId: string,
+  format: "csv" | "json",
+): Promise<Blob> {
+  return api<Blob>(
+    `/workspaces/${workspaceId}/projects/${projectId}/export/tasks?format=${format}`,
+    { headers: { Accept: format === "csv" ? "text/csv" : "application/json" } },
+  );
+}
+
+export function getGitHubIntegration(
+  workspaceId: string,
+  projectId: string,
+): Promise<GitHubIntegrationResponse | null> {
+  return api<GitHubIntegrationResponse | null>(
+    `/workspaces/${workspaceId}/projects/${projectId}/github`,
+  );
+}
+
+export async function linkGitHubRepo(
+  workspaceId: string,
+  projectId: string,
+  repositoryUrl: string,
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}/projects/${projectId}/github/link`, {
+    method: "POST",
+    body: JSON.stringify({ repositoryUrl }),
+  });
+}
+
+export async function unlinkGitHubRepo(
+  workspaceId: string,
+  projectId: string,
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}/projects/${projectId}/github`, {
+    method: "DELETE",
+  });
+}
+
+export function getProjectPRs(
+  workspaceId: string,
+  projectId: string,
+): Promise<PullRequestResponse[]> {
+  return api<PullRequestResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/github/prs`,
+  );
+}
+
+export function getTemplates(
+  workspaceId: string,
+  projectId: string,
+): Promise<TemplateResponse[]> {
+  return api<TemplateResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/templates`,
+  );
+}
+
+export async function createTemplate(
+  workspaceId: string,
+  projectId: string,
+  input: {
+    name: string;
+    title?: string | null;
+    description?: string | null;
+    priority: string;
+    estimateMinutes?: number | null;
+  },
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}/projects/${projectId}/templates`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function applyTemplate(
+  workspaceId: string,
+  projectId: string,
+  templateId: string,
+): Promise<{ id: string } | void> {
+  return api<{ id: string }>(
+    `/workspaces/${workspaceId}/projects/${projectId}/templates/${templateId}/apply`,
+    { method: "POST" },
+  );
+}
+
+export async function deleteTemplate(
+  workspaceId: string,
+  projectId: string,
+  templateId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/templates/${templateId}`,
+    { method: "DELETE" },
+  );
+}
+
+export function getCustomFields(
+  workspaceId: string,
+  projectId: string,
+): Promise<CustomFieldResponse[]> {
+  return api<CustomFieldResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/fields`,
+  );
+}
+
+export async function createCustomField(
+  workspaceId: string,
+  projectId: string,
+  input: { name: string; fieldType: string; options?: string | null },
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}/projects/${projectId}/fields`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteCustomField(
+  workspaceId: string,
+  projectId: string,
+  fieldId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/fields/${fieldId}`,
+    { method: "DELETE" },
+  );
+}
+
+export function getTaskFieldValues(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+): Promise<CustomFieldValueResponse[]> {
+  return api<CustomFieldValueResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/fields/tasks/${taskId}`,
+  );
+}
+
+export async function setTaskFieldValue(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+  fieldId: string,
+  value: string | null,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/fields/tasks/${taskId}`,
+    { method: "POST", body: JSON.stringify({ fieldId, value }) },
+  );
+}
+
+export async function bulkMoveTasks(
+  workspaceId: string,
+  projectId: string,
+  taskIds: string[],
+  status: TaskItemResponse["status"],
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/bulk/move`,
+    { method: "POST", body: JSON.stringify({ taskIds, newStatus: status }) },
+  );
+}
+
+export async function bulkAssignTasks(
+  workspaceId: string,
+  projectId: string,
+  taskIds: string[],
+  assigneeId: string | null,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/bulk/assign`,
+    { method: "POST", body: JSON.stringify({ taskIds, assigneeId }) },
+  );
+}
+
+export async function bulkDeleteTasks(
+  workspaceId: string,
+  projectId: string,
+  taskIds: string[],
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/bulk/delete`,
+    { method: "POST", body: JSON.stringify({ taskIds }) },
+  );
 }
 
 export function getLabels(

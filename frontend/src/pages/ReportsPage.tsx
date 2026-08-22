@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, BarChart3, LineChart } from "lucide-react";
-import { api, getBurndown, getTeamReport, getVelocity } from "../lib/api";
+import { ArrowLeft, BarChart3, Download, FileJson, FileSpreadsheet, LineChart } from "lucide-react";
+import { api, exportTasks, getBurndown, getTeamReport, getVelocity } from "../lib/api";
 import { useApi } from "../hooks/useApi";
+import { useToast } from "../components/ui/ToastProvider";
 import { AppShell } from "../components/AppShell";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { BurndownChartApi } from "../components/reporting/BurndownChartApi";
 import { VelocityChart } from "../components/reporting/VelocityChart";
 import { TeamReportCards } from "../components/reporting/TeamReportCards";
+import { GitHubIntegrationCard } from "../components/github/GitHubIntegrationCard";
+import { TemplatesCard } from "../components/templates/TemplatesCard";
+import { CustomFieldsCard } from "../components/fields/CustomFieldsCard";
 import type {
   ProjectResponse,
   WorkspaceMemberResponse,
@@ -56,6 +60,31 @@ export function ReportsPage() {
       ? "Start date must be before end date."
       : null;
 
+  const { push } = useToast();
+  const [exporting, setExporting] = useState<string | null>(null);
+
+  async function handleExport(format: "csv" | "json") {
+    setExporting(format);
+    try {
+      const blob = await exportTasks(workspaceId, projectId, format);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `tasks.${format}`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      push(
+        err instanceof Error ? err.message : "Export failed.",
+        "error",
+      );
+    } finally {
+      setExporting(null);
+    }
+  }
+
   return (
     <AppShell>
       <div className="mx-auto flex w-full max-w-6xl flex-col px-6 py-6">
@@ -77,6 +106,31 @@ export function ReportsPage() {
             <p className="mt-0.5 text-sm text-muted-foreground">
               Burndown, velocity and team workload across the project.
             </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void handleExport("csv")}
+              disabled={exporting !== null}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] disabled:opacity-40"
+            >
+              <FileSpreadsheet className="size-4" aria-hidden />
+              {exporting === "csv" ? "…" : "CSV"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleExport("json")}
+              disabled={exporting !== null}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] disabled:opacity-40"
+            >
+              <FileJson className="size-4" aria-hidden />
+              {exporting === "json" ? "…" : "JSON"}
+            </button>
+            <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
+              <Download className="size-3" aria-hidden />
+              export
+            </span>
           </div>
 
           <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors duration-200 focus-within:border-primary">
@@ -135,6 +189,20 @@ export function ReportsPage() {
           ) : team ? (
             <TeamReportCards data={team} members={members ?? []} />
           ) : null}
+
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+            <GitHubIntegrationCard workspaceId={workspaceId} projectId={projectId} />
+            <TemplatesCard
+              workspaceId={workspaceId}
+              projectId={projectId}
+              onChanged={() => undefined}
+            />
+            <CustomFieldsCard
+              workspaceId={workspaceId}
+              projectId={projectId}
+              onChanged={() => undefined}
+            />
+          </div>
 
           {!burndownLoading && !velocityLoading && !teamLoading && (
             <p className="flex items-center gap-1.5 pb-2 text-xs text-muted-foreground">
