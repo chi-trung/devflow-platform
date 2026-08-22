@@ -239,3 +239,14 @@ export function searchWorkspace(
     `/workspaces/${workspaceId}/search?q=${encodeURIComponent(query)}`,
   );
 }
+
+export interface AppSettings {
+  theme: string;
+  emailNotifications: boolean;
+}
+
+export async function updateSettings(input: AppSettings): Promise<void> {
+  try {
+    localStorage.setItem("devflow.settings", JSON.stringify(input));
+  } catch {}
+}
