@@ -7,6 +7,13 @@ import {
   pagedItems,
 } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
+import {
+  getNotificationConnection,
+  parseNotificationPayload,
+  startNotificationStream,
+  stopNotificationStream,
+  type IncomingNotification,
+} from "../lib/realtime";
 import type {
   ActivityResponse,
   NotificationResponse,
@@ -101,9 +108,14 @@ async function fetchActivityNotifications(workspaceId: string) {
   );
 }
 
+export interface UseNotificationsOptions {
+  onIncoming?: (notification: IncomingNotification) => void;
+}
+
 export function useNotifications(
   workspaceId?: string | null,
   enabled = true,
+  options?: UseNotificationsOptions,
 ): {
   notifications: AppNotification[];
   unreadCount: number;
@@ -169,6 +181,26 @@ export function useNotifications(
     const timer = window.setInterval(() => void load(), 60_000);
     return () => window.clearInterval(timer);
   }, [load]);
+
+  const loadRef = useRef(load);
+  loadRef.current = load;
+  const incomingRef = useRef(options?.onIncoming);
+  incomingRef.current = options?.onIncoming;
+
+  useEffect(() => {
+    if (!enabled) return;
+    const connection = getNotificationConnection();
+    const handleIncoming = (payload: unknown) => {
+      loadRef.current();
+      incomingRef.current?.(parseNotificationPayload(payload));
+    };
+    connection.on("notification", handleIncoming);
+    void startNotificationStream();
+    return () => {
+      connection.off("notification", handleIncoming);
+      stopNotificationStream();
+    };
+  }, [enabled]);
 
   const markRead = useCallback(
     (id: string) => {
