@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, SquareKanban, Search, History } from "lucide-react";
+import { ArrowLeft, Plus, SquareKanban, Search, History, CalendarRange } from "lucide-react";
 import { api } from "../lib/api";
 import { createProjectConnection } from "../lib/realtime";
 import { useApi } from "../hooks/useApi";
@@ -246,6 +246,13 @@ export function BoardPage() {
             </p>
           </div>
             <div className="flex items-center gap-2">
+              <Link
+                to={`/workspaces/${workspaceId}/projects/${projectId}/sprints`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98]"
+              >
+                <CalendarRange className="size-4" aria-hidden />
+                Sprints
+              </Link>
               <Button
                 variant="outline"
                 onClick={() => setActivityOpen(true)}
