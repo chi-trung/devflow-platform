@@ -1,12 +1,14 @@
 using DevFlow.Api.Contracts.Auth;
+using DevFlow.Application.Common.Interfaces;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DevFlow.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/auth")]
-public sealed class AuthController(ISender sender) : ControllerBase
+public sealed class AuthController(ISender sender, IUserContext userContext) : ControllerBase
 {
     [HttpPost("register")]
     [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status201Created)]
@@ -65,6 +67,44 @@ public sealed class AuthController(ISender sender) : ControllerBase
         CancellationToken cancellationToken)
     {
         await sender.Send(new Application.Features.Auth.Logout.LogoutCommand(request.RefreshToken), cancellationToken);
+
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpPatch("profile")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateProfile(
+        UpdateProfileRequest request,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Auth.UpdateProfile.UpdateProfileCommand(
+                userContext.UserId,
+                request.DisplayName,
+                request.Username),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpPost("change-password")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ChangePassword(
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Auth.ChangePassword.ChangePasswordCommand(
+                userContext.UserId,
+                request.CurrentPassword,
+                request.NewPassword),
+            cancellationToken);
 
         return NoContent();
     }

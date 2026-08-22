@@ -17,4 +17,6 @@ public interface IUserRepository
     Task<IReadOnlyDictionary<Guid, string>> GetDisplayNamesAsync(
         IEnumerable<Guid> userIds,
         CancellationToken cancellationToken = default);
+
+    Task<bool> ExistsByUsernameExceptIdAsync(string username, Guid userId, CancellationToken cancellationToken = default);
 }
