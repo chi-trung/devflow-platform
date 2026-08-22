@@ -56,7 +56,8 @@ public sealed class DevFlowWebApplicationFactory : WebApplicationFactory<Program
                 ["ConnectionStrings:Redis"] = string.Empty,
                 ["Jwt:Key"] = "SuperSecretIntegrationTestKeyWithSufficientLength1234567890",
                 ["Jwt:Issuer"] = "devflow-api",
-                ["Jwt:Audience"] = "devflow-client"
+                ["Jwt:Audience"] = "devflow-client",
+                ["RateLimiting:Enabled"] = "false"
             };
 
             if (IsDockerAvailable && dbContainer is not null)
