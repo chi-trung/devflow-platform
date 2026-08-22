@@ -43,12 +43,21 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
     navigate(path);
   }
 
-  const menuPosition =
-    direction === "up" ? "bottom-full mb-2" : "top-full mt-2";
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  function getDropdownStyle(): React.CSSProperties {
+    if (!triggerRef.current) return {};
+    const rect = triggerRef.current.getBoundingClientRect();
+    if (direction === "up") {
+      return { position: "fixed" as const, left: rect.left, bottom: window.innerHeight - rect.top + 8, zIndex: 80 };
+    }
+    return { position: "fixed" as const, left: rect.left, top: rect.bottom + 8, zIndex: 80 };
+  }
 
   return (
     <div ref={containerRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-label="User menu"
@@ -86,7 +95,8 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
       {open && (
         <div
           role="menu"
-          className={`absolute left-0 z-[80] w-56 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise ${menuPosition}`}
+          style={getDropdownStyle()}
+          className="w-56 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise"
         >
           <MenuItem
             icon={<UserRound className="size-4" aria-hidden />}
