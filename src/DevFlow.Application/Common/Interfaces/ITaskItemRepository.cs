@@ -14,5 +14,17 @@ public interface ITaskItemRepository
         TaskItemStatus? status,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<TaskItem>> GetForProjectPagedAsync(
+        Guid projectId,
+        TaskItemStatus? status,
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default);
+
+    Task<int> GetCountForProjectAsync(
+        Guid projectId,
+        TaskItemStatus? status,
+        CancellationToken cancellationToken = default);
+
     Task RemoveAsync(TaskItem task, CancellationToken cancellationToken = default);
 }

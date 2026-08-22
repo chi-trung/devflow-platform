@@ -35,18 +35,24 @@ public sealed class TasksController(ISender sender) : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Tasks.TaskItemResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Application.Common.Models.PagedResult<Application.Features.Tasks.TaskItemResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(
         Guid workspaceId,
         Guid projectId,
         [FromQuery] Domain.Enums.TaskItemStatus? status,
-        CancellationToken cancellationToken)
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
     {
-        var tasks = await sender.Send(
-            new Application.Features.Tasks.List.ListTaskItemsQuery(workspaceId, projectId, status),
+        var result = await sender.Send(
+            new Application.Features.Tasks.List.ListTaskItemsQuery(workspaceId, projectId, status, page, pageSize),
             cancellationToken);
 
-        return Ok(tasks);
+        Response.Headers.Append("X-Total-Count", result.TotalCount.ToString());
+        Response.Headers.Append("X-Total-Pages", result.TotalPages.ToString());
+        Response.Headers.Append("X-Current-Page", result.Page.ToString());
+
+        return Ok(result);
     }
 
     [HttpPatch("{taskId:guid}")]
