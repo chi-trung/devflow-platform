@@ -53,10 +53,14 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
   function getDropdownStyle(): React.CSSProperties {
     if (!triggerRef.current) return {};
     const rect = triggerRef.current.getBoundingClientRect();
+    const dropdownWidth = 224; // w-56
+    // If trigger is near right edge, align dropdown to right
+    const alignRight = rect.right + dropdownWidth > window.innerWidth;
+    const left = alignRight ? rect.right - dropdownWidth : rect.left;
     if (direction === "up") {
-      return { position: "fixed" as const, left: rect.left, bottom: window.innerHeight - rect.top + 8, zIndex: 80 };
+      return { position: "fixed" as const, left, bottom: window.innerHeight - rect.top + 8, zIndex: 80 };
     }
-    return { position: "fixed" as const, left: rect.left, top: rect.bottom + 8, zIndex: 80 };
+    return { position: "fixed" as const, left, top: rect.bottom + 8, zIndex: 80 };
   }
 
   return (
