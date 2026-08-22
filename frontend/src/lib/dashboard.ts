@@ -1,4 +1,4 @@
-import { api, getDashboard } from "./api";
+import { api, getDashboard, pagedItems } from "./api";
 import type {
   DashboardActivityItem,
   DashboardData,
@@ -30,11 +30,15 @@ async function fetchProjectSlice(
   project: ProjectResponse,
 ): Promise<ProjectSlice> {
   const base = `/workspaces/${workspaceId}/projects/${project.id}`;
-  const [tasks, activities] = await Promise.all([
-    api<TaskItemResponse[]>(`${base}/tasks`).catch(() => []),
-    api<DashboardActivityItem[]>(`${base}/activities`).catch(() => []),
+  const [tasksResult, activitiesResult] = await Promise.all([
+    api<unknown>(`${base}/tasks`).catch(() => []),
+    api<unknown>(`${base}/activities`).catch(() => []),
   ]);
-  return { project, tasks, activities };
+  return {
+    project,
+    tasks: pagedItems<TaskItemResponse>(tasksResult),
+    activities: pagedItems<DashboardActivityItem>(activitiesResult),
+  };
 }
 
 function deriveFromSlices(slices: ProjectSlice[]): DashboardData {
@@ -99,12 +103,9 @@ function deriveFromSlices(slices: ProjectSlice[]): DashboardData {
 export async function deriveDashboard(
   workspaceId: string,
 ): Promise<DashboardData> {
-  const projects = await api<ProjectResponse[]>(
-    `/workspaces/${workspaceId}/projects`,
+  const projects = pagedItems<ProjectResponse>(
+    await api<unknown>(`/workspaces/${workspaceId}/projects`),
   );
-  if (!Array.isArray(projects)) {
-    throw new Error("Unexpected projects response");
-  }
   const slices = await Promise.all(
     projects.map((project) => fetchProjectSlice(workspaceId, project)),
   );
