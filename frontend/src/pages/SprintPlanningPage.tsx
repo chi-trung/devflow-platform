@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -56,6 +57,7 @@ function daysLeft(endUtc: string): number {
 }
 
 export function SprintPlanningPage() {
+  const { t } = useTranslation();
   const { workspaceId = "", projectId = "" } = useParams();
 
   const { data: project } = useApi<ProjectResponse>(
@@ -247,14 +249,14 @@ export function SprintPlanningPage() {
           className="mb-3 inline-flex items-center gap-1 self-start text-sm text-muted-foreground transition-colors duration-150 hover:text-primary"
         >
           <ArrowLeft className="size-4" aria-hidden />
-          Board
+          {t("board.projects")}
         </Link>
 
         <header className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="font-display text-2xl font-semibold tracking-tight">
-                Sprint Planning
+                {t("sprint.sprintPlanning")}
               </h1>
               {project && <Badge tone="teal">{project.key}</Badge>}
             </div>
@@ -267,7 +269,7 @@ export function SprintPlanningPage() {
           {canManage && (
             <Button onClick={() => setModalOpen(true)}>
               <Plus className="size-4" aria-hidden />
-              New sprint
+              {t("sprint.newSprint")}
             </Button>
           )}
         </header>
@@ -297,16 +299,15 @@ export function SprintPlanningPage() {
                   <CalendarRange className="size-6" aria-hidden />
                 </span>
                 <p className="font-display text-lg font-semibold">
-                  No sprints yet
+                  {t("sprint.noSprintsYet")}
                 </p>
                 <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                  Create your first sprint, then drag backlog tasks into it to
-                  plan the iteration.
+                  {t("sprint.noSprintsDesc")}
                 </p>
                 {canManage && (
                   <Button className="mt-5" onClick={() => setModalOpen(true)}>
                     <Plus className="size-4" aria-hidden />
-                    New sprint
+                    {t("sprint.newSprint")}
                   </Button>
                 )}
               </div>
@@ -325,7 +326,7 @@ export function SprintPlanningPage() {
                   <h2 className="font-display text-lg font-semibold">
                     {active.name}
                   </h2>
-                  <Badge tone="teal">active</Badge>
+                  <Badge tone="teal">{t("sprint.active")}</Badge>
                   <span className="ml-auto font-mono text-[11px] text-muted-foreground">
                     {fmt(active.startDateUtc)} – {fmt(active.endDateUtc)}
                     {active.endDateUtc &&
@@ -354,9 +355,8 @@ export function SprintPlanningPage() {
                       variant="outline"
                       disabled={busy}
                       onClick={() => setPendingComplete(active)}
-                    >
-                      <Flag className="size-3.5" aria-hidden />
-                      Complete sprint
+                    >                    <Flag className="size-3.5" aria-hidden />
+                    {t("sprint.completeSprint")}
                     </Button>
                   )}
                 </div>
@@ -388,7 +388,7 @@ export function SprintPlanningPage() {
                           aria-hidden
                         />
                         <h3 className="text-sm font-semibold">{sprint.name}</h3>
-                        <Badge tone="violet">planned</Badge>
+                        <Badge tone="violet">{t("sprint.planned")}</Badge>
                         <span className="ml-auto font-mono text-[11px] text-muted-foreground">
                           {
                             tasks.filter((t) => t.sprintId === sprint.id)
@@ -403,9 +403,9 @@ export function SprintPlanningPage() {
                             disabled={busy}
                             onClick={() => openStart(sprint.id)}
                           >
-                            <Play className="size-3.5" aria-hidden />
-                            Start
-                          </Button>
+                    <Play className="size-3.5" aria-hidden />
+                    {t("sprint.start")}
+                  </Button>
                         )}
                       </div>
                       {sprint.goal && (
@@ -417,7 +417,7 @@ export function SprintPlanningPage() {
                       {startingId === sprint.id && (
                         <div className="mt-3 flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-3">
                           <label className="flex flex-col gap-1 text-xs font-medium">
-                            Start date
+                            {t("sprint.startDate")}
                             <Input
                               type="date"
                               value={startDate}
@@ -428,7 +428,7 @@ export function SprintPlanningPage() {
                             />
                           </label>
                           <label className="flex flex-col gap-1 text-xs font-medium">
-                            End date
+                            {t("sprint.endDate")}
                             <Input
                               type="date"
                               value={endDate}
@@ -444,7 +444,7 @@ export function SprintPlanningPage() {
                             disabled={busy}
                             onClick={() => void handleStart()}
                           >
-                            {busy ? "Starting…" : "Confirm start"}
+                            {busy ? t("sprint.starting") : t("sprint.confirmStart")}
                           </Button>
                           <Button
                             size="sm"
@@ -464,11 +464,10 @@ export function SprintPlanningPage() {
 
             <section aria-label="Plan work" className="mb-2 mt-1">
               <h2 className="mb-2 px-1 font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Plan work
+                {t("sprint.planWork")}
               </h2>
               <p className="mb-3 px-1 text-sm text-muted-foreground">
-                Drag tasks between the backlog and a sprint to plan the next
-                iteration.
+                {t("sprint.planWorkDesc")}
               </p>
               <SprintBoard
                 tasks={tasks}
@@ -485,7 +484,7 @@ export function SprintPlanningPage() {
             {completed.length > 0 && (
               <section aria-label="Completed sprints" className="mt-6">
                 <h2 className="mb-2 px-1 font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Completed
+                  {t("sprint.completed")}
                 </h2>
                 <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   {completed.map((sprint) => {
@@ -508,7 +507,7 @@ export function SprintPlanningPage() {
                           <h3 className="min-w-0 truncate text-sm font-semibold">
                             {sprint.name}
                           </h3>
-                          <Badge tone="neutral">done</Badge>
+                          <Badge tone="neutral">{t("sprint.done")}</Badge>
                         </div>
                         {(sprint.startDateUtc || sprint.endDateUtc) && (
                           <p className="mb-2 font-mono text-[11px] text-muted-foreground">

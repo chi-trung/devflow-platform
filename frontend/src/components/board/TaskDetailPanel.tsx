@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { X, Paperclip, Download, Trash2, BookmarkPlus } from "lucide-react";
 import { api, createTemplate, tokens } from "../../lib/api";
 import { Button } from "../ui/Button";
@@ -41,6 +42,7 @@ export function TaskDetailPanel({
   onClose,
   onTaskChanged,
 }: TaskDetailPanelProps) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
   const [dueDate, setDueDate] = useState(
@@ -355,7 +357,7 @@ export function TaskDetailPanel({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm font-medium">
-              Status
+              {t("task.status")}
               <select
                 value={status}
                 onChange={(event) =>
@@ -363,15 +365,15 @@ export function TaskDetailPanel({
                 }
                 className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
               >
-                <option value="Backlog">Backlog</option>
-                <option value="InProgress">In Progress</option>
-                <option value="InReview">In Review</option>
-                <option value="Done">Done</option>
+                <option value="Backlog">{t("board.backlog")}</option>
+                <option value="InProgress">{t("board.inProgress")}</option>
+                <option value="InReview">{t("board.inReview")}</option>
+                <option value="Done">{t("board.done")}</option>
               </select>
             </label>
 
             <label className="flex flex-col gap-1 text-sm font-medium">
-              Priority
+              {t("task.priority")}
               <select
                 value={priority}
                 onChange={(event) =>
@@ -379,16 +381,16 @@ export function TaskDetailPanel({
                 }
                 className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
               >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Critical">Critical</option>
+                <option value="Low">{t("task.low")}</option>
+                <option value="Medium">{t("task.medium")}</option>
+                <option value="High">{t("task.high")}</option>
+                <option value="Critical">{t("task.critical")}</option>
               </select>
             </label>
           </div>
 
           <label className="flex flex-col gap-1 text-sm font-medium">
-            Assignee
+            {t("task.assignee")}
             <select
               value={assigneeId ?? ""}
               onChange={(event) =>
@@ -396,7 +398,7 @@ export function TaskDetailPanel({
               }
               className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
             >
-              <option value="">Unassigned</option>
+              <option value="">{t("task.unassigned")}</option>
               {members.map((member) => (
                 <option key={member.userId} value={member.userId}>
                   {member.displayName || member.username}
@@ -407,7 +409,7 @@ export function TaskDetailPanel({
           </label>
 
           <label className="flex flex-col gap-1 text-sm font-medium">
-            Sprint
+            {t("task.sprint")}
             <select
               value={task.sprintId ?? ""}
               onChange={(event) =>
@@ -415,7 +417,7 @@ export function TaskDetailPanel({
               }
               className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
             >
-              <option value="">No sprint</option>
+              <option value="">{t("task.noSprint")}</option>
               {sprints.map((sprint) => (
                 <option key={sprint.id} value={sprint.id}>
                   {sprint.name}
@@ -427,12 +429,12 @@ export function TaskDetailPanel({
 
           {dirty && (
             <Button onClick={() => void saveChanges()} disabled={saving}>
-              {saving ? "Saving…" : "Save changes"}
+              {saving ? t("task.saving") : t("task.saveChanges")}
             </Button>
           )}
 
           <label className="flex flex-col gap-1 text-sm font-medium">
-            Due date
+            {t("task.dueDate")}
             <input
               type="date"
               value={dueDate}
@@ -442,7 +444,7 @@ export function TaskDetailPanel({
           </label>
 
           <label className="flex flex-col gap-1 text-sm font-medium">
-            Description
+            {t("task.description")}
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
@@ -484,13 +486,13 @@ export function TaskDetailPanel({
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium flex items-center gap-1.5">
                 <Paperclip className="size-4 text-muted-foreground" aria-hidden />
-                Attachments{" "}
+                {t("task.attachments")}{" "}
                 <span className="font-mono text-xs text-muted-foreground">
                   ({attachments.length})
                 </span>
               </h3>
               <label className="cursor-pointer text-xs font-medium text-primary hover:underline">
-                {uploading ? "Uploading…" : "+ Add file"}
+                {uploading ? t("task.uploading") : t("task.addFile")}
                 <input
                   type="file"
                   onChange={uploadFile}

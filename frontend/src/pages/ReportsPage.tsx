@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, BarChart3, Download, FileJson, FileSpreadsheet, LineChart } from "lucide-react";
 import { api, exportTasks, getBurndown, getTeamReport, getVelocity } from "../lib/api";
@@ -25,6 +26,7 @@ function isoDaysAgo(days: number): string {
 }
 
 export function ReportsPage() {
+  const { t } = useTranslation();
   const { workspaceId = "", projectId = "" } = useParams();
   const [from, setFrom] = useState(isoDaysAgo(29));
   const [to, setTo] = useState(isoDaysAgo(0));
@@ -93,7 +95,7 @@ export function ReportsPage() {
           className="mb-3 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-150 hover:text-primary"
         >
           <ArrowLeft className="size-4" aria-hidden />
-          Board
+          {t("board.projects")}
         </Link>
 
         <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
@@ -104,7 +106,7 @@ export function ReportsPage() {
               </h1>
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Burndown, velocity and team workload across the project.
+              {t("reports.description")}
             </p>
           </div>
 
@@ -207,7 +209,7 @@ export function ReportsPage() {
           {!burndownLoading && !velocityLoading && !teamLoading && (
             <p className="flex items-center gap-1.5 pb-2 text-xs text-muted-foreground">
               <BarChart3 className="size-3.5" aria-hidden />
-              Data refreshes automatically when you change the range or reopen this page.
+              {t("reports.dataRefresh")}
             </p>
           )}
         </div>
