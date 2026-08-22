@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, FolderKanban, Users, Trash2 } from "lucide-react";
 import { api, pagedItems } from "../lib/api";
@@ -39,6 +40,7 @@ interface ProjectWithStats extends ProjectResponse {
 }
 
 export function WorkspacePage() {
+  const { t } = useTranslation();
   const { workspaceId = "" } = useParams();
   const navigate = useNavigate();
 
@@ -224,7 +226,7 @@ export function WorkspacePage() {
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-150 hover:text-primary"
         >
           <ArrowLeft className="size-4" aria-hidden />
-          All workspaces
+          {t("nav.allWorkspaces")}
         </Link>
 
         {wsLoading ? (
@@ -252,7 +254,7 @@ export function WorkspacePage() {
                 {!creating && (
                   <Button onClick={() => setCreating(true)}>
                     <Plus className="size-4" aria-hidden />
-                    New project
+                    {t("common.create")} project
                   </Button>
                 )}
                 {workspace.role === "Owner" && (
@@ -409,17 +411,17 @@ export function WorkspacePage() {
               <div className="mb-4 flex items-end justify-between gap-4">
                 <div>
                   <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                    Team
+                    {t("reports.team")}
                   </p>
                   <h2 className="mt-1 flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
                     <Users className="size-5 text-primary" aria-hidden />
-                    Members
+                    {t("reports.team")}
                   </h2>
                 </div>
                 {canManageMembers && !inviting && (
                   <Button variant="outline" onClick={() => setInviting(true)}>
                     <Plus className="size-4" aria-hidden />
-                    Invite
+                    {t("common.create")}
                   </Button>
                 )}
               </div>
@@ -499,8 +501,8 @@ export function WorkspacePage() {
 
       {pendingDeleteWorkspace && (
         <ConfirmDialog
-          title="Delete this workspace?"
-          message="All projects, tasks, and member data will be permanently removed."
+          title={t("task.delete") + " workspace?"}
+          message={t("task.deleteConfirm")}
           onConfirm={() => {
             setPendingDeleteWorkspace(false);
             void deleteWorkspace();
@@ -511,7 +513,7 @@ export function WorkspacePage() {
 
       {pendingDeleteProject && (
         <ConfirmDialog
-          title="Archive this project?"
+          title={t("task.delete") + " project?"}
           message={`\"${pendingDeleteProject.name}\" will be archived and hidden from the board.`}
           onConfirm={() => {
             const project = pendingDeleteProject;
