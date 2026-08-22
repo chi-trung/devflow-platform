@@ -82,4 +82,9 @@ public sealed class WorkspaceRepository(DevFlowDbContext dbContext) : IWorkspace
 
         await dbContext.WorkspaceMembers.AddAsync(member, cancellationToken);
     }
+
+    public void Delete(Workspace workspace)
+    {
+        dbContext.Workspaces.Remove(workspace);
+    }
 }

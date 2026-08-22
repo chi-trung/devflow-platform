@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, FolderKanban, Users } from "lucide-react";
+import { ArrowLeft, Plus, FolderKanban, Users, Trash2 } from "lucide-react";
 import { api, pagedItems } from "../lib/api";
 import { useApi } from "../hooks/useApi";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ui/ToastProvider";
 import { AppShell } from "../components/AppShell";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { Input } from "../components/ui/Input";
@@ -38,6 +40,7 @@ interface ProjectWithStats extends ProjectResponse {
 
 export function WorkspacePage() {
   const { workspaceId = "" } = useParams();
+  const navigate = useNavigate();
 
   const {
     data: workspace,
@@ -124,6 +127,28 @@ export function WorkspacePage() {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSubmitting, setInviteSubmitting] = useState(false);
   const { push } = useToast();
+  const [pendingDeleteWorkspace, setPendingDeleteWorkspace] = useState(false);
+  const [pendingDeleteProject, setPendingDeleteProject] = useState<ProjectResponse | null>(null);
+
+  async function deleteWorkspace() {
+    try {
+      await api(`/workspaces/${workspaceId}`, { method: "DELETE" });
+      push("Workspace deleted");
+      navigate("/");
+    } catch (err) {
+      push(err instanceof Error ? err.message : "Failed to delete workspace", "error");
+    }
+  }
+
+  async function deleteProject(project: ProjectResponse) {
+    try {
+      await api(`/workspaces/${workspaceId}/projects/${project.id}`, { method: "DELETE" });
+      push(`"${project.name}" archived`);
+      reload();
+    } catch (err) {
+      push(err instanceof Error ? err.message : "Failed to archive project", "error");
+    }
+  }
 
   const canManageMembers =
     workspace?.role === "Owner" || workspace?.role === "Admin";
@@ -223,12 +248,23 @@ export function WorkspacePage() {
                   {workspace.description && ` — ${workspace.description}`}
                 </p>
               </div>
-              {!creating && (
-                <Button onClick={() => setCreating(true)}>
-                  <Plus className="size-4" aria-hidden />
-                  New project
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {!creating && (
+                  <Button onClick={() => setCreating(true)}>
+                    <Plus className="size-4" aria-hidden />
+                    New project
+                  </Button>
+                )}
+                {workspace.role === "Owner" && (
+                  <Button
+                    variant="ghost"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setPendingDeleteWorkspace(true)}
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </Button>
+                )}
+              </div>
             </div>
 
             {creating && (
@@ -318,8 +354,20 @@ export function WorkspacePage() {
                     >
                       <Link
                         to={`/workspaces/${workspaceId}/projects/${project.id}`}
-                        className="group flex h-full flex-col rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40"
+                        className="group relative flex h-full flex-col rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40"
                       >
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setPendingDeleteProject(project);
+                          }}
+                          aria-label={`Archive ${project.name}`}
+                          className="absolute right-2 top-2 z-10 rounded p-1 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-destructive group-hover:opacity-100"
+                        >
+                          <Trash2 className="size-3.5" aria-hidden />
+                        </button>
                         <div className="mb-3 flex items-center justify-between gap-2">
                           <Badge tone="teal">{project.key}</Badge>
                           <Badge
@@ -448,6 +496,31 @@ export function WorkspacePage() {
           </>
         )}
       </div>
+
+      {pendingDeleteWorkspace && (
+        <ConfirmDialog
+          title="Delete this workspace?"
+          message="All projects, tasks, and member data will be permanently removed."
+          onConfirm={() => {
+            setPendingDeleteWorkspace(false);
+            void deleteWorkspace();
+          }}
+          onCancel={() => setPendingDeleteWorkspace(false)}
+        />
+      )}
+
+      {pendingDeleteProject && (
+        <ConfirmDialog
+          title="Archive this project?"
+          message={`\"${pendingDeleteProject.name}\" will be archived and hidden from the board.`}
+          onConfirm={() => {
+            const project = pendingDeleteProject;
+            setPendingDeleteProject(null);
+            void deleteProject(project);
+          }}
+          onCancel={() => setPendingDeleteProject(null)}
+        />
+      )}
     </AppShell>
   );
 }

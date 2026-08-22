@@ -72,6 +72,19 @@ public sealed class WorkspacesController(ISender sender) : ControllerBase
         return Ok(members);
     }
 
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Workspaces.Delete.DeleteWorkspaceCommand(id),
+            cancellationToken);
+
+        return NoContent();
+    }
+
     [HttpPost("{id:guid}/members")]
     [ProducesResponseType(typeof(Application.Features.Workspaces.InviteMembers.MemberResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
