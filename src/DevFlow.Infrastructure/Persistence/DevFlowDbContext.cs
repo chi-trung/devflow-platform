@@ -40,6 +40,10 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
 
+    public DbSet<GitHubIntegration> GitHubIntegrations => Set<GitHubIntegration>();
+
+    public DbSet<PullRequest> PullRequests => Set<PullRequest>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);
