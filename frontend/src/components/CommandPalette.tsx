@@ -39,6 +39,9 @@ export function CommandPalette({
     null,
   );
   const [searching, setSearching] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState("");
+  const [dueFilter, setDueFilter] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -56,9 +59,26 @@ export function CommandPalette({
   );
   const projects = pagedItems<ProjectResponse>(projectsRaw);
 
+  const dueRange = useMemo((): { dueAfter?: string; dueBefore?: string } => {
+    if (!dueFilter) return {};
+    const now = new Date();
+    if (dueFilter === "overdue") return { dueBefore: now.toISOString() };
+    if (dueFilter === "today") {
+      const end = new Date(now);
+      end.setHours(23, 59, 59, 999);
+      return { dueBefore: end.toISOString() };
+    }
+    const week = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    return { dueBefore: week.toISOString() };
+  }, [dueFilter]);
+
   useEffect(() => {
     const keyword = query.trim();
-    if (!open || !workspaceId || keyword.length < 2) {
+    if (
+      !open ||
+      !workspaceId ||
+      (keyword.length < 2 && !statusFilter && !priorityFilter && !dueFilter)
+    ) {
       setRemoteResults(null);
       setSearching(false);
       return;
@@ -67,7 +87,11 @@ export function CommandPalette({
     let cancelled = false;
     setSearching(true);
     const timer = window.setTimeout(() => {
-      searchWorkspace(workspaceId, keyword)
+      searchWorkspace(workspaceId, keyword, {
+        status: statusFilter || undefined,
+        priority: priorityFilter || undefined,
+        ...dueRange,
+      })
         .then((data) => {
           if (!cancelled) {
             setRemoteResults(data);
@@ -83,7 +107,7 @@ export function CommandPalette({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [open, query, workspaceId]);
+  }, [open, query, workspaceId, statusFilter, priorityFilter, dueRange]);
 
   const commands = useMemo<Command[]>(() => {
     const list: Command[] = [];
@@ -137,7 +161,10 @@ export function CommandPalette({
         : true,
     );
 
-    if (!q || !remoteResults) {
+    if (!q && !statusFilter && !priorityFilter && !dueFilter) {
+      return localMatches;
+    }
+    if (!remoteResults) {
       return localMatches;
     }
 
@@ -170,12 +197,26 @@ export function CommandPalette({
     const others = localMatches.filter((command) => command.group !== t("nav.projects"));
 
     return [...remoteProjects, ...taskCommands, ...others];
-  }, [commands, query, remoteResults, projectIdByKey, workspaceId, navigate, t]);
+  }, [
+    commands,
+    query,
+    remoteResults,
+    projectIdByKey,
+    workspaceId,
+    navigate,
+    t,
+    statusFilter,
+    priorityFilter,
+    dueFilter,
+  ]);
 
   useEffect(() => {
     if (open) {
       setQuery("");
       setSelected(0);
+      setStatusFilter("");
+      setPriorityFilter("");
+      setDueFilter("");
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [open]);
@@ -244,6 +285,50 @@ export function CommandPalette({
             esc
           </kbd>
         </div>
+
+        {workspaceId && (
+          <div
+            className="flex items-center gap-1.5 border-b border-border px-3 py-2"
+            role="group"
+            aria-label={t("commandPalette.filters")}
+          >
+            <select
+              aria-label={t("commandPalette.statusFilter")}
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="rounded-md border border-border bg-surface px-1.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:border-border-strong focus:outline-none"
+            >
+              <option value="">{t("commandPalette.anyStatus")}</option>
+              <option value="Backlog">Backlog</option>
+              <option value="InProgress">{t("board.inProgress")}</option>
+              <option value="InReview">{t("board.inReview")}</option>
+              <option value="Done">{t("board.done")}</option>
+            </select>
+            <select
+              aria-label={t("commandPalette.priorityFilter")}
+              value={priorityFilter}
+              onChange={(event) => setPriorityFilter(event.target.value)}
+              className="rounded-md border border-border bg-surface px-1.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:border-border-strong focus:outline-none"
+            >
+              <option value="">{t("commandPalette.anyPriority")}</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+            <select
+              aria-label={t("commandPalette.dueFilter")}
+              value={dueFilter}
+              onChange={(event) => setDueFilter(event.target.value)}
+              className="rounded-md border border-border bg-surface px-1.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:border-border-strong focus:outline-none"
+            >
+              <option value="">{t("commandPalette.anyDue")}</option>
+              <option value="overdue">{t("commandPalette.dueOverdue")}</option>
+              <option value="today">{t("commandPalette.dueToday")}</option>
+              <option value="week">{t("commandPalette.dueWeek")}</option>
+            </select>
+          </div>
+        )}
 
         <ul ref={listRef} className="max-h-80 overflow-y-auto p-2">
           {results.length === 0 && !searching && (

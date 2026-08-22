@@ -50,6 +50,7 @@
     "inReview": "In Review",
     "done": "Done",
     "newTask": "New task",
+    "importTasks": "Import",
     "filterTasks": "Filter tasks…  status:done is:blocked",
     "empty": "This board is empty",
     "emptyDesc": "Add the first task and drag it across columns as work progresses.",
@@ -376,7 +377,29 @@
   },
   "commandPalette": {
     "placeholder": "Type a command or search…",
-    "noResults": "No results found."
+    "noResults": "No results found.",
+    "filters": "Search filters",
+    "statusFilter": "Filter by status",
+    "priorityFilter": "Filter by priority",
+    "dueFilter": "Filter by due date",
+    "anyStatus": "Any status",
+    "anyPriority": "Any priority",
+    "anyDue": "Any due date",
+    "dueOverdue": "Overdue",
+    "dueToday": "Due today",
+    "dueWeek": "Due this week"
+  },
+  "import": {
+    "title": "Import tasks",
+    "pickFile": "Choose a .csv or .json file",
+    "noFile": "Please choose a file first.",
+    "failed": "Import failed.",
+    "importing": "Importing…",
+    "submit": "Import",
+    "importedCount": "{{count}} task(s) imported",
+    "skippedCount": "{{count}} skipped",
+    "errors": "Rows with problems:",
+    "statusHint": "status: Backlog/InProgress/InReview/Done, priority: Low/Medium/High/Critical"
   },
   "common": {
     "save": "Save",
@@ -395,6 +418,7 @@
     "owner": "Owner",
     "admin": "Admin",
     "member": "Member",
-    "retry": "Retry"
+    "retry": "Retry",
+    "done": "Done"
   }
 }
