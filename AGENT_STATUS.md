@@ -93,8 +93,9 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 - [x] **F18.2: Subtask Checklist Component** — ✅ **Agent A**
   - `frontend/src/components/board/SubtaskSection.tsx` wired into `TaskDetailPanel.tsx`.
   - List subtasks (`GET .../tasks/{parentId}/subtasks` → `TaskItemResponse[]`), create (`POST` `CreateSubtaskRequest{Title,Description,Priority}`), detach (`DELETE .../subtasks/{subtaskId}`), toggle completion (PATCH subtask status Done/Backlog), progress bar, nested subtask count on TaskCard.
-- [ ] **F18.1: Epic Roadmap & Timeline View** — **Agent C**
-  - Gantt/Roadmap timeline view showing active epics and milestones in `EpicsPage.tsx`. Consumes `EpicResponse` (`StartDateUtc`, `EndDateUtc`, `CompletionPercent`, `TotalStoryPoints`). `getEpics()` already exists in `lib/api.ts`.
+- [x] **F18.1: Epic Roadmap & Timeline View** — ✅ **Agent C**
+  - Gantt/Roadmap timeline view in `EpicsPage.tsx` (List/Roadmap toggle) + `frontend/src/components/epic/EpicRoadmap.tsx`.
+  - Month tick header, today line, progress-filled Gantt bars from `EpicResponse` (`startDateUtc`/`endDateUtc`/`completionPercent`), milestone markers for date-less epics, unscheduled chips, click-to-edit.
 - [x] **F18.3: Story Point Badges & Board Estimator** — ✅ **Agent B**
   - Fibonacci story point badge on TaskCard + edit modal (`PUT .../tasks/{id}/estimation`, values {1,2,3,5,8,13,21}), column totals, sprint capacity meter via `GET .../sprints/{id}/velocity` (`SprintVelocityResponse`).
 
