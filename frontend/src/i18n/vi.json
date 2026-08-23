@@ -14,7 +14,9 @@
     "allWorkspaces": "Tất cả workspaces",
     "searchPlaceholder": "Tìm kiếm…",
     "workspaces": "Workspaces",
-    "projects": "Dự án"
+    "projects": "Dự án",
+    "epics": "Epics",
+    "savedSearches": "Saved Searches"
   },
   "dashboard": {
     "title": "Workspaces",

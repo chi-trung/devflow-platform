@@ -13,6 +13,8 @@ import {
   Keyboard,
   X,
   Upload,
+  List,
+  Bookmark,
 } from "lucide-react";
 import {
   api,
@@ -636,6 +638,20 @@ export function BoardPage() {
               >
                 <BarChart3 className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("nav.reports")}</span>
+              </Link>
+              <Link
+                to={`/workspaces/${workspaceId}/projects/${projectId}/epics`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+              >
+                <List className="size-4" aria-hidden />
+                <span className="hidden xs:inline sm:inline">{t("epic.title")}</span>
+              </Link>
+              <Link
+                to="/saved-searches"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+              >
+                <Bookmark className="size-4" aria-hidden />
+                <span className="hidden xs:inline sm:inline">{t("savedSearch.title")}</span>
               </Link>
               <Button
                 variant="outline"
