@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { GitPullRequest } from "lucide-react";
+import { ExternalLink, GitBranch, GitPullRequest, Loader2 } from "lucide-react";
 import { getProjectPRs } from "../../lib/api";
 import type { PullRequestResponse } from "../../types/api";
 
@@ -14,6 +14,18 @@ interface TaskPullRequestsProps {
   workspaceId: string;
   projectId: string;
   taskId: string;
+}
+
+/** Best-effort branch name from the PR URL (…/pull/42) or the title. */
+function deriveBranch(pr: PullRequestResponse): string | null {
+  const pullMatch = pr.url.match(/pull\/(\d+)/i);
+  if (pullMatch) return `branch-${pullMatch[1]}`;
+  const slug = pr.title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+  return slug || null;
 }
 
 export function TaskPullRequests({ workspaceId, projectId, taskId }: TaskPullRequestsProps) {
@@ -47,32 +59,52 @@ export function TaskPullRequests({ workspaceId, projectId, taskId }: TaskPullReq
       </h3>
 
       {!prs ? (
-        <p className="text-xs text-muted-foreground">{t("common.loading")}</p>
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Loader2 className="size-3 animate-spin" aria-hidden />
+          {t("common.loading")}
+        </p>
       ) : (
         <div className="flex flex-col gap-1.5">
-          {prs.map((pr) => (
-            <a
-              key={pr.id}
-              href={pr.url}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2 rounded-lg border border-border/60 bg-card p-2 text-xs transition-colors duration-150 hover:border-primary"
-            >
-              <span
-                className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold ${
-                  prStatusStyle[pr.status] ?? prStatusStyle.Closed
-                }`}
+          {prs.map((pr) => {
+            const branch = deriveBranch(pr);
+            return (
+              <div
+                key={pr.id}
+                className="flex items-center gap-2 rounded-lg border border-border/60 bg-card p-2 text-xs transition-colors duration-150 hover:border-primary"
               >
-                {pr.status}
-              </span>
-              <span className="truncate font-medium">{pr.title}</span>
-              {pr.author && (
-                <span className="ml-auto shrink-0 font-mono text-[10px] text-muted-foreground">
-                  {pr.author}
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold ${
+                    prStatusStyle[pr.status] ?? prStatusStyle.Closed
+                  }`}
+                >
+                  {pr.status}
                 </span>
-              )}
-            </a>
-          ))}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{pr.title}</p>
+                  {branch && (
+                    <p className="mt-0.5 flex items-center gap-1 truncate font-mono text-[10px] text-muted-foreground">
+                      <GitBranch className="size-3 shrink-0" aria-hidden />
+                      {branch}
+                    </p>
+                  )}
+                  <div className="mt-0.5 flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
+                    {pr.author && <span>by {pr.author}</span>}
+                    <span>CI: —</span>
+                  </div>
+                </div>
+                <a
+                  href={pr.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={t("github.viewPr")}
+                  title={t("github.viewPr")}
+                  className="shrink-0 rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-primary"
+                >
+                  <ExternalLink className="size-3.5" aria-hidden />
+                </a>
+              </div>
+            );
+          })}
         </div>
       )}
     </section>

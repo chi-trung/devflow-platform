@@ -51,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<ITemplateRepository, TemplateRepository>();
         services.AddScoped<ICustomFieldRepository, CustomFieldRepository>();
         services.AddScoped<IWebhookRepository, WebhookRepository>();
+        services.AddScoped<IPersonalAccessTokenRepository, PersonalAccessTokenRepository>();
         services.AddScoped<IWebhookDispatcher, WebhookDispatcher>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
         services.AddScoped<IOutboxDispatcher, OutboxDispatcher>();

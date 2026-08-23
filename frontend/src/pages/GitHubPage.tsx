@@ -6,6 +6,7 @@ import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Skeleton } from "../components/ui/Skeleton";
+import { GitHubSettingsSection } from "../components/settings/GitHubSettingsSection";
 import {
   addPR,
   getGitHubIntegration,
@@ -357,6 +358,8 @@ export function GitHubPage() {
             onCancel={() => setPendingDeletePr(null)}
           />
         )}
+
+        <GitHubSettingsSection workspaceId={workspaceId} projectId={projectId} />
       </div>
     </AppShell>
   );

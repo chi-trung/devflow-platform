@@ -276,6 +276,7 @@ export interface GitHubIntegrationResponse {
   repositoryUrl: string;
   isActive: boolean;
   createdAtUtc: string;
+  hasWebhookSecret?: boolean;
 }
 
 export interface PullRequestResponse {
@@ -376,4 +377,18 @@ export interface UpdateEpicRequest {
   description?: string | null;
   startDateUtc?: string | null;
   endDateUtc?: string | null;
+}
+
+export interface PatResponse {
+  id: string;
+  name: string;
+  scopes: string[];
+  expiresAtUtc: string;
+  createdAtUtc: string;
+  lastUsedAtUtc: string | null;
+}
+
+export interface PatCreatedResponse {
+  id: string;
+  token: string;
 }

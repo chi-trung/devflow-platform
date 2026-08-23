@@ -39,4 +39,9 @@ public class GitHubIntegration : BaseEntity, IAuditableEntity
     public void Deactivate() => IsActive = false;
 
     public void Activate() => IsActive = true;
+
+    public void UpdateWebhookSecret(string secret)
+    {
+        WebhookSecret = secret ?? throw new ArgumentNullException(nameof(secret));
+    }
 }

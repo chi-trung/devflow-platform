@@ -58,6 +58,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<SavedSearch> SavedSearches => Set<SavedSearch>();
 
+    public DbSet<PersonalAccessToken> PersonalAccessTokens => Set<PersonalAccessToken>();
+
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

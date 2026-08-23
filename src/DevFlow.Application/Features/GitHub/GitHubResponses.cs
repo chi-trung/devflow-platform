@@ -5,7 +5,8 @@ public sealed record GitHubIntegrationResponse(
     Guid ProjectId,
     string RepositoryUrl,
     bool IsActive,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    bool HasWebhookSecret = false);
 
 public sealed record PullRequestResponse(
     Guid Id,

@@ -38,7 +38,8 @@ public class LinkGitHubHandler(
             integration.ProjectId,
             integration.RepositoryUrl,
             integration.IsActive,
-            integration.CreatedAtUtc);
+            integration.CreatedAtUtc,
+            integration.WebhookSecret is not null);
     }
 }
 
@@ -62,7 +63,8 @@ public class GetGitHubIntegrationHandler(
             integration.ProjectId,
             integration.RepositoryUrl,
             integration.IsActive,
-            integration.CreatedAtUtc);
+            integration.CreatedAtUtc,
+            integration.WebhookSecret is not null);
     }
 }
 
@@ -147,5 +149,30 @@ public class AddPullRequestHandler(
             pr.Author,
             pr.LinkedTaskId,
             pr.CreatedAtUtc);
+    }
+}
+
+// Update the webhook signing secret for an integration
+[RequireWorkspaceRole(WorkspaceRole.Admin)]
+public sealed record UpdateGitHubWebhookSecretCommand(
+    Guid WorkspaceId,
+    Guid ProjectId,
+    string Secret) : IRequest, IWorkspaceRequest;
+
+public class UpdateGitHubWebhookSecretHandler(
+    IGitHubRepository gitHubRepository,
+    IUnitOfWork unitOfWork)
+    : IRequestHandler<UpdateGitHubWebhookSecretCommand>
+{
+    public async Task Handle(UpdateGitHubWebhookSecretCommand request, CancellationToken ct)
+    {
+        var integration = await gitHubRepository.GetByProjectIdAsync(request.ProjectId, ct)
+            ?? throw new NotFoundException("GitHub integration", request.ProjectId);
+
+        if (string.IsNullOrWhiteSpace(request.Secret))
+            throw new ArgumentException("Webhook secret is required.", nameof(request.Secret));
+
+        integration.UpdateWebhookSecret(request.Secret.Trim());
+        await unitOfWork.SaveChangesAsync(ct);
     }
 }

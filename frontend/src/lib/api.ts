@@ -16,6 +16,8 @@ import type {
   NotificationPreferencesResponse,
   NotificationResponse,
   PagedResult,
+  PatCreatedResponse,
+  PatResponse,
   PullRequestResponse,
   SavedSearchResponse,
   SearchResponse,
@@ -508,6 +510,17 @@ export function getProjectPRs(
   );
 }
 
+export async function updateGitHubWebhookSecret(
+  workspaceId: string,
+  projectId: string,
+  secret: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/github/webhook-secret`,
+    { method: "PUT", body: JSON.stringify({ secret }) },
+  );
+}
+
 export async function addPR(
   workspaceId: string,
   projectId: string,
@@ -944,6 +957,21 @@ export async function updateNotificationPreferences(
     method: "PUT",
     body: JSON.stringify(prefs),
   });
+}
+
+export function listPats(): Promise<PatResponse[]> {
+  return api<PatResponse[]>("/users/me/pat");
+}
+
+export async function createPat(name: string, scopes: string[], expiresAtUtc: string): Promise<PatCreatedResponse> {
+  return api<PatCreatedResponse>("/users/me/pat", {
+    method: "POST",
+    body: JSON.stringify({ name, scopes, expiresAtUtc }),
+  });
+}
+
+export async function deletePat(patId: string): Promise<void> {
+  await api(`/users/me/pat/${patId}`, { method: "DELETE" });
 }
 
 export interface ReorderTaskPayload {
