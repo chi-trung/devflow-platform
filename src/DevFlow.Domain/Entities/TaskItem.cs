@@ -46,6 +46,8 @@ public class TaskItem : BaseEntity, IAuditableEntity
 
     public DateTimeOffset? CompletedAtUtc { get; private set; }
 
+    public DateTimeOffset? StartedAtUtc { get; private set; }
+
     public int? EstimateMinutes { get; private set; }
 
     public int Position { get; set; }
@@ -89,6 +91,11 @@ public class TaskItem : BaseEntity, IAuditableEntity
         }
 
         Status = status;
+
+        if (status == TaskItemStatus.InProgress && StartedAtUtc is null)
+        {
+            StartedAtUtc = DateTimeOffset.UtcNow;
+        }
 
         if (status == TaskItemStatus.Done)
         {

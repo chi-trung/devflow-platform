@@ -1,3 +1,5 @@
+using DevFlow.Domain.Enums;
+
 namespace DevFlow.Application.Features.Reporting;
 
 public sealed record BurndownPoint(
@@ -34,3 +36,32 @@ public sealed record TeamReportResponse(
     int TotalTasks,
     int TotalCompleted,
     int TotalMinutesLogged);
+
+public sealed record TaskCycleLeadTime(
+    Guid TaskId,
+    string Title,
+    TaskItemStatus Status,
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset? StartedAtUtc,
+    DateTimeOffset? CompletedAtUtc,
+    double? CycleTimeDays,
+    double? LeadTimeDays);
+
+public sealed record CycleLeadTimeResponse(
+    double? CycleTimeP50,
+    double? CycleTimeP90,
+    double? LeadTimeP50,
+    double? LeadTimeP90,
+    IReadOnlyList<TaskCycleLeadTime> Tasks);
+
+public sealed record VelocityHistoryPoint(
+    Guid SprintId,
+    string SprintName,
+    int TotalStoryPoints,
+    int CompletedStoryPoints,
+    DateTimeOffset? EndDateUtc);
+
+public sealed record VelocityHistoryResponse(
+    IReadOnlyList<VelocityHistoryPoint> Points,
+    double AverageCompleted,
+    double AverageTotal);
