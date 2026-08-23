@@ -13,6 +13,7 @@ const WorkspacePage = lazy(() => import("./pages/WorkspacePage").then(m => ({ de
 const BoardPage = lazy(() => import("./pages/BoardPage").then(m => ({ default: m.BoardPage })));
 const SprintPlanningPage = lazy(() => import("./pages/SprintPlanningPage").then(m => ({ default: m.SprintPlanningPage })));
 const ReportsPage = lazy(() => import("./pages/ReportsPage").then(m => ({ default: m.ReportsPage })));
+const SavedSearchesPage = lazy(() => import("./pages/SavedSearchesPage").then(m => ({ default: m.SavedSearchesPage })));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
 
 function LoadingFallback() {
@@ -36,6 +37,7 @@ export default function App() {
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/saved-searches" element={<SavedSearchesPage />} />
                 <Route
                   path="/workspaces/:workspaceId"
                   element={<WorkspacePage />}

@@ -502,6 +502,23 @@
     "syncedToAccount": "Synced to your account.",
     "prefsSaveFailed": "Couldn't save notification preferences."
   },
+  "savedSearch": {
+    "title": "Saved Searches",
+    "description": "Quick access to your saved filters and queries.",
+    "create": "Save current search",
+    "createTitle": "Save Search",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. High priority bugs",
+    "loadFailed": "Failed to load saved searches.",
+    "saveFailed": "Failed to save search.",
+    "deleteFailed": "Failed to delete saved search.",
+    "emptyTitle": "No saved searches yet",
+    "emptyDescription": "Save your current search filters to access them quickly later.",
+    "deleteTitle": "Delete saved search?",
+    "deleteMessage": "This will permanently delete \"{{name}}\". This action cannot be undone.",
+    "deleteConfirm": "Delete",
+    "delete": "Delete"
+  },
   "notification": {
     "notifications": "Notifications",
     "markAllRead": "Mark all read",
