@@ -15,6 +15,7 @@ import {
   Upload,
   List,
   Bookmark,
+  Tag,
 } from "lucide-react";
 import {
   api,
@@ -652,6 +653,13 @@ export function BoardPage() {
               >
                 <Bookmark className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("savedSearch.title")}</span>
+              </Link>
+              <Link
+                to={`/workspaces/${workspaceId}/projects/${projectId}/labels`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+              >
+                <Tag className="size-4" aria-hidden />
+                <span className="hidden xs:inline sm:inline">{t("label.title")}</span>
               </Link>
               <Button
                 variant="outline"

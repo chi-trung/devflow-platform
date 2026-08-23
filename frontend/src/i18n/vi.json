@@ -16,7 +16,8 @@
     "workspaces": "Workspaces",
     "projects": "Dự án",
     "epics": "Epics",
-    "savedSearches": "Saved Searches"
+    "savedSearches": "Saved Searches",
+    "labels": "Labels"
   },
   "dashboard": {
     "title": "Workspaces",
