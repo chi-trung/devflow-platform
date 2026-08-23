@@ -12,6 +12,12 @@ public sealed class GitHubRepository(DevFlowDbContext dbContext) : IGitHubReposi
             .FirstOrDefaultAsync(gi => gi.ProjectId == projectId, cancellationToken);
     }
 
+    public async Task<GitHubIntegration?> GetByRepositoryUrlAsync(string repositoryUrl, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.GitHubIntegrations
+            .FirstOrDefaultAsync(gi => gi.RepositoryUrl == repositoryUrl, cancellationToken);
+    }
+
     public async Task AddIntegrationAsync(GitHubIntegration integration, CancellationToken cancellationToken = default)
     {
         await dbContext.GitHubIntegrations.AddAsync(integration, cancellationToken);

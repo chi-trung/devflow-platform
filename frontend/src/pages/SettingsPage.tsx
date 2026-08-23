@@ -25,6 +25,7 @@ import { Button } from "../components/ui/Button";
 import { ThemeToggle } from "../components/ui/ThemeToggle";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { WebhooksSection } from "../components/settings/WebhooksSection";
+import { PATSection } from "../components/settings/PATSection";
 
 function Switch({
   checked,
@@ -262,6 +263,8 @@ export function SettingsPage() {
         </section>
 
         <LanguageSection />
+
+        <PATSection />
 
         <section
           aria-label={t("settings.notifications")}
