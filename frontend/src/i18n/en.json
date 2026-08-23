@@ -857,5 +857,27 @@
     "deleteMessage": "This will permanently delete \"{{name}}\". This action cannot be undone.",
     "deleteConfirm": "Delete",
     "delete": "Delete field"
+  },
+  "webhook": {
+    "title": "Webhooks",
+    "description": "Configure webhooks to receive real-time event notifications.",
+    "create": "New Webhook",
+    "createTitle": "Create Webhook",
+    "urlLabel": "Webhook URL",
+    "eventsLabel": "Events",
+    "secretLabel": "Secret (optional)",
+    "secretPlaceholder": "Optional signing secret",
+    "loadFailed": "Failed to load webhooks.",
+    "saveFailed": "Failed to save webhook.",
+    "testFailed": "Failed to test webhook.",
+    "deleteFailed": "Failed to delete webhook.",
+    "emptyTitle": "No webhooks yet",
+    "emptyDescription": "Add a webhook to send events to external services.",
+    "deleteTitle": "Delete webhook?",
+    "deleteMessage": "This will permanently delete the webhook to \"{{name}}\". This action cannot be undone.",
+    "deleteConfirm": "Delete",
+    "delete": "Delete webhook",
+    "test": "Test webhook",
+    "apply": "Apply"
   }
 }

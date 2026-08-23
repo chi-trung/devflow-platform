@@ -18,6 +18,7 @@ const EpicsPage = lazy(() => import("./pages/EpicsPage").then(m => ({ default: m
 const LabelsPage = lazy(() => import("./pages/LabelsPage").then(m => ({ default: m.LabelsPage })));
 const CustomFieldsPage = lazy(() => import("./pages/CustomFieldsPage").then(m => ({ default: m.CustomFieldsPage })));
 const TemplatesPage = lazy(() => import("./pages/TemplatesPage").then(m => ({ default: m.TemplatesPage })));
+const WebhooksPage = lazy(() => import("./pages/WebhooksPage").then(m => ({ default: m.WebhooksPage })));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
 
 function LoadingFallback() {
@@ -73,6 +74,10 @@ export default function App() {
                 <Route
                   path="/workspaces/:workspaceId/projects/:projectId/templates"
                   element={<TemplatesPage />}
+                />
+                <Route
+                  path="/workspaces/:workspaceId/webhooks"
+                  element={<WebhooksPage />}
                 />
               </Route>
               <Route path="*" element={<NotFoundPage />} />
