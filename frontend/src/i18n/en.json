@@ -14,7 +14,9 @@
     "allWorkspaces": "All workspaces",
     "searchPlaceholder": "Search…",
     "workspaces": "Workspaces",
-    "projects": "Projects"
+    "projects": "Projects",
+    "epics": "Epics",
+    "savedSearches": "Saved Searches"
   },
   "dashboard": {
     "title": "Workspaces",
