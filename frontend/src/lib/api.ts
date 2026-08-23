@@ -510,6 +510,17 @@ export function getProjectPRs(
   );
 }
 
+export async function updateGitHubWebhookSecret(
+  workspaceId: string,
+  projectId: string,
+  secret: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/github/webhook-secret`,
+    { method: "PUT", body: JSON.stringify({ secret }) },
+  );
+}
+
 export async function addPR(
   workspaceId: string,
   projectId: string,
@@ -948,6 +959,21 @@ export async function updateNotificationPreferences(
   });
 }
 
+export function listPats(): Promise<PatResponse[]> {
+  return api<PatResponse[]>("/users/me/pat");
+}
+
+export async function createPat(name: string, scopes: string[], expiresAtUtc: string): Promise<PatCreatedResponse> {
+  return api<PatCreatedResponse>("/users/me/pat", {
+    method: "POST",
+    body: JSON.stringify({ name, scopes, expiresAtUtc }),
+  });
+}
+
+export async function deletePat(patId: string): Promise<void> {
+  await api(`/users/me/pat/${patId}`, { method: "DELETE" });
+}
+
 export interface ReorderTaskPayload {
   id: string;
   status: string;
@@ -1008,21 +1034,4 @@ export async function updateMemberRole(
     method: "PATCH",
     body: JSON.stringify({ role }),
   });
-}
-
-export function getPats(): Promise<PatResponse[]> {
-  return api<PatResponse[]>("/users/me/pat");
-}
-
-export async function createPat(
-  input: { name: string; scopes: string[]; expiresAtUtc?: string | null },
-): Promise<PatCreatedResponse> {
-  return api<PatCreatedResponse>("/users/me/pat", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
-}
-
-export async function revokePat(id: string): Promise<void> {
-  await api(`/users/me/pat/${id}`, { method: "DELETE" });
 }

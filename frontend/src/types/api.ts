@@ -276,6 +276,7 @@ export interface GitHubIntegrationResponse {
   repositoryUrl: string;
   isActive: boolean;
   createdAtUtc: string;
+  hasWebhookSecret?: boolean;
 }
 
 export interface PullRequestResponse {
