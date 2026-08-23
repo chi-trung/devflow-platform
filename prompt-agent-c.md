@@ -1,73 +1,105 @@
-# 🚀 PROMPT CHO AGENT C — Sprint 20 (Custom Field Values on Cards + Analytics Charts)
+# 🚀 PROMPT CHO AGENT C — Sprint 21 (Dashboard Charts + Export Enhancement)
 
 **Bạn là Agent C** trong đội DevFlow (React 19 + TypeScript + Vite + Tailwind v4).
-Branch prefix: `feat/frontend-sprint20-*`.
+Branch prefix: `feat/frontend-sprint21-dashboard`.
 **QUAN TRỌNG:** Chỉ sửa file trong `frontend/src/`. KHÔNG đụng backend, KHÔNG đụng file Agent A & B.
 
 ---
 
-## PHẦN 1 — Custom Field Values trên Kanban Cards (F20.1)
+## Context — Dashboard Hiện Tại
 
-Backend **đã có sẵn** API:
-- `GET /api/v1/workspaces/{wsId}/projects/{projId}/tasks/{taskId}/custom-fields` → `CustomFieldValueResponse[]`
-- `PUT .../tasks/{taskId}/custom-fields/{fieldId}` → set value
-- Check `frontend/src/lib/api.ts`: đã có `getTaskCustomFieldValues(workspaceId, projectId, taskId)` (đã import type `CustomFieldValueResponse`). Nếu chưa có `setCustomFieldValue`, thêm theo pattern `api<T>()`.
+Verified in code: `DashboardPage.tsx` hiện có:
+- `StatsCards` (total tasks, in progress, completed, overdue)
+- `CumulativeFlow` (stacked bar snapshot)
+- `TaskDistribution` (pie chart)
+- `RecentActivity` list
+- **KHÔNG có** cycle/lead time chart (chỉ có ở `ReportsPage` dưới dạng `CycleLeadTimeChart`)
 
-### 1.1 TaskCard badges
-- **File:** `frontend/src/components/board/TaskCard.tsx`
-  - Fetch custom field values cho task (tối đa hiển thị **3 badge** đầu tiên, mỗi badge `bg-elevated text-muted-foreground rounded px-1.5 py-0.5 font-mono text-[10px]`).
-  - Chỉ render khi có value (`value != null` và `!== ""`). Label = field name, value = `value`.
-  - Gọi API một lần khi card mount — dùng `useApi` hoặc `useEffect` (theo pattern TaskPullRequests trong TaskDetailPanel). Nếu lỗi → silent, không hiện gì.
-
-### 1.2 TaskDetailPanel values
-- **File:** `frontend/src/components/board/TaskDetailPanel.tsx`
-  - Thêm section "Custom Fields" (giữa DependencySection và TimeTrackingSection hoặc sau SubtaskSection).
-  - List tất cả fields có value: `field.name` + `field.value` (render theo `field.fieldType`).
-  - Nếu chưa có editable: **tối thiểu hiển thị read-only list** các field values của task.
-  - i18n: thêm keys `taskDetail.customFields`, `taskDetail.noCustomFields` vào `en.json` + `vi.json` (section `taskDetail.*`).
+Export hiện tại: `ExportProjectTasksQuery` — chỉ export tasks của 1 project. Không có cross-project export.
 
 ---
 
-## PHẦN 2 — Cycle/Lead Time & Velocity Trend Charts (F20.2)
+## PHẦN 1 — Dashboard Cycle/Lead Time Trend (F21.1)
 
-Backend Agent B sẽ thêm 2 endpoint — **dùng khi chúng tồn tại** (test bằng cách fetch, nếu 404 thì để placeholder):
-- `GET .../reporting/cycle-lead-time` → `{ cycleTimeP50, cycleTimeP90, leadTimeP50, leadTimeP90, tasks[] }`
-- `GET .../reporting/velocity-history` → `{ points[]: {sprintId, sprintName, totalStoryPoints, completedStoryPoints, endDateUtc}, averageCompleted, averageTotal }`
+### 1.1 Tạo component DashboardCycleLeadChart
+- **File mới:** `frontend/src/components/dashboard/DashboardCycleLeadChart.tsx`
+  - Không cần SVG chart phức tạp — hiển thị **4 stat tiles** lớn (P50/P90 cycle/lead time) nhưng có **mini sparkline** (xu hướng).
+  - Gọi `GET /api/v1/workspaces/{wsId}/projects/{projId}/reporting/cycle-lead-time` (đã có sẵn từ Sprint 20, Agent B).
+  - Dùng `useApi` pattern:
+    ```typescript
+    const { data } = useApi<CycleLeadTimeResponse>(...);
+    ```
+  - Nếu `data` null/error → render placeholder "Analytics data not available yet" (dùng i18n key `dashboard.analyticsUnavailable` đã có).
+  - Layout: grid 2x2 với 4 tiles:
+    ```
+    ┌──────────────┬──────────────┐
+    │ Cycle P50    │ Cycle P90    │
+    │ 2.4d         │ 5.1d         │
+    ├──────────────┼──────────────┤
+    │ Lead P50     │ Lead P90     │
+    │ 4.2d         │ 8.7d         │
+    └──────────────┴──────────────┘
+    ```
+  - Mỗi tile: rounded border, label text-muted-foreground, value font-mono text-lg font-semibold.
+  - Reuse CSS variables pattern từ `DashboardPage.tsx` hiện tại.
 
-### 2.1 CycleLeadTimeChart.tsx
-- **File mới:** `frontend/src/components/reporting/CycleLeadTimeChart.tsx`
-  - Dùng `@tremor/react` nếu có, hoặc SVG đơn giản như `VelocityChart.tsx` hiện tại (đọc file này làm reference).
-  - Hiển thị 4 số lớn: Cycle P50, Cycle P90, Lead P50, Lead P90 (đơn vị "d" = days).
-  - Optional: mini scatter plot của per-task cycle time (trục x = task index, y = days).
+### 1.2 Wire vào DashboardPage
+- **File:** `frontend/src/pages/DashboardPage.tsx`
+  - Thêm `DashboardCycleLeadChart` bên dưới `CumulativeFlow` (hoặc cạnh `TaskDistribution`).
+  - Import component + render:
+    ```tsx
+    <DashboardCycleLeadChart workspaceId={workspaceId} projectId={projectId} />
+    ```
+  - Cần `workspaceId` và `projectId` — kiểm tra DashboardPage xem đã có 2 biến này chưa (thường có từ `useParams` hoặc state). Nếu DashboardPage là workspace-level (không có projectId), dùng project đầu tiên từ `dashboard.data` hoặc cho phép user chọn project.
 
-### 2.2 VelocityTrendChart.tsx
-- **File mới:** `frontend/src/components/reporting/VelocityTrendChart.tsx`
-  - Bar chart 10 sprints (như VelocityChart.tsx): planned (ghost) vs completed (solid) per sprint.
-  - Đường trung bình `averageCompleted` (dashed line).
-  - Reuse styling constants pattern từ `VelocityChart.tsx`.
+### 1.3 i18n
+- **File:** `frontend/src/i18n/en.json` + `frontend/src/i18n/vi.json`
+  - Key `dashboard.cycleTime` và `dashboard.leadTime` đã có từ Sprint 20.
+  - Thêm (nếu thiếu): `dashboard.cycleTimeLabel`, `dashboard.leadTimeLabel`.
 
-### 2.3 Wire vào ReportsPage
+---
+
+## PHẦN 2 — Export Enhancement (F21.2) — Optional, nếu đơn giản
+
+### 2.1 Export button cải tiến
 - **File:** `frontend/src/pages/ReportsPage.tsx`
-  - Thêm 2 chart mới bên dưới `VelocityChart`/`BurndownChartApi`.
-  - Fetch 2 endpoint mới bằng pattern `useApi` hiện có; nếu lỗi → ẩn chart + hiện placeholder text (`reports.analyticsUnavailable`).
-  - i18n keys: `reports.cycleLeadTime`, `reports.velocityTrend`, `reports.cycleTimeP50`, `reports.cycleTimeP90`, `reports.leadTimeP50`, `reports.leadTimeP90`, `reports.days`, `reports.analyticsUnavailable`.
+  - Export hiện tại: `exportTasks(workspaceId, projectId, format)` → CSV/JSON.
+  - Thêm **filter scope** cho export: "All tasks" vs "Current view" (nếu có filter active).
+  - Hoặc đơn giản: thêm export button cho **velocity chart** (export chart data as CSV).
+
+### 2.2 Export CSV từ chart data
+- **File:** `frontend/src/components/reporting/CycleLeadTimeChart.tsx` (hoặc component mới `ExportChartButton.tsx`)
+  - Thêm nút export CSV bên cạnh chart title.
+  - Khi click: generate CSV từ `data.tasks` (taskId, title, cycleTimeDays, leadTimeDays) + trigger download.
+  - Dùng `Blob` + `URL.createObjectURL` pattern (giống ReportsPage.tsx `handleExport`).
+
+---
+
+## PHẦN 3 — Dashboard select project (F21.3) — Nếu DashboardPage workspace-level
+
+### 3.1 Nếu DashboardPage hiện tại không có project selector
+- **File:** `frontend/src/pages/DashboardPage.tsx`
+  - DashboardPage hiện tại có thể là workspace-level (không biết projectId).
+  - Thêm dropdown chọn project (dùng `useApi` lấy `projects` từ workspace).
+  - Khi chọn project, pass projectId xuống `DashboardCycleLeadChart` và `CumulativeFlow` (nếu cần project-scoped data).
+  - Mặc định chọn project đầu tiên.
 
 ---
 
 ## 🧪 QUALITY GATES (bắt buộc)
 1. `npm run build` trong `frontend/` phải xanh (TypeScript strict).
-2. Commit: `feat: custom field values on cards + cycle/velocity charts (Sprint 20)`.
+2. Commit: `feat: dashboard cycle/lead time chart + export enhancement (Sprint 21)`
 3. Tạo PR:
    ```bash
    git checkout main && git pull
-   git checkout -b feat/frontend-sprint20-analytics
+   git checkout -b feat/frontend-sprint21-dashboard
    git add .
-   git commit -m "feat: custom field values on cards + cycle/lead & velocity trend charts (F20.1-2)"
-   git push origin feat/frontend-sprint20-analytics
-   gh pr create --base main --head feat/frontend-sprint20-analytics --title "feat: Sprint 20 custom field values + analytics charts (Agent C)" --body "Custom field value badges on cards, detail panel values, cycle/lead time & velocity trend charts."
+   git commit -m "feat: dashboard cycle/lead time chart + export enhancement (F21.1-2)"
+   git push origin feat/frontend-sprint21-dashboard
+   gh pr create --base main --head feat/frontend-sprint21-dashboard --title "feat: Sprint 21 dashboard cycle/lead time + export (Agent C)" --body "Dashboard cycle/lead time P50/P90 tiles, CSV export enhancement for chart data."
    ```
-4. **KHÔNG đụng** file: `frontend/src/pages/SettingsPage.tsx`, `frontend/src/pages/CustomFieldsPage.tsx`, `frontend/src/components/dashboard/**`, `frontend/src/components/board/SprintBar.tsx` (nếu Agent A đang làm), `src/**`, `frontend/src/lib/api.ts` (nếu có conflict, chỉ thêm hàm mới, không sửa hàm có sẵn).
+4. **KHÔNG đụng** file: `src/**`, `frontend/src/pages/MyTasksPage.tsx`, `frontend/src/components/AppShell.tsx` (nếu Agent A đang sửa navigation), `frontend/src/lib/api.ts` (nếu có conflict, chỉ append hàm mới).
 
-> ⚠️ **Phối hợp:** nếu `frontend/src/lib/api.ts` có conflict với Agent A — chỉ **append** hàm mới, không sửa hàm có sẵn. Nếu endpoint backend chưa có (Agent B chưa xong), để placeholder + note trong PR, ĐỪNG block.
+> ⚠️ DashboardPage có thể không có `projectId` — nếu workspace-level, cần thêm project selector. Xem `useParams()` để biết route params.
 
 > Nếu gặp rate limit (429): commit phần đã xong ngay, đừng bỏ lửng file.

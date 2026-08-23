@@ -1,93 +1,138 @@
-# 🚀 PROMPT CHO AGENT A — Sprint 20 (Sprint Rollover API + Team Performance Dashboard)
+# 🚀 PROMPT CHO AGENT A — Sprint 21 (My Tasks Page — Cross-Project Assigned Tasks)
 
 **Bạn là Agent A (team lead)** trong đội DevFlow (ASP.NET Core 8 + React 19).
-Branch prefix: `feat/backend-sprint20-*` (backend), `feat/frontend-sprint20-*` (frontend).
-**QUAN TRỌNG:** KHÔNG đụng file Agent B (ReportingHandlers.cs, ReportingController.cs endpoints cycle-lead-time/velocity-history, TaskItem.cs StartedAtUtc) và Agent C (TaskCard.tsx, TaskDetailPanel.tsx, ReportsPage.tsx charts, components/reporting/CycleLeadTimeChart.tsx, VelocityTrendChart.tsx).
+Branch prefix: `feat/sprint21-my-tasks`.
+**QUAN TRỌNG:** KHÔNG đụng file Agent B (NotificationService, NotificationBroadcaster, NotificationPreferences, EmailService, CommentHandlers, TaskHandlers) và Agent C (DashboardPage, ReportsPage, chart components, ExportController, ExportHandlers).
 
 ---
 
-## PHẦN 1 — Backend: Sprint Rollover Automation (B20.3)
+## PHẦN 1 — Backend: My Tasks API (A21.1)
 
-### 1.1 Rollover command + handler
-- **File mới:** `src/DevFlow.Application/Features/Sprints/Rollover/RolloverSprintCommand.cs`
+### 1.1 Query + Handler
+- **File mới:** `src/DevFlow.Application/Features/Tasks/MyTasks/GetMyTasksQuery.cs`
   ```csharp
-  public sealed record RolloverSprintCommand(
-      Guid WorkspaceId, Guid ProjectId, Guid SprintId) : IRequest<RolloverResult>, IWorkspaceRequest;
+  [RequireWorkspaceRole(WorkspaceRole.Member)]
+  public sealed record GetMyTasksQuery(Guid WorkspaceId, Guid UserId) : IRequest<IReadOnlyList<MyTaskItem>>, IWorkspaceRequest;
 
-  public sealed record RolloverResult(int RolledOverTasks, int CompletedTasks, Guid? TargetSprintId);
+  public sealed record MyTaskItem(
+      Guid Id, Guid ProjectId, string ProjectName, string ProjectKey,
+      string Title, string Status, string Priority,
+      DateTimeOffset? DueDateUtc, DateTimeOffset? CompletedAtUtc,
+      Guid? SprintId, string? SprintName);
   ```
-- **Logic handler:**
-  1. Load sprint (`ISprintRepository.GetByIdAsync`). Nếu chưa `Completed` → **không làm gì**, trả `RolloverResult(0, 0, null)` (hoặc throw InvalidOperationException — chọn không throw để API an toàn, trả 200 với kết quả rỗng).
-  2. Load toàn bộ tasks của project (`ITaskItemRepository.GetForProjectAsync`).
-  3. Lọc task thuộc sprint này (`task.SprintId == sprintId`) và **chưa Done** (`Status != Done`).
-  4. Tìm sprint **Planned kế tiếp** trong project (`GetForProjectAsync` → filter `Status == Planned`, sort theo `StartDateUtc` hoặc `CreatedAtUtc`, lấy cái đầu tiên). Nếu có → set `task.AssignToSprint(targetSprint.Id)`. Nếu không có → set `task.RemoveFromSprint()` (trả về backlog).
-  5. Ghi activity log cho mỗi task: `ActivityLog.Create(workspaceId, projectId, task.Id, Guid.Empty, $"Rolled over from sprint {sprint.Name}", task.Title)`.
-  6. `unitOfWork.SaveChangesAsync`.
-  7. Trả `RolloverResult(rolledCount, completedCount, targetSprint?.Id)`.
+- **File mới:** `src/DevFlow.Application/Features/Tasks/MyTasks/GetMyTasksQueryHandler.cs`
+  - Inject `IUserContext`, `IProjectRepository`, `ITaskItemRepository`, `ISprintRepository`.
+  - Load tất cả projects trong workspace → foreach project lấy tasks với `AssigneeId == userId`.
+  - Nếu task có `SprintId`, load sprint name từ `ISprintRepository`.
+  - Gom tất cả vào list, sort theo `CreatedAtUtc` DESC (hoặc DueDateUtc ASC).
+  - Trả về `IReadOnlyList<MyTaskItem>`.
 
 ### 1.2 Controller endpoint
-- **File:** `src/DevFlow.Api/Controllers/SprintsController.cs` — thêm **method mới** (không sửa method có sẵn):
+- **File mới:** `src/DevFlow.Api/Controllers/MyTasksController.cs`
   ```csharp
-  [HttpPost("{sprintId:guid}/rollover")]
-  [ProducesResponseType(typeof(RolloverResult), StatusCodes.Status200OK)]
+  [Route("api/v1/workspaces/{workspaceId:guid}/my-tasks")]
+  [ApiController]
+  [Authorize]
+  public sealed class MyTasksController(ISender sender) : ControllerBase
+  {
+      [HttpGet]
+      [ProducesResponseType(typeof(IReadOnlyList<MyTaskItem>), StatusCodes.Status200OK)]
+      public async Task<IActionResult> GetMyTasks(Guid workspaceId)
+      {
+          var userId = User.GetUserId(); // dùng extension method có sẵn
+          var result = await sender.Send(new GetMyTasksQuery(workspaceId, userId));
+          return Ok(result);
+      }
+  }
   ```
-  Route: `POST /api/v1/workspaces/{wsId}/projects/{projId}/sprints/{sprintId}/rollover`
-- Inject `ISender` như các action khác. Theo pattern `Complete` action hiện có.
+  - Route: `GET /api/v1/workspaces/{workspaceId}/my-tasks`
+  - Dùng `User.GetUserId()` extension method từ `DevFlow.Api.Extensions` (kiểm tra xem extension có sẵn không — nếu không, lấy từ claim `ClaimTypes.NameIdentifier`).
 
-### 1.3 Unit tests
-- **File mới:** `tests/DevFlow.UnitTests/Features/Sprints/RolloverSprintHandlerTests.cs`
-  - Test: task chưa Done → chuyển sang sprint planned kế tiếp.
-  - Test: không có sprint planned → task về backlog (SprintId null).
-  - Test: task Done không bị đụng.
-  - Dùng NSubstitute mock `ISprintRepository`, `ITaskItemRepository`, `IActivityLogRepository`, `IUnitOfWork` (theo pattern `PatHandlerTests.cs`).
+### 1.3 Tests
+- **File mới:** `tests/DevFlow.UnitTests/Features/Tasks/MyTasksHandlerTests.cs`
+  - Test: trả về tasks assignee đúng user.
+  - Test: bỏ qua tasks của user khác.
+  - Test: empty list khi không có task nào.
+  - Dùng NSubstitute mock theo pattern `ListTaskItemsQueryHandlerTests.cs` (thường dùng InMemory hoặc mock repository).
 
 ---
 
-## PHẦN 2 — Frontend: Team Performance Dashboard + CFD (F20.3)
+## PHẦN 2 — Frontend: My Tasks Page (A21.2)
 
-### 2.1 Cumulative Flow Diagram (CFD)
-- **File mới:** `frontend/src/components/dashboard/CumulativeFlow.tsx`
-  - SVG stacked area chart hiển thị số task theo trạng thái (Backlog/InProgress/InReview/Done) theo thời gian.
-  - **Nguồn dữ liệu:** không có API CFD riêng → **tính client-side từ dashboard data** có sẵn (`loadDashboard` → task counts per status). Vẽ 1 lần snapshot hiện tại (không cần lịch sử thời gian thực). Nếu phức tạp, tối giản thành stacked bar các status hiện tại.
-  - Màu: dùng CSS vars (`var(--color-primary)`, `--color-border`, opacity scale) theo pattern `VelocityChart.tsx`.
-  - Label tiếng Việt/Anh qua `t()`.
+### 2.1 API helper
+- **File:** `frontend/src/lib/api.ts` — thêm hàm:
+  ```typescript
+  export interface MyTaskItem {
+    id: string;
+    projectId: string;
+    projectName: string;
+    projectKey: string;
+    title: string;
+    status: string;
+    priority: string;
+    dueDateUtc: string | null;
+    completedAtUtc: string | null;
+    sprintId: string | null;
+    sprintName: string | null;
+  }
 
-### 2.2 Team performance numbers (P50/P90 cycle time)
-- **File mới:** `frontend/src/components/dashboard/TeamPerformancePanel.tsx`
-  - Gọi `GET .../reporting/cycle-lead-time` (Agent B đang làm). Nếu 404/chưa có → hiện placeholder text.
-  - Hiển thị 4 stat tiles: Cycle P50, Cycle P90, Lead P50, Lead P90 (đơn vị "d").
-  - Reuse `StatsCards` styling nếu đơn giản, hoặc tự render grid 2x2.
+  export function getMyTasks(workspaceId: string): Promise<MyTaskItem[]> {
+    return api<MyTaskItem[]>(`/workspaces/${workspaceId}/my-tasks`);
+  }
+  ```
+  CHỈ append vào cuối file, không sửa hàm có sẵn.
 
-### 2.3 Wire vào DashboardPage
-- **File:** `frontend/src/pages/DashboardPage.tsx`
-  - Thêm `TeamPerformancePanel` và `CumulativeFlow` vào dưới `StatsCards` (khu vực hiện có). Import + render theo pattern đã có.
-  - i18n keys: `dashboard.teamPerformance`, `dashboard.cycleTime`, `dashboard.leadTime`, `dashboard.cfd`, `dashboard.cfdUnavailable`, `dashboard.p50`, `dashboard.p90`, `dashboard.days` (thêm vào `en.json` + `vi.json`, section `dashboard.*`).
+### 2.2 My Tasks Page
+- **File mới:** `frontend/src/pages/MyTasksPage.tsx`
+  - Dùng layout `AppShell` như các page khác.
+  - Gọi `getMyTasks(workspaceId)` với `useApi`.
+  - Hiển thị danh sách task dạng table hoặc card list:
+    - Mỗi task: `[projectKey] Title` — Status badge, Priority dot, Due date, Sprint name.
+    - Click → navigate tới `BoardPage` với task filter (dùng `?selectedTaskId=` param).
+    - Empty state: "No tasks assigned to you" với i18n key.
+  - Skeleton loading, error state (pattern từ `SprintPlanningPage.tsx`).
 
-### Files frontend (CHỈ các file này):
-- `frontend/src/components/dashboard/CumulativeFlow.tsx` (mới)
-- `frontend/src/components/dashboard/TeamPerformancePanel.tsx` (mới)
-- `frontend/src/pages/DashboardPage.tsx` (thêm import + render)
-- `frontend/src/lib/api.ts` (thêm hàm `getCycleLeadTime` nếu chưa có — CHỈ append)
-- `frontend/src/i18n/en.json` + `frontend/src/i18n/vi.json`
-- `frontend/src/types/api.ts` (thêm type `CycleLeadTimeResponse` nếu cần)
+### 2.3 Navigation
+- **File:** `frontend/src/components/AppShell.tsx` — thêm nav item "My Tasks" (sau "Dashboard" / "Board"):
+  - Icon: `UserCheck` hoặc `ListTodo` từ lucide-react.
+  - Route: `/workspaces/:workspaceId/projects/my-tasks` (hoặc `/workspaces/:workspaceId/my-tasks`).
+  - i18n keys: `nav.myTasks` (en: "My Tasks", vi: "Việc của tôi").
+  - Import icon + thêm vào navItems array.
+
+### 2.4 Router
+- **File:** `frontend/src/App.tsx` — thêm route:
+  ```tsx
+  <Route path="workspaces/:workspaceId/my-tasks" element={<MyTasksPage />} />
+  ```
+  (hoặc trong nested route structure phù hợp).
+
+### 2.5 i18n
+- **File:** `frontend/src/i18n/en.json` + `frontend/src/i18n/vi.json`
+  - `nav.myTasks`: "My Tasks" / "Việc của tôi"
+  - `myTasks.title`: "My Tasks" / "Việc của tôi"
+  - `myTasks.empty`: "No tasks assigned to you." / "Bạn chưa được giao task nào."
+  - `myTasks.loading`: "Loading your tasks…" / "Đang tải việc của bạn…"
+  - `myTasks.error`: "Could not load your tasks." / "Không thể tải danh sách việc."
+  - `myTasks.dueDate`: "Due: {{date}}"
+  - `myTasks.sprint`: "Sprint: {{name}}"
 
 ---
 
 ## 🧪 QUALITY GATES (bắt buộc)
-1. Backend: `dotnet build` 0 warning, `dotnet test` xanh.
+1. Backend: `dotnet build` 0 warning, `dotnet test` xanh (thêm ít nhất 3 tests cho handler).
 2. Frontend: `npm run build` xanh.
-3. Commit: `feat: sprint rollover API + team performance dashboard (Sprint 20)`.
+3. Commit: `feat: cross-project My Tasks page (A21.1-2)`
 4. Tạo PR:
    ```bash
    git checkout main && git pull
-   git checkout -b feat/sprint20-rollover-dashboard
+   git checkout -b feat/sprint21-my-tasks
    git add .
-   git commit -m "feat: sprint rollover API + team performance dashboard/CFD (B20.3+F20.3)"
-   git push origin feat/sprint20-rollover-dashboard
-   gh pr create --base main --head feat/sprint20-rollover-dashboard --title "feat: Sprint 20 rollover + team dashboard (Agent A)" --body "Sprint rollover API (POST /sprints/{id}/rollover), Cumulative Flow Diagram + team performance P50/P90 panel."
+   git commit -m "feat: cross-project My Tasks page (A21.1-2)"
+   git push origin feat/sprint21-my-tasks
+   gh pr create --base main --head feat/sprint21-my-tasks --title "feat: Sprint 21 My Tasks cross-project view (Agent A)" --body "My Tasks page: GET /workspaces/{wsId}/my-tasks endpoint + frontend page showing assigned tasks across all projects."
    ```
-5. **KHÔNG đụng** file Agent B/C đã liệt kê ở đầu. Nếu `ReportingController.cs`/`ReportingHandlers.cs` cần sửa — chỉ append method mới, không sửa method có sẵn.
+5. **KHÔNG đụng** file Agent B (NotificationService, NotificationBroadcaster, NotificationPreferences, EmailService, CommentHandlers, TaskHandlers) và Agent C (DashboardPage, ReportsPage, chart components, ExportController, ExportHandlers, api.ts type helpers cho chart).
 
-> ⚠️ **Phối hợp:** Agent B đang thêm cycle-lead-time/velocity-history vào `ReportingController.cs`. Chỉ **append** method mới vào cuối file. Nếu conflict khi merge — giải quyết theo hướng giữ cả 2.
+> ⚠️ Nếu `User.GetUserId()` extension không tồn tại — tự tạo helper method trong `MyTasksController` lấy từ `ClaimTypes.NameIdentifier`.
 
 > Nếu gặp rate limit (429): commit phần đã xong ngay, đừng bỏ lửng file.

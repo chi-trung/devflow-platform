@@ -1,11 +1,9 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | **Sprint 21 In Progress 🎯**
 
 ---
-
-## 📊 Quick Status Matrix
 
 | Sprint | Focus Area | Backend (Codebuff) | Frontend (OpenCode) | Status |
 |---|---|---|---|---|
@@ -14,6 +12,7 @@
 | **Sprint 18** | Epics, Subtasks & Task Hierarchy | ✅ DONE (B18.1-B18.3) — PR #77 | ✅ DONE (F18.1-F18.3) — PR #89-91 | Complete |
 | **Sprint 19** | GitHub Integration & Webhook Outbox | ✅ DONE (B19.1-B19.3) — PR #93 | ✅ DONE (F19.1-F19.3) — PR #92 | Complete ✅ |
 | **Sprint 20** | Advanced Agile Analytics & Custom Fields | ✅ DONE (B20.1-3) — PR #94, #95 | ✅ DONE (F20.1-3) — PR #94 | Complete ✅ |
+| **Sprint 21** | Live Team Experience (Notifications + My Work + Dashboard) | ⏳ B21.1-3 (Agent B) | ⏳ F21.1-2 (Agent C), A21.1-2 (Agent A) | In Progress 🎯 |
 
 ---
 
@@ -152,6 +151,44 @@ blockers/blocked-by toggle). Landed on main via PR #76.
   - `TeamPerformancePanel.tsx` (P50/P90 cycle/lead tiles) + `CumulativeFlow.tsx` (CFD từ `tasksByStatus`). **PR #94 merged.**
 
 ---
+
+---
+
+### 📈 Sprint 21 — Live Team Experience (Realtime Notifications + My Work + Dashboard)
+
+**Goal:** Turn DevFlow into a live collaborative workspace — real-time notification push, cross-project personal task view, and richer dashboard analytics.
+
+> **Gaps verified in code:** `NotificationBroadcaster` registered in DI but never called (dead code). `CreateCommentCommandHandler` creates notifications but never pushes via SignalR. No email preference check before sending. Email links are dead `<a href="#">`. No "My Tasks" cross-project page. Dashboard lacks cycle/lead time tiles.
+
+#### 🤖 Agent: Codebuff (Backend) — Agent B
+- [ ] **B21.1: Real-time Notification Push via SignalR**
+  - `IRealtimeNotificationService` → `SignalRNotificationService` (Infrastructure layer, dùng `IHubContext<NotificationHub>`).
+  - Inject vào `CreateCommentCommandHandler` (gọi `NotifyUserAsync` sau khi tạo Notification entity).
+  - Inject vào `UpdateTaskItemCommandHandler` (broadcast khi task được assign).
+  - Frontend `useNotifications` hook đã lắng nghe `connection.on("notification")` — chỉ cần backend push đúng shape.
+- [ ] **B21.2: Notification Preferences Enforcement**
+  - `INotificationPreferencesRepository` + implement.
+  - Check `EmailOnMention`/`EmailOnAssignment` trước khi gọi email service.
+- [ ] **B21.3: Real Email Links**
+  - `ResendEmailService` — thay `<a href="#">` bằng URL thật từ `FRONTEND_URL` config.
+  - Thêm workspaceId/projectId/taskId vào param email methods.
+
+#### 🎨 Agent: OpenCode (Frontend) — Agent C
+- [ ] **F21.1: Dashboard Cycle/Lead Time Tiles**
+  - `DashboardCycleLeadChart.tsx` — 4 stat tiles (P50/P90 cycle/lead) gọi `GET .../reporting/cycle-lead-time`.
+  - DashboardPage workspace-level → cần project selector (hoặc dùng project đầu tiên).
+- [ ] **F21.2: Export Enhancement (CSV chart data)**
+  - Export CSV button cho chart data (CycleLeadTimeChart).
+
+#### 🚀 Agent A (Team Lead)
+- [ ] **A21.1: My Tasks Cross-Project Page (Backend + Frontend)**
+  - `GET /api/v1/workspaces/{wsId}/my-tasks` — trả tasks assigned to current user across all projects.
+  - `MyTasksPage.tsx` — card/table list, click → navigate to board.
+  - `AppShell.tsx` — nav item "My Tasks".
+  - Test: 3+ unit tests.
+- [ ] **A21.2: Review & merge B/C PRs**
+
+
 
 ## 🔒 Multi-Agent Coordination Guidelines
 
