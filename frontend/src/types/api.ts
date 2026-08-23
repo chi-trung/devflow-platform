@@ -62,11 +62,35 @@ export interface TaskItemResponse {
 
 export interface TaskDependencyResponse {
   id: string;
+  blockedTaskId: string;
   blockerTaskId: string;
   blockerTitle: string;
   blockerStatus: TaskItemResponse["status"];
-  blockedTaskId?: string;
-  isResolved?: boolean;
+  isResolved: boolean;
+}
+
+export interface TaskGraphNode {
+  id: string;
+  title: string;
+  status: TaskItemResponse["status"];
+  assigneeId: string | null;
+  projectId: string;
+}
+
+/**
+ * Backend naming note: `fromTaskId` is the *blocked* task and `toTaskId` is the
+ * *blocker* task (the edge mirrors the TaskDependencies row, not the arrow).
+ */
+export interface DependencyGraphEdge {
+  fromTaskId: string;
+  toTaskId: string;
+  isCyclic: boolean;
+}
+
+export interface ProjectDependencyGraphResponse {
+  nodes: TaskGraphNode[];
+  edges: DependencyGraphEdge[];
+  cyclicNodeIds: string[];
 }
 
 export interface TimeEntryResponse {

@@ -157,7 +157,12 @@ export function BoardPage() {
     loading,
     reload,
   } = useApi<unknown>(
-    () => api(`/workspaces/${workspaceId}/projects/${projectId}/tasks`),
+    // pageSize=100 (the API clamp) so board filters, pagination and the
+    // dependency graph operate on the whole project, not the first page.
+    () =>
+      api(
+        `/workspaces/${workspaceId}/projects/${projectId}/tasks?page=1&pageSize=100`,
+      ),
     [workspaceId, projectId],
   );
 
@@ -926,6 +931,10 @@ export function BoardPage() {
           projectId={projectId}
           onSelectTask={setSelectedTaskId}
           onClose={() => setGraphOpen(false)}
+          onDependencyChanged={() => {
+            reload();
+            reloadActivities();
+          }}
         />
       )}
 
