@@ -17,7 +17,8 @@
     "projects": "Projects",
     "epics": "Epics",
     "savedSearches": "Saved Searches",
-    "labels": "Labels"
+    "labels": "Labels",
+    "customFields": "Custom Fields"
   },
   "dashboard": {
     "title": "Workspaces",
