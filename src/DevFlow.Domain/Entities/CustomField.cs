@@ -8,13 +8,13 @@ public class CustomField : BaseEntity, IAuditableEntity
     {
     }
 
-    private CustomField(Guid projectId, string name, string fieldType, string? options)
+    private CustomField(Guid projectId, string name, string fieldType, string? options, bool isRequired)
     {
         ProjectId = projectId;
         Name = name;
         FieldType = fieldType; // text, number, date, select, multi-select
         Options = options; // JSON array for select fields
-        IsRequired = false;
+        IsRequired = isRequired;
     }
 
     public Guid ProjectId { get; private set; }
@@ -33,7 +33,7 @@ public class CustomField : BaseEntity, IAuditableEntity
 
     public DateTimeOffset? UpdatedAtUtc { get; set; }
 
-    public static CustomField Create(Guid projectId, string name, string fieldType, string? options)
+    public static CustomField Create(Guid projectId, string name, string fieldType, string? options, bool isRequired = false)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Field name is required.", nameof(name));
@@ -42,12 +42,13 @@ public class CustomField : BaseEntity, IAuditableEntity
         if (!validTypes.Contains(fieldType.ToLower()))
             throw new ArgumentException($"Invalid field type. Valid types: {string.Join(", ", validTypes)}", nameof(fieldType));
 
-        return new CustomField(projectId, name.Trim(), fieldType.ToLower(), options);
+        return new CustomField(projectId, name.Trim(), fieldType.ToLower(), options, isRequired);
     }
 
-    public void Update(string name, string? options, bool isRequired, int sortOrder)
+    public void Update(string name, string? options, bool isRequired, int sortOrder, string fieldType)
     {
         Name = name.Trim();
+        FieldType = fieldType.ToLower();
         Options = options;
         IsRequired = isRequired;
         SortOrder = sortOrder;

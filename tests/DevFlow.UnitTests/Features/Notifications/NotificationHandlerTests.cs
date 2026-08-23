@@ -122,6 +122,6 @@ public class NotificationHandlerTests
 
         Assert.Equal(1, result.TotalCount);
         Assert.Single(result.Items);
-        Assert.False(result.Items[0].IsRead);
+        Assert.Null(result.Items[0].ReadAtUtc);
     }
 }

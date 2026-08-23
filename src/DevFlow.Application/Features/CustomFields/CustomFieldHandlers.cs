@@ -20,13 +20,13 @@ public class ListCustomFieldsHandler(ICustomFieldRepository repo) : IRequestHand
 }
 
 [RequireWorkspaceRole(WorkspaceRole.Admin)]
-public sealed record CreateCustomFieldCommand(Guid WorkspaceId, Guid ProjectId, string Name, string FieldType, string? Options) : IRequest<Guid>, IWorkspaceRequest;
+public sealed record CreateCustomFieldCommand(Guid WorkspaceId, Guid ProjectId, string Name, string FieldType, string? Options, bool IsRequired) : IRequest<Guid>, IWorkspaceRequest;
 
 public class CreateCustomFieldHandler(ICustomFieldRepository repo, IUnitOfWork uow) : IRequestHandler<CreateCustomFieldCommand, Guid>
 {
     public async Task<Guid> Handle(CreateCustomFieldCommand request, CancellationToken ct)
     {
-        var field = Domain.Entities.CustomField.Create(request.ProjectId, request.Name, request.FieldType, request.Options);
+        var field = Domain.Entities.CustomField.Create(request.ProjectId, request.Name, request.FieldType, request.Options, request.IsRequired);
         await repo.AddAsync(field, ct);
         await uow.SaveChangesAsync(ct);
         return field.Id;
@@ -66,6 +66,21 @@ public class GetTaskCustomFieldValuesHandler(ICustomFieldRepository repo) : IReq
     {
         var values = await repo.GetFieldValuesForTaskAsync(request.TaskId, ct);
         return values.Select(v => new CustomFieldValueResponse(v.Field.Id, v.Field.Name, v.Field.FieldType, v.Value)).ToList();
+    }
+}
+
+[RequireWorkspaceRole(WorkspaceRole.Admin)]
+public sealed record UpdateCustomFieldCommand(Guid WorkspaceId, Guid ProjectId, Guid FieldId, string Name, string FieldType, string? Options, bool IsRequired, int SortOrder) : IRequest, IWorkspaceRequest;
+
+public class UpdateCustomFieldHandler(ICustomFieldRepository repo, IUnitOfWork uow) : IRequestHandler<UpdateCustomFieldCommand>
+{
+    public async Task Handle(UpdateCustomFieldCommand request, CancellationToken ct)
+    {
+        var field = await repo.GetByIdAsync(request.FieldId, ct)
+            ?? throw new NotFoundException(nameof(Domain.Entities.CustomField), request.FieldId);
+
+        field.Update(request.Name, request.Options, request.IsRequired, request.SortOrder, request.FieldType);
+        await uow.SaveChangesAsync(ct);
     }
 }
 

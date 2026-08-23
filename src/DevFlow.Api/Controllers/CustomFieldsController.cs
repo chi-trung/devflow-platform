@@ -22,8 +22,17 @@ public sealed class CustomFieldsController(ISender sender) : ControllerBase
     public async Task<IActionResult> Create(Guid workspaceId, Guid projectId, CreateCustomFieldRequest request, CancellationToken ct)
     {
         var id = await sender.Send(new Application.Features.CustomFields.CreateCustomFieldCommand(
-            workspaceId, projectId, request.Name, request.FieldType, request.Options), ct);
+            workspaceId, projectId, request.Name, request.FieldType, request.Options, request.IsRequired), ct);
         return StatusCode(StatusCodes.Status201Created, id);
+    }
+
+    [HttpPut("{fieldId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Update(Guid workspaceId, Guid projectId, Guid fieldId, UpdateCustomFieldRequest request, CancellationToken ct)
+    {
+        await sender.Send(new Application.Features.CustomFields.UpdateCustomFieldCommand(
+            workspaceId, projectId, fieldId, request.Name, request.FieldType, request.Options, request.IsRequired, request.SortOrder), ct);
+        return NoContent();
     }
 
     [HttpGet("tasks/{taskId:guid}")]
@@ -52,5 +61,6 @@ public sealed class CustomFieldsController(ISender sender) : ControllerBase
     }
 }
 
-public sealed record CreateCustomFieldRequest(string Name, string FieldType, string? Options);
+public sealed record CreateCustomFieldRequest(string Name, string FieldType, string? Options, bool IsRequired);
+public sealed record UpdateCustomFieldRequest(string Name, string FieldType, string? Options, bool IsRequired, int SortOrder);
 public sealed record SetCustomFieldValueRequest(Guid FieldId, string? Value);
