@@ -13,7 +13,7 @@
 | **Sprint 17** | Performance Hardening & State Sync | ✅ DONE (B17.1-B17.4) | ✅ DONE (F17.1-F17.4) | Complete |
 | **Sprint 18** | Epics, Subtasks & Task Hierarchy | ✅ DONE (B18.1-B18.3) — PR #77 | ✅ DONE (F18.1-F18.3) — PR #89-91 | Complete |
 | **Sprint 19** | GitHub Integration & Webhook Outbox | ✅ DONE (B19.1-B19.3) — PR #93 | ✅ DONE (F19.1-F19.3) — PR #92 | Complete ✅ |
-| **Sprint 20** | Advanced Agile Analytics & Custom Fields | ⏳ B20.1-2 (Agent B), B20.3 (Agent A) | ⏳ F20.1-2 (Agent C), F20.3 (Agent A) | In Progress 🎯 |
+| **Sprint 20** | Advanced Agile Analytics & Custom Fields | ⏳ B20.1-2 (Agent B) | ✅ F20.1-3 (C+A) | In Progress 🎯 |
 
 ---
 
@@ -137,18 +137,20 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 - [ ] **B20.1: Cycle Time & Lead Time Analytics (Agent B)**
   - Thêm `StartedAtUtc` field cho TaskItem (track khi task vào InProgress) + migration.
   - `GET .../reporting/cycle-lead-time` — Cycle Time (InProgress→Done) & Lead Time (Created→Done), trả P50/P90 + per-task breakdown.
+  - ⚠️ **Frontend F20.2 đã gọi endpoint này** — cần backend để chart hiển thị data.
 - [ ] **B20.2: Velocity History Trend (Agent B)**
   - `GET .../reporting/velocity-history` — aggregate 10 sprints gần nhất (story points completed, per-sprint), dùng `GET .../sprints/{id}/velocity` có sẵn.
-- [ ] **B20.3: Sprint Rollover Automation (Agent A)**
-  - `POST .../sprints/{id}/rollover` — tự động chuyển task chưa hoàn thành sang sprint planned tiếp theo (hoặc backlog), ghi activity log. Entity method `Sprint.Complete()` nếu thiếu.
+  - ⚠️ **Frontend F20.2 đã gọi endpoint này** — cần backend để chart hiển thị data.
+- [x] **B20.3: Sprint Rollover Automation (Agent A)** ✅
+  - `POST .../sprints/{id}/rollover` — tự động chuyển task chưa hoàn thành sang sprint planned tiếp theo (hoặc backlog), ghi activity log. 6 unit tests, 137/137 green. **PR #94 merged.**
 
 #### 🎨 Agent: OpenCode (Frontend) — Agent C & A
-- [ ] **F20.1: Custom Field Values on Kanban Cards (Agent C)**
-  - Render `TaskCustomFieldValue` trên TaskCard (badge nhỏ dưới title) + hiển thị/editing values trong TaskDetailPanel. Dùng `getTaskCustomFieldValues` + `setCustomFieldValue` API có sẵn.
-- [ ] **F20.2: Cycle/Lead Time & Velocity Trend Charts (Agent C)**
-  - `frontend/src/components/reporting/CycleLeadTimeChart.tsx` + `VelocityTrendChart.tsx` wired vào ReportsPage. Export CSV nếu đơn giản.
-- [ ] **F20.3: Team Performance Dashboard (Agent A)**
-  - `frontend/src/components/dashboard/TeamPerformancePanel.tsx` — Cumulative Flow Diagram (CFD) từ dữ liệu reporting + team report (P50/P90 cycle time).
+- [x] **F20.1: Custom Field Values on Kanban Cards (Agent C)** ✅
+  - Render `TaskCustomFieldValue` trên TaskCard (badge nhỏ dưới title) + `CustomFieldsSection` hiển thị values trong TaskDetailPanel. Dùng `getTaskFieldValues` API có sẵn. **Merged (main aa510b5).**
+- [x] **F20.2: Cycle/Lead Time & Velocity Trend Charts (Agent C)** ✅
+  - `CycleLeadTimeChart.tsx` + `VelocityTrendChart.tsx` wired vào ReportsPage (kèm `TeamPerformancePanel`). Chờ B20.1/B20.2 để hiển thị data. **Merged (main aa510b5).**
+- [x] **F20.3: Team Performance Dashboard (Agent A)** ✅
+  - `TeamPerformancePanel.tsx` (P50/P90 cycle/lead tiles) + `CumulativeFlow.tsx` (CFD từ `tasksByStatus`). **PR #94 merged.**
 
 ---
 
