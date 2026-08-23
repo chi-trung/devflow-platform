@@ -571,10 +571,22 @@ export function getCustomFields(
 export async function createCustomField(
   workspaceId: string,
   projectId: string,
-  input: { name: string; fieldType: string; options?: string | null },
+  input: { name: string; fieldType: string; options?: string | null; isRequired?: boolean },
 ): Promise<void> {
   await api(`/workspaces/${workspaceId}/projects/${projectId}/fields`, {
     method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateCustomField(
+  workspaceId: string,
+  projectId: string,
+  fieldId: string,
+  input: { name: string; fieldType: string; options?: string | null; isRequired?: boolean; sortOrder?: number },
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}/projects/${projectId}/fields/${fieldId}`, {
+    method: "PUT",
     body: JSON.stringify(input),
   });
 }

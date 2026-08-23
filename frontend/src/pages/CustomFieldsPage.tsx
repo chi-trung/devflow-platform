@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Plus, Trash2, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Pencil, Check, X } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
@@ -10,6 +10,7 @@ import {
   createCustomField,
   deleteCustomField,
   getCustomFields,
+  updateCustomField,
 } from "../lib/api";
 import type { CustomFieldResponse } from "../types/api";
 
@@ -29,12 +30,19 @@ export function CustomFieldsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<CustomFieldResponse | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState("");
   const [fieldType, setFieldType] = useState<FieldType>("text");
   const [options, setOptions] = useState("");
+  const [isRequired, setIsRequired] = useState(false);
+
+  const [editName, setEditName] = useState("");
+  const [editFieldType, setEditFieldType] = useState<FieldType>("text");
+  const [editOptions, setEditOptions] = useState("");
+  const [editIsRequired, setEditIsRequired] = useState(false);
 
   const loadFields = useCallback(async () => {
     setLoading(true);
@@ -53,14 +61,15 @@ export function CustomFieldsPage() {
     loadFields();
   }, [loadFields]);
 
-  function resetForm() {
+  function resetCreateForm() {
     setName("");
     setFieldType("text");
     setOptions("");
+    setIsRequired(false);
     setCreating(false);
   }
 
-  async function handleSubmit(event: React.FormEvent) {
+  async function handleCreate(event: React.FormEvent) {
     event.preventDefault();
     if (!name.trim()) return;
     setSaving(true);
@@ -69,8 +78,45 @@ export function CustomFieldsPage() {
         name: name.trim(),
         fieldType,
         options: fieldType === "select" ? options : null,
+        isRequired,
       });
-      resetForm();
+      resetCreateForm();
+      loadFields();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("customField.saveFailed"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function startEdit(field: CustomFieldResponse) {
+    setEditingId(field.id);
+    setEditName(field.name);
+    setEditFieldType(field.fieldType);
+    setEditOptions(field.options ?? "");
+    setEditIsRequired(field.isRequired);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditName("");
+    setEditFieldType("text");
+    setEditOptions("");
+    setEditIsRequired(false);
+  }
+
+  async function handleUpdate(field: CustomFieldResponse) {
+    if (!editName.trim()) return;
+    setSaving(true);
+    try {
+      await updateCustomField(workspaceId, projectId, field.id, {
+        name: editName.trim(),
+        fieldType: editFieldType,
+        options: editFieldType === "select" ? editOptions : null,
+        isRequired: editIsRequired,
+        sortOrder: field.sortOrder,
+      });
+      cancelEdit();
       loadFields();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("customField.saveFailed"));
@@ -133,7 +179,7 @@ export function CustomFieldsPage() {
 
         {creating && (
           <form
-            onSubmit={handleSubmit}
+            onSubmit={handleCreate}
             className="mb-6 rounded-xl border border-border bg-card p-5"
           >
             <h2 className="mb-4 font-display text-lg font-semibold">
@@ -183,6 +229,18 @@ export function CustomFieldsPage() {
                   />
                 </div>
               )}
+              <div className="sm:col-span-2 flex items-center gap-2">
+                <input
+                  id="isRequired"
+                  type="checkbox"
+                  checked={isRequired}
+                  onChange={(e) => setIsRequired(e.target.checked)}
+                  className="size-4 rounded border-border"
+                />
+                <label htmlFor="isRequired" className="text-sm font-medium">
+                  {t("customField.requiredLabel")}
+                </label>
+              </div>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Button type="submit" disabled={saving || !name.trim()}>
@@ -191,7 +249,7 @@ export function CustomFieldsPage() {
               <Button
                 type="button"
                 variant="ghost"
-                onClick={resetForm}
+                onClick={resetCreateForm}
                 disabled={saving}
               >
                 {t("common.cancel")}
@@ -226,31 +284,120 @@ export function CustomFieldsPage() {
           </div>
         ) : (
           <ul className="flex flex-col gap-2">
-            {fields.map((field) => (
-              <li
-                key={field.id}
-                className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors duration-200 hover:border-border-strong"
-              >
-                <GripVertical className="size-4 text-muted-foreground" aria-hidden />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{field.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {t(typeLabel ?? "customField.typeText")}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                  <button
-                    type="button"
-                    onClick={() => setPendingDelete(field)}
-                    className="rounded p-1.5 text-muted-foreground transition-colors duration-150 hover:text-destructive"
-                    title={t("customField.delete")}
-                    aria-label={t("customField.delete")}
-                  >
-                    <Trash2 className="size-4" aria-hidden />
-                  </button>
-                </div>
-              </li>
-            ))}
+            {fields.map((field) => {
+              const isEditing = editingId === field.id;
+              const currentTypeLabel = FIELD_TYPES.find((ft) => ft.value === field.fieldType)?.labelKey;
+              const editTypeLabel = FIELD_TYPES.find((ft) => ft.value === editFieldType)?.labelKey;
+
+              return (
+                <li
+                  key={field.id}
+                  className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors duration-200 hover:border-border-strong"
+                >
+                  <GripVertical className="size-4 text-muted-foreground" aria-hidden />
+                  {isEditing ? (
+                    <div className="flex-1 space-y-2">
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm focus:border-primary focus:outline-none"
+                        />
+                        <select
+                          value={editFieldType}
+                          onChange={(e) => setEditFieldType(e.target.value as FieldType)}
+                          className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm focus:border-primary focus:outline-none"
+                        >
+                          {FIELD_TYPES.map((ft) => (
+                            <option key={ft.value} value={ft.value}>
+                              {t(ft.labelKey)}
+                            </option>
+                          ))}
+                        </select>
+                        {editFieldType === "select" && (
+                          <div className="sm:col-span-2">
+                            <textarea
+                              value={editOptions}
+                              onChange={(e) => setEditOptions(e.target.value)}
+                              rows={2}
+                              className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm focus:border-primary focus:outline-none"
+                            />
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 sm:col-span-2">
+                          <input
+                            id={`edit-required-${field.id}`}
+                            type="checkbox"
+                            checked={editIsRequired}
+                            onChange={(e) => setEditIsRequired(e.target.checked)}
+                            className="size-4 rounded border-border"
+                          />
+                          <label htmlFor={`edit-required-${field.id}`} className="text-sm font-medium">
+                            {t("customField.requiredLabel")}
+                          </label>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleUpdate(field)}
+                          disabled={saving || !editName.trim()}
+                        >
+                          <Check className="size-3.5" aria-hidden />
+                          {t("common.save")}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={cancelEdit}
+                          disabled={saving}
+                        >
+                          <X className="size-3.5" aria-hidden />
+                          {t("common.cancel")}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-sm font-medium">{field.name}</p>
+                          {field.isRequired && (
+                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                              {t("customField.requiredBadge")}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {t(currentTypeLabel ?? "customField.typeText")}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                        <button
+                          type="button"
+                          onClick={() => startEdit(field)}
+                          className="rounded p-1.5 text-muted-foreground transition-colors duration-150 hover:text-primary"
+                          title={t("common.edit")}
+                          aria-label={t("common.edit")}
+                        >
+                          <Pencil className="size-4" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPendingDelete(field)}
+                          className="rounded p-1.5 text-muted-foreground transition-colors duration-150 hover:text-destructive"
+                          title={t("customField.delete")}
+                          aria-label={t("customField.delete")}
+                        >
+                          <Trash2 className="size-4" aria-hidden />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
 
