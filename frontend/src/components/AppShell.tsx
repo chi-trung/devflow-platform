@@ -18,6 +18,7 @@ import { useAuth } from "../auth/AuthContext";
 import { Avatar } from "./ui/Avatar";
 import { CommandPalette } from "./CommandPalette";
 import { ApiStatusDot } from "./user/ApiStatusDot";
+import { ThemeToggle } from "./ui/ThemeToggle";
 import { NotificationsPanel } from "./notifications/NotificationsPanel";
 import { UserMenu } from "./user/UserMenu";
 import type { ProjectResponse, WorkspaceResponse } from "../types/api";
@@ -304,6 +305,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex items-center gap-1.5">
           <ApiStatusDot />
+          <ThemeToggle />
           <NotificationsPanel
             workspaceId={workspaceId}
             direction="down"
