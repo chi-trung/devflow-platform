@@ -219,7 +219,7 @@ public sealed class TasksController(ISender sender) : ControllerBase
         return NoContent();
     }
 
-    [HttpDelete("{taskId:guid}/dependencies/{dependencyId:guid}")]
+    [HttpGet("{taskId:guid}/dependencies/{dependencyId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> RemoveDependency(
         Guid workspaceId,
@@ -233,6 +233,20 @@ public sealed class TasksController(ISender sender) : ControllerBase
             cancellationToken);
 
         return NoContent();
+    }
+
+    [HttpGet("dependencies/graph")]
+    [ProducesResponseType(typeof(Application.Features.Tasks.Dependencies.ProjectDependencyGraphResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetProjectDependencyGraph(
+        Guid workspaceId,
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new Application.Features.Tasks.Dependencies.GetProjectDependencyGraphQuery(workspaceId, projectId),
+            cancellationToken);
+
+        return Ok(result);
     }
 
     // ===== TIME TRACKING =====
