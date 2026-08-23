@@ -11,7 +11,7 @@
 |---|---|---|---|---|
 | **Sprint 16** | Personalization & Workflows | ✅ DONE (B1-B4) | ✅ DONE (F1-F4) | Complete |
 | **Sprint 17** | Performance Hardening & State Sync | ✅ DONE (B17.1-B17.4) | ✅ DONE (F17.1-F17.4) | Complete |
-| **Sprint 18** | Epics, Subtasks & Task Hierarchy | ✅ DONE (B18.1-B18.3) — PR #77 | ✅ F18.2 + F18.3 DONE, F18.1 in progress | Mostly Complete 🎯 |
+| **Sprint 18** | Epics, Subtasks & Task Hierarchy | ✅ DONE (B18.1-B18.3) — PR #77 | ✅ DONE (F18.1-F18.3) — PR #89, #90, #91 | Complete ✅ |
 | **Sprint 19** | GitHub Integration & Webhook Outbox | ⏳ Planned | ⏳ Planned | Queued |
 | **Sprint 20** | Advanced Agile Analytics & Custom Fields | ⏳ Planned | ⏳ Planned | Queued |
 
