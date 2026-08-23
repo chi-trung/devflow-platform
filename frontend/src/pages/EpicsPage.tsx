@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Plus, Pencil, Trash2, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, GripVertical, List, Flag } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Skeleton } from "../components/ui/Skeleton";
+import { EpicRoadmap } from "../components/epic/EpicRoadmap";
 import {
   createEpic,
   deleteEpic,
@@ -13,6 +14,8 @@ import {
   updateEpic,
 } from "../lib/api";
 import type { EpicResponse, CreateEpicRequest, UpdateEpicRequest } from "../types/api";
+
+type ViewMode = "list" | "roadmap";
 
 export function EpicsPage() {
   const { t } = useTranslation();
@@ -24,6 +27,7 @@ export function EpicsPage() {
   const [editing, setEditing] = useState<EpicResponse | null>(null);
   const [pendingDelete, setPendingDelete] = useState<EpicResponse | null>(null);
   const [saving, setSaving] = useState(false);
+  const [view, setView] = useState<ViewMode>("list");
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -126,23 +130,51 @@ export function EpicsPage() {
             {t("common.back")}
           </Link>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="font-display text-2xl font-semibold tracking-tight">
-                {t("epic.title")}
-              </h1>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                {t("epic.description")}
-              </p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="font-display text-2xl font-semibold tracking-tight">
+                  {t("epic.title")}
+                </h1>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {t("epic.description")}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="inline-flex items-center rounded-lg border border-border bg-surface p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setView("list")}
+                    className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs transition-colors duration-150 ${
+                      view === "list"
+                        ? "bg-elevated font-semibold text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <List className="size-3.5" aria-hidden />
+                    {t("epic.listView")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setView("roadmap")}
+                    className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs transition-colors duration-150 ${
+                      view === "roadmap"
+                        ? "bg-elevated font-semibold text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Flag className="size-3.5" aria-hidden />
+                    {t("epic.roadmapView")}
+                  </button>
+                </div>
+                {!creating && (
+                  <Button onClick={() => setCreating(true)}>
+                    <Plus className="size-4" aria-hidden />
+                    {t("epic.create")}
+                  </Button>
+                )}
+              </div>
             </div>
-            {!creating && (
-              <Button onClick={() => setCreating(true)}>
-                <Plus className="size-4" aria-hidden />
-                {t("epic.create")}
-              </Button>
-            )}
           </div>
-        </div>
 
         {error && (
           <div className="mb-4">
@@ -249,6 +281,8 @@ export function EpicsPage() {
               </Button>
             )}
           </div>
+        ) : view === "roadmap" ? (
+          <EpicRoadmap epics={epics} onSelect={handleEdit} />
         ) : (
           <ul className="flex flex-col gap-3">
             {epics.map((epic) => {
