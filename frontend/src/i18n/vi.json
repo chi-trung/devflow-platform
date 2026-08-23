@@ -20,7 +20,8 @@
     "labels": "Labels",
     "customFields": "Custom Fields",
     "templates": "Templates",
-    "webhooks": "Webhooks"
+    "webhooks": "Webhooks",
+    "github": "GitHub"
   },
   "dashboard": {
     "title": "Workspaces",
