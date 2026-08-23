@@ -863,6 +863,8 @@
   "activity": {
     "title": "Activity Log",
     "description": "Track all changes and updates in this project.",
+    "projectActivity": "Project Activity",
+    "noActivity": "No activity yet",
     "loadFailed": "Failed to load activity.",
     "emptyTitle": "No activity yet",
     "emptyDescription": "Activity will appear here as changes are made to tasks and other items."
