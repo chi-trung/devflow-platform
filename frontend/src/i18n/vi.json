@@ -55,7 +55,15 @@
     "workspace": "Không gian làm việc",
     "tasksByStatus": "Task theo trạng thái",
     "tasksByPriority": "Task theo độ ưu tiên",
-    "showPriorityAria": "Hiện các task ưu tiên {{priority}} trên bảng"
+    "showPriorityAria": "Hiện các task ưu tiên {{priority}} trên bảng",
+    "cfd": "Cumulative Flow",
+    "teamPerformance": "Hiệu suất đội",
+    "cycleTime": "Cycle time",
+    "leadTime": "Lead time",
+    "p50": "P50",
+    "p90": "P90",
+    "days": "ng",
+    "analyticsUnavailable": "Dữ liệu cycle/lead time chưa có"
   },
   "board": {
     "backlog": "Chờ xử lý",

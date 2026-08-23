@@ -55,7 +55,15 @@
     "workspace": "Workspace",
     "tasksByStatus": "Tasks by status",
     "tasksByPriority": "Tasks by priority",
-    "showPriorityAria": "Show {{priority}} priority tasks on the board"
+    "showPriorityAria": "Show {{priority}} priority tasks on the board",
+    "cfd": "Cumulative Flow",
+    "teamPerformance": "Team performance",
+    "cycleTime": "Cycle time",
+    "leadTime": "Lead time",
+    "p50": "P50",
+    "p90": "P90",
+    "days": "d",
+    "analyticsUnavailable": "Cycle/lead time analytics not available yet"
   },
   "board": {
     "backlog": "Backlog",

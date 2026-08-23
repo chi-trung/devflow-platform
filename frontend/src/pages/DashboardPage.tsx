@@ -14,6 +14,7 @@ import { Avatar } from "../components/ui/Avatar";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { StatsCards } from "../components/dashboard/StatsCards";
+import { CumulativeFlow } from "../components/dashboard/CumulativeFlow";
 import { TaskDistribution } from "../components/dashboard/TaskDistribution";
 import { ActivityFeed } from "../components/dashboard/ActivityFeed";
 import type { WorkspaceResponse } from "../types/api";
@@ -195,6 +196,7 @@ export function DashboardPage() {
             ) : dashboard ? (
               <>
                 <StatsCards data={dashboard.data} className="mb-4" />
+                <CumulativeFlow data={dashboard.data} className="mb-4" />
                 <div className="grid gap-4 lg:grid-cols-2">
                   <TaskDistribution data={dashboard.data} />
                   <ActivityFeed
