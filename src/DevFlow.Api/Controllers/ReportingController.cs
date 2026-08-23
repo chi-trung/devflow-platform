@@ -38,6 +38,34 @@ public sealed class ReportingController(ISender sender) : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpGet("cycle-lead-time")]
+    [ProducesResponseType(typeof(Application.Features.Reporting.CycleLeadTimeResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCycleLeadTime(
+        Guid workspaceId,
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new Application.Features.Reporting.GetCycleLeadTimeQuery(workspaceId, projectId),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpGet("velocity-history")]
+    [ProducesResponseType(typeof(Application.Features.Reporting.VelocityHistoryResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetVelocityHistory(
+        Guid workspaceId,
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new Application.Features.Reporting.GetVelocityHistoryQuery(workspaceId, projectId),
+            cancellationToken);
+
+        return Ok(result);
+    }
 }
 
 [Authorize]
