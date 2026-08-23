@@ -55,14 +55,14 @@
   - Dedicated lightweight probe `/api/v1/ping` with database keepalive query for zero-cold-start hosting.
 
 #### 🎨 Agent: OpenCode (Frontend)
-- [ ] **F17.1: Global Request Deduplication & Stale-While-Revalidate Caching**
-  - Upgraded API client caching layer with instant UI cache hit + background sync.
-- [ ] **F17.2: SignalR Auto-Reconnection & Resilience Guard**
-  - Backoff reconnect logic with silent offline queued mutations and optimistic UI updates.
-- [ ] **F17.3: Virtualized Board Columns for Large Projects (500+ tasks)**
-  - Smooth 60fps scrolling and dragging on high-density Kanban boards.
-- [ ] **F17.4: Keepalive Cron Service Integration**
-  - Client-side background ping helper and warm-up indicator.
+- [x] **F17.1: Global Request Deduplication & Stale-While-Revalidate Caching**
+  - 5s TTL cache + in-flight dedup in `api()`; mutations now invalidate the whole GET cache; `invalidateApiCache()` exported and wired into logout.
+- [x] **F17.2: SignalR Auto-Reconnection & Resilience Guard**
+  - Backoff `[0,2,5,10,30,60s]`; **auto re-join project group on reconnect** (`createProjectConnection(projectId)`); `onConnectionWake` listener restarts hub + refetches when connectivity returns; notification stream auto-restarts on `online`.
+- [x] **F17.3: Windowed Board Columns**
+  - Columns render 12 cards then stream +12 via IntersectionObserver sentinel / "Show more" button; page size raised 8→24. DOM stays small on 500+ task projects.
+- [x] **F17.4: Keepalive & Warm-up Indicator**
+  - `lib/keepalive.ts` pings `/health` every 4 min while tab open (visibility-aware); `ApiStatusDot` in AppShell sidebar + mobile header (green=warm / amber pulsing=waking / red=offline).
 
 ---
 

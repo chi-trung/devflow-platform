@@ -7,7 +7,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { api, refreshSession, tokens } from "../lib/api";
+import {
+  api,
+  invalidateApiCache,
+  refreshSession,
+  tokens,
+} from "../lib/api";
 import { decodeJwt } from "../lib/jwt";
 import type { LoginResponse, RegisterResponse } from "../types/api";
 
@@ -95,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
     tokens.clear();
+    invalidateApiCache();
     setStatus("anonymous");
   }, []);
 

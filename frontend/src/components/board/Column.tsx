@@ -1,8 +1,13 @@
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Circle, CircleDot, Eye, CheckCircle2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { TaskItemResponse, WorkspaceMemberResponse } from "../../types/api";
 import { TaskCard } from "./TaskCard";
+
+// Cards rendered initially per column; more stream in as the sentinel
+// scrolls into view (keeps DOM small on 500+ task projects).
+const WINDOW_CHUNK = 12;
 
 interface ColumnProps {
   title: string;
@@ -47,6 +52,41 @@ export function Column({
   const Icon = meta.icon;
 
   const { t } = useTranslation();
+  const [visibleCount, setVisibleCount] = useState(WINDOW_CHUNK);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Only shrink the window when the list contracts (e.g. filter applied);
+  // never reset on routine refetches so scroll position is preserved.
+  useEffect(() => {
+    setVisibleCount((count) => Math.min(count, tasks.length || WINDOW_CHUNK));
+  }, [tasks.length]);
+
+  useEffect(() => {
+    if (visibleCount >= tasks.length) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisibleCount((count) =>
+            Math.min(count + WINDOW_CHUNK, tasks.length),
+          );
+        }
+      },
+      { rootMargin: "240px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [visibleCount, tasks.length]);
+
+  const shown = useMemo(
+    () =>
+      tasks.length <= WINDOW_CHUNK
+        ? tasks
+        : tasks.slice(0, visibleCount),
+    [tasks, visibleCount],
+  );
+  const hiddenCount = tasks.length - shown.length;
 
   return (
     <section
@@ -95,7 +135,7 @@ export function Column({
       </header>
 
       <div className="flex flex-col gap-2">
-        {tasks.map((task) => (
+        {shown.map((task) => (
           <TaskCard
             key={task.id}
             task={task}
@@ -107,6 +147,21 @@ export function Column({
             onToggleSelect={onToggleSelect}
           />
         ))}
+        {hiddenCount > 0 && (
+          <div ref={sentinelRef} className="pb-1">
+            <button
+              type="button"
+              onClick={() =>
+                setVisibleCount((count) =>
+                  Math.min(count + WINDOW_CHUNK, tasks.length),
+                )
+              }
+              className="w-full rounded-lg border border-dashed border-border px-4 py-2 text-center text-xs text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground"
+            >
+              {t("board.showMore", { count: hiddenCount })}
+            </button>
+          </div>
+        )}
         {tasks.length === 0 && (
           <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
             {t("board.dropHere")}

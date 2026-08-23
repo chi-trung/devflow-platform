@@ -21,7 +21,7 @@ import {
   pagedItems,
   reorderTasks,
 } from "../lib/api";
-import { createProjectConnection } from "../lib/realtime";
+import { createProjectConnection, onConnectionWake } from "../lib/realtime";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
 import { useToast } from "../components/ui/ToastProvider";
@@ -50,7 +50,7 @@ import type {
   WorkspaceMemberResponse,
 } from "../types/api";
 
-const TASKS_PER_PAGE = 8;
+const TASKS_PER_PAGE = 24;
 
 function getColumns(t: (key: string) => string): { title: string; status: TaskItemResponse["status"] }[] {
   return [
@@ -452,7 +452,7 @@ export function BoardPage() {
   useEffect(() => {
     if (!projectId) return;
 
-    const connection = createProjectConnection();
+    const connection = createProjectConnection(projectId);
     let timer: number | undefined;
     const scheduleReload = () => {
       window.clearTimeout(timer);
@@ -464,6 +464,23 @@ export function BoardPage() {
     };
 
     connection.on("project-event", scheduleReload);
+
+    const ensureLive = () => {
+      scheduleReload();
+      if (
+        connection.state === "Disconnected" &&
+        navigator.onLine
+      ) {
+        connection
+          .start()
+          .then(() => connection.invoke("JoinProject", projectId))
+          .catch(() => {
+            /* board still works without realtime */
+          });
+      }
+    };
+    const offWake = onConnectionWake(ensureLive);
+
     connection
       .start()
       .then(() => connection.invoke("JoinProject", projectId))
@@ -472,6 +489,7 @@ export function BoardPage() {
       });
 
     return () => {
+      offWake();
       window.clearTimeout(timer);
       void connection.stop();
     };
@@ -770,7 +788,9 @@ export function BoardPage() {
                     status={status}
                     tasks={pagedTasks.filter((t) => t.status === status)}
                     members={members ?? []}
-                    onDropTask={(taskId, next) => void moveTask(taskId, next)}
+                    onDropTask={(taskId, next, beforeId) =>
+                      void moveTask(taskId, next, beforeId)
+                    }
                     onDelete={setPendingDelete}
                     onSelect={setSelectedTaskId}
                     selectionMode={selectedIds.size > 0}

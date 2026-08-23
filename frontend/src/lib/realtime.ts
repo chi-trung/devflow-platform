@@ -11,11 +11,50 @@ const HUB_OPTIONS = {
 
 const RECONNECT_DELAYS = [0, 2_000, 5_000, 10_000, 30_000, 60_000];
 
-export function createProjectConnection(): signalR.HubConnection {
-  return new signalR.HubConnectionBuilder()
+export function createProjectConnection(
+  projectId?: string,
+): signalR.HubConnection {
+  const connection = new signalR.HubConnectionBuilder()
     .withUrl(`${API_BASE}/hubs/projects`, HUB_OPTIONS)
     .withAutomaticReconnect(RECONNECT_DELAYS)
     .build();
+
+  // After an automatic reconnect the connection has rejoined no groups;
+  // re-invoke JoinProject so live updates keep flowing.
+  connection.onreconnected(() => {
+    if (projectId) {
+      void connection.invoke("JoinProject", projectId).catch(() => {});
+    }
+  });
+
+  return connection;
+}
+
+// ── Online/wake guards ──────────────────────────────────────────────
+// Long outages exhaust the automatic reconnect schedule (state becomes
+// Disconnected). When connectivity returns we let listeners restart
+// connections and refetch.
+const wakeListeners = new Set<() => void>();
+
+/** Register a callback fired when connectivity returns. Returns unlisten. */
+export function onConnectionWake(listener: () => void): () => void {
+  wakeListeners.add(listener);
+  return () => wakeListeners.delete(listener);
+}
+
+function notifyWake(): void {
+  for (const listener of [...wakeListeners]) {
+    try {
+      listener();
+    } catch {}
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("online", () => {
+    notifyWake();
+    void restartNotificationStreamIfOwned();
+  });
 }
 
 export interface IncomingNotification {
@@ -101,6 +140,18 @@ export function resetNotificationStream(): void {
   if (notificationConnection) {
     void notificationConnection.stop().catch(() => {});
     notificationConnection = null;
+  }
+}
+
+/** Used by the online guard: restart the stream if this app still wants it. */
+async function restartNotificationStreamIfOwned(): Promise<void> {
+  if (notificationSubscribers <= 0) return;
+  const connection = getNotificationConnection();
+  if (
+    connection.state === signalR.HubConnectionState.Disconnected &&
+    navigator.onLine
+  ) {
+    await startNotificationStream().catch(() => {});
   }
 }
 

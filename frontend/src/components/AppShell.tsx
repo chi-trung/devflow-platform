@@ -17,6 +17,7 @@ import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
 import { Avatar } from "./ui/Avatar";
 import { CommandPalette } from "./CommandPalette";
+import { ApiStatusDot } from "./user/ApiStatusDot";
 import { NotificationsPanel } from "./notifications/NotificationsPanel";
 import { UserMenu } from "./user/UserMenu";
 import type { ProjectResponse, WorkspaceResponse } from "../types/api";
@@ -263,7 +264,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <div className="relative shrink-0 border-t border-border px-3 py-2.5">
           {currentUser && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
+              <ApiStatusDot />
               <NotificationsPanel
                 workspaceId={workspaceId}
                 direction="up"
@@ -300,7 +302,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="font-display font-semibold">DevFlow</span>
           </Link>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
+          <ApiStatusDot />
           <NotificationsPanel
             workspaceId={workspaceId}
             direction="down"

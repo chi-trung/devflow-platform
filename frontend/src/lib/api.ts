@@ -82,6 +82,11 @@ function cacheKey(path: string, opts: RequestInit): string {
   return `${method}:${path}:${body}`;
 }
 
+/** Drop all cached GET responses (call after mutations or auth changes). */
+export function invalidateApiCache(): void {
+  cache.clear();
+}
+
 async function requestRefresh(): Promise<boolean> {
   const refresh = tokens.refresh;
   if (!refresh) return false;
@@ -202,6 +207,11 @@ export async function api<T>(
   if (!response.ok) {
     throw await parseProblemDetails(response);
   }
+
+  // A successful mutation invalidates every cached GET so subsequent
+  // reads never serve pre-mutation data.
+  cache.clear();
+  inflight.clear();
 
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;

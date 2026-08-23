@@ -102,7 +102,8 @@
     "addCommentFailed": "Không thể thêm bình luận.",
     "deleteCommentFailed": "Không thể xóa bình luận.",
     "saveTemplateFailed": "Không thể lưu mẫu.",
-    "createTaskFailed": "Tạo task thất bại."
+    "createTaskFailed": "Tạo task thất bại.",
+    "showMore": "Xem thêm {count}"
   },
   "task": {
     "title": "Tiêu đề",
