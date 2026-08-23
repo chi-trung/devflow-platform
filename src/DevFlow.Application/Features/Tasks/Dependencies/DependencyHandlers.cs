@@ -45,6 +45,106 @@ public class GetTaskDependenciesHandler(
     }
 }
 
+// Get project-level dependency graph
+[RequireWorkspaceRole(WorkspaceRole.Member)]
+public sealed record GetProjectDependencyGraphQuery(
+    Guid WorkspaceId,
+    Guid ProjectId) : IRequest<ProjectDependencyGraphResponse>, IWorkspaceRequest;
+
+public class GetProjectDependencyGraphHandler(
+    ITaskDependencyRepository dependencyRepository,
+    ITaskItemRepository taskItemRepository)
+    : IRequestHandler<GetProjectDependencyGraphQuery, ProjectDependencyGraphResponse>
+{
+    public async Task<ProjectDependencyGraphResponse> Handle(
+        GetProjectDependencyGraphQuery request,
+        CancellationToken cancellationToken)
+    {
+        var dependencies = await dependencyRepository.GetAllByProjectIdAsync(request.ProjectId, cancellationToken);
+        var taskIds = dependencies
+            .Select(d => d.BlockedTaskId)
+            .Concat(dependencies.Select(d => d.BlockerTaskId))
+            .Distinct()
+            .ToList();
+
+        var tasks = new Dictionary<Guid, Domain.Entities.TaskItem>();
+        foreach (var taskId in taskIds)
+        {
+            var task = await taskItemRepository.GetByIdAsync(taskId, cancellationToken);
+            if (task != null)
+                tasks[taskId] = task;
+        }
+
+        var nodes = tasks.Values
+            .OrderBy(t => t.Title)
+            .Select(t => new TaskGraphNode(
+                t.Id,
+                t.Title,
+                t.Status.ToString(),
+                t.AssigneeId,
+                t.ProjectId))
+            .ToList();
+
+        var adjacency = new Dictionary<Guid, List<Guid>>();
+        foreach (var dep in dependencies)
+        {
+            if (!adjacency.ContainsKey(dep.BlockedTaskId))
+                adjacency[dep.BlockedTaskId] = new List<Guid>();
+            adjacency[dep.BlockedTaskId].Add(dep.BlockerTaskId);
+        }
+
+        var visited = new HashSet<Guid>();
+        var recursionStack = new HashSet<Guid>();
+        var cyclicNodeIds = new HashSet<Guid>();
+        var path = new List<Guid>();
+
+        void Dfs(Guid node)
+        {
+            visited.Add(node);
+            recursionStack.Add(node);
+            path.Add(node);
+
+            if (adjacency.TryGetValue(node, out var neighbors))
+            {
+                foreach (var neighbor in neighbors)
+                {
+                    if (!visited.Contains(neighbor))
+                    {
+                        Dfs(neighbor);
+                    }
+                    else if (recursionStack.Contains(neighbor))
+                    {
+                        var cycleStartIdx = path.IndexOf(neighbor);
+                        for (var i = cycleStartIdx; i < path.Count; i++)
+                        {
+                            cyclicNodeIds.Add(path[i]);
+                        }
+                        cyclicNodeIds.Add(neighbor);
+                    }
+                }
+            }
+
+            path.Remove(node);
+            recursionStack.Remove(node);
+        }
+
+        foreach (var nodeId in adjacency.Keys)
+        {
+            if (!visited.Contains(nodeId))
+                Dfs(nodeId);
+        }
+
+        var edges = dependencies
+            .Select(d => new DependencyGraphEdge(
+                d.BlockedTaskId,
+                d.BlockerTaskId,
+                cyclicNodeIds.Contains(d.BlockedTaskId) && cyclicNodeIds.Contains(d.BlockerTaskId)))
+            .ToList();
+
+        return new ProjectDependencyGraphResponse(nodes, edges, cyclicNodeIds.ToList());
+    }
+}
+
 // Add dependency (blocker)
 [RequireWorkspaceRole(WorkspaceRole.Member)]
 public sealed record AddTaskDependencyCommand(
@@ -81,10 +181,12 @@ public class AddTaskDependencyHandler(
         if (exists)
             throw new ConflictException("This dependency already exists.");
 
+        if (await WouldCreateCycleAsync(request.TaskId, request.BlockerTaskId, cancellationToken))
+            throw new ConflictException("Adding this dependency would create a circular dependency.");
+
         var dependency = Domain.Entities.TaskDependency.Create(request.TaskId, request.BlockerTaskId);
         await dependencyRepository.AddAsync(dependency, cancellationToken);
 
-        // Log activity
         var log = Domain.Entities.ActivityLog.Create(
             request.WorkspaceId,
             request.ProjectId,
@@ -95,6 +197,50 @@ public class AddTaskDependencyHandler(
         await activityLog.AddAsync(log, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<bool> WouldCreateCycleAsync(Guid blockedTaskId, Guid blockerTaskId, CancellationToken cancellationToken)
+    {
+        var allDeps = await dependencyRepository.GetAllByProjectIdAsync(
+            await GetProjectIdAsync(blockedTaskId, cancellationToken),
+            cancellationToken);
+
+        var adjacency = new Dictionary<Guid, List<Guid>>();
+        foreach (var dep in allDeps)
+        {
+            if (!adjacency.ContainsKey(dep.BlockedTaskId))
+                adjacency[dep.BlockedTaskId] = new List<Guid>();
+            adjacency[dep.BlockedTaskId].Add(dep.BlockerTaskId);
+        }
+
+        var queue = new Queue<Guid>();
+        var visited = new HashSet<Guid> { blockerTaskId };
+        queue.Enqueue(blockerTaskId);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            if (current == blockedTaskId)
+                return true;
+
+            if (adjacency.TryGetValue(current, out var neighbors))
+            {
+                foreach (var neighbor in neighbors)
+                {
+                    if (visited.Add(neighbor))
+                        queue.Enqueue(neighbor);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private async Task<Guid> GetProjectIdAsync(Guid taskId, CancellationToken cancellationToken)
+    {
+        var task = await taskItemRepository.GetByIdAsync(taskId, cancellationToken)
+            ?? throw new NotFoundException(nameof(Domain.Entities.TaskItem), taskId);
+        return task.ProjectId;
     }
 }
 

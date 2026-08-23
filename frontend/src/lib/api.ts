@@ -15,6 +15,7 @@ import type {
   SavedSearchResponse,
   SearchResponse,
   SprintResponse,
+  ProjectDependencyGraphResponse,
   TaskDependencyResponse,
   TaskItemResponse,
   TeamReportResponse,
@@ -651,6 +652,19 @@ export async function removeTaskDependency(
   await api(
     `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/dependencies/${dependencyId}`,
     { method: "DELETE" },
+  );
+}
+
+/**
+ * Loads the whole project dependency graph in a single request (nodes + edges +
+ * server-computed cyclic node ids), replacing the old per-task N+1 waterfall.
+ */
+export function getProjectDependencyGraph(
+  workspaceId: string,
+  projectId: string,
+): Promise<ProjectDependencyGraphResponse> {
+  return api<ProjectDependencyGraphResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/dependencies/graph`,
   );
 }
 

@@ -235,6 +235,20 @@ public sealed class TasksController(ISender sender) : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("dependencies/graph")]
+    [ProducesResponseType(typeof(Application.Features.Tasks.Dependencies.ProjectDependencyGraphResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetProjectDependencyGraph(
+        Guid workspaceId,
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new Application.Features.Tasks.Dependencies.GetProjectDependencyGraphQuery(workspaceId, projectId),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
     // ===== TIME TRACKING =====
 
     [HttpGet("{taskId:guid}/time-entries")]

@@ -14,6 +14,16 @@ public sealed class TaskDependencyRepository(DevFlowDbContext dbContext) : ITask
             .ContinueWith(t => (IReadOnlyList<TaskDependency>)t.Result, cancellationToken);
     }
 
+    public Task<IReadOnlyList<TaskDependency>> GetAllByProjectIdAsync(Guid projectId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.TaskDependencies
+            .Where(td =>
+                dbContext.TaskItems.Any(t => t.ProjectId == projectId && t.Id == td.BlockedTaskId) ||
+                dbContext.TaskItems.Any(t => t.ProjectId == projectId && t.Id == td.BlockerTaskId))
+            .ToListAsync(cancellationToken)
+            .ContinueWith(t => (IReadOnlyList<TaskDependency>)t.Result, cancellationToken);
+    }
+
     public Task<bool> ExistsAsync(Guid blockedTaskId, Guid blockerTaskId, CancellationToken cancellationToken = default)
     {
         return dbContext.TaskDependencies

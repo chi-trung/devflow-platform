@@ -6,6 +6,8 @@ public interface ITaskDependencyRepository
 {
     Task<IReadOnlyList<TaskDependency>> GetByTaskIdAsync(Guid taskId, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<TaskDependency>> GetAllByProjectIdAsync(Guid projectId, CancellationToken cancellationToken = default);
+
     Task<bool> ExistsAsync(Guid blockedTaskId, Guid blockerTaskId, CancellationToken cancellationToken = default);
 
     Task<TaskDependency?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
