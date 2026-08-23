@@ -10,4 +10,5 @@ public sealed record TaskItemResponse(
     Guid? AssigneeId,
     Guid? SprintId,
     DateTimeOffset? DueDateUtc,
-    DateTimeOffset? CompletedAtUtc);
+    DateTimeOffset? CompletedAtUtc,
+    int Position);

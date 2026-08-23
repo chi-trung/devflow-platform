@@ -44,7 +44,8 @@ public sealed class ListTaskItemsQueryHandler(
                 task.AssigneeId,
                 task.SprintId,
                 task.DueDateUtc,
-                task.CompletedAtUtc))
+                task.CompletedAtUtc,
+                task.Position))
             .ToList();
 
         return new PagedResult<TaskItemResponse>(items, totalCount, page, pageSize);

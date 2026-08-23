@@ -1,10 +1,12 @@
 using DevFlow.Application.Common.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
 namespace DevFlow.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/v1/workspaces/{workspaceId:guid}/webhooks")]
 public sealed class WebhooksController(
     IWebhookRepository webhookRepository,

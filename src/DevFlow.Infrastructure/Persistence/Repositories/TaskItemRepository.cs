@@ -51,7 +51,8 @@ public sealed class TaskItemRepository(DevFlowDbContext dbContext) : ITaskItemRe
         }
 
         var tasks = await query
-            .OrderByDescending(task => task.CreatedAtUtc)
+            .OrderBy(task => task.Position)
+            .ThenByDescending(task => task.CreatedAtUtc)
             .Skip(skip)
             .Take(take)
             .ToListAsync(cancellationToken);

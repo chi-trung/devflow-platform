@@ -57,6 +57,7 @@ export interface TaskItemResponse {
   estimateMinutes?: number | null;
   totalLoggedMinutes?: number;
   labelIds?: string[];
+  position?: number;
 }
 
 export interface TaskDependencyResponse {

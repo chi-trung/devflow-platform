@@ -1,12 +1,14 @@
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Domain.Entities;
 using DevFlow.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace DevFlow.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/v1/users/me/notification-preferences")]
 public sealed class NotificationPreferencesController(
     DevFlowDbContext dbContext,

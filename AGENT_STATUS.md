@@ -33,11 +33,10 @@
 - [x] **F3: Drag-Reorder Persistence** — Index-aware column drops; moves persist via `tasks/reorder` (status + position per affected column).
 - [x] **F4: Command Palette Saved Searches** — Save current query/filters to API, run from palette via `?fs=` handoff to BoardPage, inline delete.
 
-> **⚠️ Backend follow-up for F3 fidelity (Codebuff, B16.5):**
-> `GET .../tasks` currently orders by `CreatedAtUtc DESC` and `TaskItemResponse` does not
-> expose `Position`. Reorder saves correctly to DB, but reload ignores saved order.
-> Fix = order by `Position` in `TaskItemRepository.GetForProjectPagedAsync` + add
-> `position` to `TaskItemResponse`. Frontend already sends/consumes it.
+> **✅ B16.5 (done by OpenCode, hotfix):**
+> `GET .../tasks` now orders by `Position` (tiebreak `CreatedAtUtc DESC`) and
+> `TaskItemResponse` exposes `position`. Also added missing `[Authorize]` to
+> NotificationPreferences / SavedSearches / Webhooks controllers (were public!).
 
 ---
 
