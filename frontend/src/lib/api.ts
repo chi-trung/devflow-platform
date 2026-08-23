@@ -843,3 +843,23 @@ export function createSavedSearch(input: {
 export async function deleteSavedSearch(id: string): Promise<void> {
   await api(`/users/me/saved-searches/${id}`, { method: "DELETE" });
 }
+
+export async function removeWorkspaceMember(
+  workspaceId: string,
+  userId: string,
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}/members/${userId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function updateMemberRole(
+  workspaceId: string,
+  userId: string,
+  role: "Owner" | "Admin" | "Member",
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}/members/${userId}/role`, {
+    method: "PATCH",
+    body: JSON.stringify({ role }),
+  });
+}
