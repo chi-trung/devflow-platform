@@ -792,5 +792,23 @@
     "authFeature2": "Role-based workspaces",
     "authFeature3": "Sprint planning built in",
     "authMotto": "plan · build · review · ship"
+  },
+  "label": {
+    "title": "Labels",
+    "description": "Create and manage labels for this project.",
+    "create": "New Label",
+    "createTitle": "Create Label",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. Bug, Feature, Enhancement",
+    "colorLabel": "Color",
+    "loadFailed": "Failed to load labels.",
+    "saveFailed": "Failed to save label.",
+    "deleteFailed": "Failed to delete label.",
+    "emptyTitle": "No labels yet",
+    "emptyDescription": "Create labels to categorize and filter tasks.",
+    "deleteTitle": "Delete label?",
+    "deleteMessage": "This will permanently delete \"{{name}}\". This action cannot be undone.",
+    "deleteConfirm": "Delete",
+    "delete": "Delete label"
   }
 }

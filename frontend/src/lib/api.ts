@@ -698,6 +698,17 @@ export function createLabel(
   );
 }
 
+export async function deleteLabel(
+  workspaceId: string,
+  projectId: string,
+  labelId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/labels/${labelId}`,
+    { method: "DELETE" },
+  );
+}
+
 export function getTaskDependencies(
   workspaceId: string,
   projectId: string,
