@@ -492,6 +492,25 @@ export function getProjectPRs(
   );
 }
 
+export async function addPR(
+  workspaceId: string,
+  projectId: string,
+  input: {
+    title: string;
+    url: string;
+    status: string;
+    author?: string;
+  },
+): Promise<PullRequestResponse> {
+  return api<PullRequestResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/github/prs`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
 export function getTemplates(
   workspaceId: string,
   projectId: string,

@@ -19,6 +19,7 @@ const LabelsPage = lazy(() => import("./pages/LabelsPage").then(m => ({ default:
 const CustomFieldsPage = lazy(() => import("./pages/CustomFieldsPage").then(m => ({ default: m.CustomFieldsPage })));
 const TemplatesPage = lazy(() => import("./pages/TemplatesPage").then(m => ({ default: m.TemplatesPage })));
 const WebhooksPage = lazy(() => import("./pages/WebhooksPage").then(m => ({ default: m.WebhooksPage })));
+const GitHubPage = lazy(() => import("./pages/GitHubPage").then(m => ({ default: m.GitHubPage })));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
 
 function LoadingFallback() {
@@ -78,6 +79,10 @@ export default function App() {
                 <Route
                   path="/workspaces/:workspaceId/webhooks"
                   element={<WebhooksPage />}
+                />
+                <Route
+                  path="/workspaces/:workspaceId/projects/:projectId/github"
+                  element={<GitHubPage />}
                 />
               </Route>
               <Route path="*" element={<NotFoundPage />} />
