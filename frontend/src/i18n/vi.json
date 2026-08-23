@@ -811,5 +811,31 @@
     "deleteMessage": "This will permanently delete \"{{name}}\". This action cannot be undone.",
     "deleteConfirm": "Delete",
     "delete": "Delete label"
+  },
+  "customField": {
+    "title": "Custom Fields",
+    "description": "Define custom fields for tasks in this project.",
+    "create": "New Field",
+    "createTitle": "Create Custom Field",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. Story Points, Severity",
+    "typeLabel": "Type",
+    "optionsLabel": "Options",
+    "optionsPlaceholder": "Option A, Option B, Option C",
+    "requiredLabel": "Required",
+    "requiredBadge": "Required",
+    "typeText": "Text",
+    "typeNumber": "Number",
+    "typeDate": "Date",
+    "typeSelect": "Select",
+    "loadFailed": "Failed to load custom fields.",
+    "saveFailed": "Failed to save custom field.",
+    "deleteFailed": "Failed to delete custom field.",
+    "emptyTitle": "No custom fields yet",
+    "emptyDescription": "Add custom fields to capture additional task data.",
+    "deleteTitle": "Delete custom field?",
+    "deleteMessage": "This will permanently delete \"{{name}}\". This action cannot be undone.",
+    "deleteConfirm": "Delete",
+    "delete": "Delete field"
   }
 }
