@@ -18,6 +18,7 @@ import {
   Tag,
   Settings2,
   FileText,
+  Webhook,
 } from "lucide-react";
 import {
   api,
@@ -676,6 +677,13 @@ export function BoardPage() {
               >
                 <FileText className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("template.title")}</span>
+              </Link>
+              <Link
+                to={`/workspaces/${workspaceId}/webhooks`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+              >
+                <Webhook className="size-4" aria-hidden />
+                <span className="hidden xs:inline sm:inline">{t("webhook.title")}</span>
               </Link>
               <Button
                 variant="outline"

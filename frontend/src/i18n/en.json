@@ -19,7 +19,8 @@
     "savedSearches": "Saved Searches",
     "labels": "Labels",
     "customFields": "Custom Fields",
-    "templates": "Templates"
+    "templates": "Templates",
+    "webhooks": "Webhooks"
   },
   "dashboard": {
     "title": "Workspaces",
