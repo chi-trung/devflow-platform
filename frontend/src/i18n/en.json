@@ -860,6 +860,13 @@
     "deleteConfirm": "Delete",
     "delete": "Delete field"
   },
+  "activity": {
+    "title": "Activity Log",
+    "description": "Track all changes and updates in this project.",
+    "loadFailed": "Failed to load activity.",
+    "emptyTitle": "No activity yet",
+    "emptyDescription": "Activity will appear here as changes are made to tasks and other items."
+  },
   "webhook": {
     "title": "Webhooks",
     "description": "Configure webhooks to receive real-time event notifications.",

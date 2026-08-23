@@ -2,6 +2,7 @@ import type {
   BurndownResponse,
   CreateLabelRequest,
   CreateEpicRequest,
+  ActivityResponse,
   CustomFieldResponse,
   CustomFieldValueResponse,
   DashboardData,
@@ -556,6 +557,15 @@ export async function deleteTemplate(
   await api(
     `/workspaces/${workspaceId}/projects/${projectId}/templates/${templateId}`,
     { method: "DELETE" },
+  );
+}
+
+export function getActivities(
+  workspaceId: string,
+  projectId: string,
+): Promise<ActivityResponse[]> {
+  return api<ActivityResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/activities`,
   );
 }
 

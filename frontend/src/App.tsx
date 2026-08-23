@@ -20,6 +20,7 @@ const CustomFieldsPage = lazy(() => import("./pages/CustomFieldsPage").then(m =>
 const TemplatesPage = lazy(() => import("./pages/TemplatesPage").then(m => ({ default: m.TemplatesPage })));
 const WebhooksPage = lazy(() => import("./pages/WebhooksPage").then(m => ({ default: m.WebhooksPage })));
 const GitHubPage = lazy(() => import("./pages/GitHubPage").then(m => ({ default: m.GitHubPage })));
+const ActivitiesPage = lazy(() => import("./pages/ActivitiesPage").then(m => ({ default: m.ActivitiesPage })));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
 
 function LoadingFallback() {
@@ -83,6 +84,10 @@ export default function App() {
                 <Route
                   path="/workspaces/:workspaceId/projects/:projectId/github"
                   element={<GitHubPage />}
+                />
+                <Route
+                  path="/workspaces/:workspaceId/projects/:projectId/activities"
+                  element={<ActivitiesPage />}
                 />
               </Route>
               <Route path="*" element={<NotFoundPage />} />

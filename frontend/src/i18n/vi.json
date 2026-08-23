@@ -860,6 +860,13 @@
     "deleteConfirm": "Delete",
     "delete": "Delete field"
   },
+  "activity": {
+    "title": "Nhật ký hoạt động",
+    "description": "Theo dõi mọi thay đổi và cập nhật trong dự án này.",
+    "loadFailed": "Không thể tải hoạt động.",
+    "emptyTitle": "Chưa có hoạt động nào",
+    "emptyDescription": "Hoạt động sẽ xuất hiện ở đây khi có thay đổi đối với công việc và các mục khác."
+  },
   "webhook": {
     "title": "Webhooks",
     "description": "Configure webhooks to receive real-time event notifications.",
