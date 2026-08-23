@@ -219,7 +219,7 @@ public sealed class TasksController(ISender sender) : ControllerBase
         return NoContent();
     }
 
-    [HttpGet("{taskId:guid}/dependencies/{dependencyId:guid}")]
+    [HttpDelete("{taskId:guid}/dependencies/{dependencyId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> RemoveDependency(
         Guid workspaceId,
