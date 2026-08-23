@@ -1,12 +1,20 @@
 import * as signalR from "@microsoft/signalr";
 import { API_BASE, tokens } from "./api";
 
+// Keepalive below typical proxy idle timeouts (Render/Vercel edge) so
+// idle WebSockets are not dropped mid-session.
+const HUB_OPTIONS = {
+  accessTokenFactory: () => tokens.access ?? "",
+  keepAliveIntervalInMilliseconds: 15_000,
+  serverTimeoutInMilliseconds: 60_000,
+};
+
+const RECONNECT_DELAYS = [0, 2_000, 5_000, 10_000, 30_000, 60_000];
+
 export function createProjectConnection(): signalR.HubConnection {
   return new signalR.HubConnectionBuilder()
-    .withUrl(`${API_BASE}/hubs/projects`, {
-      accessTokenFactory: () => tokens.access ?? "",
-    })
-    .withAutomaticReconnect()
+    .withUrl(`${API_BASE}/hubs/projects`, HUB_OPTIONS)
+    .withAutomaticReconnect(RECONNECT_DELAYS)
     .build();
 }
 
@@ -23,35 +31,77 @@ let notificationConnection: signalR.HubConnection | null = null;
 export function getNotificationConnection(): signalR.HubConnection {
   if (!notificationConnection) {
     notificationConnection = new signalR.HubConnectionBuilder()
-      .withUrl(`${API_BASE}/hubs/notifications`, {
-        accessTokenFactory: () => tokens.access ?? "",
-      })
-      .withAutomaticReconnect()
+      .withUrl(`${API_BASE}/hubs/notifications`, HUB_OPTIONS)
+      .withAutomaticReconnect(RECONNECT_DELAYS)
       .build();
   }
   return notificationConnection;
 }
 
+let notificationSubscribers = 0;
+let stopTimer: number | null = null;
+let startingPromise: Promise<void> | null = null;
+
 export async function startNotificationStream(): Promise<void> {
+  notificationSubscribers++;
+  if (stopTimer !== null) {
+    window.clearTimeout(stopTimer);
+    stopTimer = null;
+  }
+
   const connection = getNotificationConnection();
-  if (connection.state !== signalR.HubConnectionState.Disconnected) return;
-  try {
-    await connection.start();
-  } catch {
-    // the polling fallback in useNotifications keeps the UI working without realtime
+  if (connection.state === signalR.HubConnectionState.Connected) return;
+  if (startingPromise) {
+    return startingPromise;
+  }
+
+  if (connection.state === signalR.HubConnectionState.Disconnected) {
+    startingPromise = connection
+      .start()
+      .catch(() => {
+        // the polling fallback in useNotifications keeps the UI working without realtime
+      })
+      .finally(() => {
+        startingPromise = null;
+      });
+    return startingPromise;
   }
 }
 
 export function stopNotificationStream(): void {
-  if (!notificationConnection) return;
-  if (notificationConnection.state === signalR.HubConnectionState.Disconnected)
-    return;
-  void notificationConnection.stop().catch(() => {});
+  notificationSubscribers = Math.max(0, notificationSubscribers - 1);
+  if (notificationSubscribers > 0) return;
+
+  if (stopTimer !== null) window.clearTimeout(stopTimer);
+  stopTimer = window.setTimeout(async () => {
+    stopTimer = null;
+    if (notificationSubscribers > 0) return;
+    if (startingPromise) {
+      try {
+        await startingPromise;
+      } catch {}
+    }
+    if (
+      notificationConnection &&
+      notificationConnection.state !== signalR.HubConnectionState.Disconnected
+    ) {
+      try {
+        await notificationConnection.stop();
+      } catch {}
+    }
+  }, 1000);
 }
 
 export function resetNotificationStream(): void {
-  stopNotificationStream();
-  notificationConnection = null;
+  notificationSubscribers = 0;
+  if (stopTimer !== null) {
+    window.clearTimeout(stopTimer);
+    stopTimer = null;
+  }
+  if (notificationConnection) {
+    void notificationConnection.stop().catch(() => {});
+    notificationConnection = null;
+  }
 }
 
 export function parseNotificationPayload(

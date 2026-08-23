@@ -287,15 +287,29 @@ export function BoardPage() {
       ["Low", "Medium", "High", "Critical"].includes(deepLinkPriority)
     ) {
       setPriorityFilter(deepLinkPriority);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("priority");
+          return next;
+        },
+        { replace: true },
+      );
     }
-    setSearchParams({}, { replace: true });
   }, [deepLinkPriority, setSearchParams]);
 
   useEffect(() => {
     if (!deepLinkTaskId) return;
     if (tasks.some((task) => task.id === deepLinkTaskId)) {
       setSelectedTaskId(deepLinkTaskId);
-      setSearchParams({}, { replace: true });
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("task");
+          return next;
+        },
+        { replace: true },
+      );
     }
   }, [deepLinkTaskId, tasks, setSearchParams]);
 
