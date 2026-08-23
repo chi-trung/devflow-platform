@@ -62,16 +62,24 @@ export function WorkspacePage() {
     () => api(`/workspaces/${workspaceId}/projects`),
     [workspaceId],
   );
-  const projects = pagedItems<ProjectResponse>(projectsRaw);
+  const projects = useMemo(
+    () => pagedItems<ProjectResponse>(projectsRaw),
+    [projectsRaw],
+  );
 
   const [stats, setStats] = useState<Record<string, { total: number; done: number }>>({});
 
   useEffect(() => {
-    if (!projects) return;
+    if (!projectsRaw) return;
+    const projectList = pagedItems<ProjectResponse>(projectsRaw);
+    if (projectList.length === 0) {
+      setStats({});
+      return;
+    }
     let cancelled = false;
 
     Promise.all(
-      projects.map(async (project) => {
+      projectList.map(async (project) => {
         const tasksRaw = await api<unknown>(
           `/workspaces/${workspaceId}/projects/${project.id}/tasks`,
         );
@@ -95,7 +103,7 @@ export function WorkspacePage() {
     return () => {
       cancelled = true;
     };
-  }, [projects, workspaceId]);
+  }, [projectsRaw, workspaceId]);
 
   const withStats: ProjectWithStats[] | null = useMemo(
     () =>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -79,7 +79,10 @@ export function SprintPlanningPage() {
     () => getSprints(workspaceId, projectId),
     [workspaceId, projectId],
   );
-  const sprints = pagedItems<SprintResponse>(sprintsRaw);
+  const sprints = useMemo(
+    () => pagedItems<SprintResponse>(sprintsRaw),
+    [sprintsRaw],
+  );
 
   const {
     data: taskDataRaw,
@@ -90,7 +93,10 @@ export function SprintPlanningPage() {
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/tasks`),
     [workspaceId, projectId],
   );
-  const taskData = pagedItems<TaskItemResponse>(taskDataRaw);
+  const taskData = useMemo(
+    () => pagedItems<TaskItemResponse>(taskDataRaw),
+    [taskDataRaw],
+  );
 
   const [tasks, setTasks] = useState<TaskItemResponse[]>([]);
   const [boardError, setBoardError] = useState<string | null>(null);
@@ -106,8 +112,8 @@ export function SprintPlanningPage() {
   const { push } = useToast();
 
   useEffect(() => {
-    if (taskData) setTasks(taskData);
-  }, [taskData]);
+    if (taskDataRaw) setTasks(pagedItems<TaskItemResponse>(taskDataRaw));
+  }, [taskDataRaw]);
 
   useEffect(() => {
     if (!projectId) return;

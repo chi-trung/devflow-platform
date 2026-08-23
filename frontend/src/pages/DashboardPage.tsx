@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Plus, ArrowUpRight, Boxes } from "lucide-react";
@@ -33,7 +33,10 @@ export function DashboardPage() {
     loading,
     reload,
   } = useApi<unknown>(() => api("/workspaces"), []);
-  const workspaces = pagedItems<WorkspaceResponse>(workspacesRaw);
+  const workspaces = useMemo(
+    () => pagedItems<WorkspaceResponse>(workspacesRaw),
+    [workspacesRaw],
+  );
 
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -43,12 +46,13 @@ export function DashboardPage() {
   const [selectedWsId, setSelectedWsId] = useState("");
 
   useEffect(() => {
-    if (workspaces && workspaces.length > 0) {
+    const ws = pagedItems<WorkspaceResponse>(workspacesRaw);
+    if (ws.length > 0) {
       setSelectedWsId((current) =>
-        workspaces.some((w) => w.id === current) ? current : workspaces[0].id,
+        ws.some((w) => w.id === current) ? current : ws[0].id,
       );
     }
-  }, [workspaces]);
+  }, [workspacesRaw]);
 
   const {
     data: dashboard,

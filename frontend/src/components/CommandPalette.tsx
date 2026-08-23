@@ -49,7 +49,10 @@ export function CommandPalette({
     () => (open ? api("/workspaces") : Promise.resolve([])),
     [open],
   );
-  const workspaces = pagedItems<WorkspaceResponse>(workspacesRaw);
+  const workspaces = useMemo(
+    () => pagedItems<WorkspaceResponse>(workspacesRaw),
+    [workspacesRaw],
+  );
   const { data: projectsRaw } = useApi<unknown>(
     () =>
       open && workspaceId
@@ -57,7 +60,10 @@ export function CommandPalette({
         : Promise.resolve([]),
     [open, workspaceId],
   );
-  const projects = pagedItems<ProjectResponse>(projectsRaw);
+  const projects = useMemo(
+    () => pagedItems<ProjectResponse>(projectsRaw),
+    [projectsRaw],
+  );
 
   const dueRange = useMemo((): { dueAfter?: string; dueBefore?: string } => {
     if (!dueFilter) return {};

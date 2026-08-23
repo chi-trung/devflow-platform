@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   CalendarRange,
@@ -76,7 +76,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     () => api("/workspaces"),
     [],
   );
-  const workspaces = pagedItems<WorkspaceResponse>(workspacesRaw);
+  const workspaces = useMemo(
+    () => pagedItems<WorkspaceResponse>(workspacesRaw),
+    [workspacesRaw],
+  );
   const { data: projectsRaw } = useApi<unknown>(
     () =>
       workspaceId
@@ -84,7 +87,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         : Promise.resolve([]),
     [workspaceId],
   );
-  const projects = pagedItems<ProjectResponse>(projectsRaw);
+  const projects = useMemo(
+    () => pagedItems<ProjectResponse>(projectsRaw),
+    [projectsRaw],
+  );
 
   const onBoardRoute =
     /^\/workspaces\/[0-9a-f-]{36}\/projects\/[0-9a-f-]{36}$/i.test(

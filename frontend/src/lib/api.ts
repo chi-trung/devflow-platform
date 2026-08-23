@@ -303,13 +303,16 @@ export async function markAllNotificationsRead(): Promise<void> {
   await api("/notifications/read-all", { method: "POST" });
 }
 
+const EMPTY_ARRAY: readonly never[] = Object.freeze([]);
+
 // Helper to extract items from PagedResult responses
 export function pagedItems<T>(response: unknown): T[] {
   if (Array.isArray(response)) return response;
   if (response && typeof response === "object" && "items" in response) {
-    return (response as { items: T[] }).items ?? [];
+    const items = (response as { items: T[] }).items;
+    return Array.isArray(items) ? items : (EMPTY_ARRAY as unknown as T[]);
   }
-  return [];
+  return EMPTY_ARRAY as unknown as T[];
 }
 
 export interface SearchFilters {

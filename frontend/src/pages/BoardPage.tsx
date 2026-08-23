@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -136,13 +136,19 @@ export function BoardPage() {
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/sprints`),
     [workspaceId, projectId],
   );
-  const sprints = pagedItems<SprintResponse>(sprintsRaw);
+  const sprints = useMemo(
+    () => pagedItems<SprintResponse>(sprintsRaw),
+    [sprintsRaw],
+  );
 
   const { data: labelsRaw } = useApi<unknown>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/labels`),
     [workspaceId, projectId],
   );
-  const labels = pagedItems<LabelResponse>(labelsRaw);
+  const labels = useMemo(
+    () => pagedItems<LabelResponse>(labelsRaw),
+    [labelsRaw],
+  );
 
   const {
     data: tasksRaw,
@@ -153,7 +159,6 @@ export function BoardPage() {
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/tasks`),
     [workspaceId, projectId],
   );
-  const data = pagedItems<TaskItemResponse>(tasksRaw);
 
   const {
     data: activities,
@@ -275,8 +280,8 @@ export function BoardPage() {
   }, [sprintFilter, search, priorityFilter, assigneeFilter, labelFilter, dueFrom, dueTo, blockedOnly]);
 
   useEffect(() => {
-    if (data) setTasks(data);
-  }, [data]);
+    if (tasksRaw) setTasks(pagedItems<TaskItemResponse>(tasksRaw));
+  }, [tasksRaw]);
 
   const deepLinkTaskId = searchParams.get("task");
   const deepLinkPriority = searchParams.get("priority");
