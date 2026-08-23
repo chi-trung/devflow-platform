@@ -104,6 +104,22 @@ public sealed class SprintsController(ISender sender) : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("{sprintId:guid}/velocity")]
+    [ProducesResponseType(typeof(Application.Features.Sprints.Velocity.SprintVelocityResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Velocity(
+        Guid workspaceId,
+        Guid projectId,
+        Guid sprintId,
+        CancellationToken cancellationToken)
+    {
+        var velocity = await sender.Send(
+            new Application.Features.Sprints.Velocity.GetSprintVelocityQuery(workspaceId, projectId, sprintId),
+            cancellationToken);
+
+        return Ok(velocity);
+    }
+
     [HttpDelete("{sprintId:guid}/tasks/{taskId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]

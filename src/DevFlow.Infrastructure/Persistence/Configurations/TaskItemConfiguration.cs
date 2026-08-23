@@ -38,6 +38,23 @@ internal sealed class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
             .HasForeignKey(task => task.SprintId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        builder.HasOne<Epic>()
+            .WithMany()
+            .HasForeignKey(task => task.EpicId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Self-referencing hierarchy for subtasks. Children survive as top-level
+        // tasks (ParentTaskId = null) when the parent is deleted.
+        builder.HasOne<TaskItem>()
+            .WithMany()
+            .HasForeignKey(task => task.ParentTaskId)
+            .OnDelete(DeleteBehavior.ClientSetNull);
+
+        builder.Property(task => task.StoryPoints)
+            .IsRequired(false);
+
         builder.HasIndex(task => new { task.ProjectId, task.Status });
+        builder.HasIndex(task => task.EpicId);
+        builder.HasIndex(task => task.ParentTaskId);
     }
 }

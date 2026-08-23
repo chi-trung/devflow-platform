@@ -9,6 +9,9 @@ public sealed record TaskItemResponse(
     string Priority,
     Guid? AssigneeId,
     Guid? SprintId,
+    Guid? EpicId,
+    Guid? ParentTaskId,
+    int? StoryPoints,
     DateTimeOffset? DueDateUtc,
     DateTimeOffset? CompletedAtUtc,
     int Position);

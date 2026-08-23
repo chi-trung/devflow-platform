@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 16 Backend Complete ✅ | Sprint 17 Planning & Execution Active ⚡
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Backend Complete ✅ | Sprint 18 Frontend Open 🔓
 
 ---
 
@@ -10,10 +10,16 @@
 | Sprint | Focus Area | Backend (Codebuff) | Frontend (OpenCode) | Status |
 |---|---|---|---|---|
 | **Sprint 16** | Personalization & Workflows | ✅ DONE (B1-B4) | ✅ DONE (F1-F4) | Complete |
-| **Sprint 17** | Performance Hardening & State Sync | ⏳ Ready | ⏳ Ready | 🎯 Next Up |
-| **Sprint 18** | Epics, Subtasks & Task Hierarchy | ⏳ Planned | ⏳ Planned | Queued |
+| **Sprint 17** | Performance Hardening & State Sync | ✅ DONE (B17.1-B17.4) | ✅ DONE (F17.1-F17.4) | Complete |
+| **Sprint 18** | Epics, Subtasks & Task Hierarchy | ✅ DONE (B18.1-B18.3) — PR #77 | ⏳ Ready (F18.1-F18.3) | Backend Merged, Frontend Next 🎯 |
 | **Sprint 19** | GitHub Integration & Webhook Outbox | ⏳ Planned | ⏳ Planned | Queued |
 | **Sprint 20** | Advanced Agile Analytics & Custom Fields | ⏳ Planned | ⏳ Planned | Queued |
+
+---
+
+## ➕ Bonus: Task Dependencies Visual Graph (KILO) — MERGED ✅
+Project-level dependency graph API + interactive GraphModal (drag-drop edges, search,
+blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
@@ -45,13 +51,13 @@
 **Goal:** Eliminate all Render cold start delays, rate-limit bottlenecks, and optimize query latency to sub-50ms.
 
 #### 🤖 Agent: Codebuff (Backend)
-- [ ] **B17.1: Redis Output & Query Caching**
+- [x] **B17.1: Redis Output & Query Caching**
   - Cache workspace metadata, member lists, and active sprint snapshots with automated cache tag invalidation.
-- [ ] **B17.2: Sliding-Window Rate Limiting & Tiering**
+- [x] **B17.2: Sliding-Window Rate Limiting & Tiering**
   - Upgrade rate limiter to sliding window per user token / authenticated identity (with higher quota for active UI sessions).
-- [ ] **B17.3: Outbox Pattern & Background Workers**
+- [x] **B17.3: Outbox Pattern & Background Workers**
   - Implement reliable background worker for notifications and webhooks with exponential backoff retries.
-- [ ] **B17.4: Health Check & Keepalive Endpoint Optimization**
+- [x] **B17.4: Health Check & Keepalive Endpoint Optimization**
   - Dedicated lightweight probe `/api/v1/ping` with database keepalive query for zero-cold-start hosting.
 
 #### 🎨 Agent: OpenCode (Frontend)
@@ -70,14 +76,18 @@
 
 **Goal:** Transform tasks into full hierarchical project trees (Epic $\rightarrow$ Task $\rightarrow$ Subtask).
 
-#### 🤖 Agent: Codebuff (Backend)
-- [ ] **B18.1: Epic Entity & API**
+#### 🤖 Agent: Codebuff (Backend) — COMPLETED ✅ (ox-alpha, PR #77)
+- [x] **B18.1: Epic Entity & API**
   - `GET/POST/PUT/DELETE /api/v1/workspaces/{wsId}/projects/{projId}/epics`
   - Epic progress computation (% completed tasks, story point totals).
-- [ ] **B18.2: Subtask System**
-  - Parent-child task relationship with cascading state rules (closing all subtasks prompts parent closure).
-- [ ] **B18.3: Story Points & Estimation**
-  - Fibonacci/T-Shirt size estimation field on tasks with sprint velocity aggregation.
+- [x] **B18.2: Subtask System**
+  - Parent-child task relationship (one level deep), subtask inherits parent sprint/epic.
+  - Cascading state rule: closing the last open subtask auto-closes the parent.
+- [x] **B18.3: Story Points & Estimation**
+  - `PUT .../tasks/{taskId}/estimation` (Fibonacci {1,2,3,5,8,13,21} or null).
+  - `GET .../sprints/{sprintId}/velocity` aggregation endpoint.
+- Migration: `AddSprint18EpicsSubtasksStoryPoints` (all-nullable columns, symmetric rollback).
+- Tests: 89 unit (+24 new) + 1 integration — green.
 
 #### 🎨 Agent: OpenCode (Frontend)
 - [ ] **F18.1: Epic Roadmap & Timeline View**

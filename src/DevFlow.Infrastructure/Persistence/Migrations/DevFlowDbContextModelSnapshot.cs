@@ -168,6 +168,53 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
                     b.ToTable("CustomFields", (string)null);
                 });
 
+            modelBuilder.Entity("DevFlow.Domain.Entities.Epic", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)")
+                        .HasColumnName("description");
+
+                    b.Property<DateTimeOffset?>("EndDateUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("end_date_utc");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<DateTimeOffset?>("StartDateUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("start_date_utc");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Id")
+                        .HasName("pk_epics");
+
+                    b.HasIndex("ProjectId", "StartDateUtc")
+                        .HasDatabaseName("ix_epics_project_id_start_date_utc");
+
+                    b.ToTable("epics", (string)null);
+                });
+
             modelBuilder.Entity("DevFlow.Domain.Entities.GitHubIntegration", b =>
                 {
                     b.Property<Guid>("Id")
@@ -343,6 +390,50 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_notification_preferences_user_id");
 
                     b.ToTable("notification_preferences", (string)null);
+                });
+
+            modelBuilder.Entity("DevFlow.Domain.Entities.OutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("error");
+
+                    b.Property<DateTimeOffset>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at_utc");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("payload");
+
+                    b.Property<DateTimeOffset?>("ProcessedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at_utc");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("retry_count");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_outbox_messages");
+
+                    b.HasIndex("ProcessedAtUtc", "OccurredAtUtc")
+                        .HasDatabaseName("ix_outbox_messages_processed_at_utc_occurred_at_utc");
+
+                    b.ToTable("outbox_messages", (string)null);
                 });
 
             modelBuilder.Entity("DevFlow.Domain.Entities.Project", b =>
@@ -740,9 +831,17 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("due_date_utc");
 
+                    b.Property<Guid?>("EpicId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("epic_id");
+
                     b.Property<int?>("EstimateMinutes")
                         .HasColumnType("integer")
                         .HasColumnName("estimate_minutes");
+
+                    b.Property<Guid?>("ParentTaskId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_task_id");
 
                     b.Property<int>("Position")
                         .HasColumnType("integer")
@@ -768,6 +867,10 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("status");
 
+                    b.Property<int?>("StoryPoints")
+                        .HasColumnType("integer")
+                        .HasColumnName("story_points");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -780,6 +883,12 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_task_items");
+
+                    b.HasIndex("EpicId")
+                        .HasDatabaseName("ix_task_items_epic_id");
+
+                    b.HasIndex("ParentTaskId")
+                        .HasDatabaseName("ix_task_items_parent_task_id");
 
                     b.HasIndex("SprintId")
                         .HasDatabaseName("ix_task_items_sprint_id");
@@ -1134,6 +1243,16 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_custom_fields_projects_project_id");
                 });
 
+            modelBuilder.Entity("DevFlow.Domain.Entities.Epic", b =>
+                {
+                    b.HasOne("DevFlow.Domain.Entities.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_epics_projects_project_id");
+                });
+
             modelBuilder.Entity("DevFlow.Domain.Entities.GitHubIntegration", b =>
                 {
                     b.HasOne("DevFlow.Domain.Entities.Project", null)
@@ -1250,6 +1369,17 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("DevFlow.Domain.Entities.TaskItem", b =>
                 {
+                    b.HasOne("DevFlow.Domain.Entities.Epic", null)
+                        .WithMany()
+                        .HasForeignKey("EpicId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_task_items_epics_epic_id");
+
+                    b.HasOne("DevFlow.Domain.Entities.TaskItem", null)
+                        .WithMany()
+                        .HasForeignKey("ParentTaskId")
+                        .HasConstraintName("fk_task_items_task_items_parent_task_id");
+
                     b.HasOne("DevFlow.Domain.Entities.Project", null)
                         .WithMany()
                         .HasForeignKey("ProjectId")

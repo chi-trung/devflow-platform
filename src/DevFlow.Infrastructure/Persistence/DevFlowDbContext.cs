@@ -26,6 +26,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<Sprint> Sprints => Set<Sprint>();
 
+    public DbSet<Epic> Epics => Set<Epic>();
+
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
 
     public DbSet<TaskAttachment> TaskAttachments => Set<TaskAttachment>();
@@ -55,6 +57,8 @@ public class DevFlowDbContext : DbContext
     public DbSet<NotificationPreferences> NotificationPreferences => Set<NotificationPreferences>();
 
     public DbSet<SavedSearch> SavedSearches => Set<SavedSearch>();
+
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
