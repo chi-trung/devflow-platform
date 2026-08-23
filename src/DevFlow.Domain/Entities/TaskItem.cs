@@ -36,6 +36,12 @@ public class TaskItem : BaseEntity, IAuditableEntity
 
     public Guid? SprintId { get; private set; }
 
+    public Guid? EpicId { get; private set; }
+
+    public Guid? ParentTaskId { get; private set; }
+
+    public int? StoryPoints { get; private set; }
+
     public DateTimeOffset? DueDateUtc { get; private set; }
 
     public DateTimeOffset? CompletedAtUtc { get; private set; }
@@ -100,4 +106,20 @@ public class TaskItem : BaseEntity, IAuditableEntity
     {
         EstimateMinutes = estimateMinutes;
     }
+
+    public void AttachToEpic(Guid? epicId) => EpicId = epicId;
+
+    public void AttachToParent(Guid parentTaskId)
+    {
+        if (parentTaskId == Id)
+        {
+            throw new InvalidOperationException("A task cannot be its own parent.");
+        }
+
+        ParentTaskId = parentTaskId;
+    }
+
+    public void DetachFromParent() => ParentTaskId = null;
+
+    public void SetStoryPoints(int? storyPoints) => StoryPoints = storyPoints;
 }

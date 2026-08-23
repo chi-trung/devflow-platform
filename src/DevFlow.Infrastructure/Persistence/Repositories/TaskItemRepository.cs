@@ -89,4 +89,15 @@ public sealed class TaskItemRepository(DevFlowDbContext dbContext) : ITaskItemRe
             .OrderByDescending(t => t.CreatedAtUtc)
             .ToListAsync(cancellationToken);
     }
+
+    // Tracked on purpose: callers rely on identity resolution seeing in-memory status changes
+    // (e.g. the subtask-cascade rule completing a parent when its last open child is done).
+    public async Task<IReadOnlyList<TaskItem>> GetSubtasksAsync(Guid parentTaskId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.TaskItems
+            .Where(task => task.ParentTaskId == parentTaskId)
+            .OrderBy(task => task.Position)
+            .ThenByDescending(task => task.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
 }

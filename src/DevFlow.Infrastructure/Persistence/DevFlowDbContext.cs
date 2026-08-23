@@ -26,6 +26,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<Sprint> Sprints => Set<Sprint>();
 
+    public DbSet<Epic> Epics => Set<Epic>();
+
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
 
     public DbSet<TaskAttachment> TaskAttachments => Set<TaskAttachment>();

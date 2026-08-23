@@ -3,6 +3,7 @@ using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Email;
 using DevFlow.Domain.Entities;
+using DevFlow.Domain.Enums;
 using MediatR;
 
 namespace DevFlow.Application.Features.Tasks.Update;
@@ -51,6 +52,12 @@ public sealed class UpdateTaskItemCommandHandler(
         task.ChangeStatus(command.Status);
         task.AssignTo(command.AssigneeId);
 
+        // Cascading state rule: when the last open subtask is completed, complete its parent.
+        if (task.Status == TaskItemStatus.Done && task.ParentTaskId is not null)
+        {
+            await CompleteParentIfAllSubtasksDoneAsync(task, cancellationToken);
+        }
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Send email when a new user is assigned
@@ -66,6 +73,23 @@ public sealed class UpdateTaskItemCommandHandler(
                     "A team member")
                     .ContinueWith(_ => Task.CompletedTask, TaskContinuationOptions.OnlyOnCanceled);
             }
+        }
+    }
+
+    private async Task CompleteParentIfAllSubtasksDoneAsync(TaskItem subtask, CancellationToken cancellationToken)
+    {
+        var parent = await taskItemRepository.GetByIdAsync(subtask.ParentTaskId!.Value, cancellationToken);
+
+        if (parent is null || parent.Status == TaskItemStatus.Done)
+        {
+            return;
+        }
+
+        var siblings = await taskItemRepository.GetSubtasksAsync(parent.Id, cancellationToken);
+
+        if (siblings.All(sibling => sibling.Status == TaskItemStatus.Done))
+        {
+            parent.ChangeStatus(TaskItemStatus.Done);
         }
     }
 }

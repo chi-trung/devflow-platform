@@ -29,4 +29,6 @@ public interface ITaskItemRepository
     Task RemoveAsync(TaskItem task, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<TaskItem>> GetByAssigneeIdAsync(Guid assigneeId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<TaskItem>> GetSubtasksAsync(Guid parentTaskId, CancellationToken cancellationToken = default);
 }
