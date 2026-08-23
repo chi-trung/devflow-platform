@@ -81,6 +81,26 @@ public sealed class GitHubController(ISender sender) : ControllerBase
 
         return StatusCode(StatusCodes.Status201Created, result);
     }
+
+    [HttpPut("webhook-secret")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateWebhookSecret(
+        Guid workspaceId,
+        Guid projectId,
+        UpdateWebhookSecretRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.Secret))
+            return BadRequest("Webhook secret is required.");
+
+        await sender.Send(
+            new Application.Features.GitHub.UpdateGitHubWebhookSecretCommand(
+                workspaceId, projectId, request.Secret),
+            cancellationToken);
+
+        return NoContent();
+    }
 }
 
 public sealed record LinkGitHubRequest(string RepositoryUrl);
@@ -90,3 +110,5 @@ public sealed record AddPullRequestRequest(
     string Url,
     string Status,
     string? Author);
+
+public sealed record UpdateWebhookSecretRequest(string Secret);

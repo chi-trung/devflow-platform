@@ -16,6 +16,8 @@ import type {
   NotificationPreferencesResponse,
   NotificationResponse,
   PagedResult,
+  PatCreatedResponse,
+  PatResponse,
   PullRequestResponse,
   SavedSearchResponse,
   SearchResponse,
@@ -1006,4 +1008,21 @@ export async function updateMemberRole(
     method: "PATCH",
     body: JSON.stringify({ role }),
   });
+}
+
+export function getPats(): Promise<PatResponse[]> {
+  return api<PatResponse[]>("/users/me/pat");
+}
+
+export async function createPat(
+  input: { name: string; scopes: string[]; expiresAtUtc?: string | null },
+): Promise<PatCreatedResponse> {
+  return api<PatCreatedResponse>("/users/me/pat", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function revokePat(id: string): Promise<void> {
+  await api(`/users/me/pat/${id}`, { method: "DELETE" });
 }
