@@ -1,18 +1,17 @@
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
-using DevFlow.Application.Common.Models;
 using DevFlow.Domain.Entities;
 using MediatR;
 
-namespace DevFlow.Application.Features.Tasks.List;
+namespace DevFlow.Application.Features.Tasks.Subtasks;
 
-public sealed class ListTaskItemsQueryHandler(
+public sealed class ListSubtasksQueryHandler(
     IProjectRepository projectRepository,
-    ITaskItemRepository taskItemRepository) : IRequestHandler<ListTaskItemsQuery, PagedResult<TaskItemResponse>>
+    ITaskItemRepository taskItemRepository) : IRequestHandler<ListSubtasksQuery, IReadOnlyList<TaskItemResponse>>
 {
-    public async Task<PagedResult<TaskItemResponse>> Handle(
-        ListTaskItemsQuery query,
+    public async Task<IReadOnlyList<TaskItemResponse>> Handle(
+        ListSubtasksQuery query,
         CancellationToken cancellationToken)
     {
         var project = await projectRepository.GetByIdAsync(query.ProjectId, cancellationToken);
@@ -22,18 +21,18 @@ public sealed class ListTaskItemsQueryHandler(
             throw new NotFoundException(nameof(Project), query.ProjectId);
         }
 
-        // Clamp page values
-        var page = Math.Max(1, query.Page);
-        var pageSize = Math.Clamp(query.PageSize, 1, 100);
-        var skip = (page - 1) * pageSize;
+        var parent = await taskItemRepository.GetByIdAsync(query.ParentTaskId, cancellationToken);
 
-        var totalCount = await taskItemRepository.GetCountForProjectAsync(
-            query.ProjectId, query.Status, cancellationToken);
+        if (parent is null || parent.ProjectId != query.ProjectId)
+        {
+            throw new NotFoundException(nameof(TaskItem), query.ParentTaskId);
+        }
 
-        var tasks = await taskItemRepository.GetForProjectPagedAsync(
-            query.ProjectId, query.Status, skip, pageSize, cancellationToken);
+        var subtasks = await taskItemRepository.GetSubtasksAsync(query.ParentTaskId, cancellationToken);
 
-        var items = tasks
+        return subtasks
+            .OrderBy(task => task.Position)
+            .ThenByDescending(task => task.CreatedAtUtc)
             .Select(task => new TaskItemResponse(
                 task.Id,
                 task.ProjectId,
@@ -50,7 +49,5 @@ public sealed class ListTaskItemsQueryHandler(
                 task.CompletedAtUtc,
                 task.Position))
             .ToList();
-
-        return new PagedResult<TaskItemResponse>(items, totalCount, page, pageSize);
     }
 }
