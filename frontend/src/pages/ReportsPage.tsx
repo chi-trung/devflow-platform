@@ -11,6 +11,7 @@ import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { BurndownChartApi } from "../components/reporting/BurndownChartApi";
 import { VelocityChart } from "../components/reporting/VelocityChart";
 import { TeamReportCards } from "../components/reporting/TeamReportCards";
+import { TeamPerformancePanel } from "../components/dashboard/TeamPerformancePanel";
 import { GitHubIntegrationCard } from "../components/github/GitHubIntegrationCard";
 import { TemplatesCard } from "../components/templates/TemplatesCard";
 import { CustomFieldsCard } from "../components/fields/CustomFieldsCard";
@@ -195,6 +196,8 @@ export function ReportsPage() {
           ) : team ? (
             <TeamReportCards data={team} members={members ?? []} />
           ) : null}
+
+          <TeamPerformancePanel workspaceId={workspaceId} projectId={projectId} />
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
             <GitHubIntegrationCard workspaceId={workspaceId} projectId={projectId} />

@@ -84,6 +84,23 @@ public sealed class SprintsController(ISender sender) : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("{sprintId:guid}/rollover")]
+    [ProducesResponseType(typeof(Application.Features.Sprints.Rollover.RolloverResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Rollover(
+        Guid workspaceId,
+        Guid projectId,
+        Guid sprintId,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new Application.Features.Sprints.Rollover.RolloverSprintCommand(workspaceId, projectId, sprintId),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
     [HttpPut("{sprintId:guid}/tasks/{taskId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
