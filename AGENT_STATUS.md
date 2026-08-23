@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 16 Backend Complete ✅ | Sprint 17 Planning & Execution Active ⚡
+> **Status:** Sprint 16 Backend Complete ✅ | Sprint 17 Backend Complete ✅ | Sprint 18 Planning Active ⚡
 
 ---
 
@@ -10,8 +10,8 @@
 | Sprint | Focus Area | Backend (Codebuff) | Frontend (OpenCode) | Status |
 |---|---|---|---|---|
 | **Sprint 16** | Personalization & Workflows | ✅ DONE (B1-B4) | ✅ DONE (F1-F4) | Complete |
-| **Sprint 17** | Performance Hardening & State Sync | ⏳ Ready | ⏳ Ready | 🎯 Next Up |
-| **Sprint 18** | Epics, Subtasks & Task Hierarchy | ⏳ Planned | ⏳ Planned | Queued |
+| **Sprint 17** | Performance Hardening & State Sync | ✅ DONE (B17.1-B17.4) | ✅ DONE (F17.1-F17.4) | Complete |
+| **Sprint 18** | Epics, Subtasks & Task Hierarchy | ⏳ Ready | ⏳ Ready | 🎯 Next Up |
 | **Sprint 19** | GitHub Integration & Webhook Outbox | ⏳ Planned | ⏳ Planned | Queued |
 | **Sprint 20** | Advanced Agile Analytics & Custom Fields | ⏳ Planned | ⏳ Planned | Queued |
 
@@ -45,13 +45,13 @@
 **Goal:** Eliminate all Render cold start delays, rate-limit bottlenecks, and optimize query latency to sub-50ms.
 
 #### 🤖 Agent: Codebuff (Backend)
-- [ ] **B17.1: Redis Output & Query Caching**
+- [x] **B17.1: Redis Output & Query Caching**
   - Cache workspace metadata, member lists, and active sprint snapshots with automated cache tag invalidation.
-- [ ] **B17.2: Sliding-Window Rate Limiting & Tiering**
+- [x] **B17.2: Sliding-Window Rate Limiting & Tiering**
   - Upgrade rate limiter to sliding window per user token / authenticated identity (with higher quota for active UI sessions).
-- [ ] **B17.3: Outbox Pattern & Background Workers**
+- [x] **B17.3: Outbox Pattern & Background Workers**
   - Implement reliable background worker for notifications and webhooks with exponential backoff retries.
-- [ ] **B17.4: Health Check & Keepalive Endpoint Optimization**
+- [x] **B17.4: Health Check & Keepalive Endpoint Optimization**
   - Dedicated lightweight probe `/api/v1/ping` with database keepalive query for zero-cold-start hosting.
 
 #### 🎨 Agent: OpenCode (Frontend)

@@ -56,6 +56,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<SavedSearch> SavedSearches => Set<SavedSearch>();
 
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);

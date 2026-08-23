@@ -2,10 +2,11 @@ using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Email;
 using DevFlow.Infrastructure.Authentication;
 using DevFlow.Infrastructure.Caching;
+using DevFlow.Infrastructure.Outbox;
 using DevFlow.Infrastructure.Persistence;
 using DevFlow.Infrastructure.Persistence.Interceptors;
-using DevFlow.Infrastructure.Email;
 using DevFlow.Infrastructure.Persistence.Repositories;
+using DevFlow.Infrastructure.Email;
 using DevFlow.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -50,6 +51,9 @@ public static class DependencyInjection
         services.AddScoped<ICustomFieldRepository, CustomFieldRepository>();
         services.AddScoped<IWebhookRepository, WebhookRepository>();
         services.AddScoped<IWebhookDispatcher, WebhookDispatcher>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
+        services.AddScoped<IOutboxDispatcher, OutboxDispatcher>();
+        services.AddHostedService<OutboxProcessor>();
         services.AddHttpClient("Webhooks");
         if (!string.IsNullOrWhiteSpace(configuration["RESEND_API_KEY"]))
         {

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.IdentityModel.Tokens.Jwt;
 using DevFlow.Api.Auth;
 using DevFlow.Api.Hubs;
 using DevFlow.Api.Middleware;
@@ -89,6 +90,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 var rateLimitConfig = builder.Configuration.GetSection("RateLimiting");
 var rateLimitEnabled = rateLimitConfig.GetValue("Enabled", true);
 var permitLimit = rateLimitConfig.GetValue("PermitLimit", 200);
+var authenticatedPermitLimit = rateLimitConfig.GetValue("AuthenticatedPermitLimit", 400);
 var windowSeconds = rateLimitConfig.GetValue("WindowSeconds", 60);
 var queueLimit = rateLimitConfig.GetValue("QueueLimit", 20);
 
@@ -106,7 +108,8 @@ if (rateLimitEnabled)
             // automated — counting them against the client quota starves the
             // SPA of API calls.
             if (context.Request.Path.StartsWithSegments("/hubs") ||
-                context.Request.Path.StartsWithSegments("/health"))
+                context.Request.Path.StartsWithSegments("/health") ||
+                context.Request.Path.StartsWithSegments("/api/v1/ping"))
             {
                 return RateLimitPartition.GetNoLimiter<string>("unlimited");
             }
@@ -116,18 +119,25 @@ if (rateLimitEnabled)
                 .GetMetadata<AuthorizeAttribute>() is null &&
                 context.Request.Path.StartsWithSegments("/api/v1/auth");
 
-            var permit = isAuthEndpoint ? 10 : permitLimit;
+            // Use authenticated user identity as partition key when available,
+            // otherwise fall back to IP address. Authenticated users get a
+            // higher quota (tiering).
+            var user = context.User;
+            var isAuthenticated = user?.Identity?.IsAuthenticated == true;
+            var partitionKey = isAuthenticated
+                ? user!.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown"
+                : (context.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+
+            var permit = isAuthEndpoint ? 10 : (isAuthenticated ? authenticatedPermitLimit : permitLimit);
             var window = isAuthEndpoint ? TimeSpan.FromMinutes(1) : TimeSpan.FromSeconds(windowSeconds);
 
-            // Use IP address as partition key for rate limiting.
-            var partitionKey = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-
-            return RateLimitPartition.GetFixedWindowLimiter(
+            return RateLimitPartition.GetSlidingWindowLimiter(
                 partitionKey: partitionKey,
-                factory: _ => new FixedWindowRateLimiterOptions
+                factory: _ => new SlidingWindowRateLimiterOptions
                 {
                     PermitLimit = permit,
                     Window = window,
+                    SegmentsPerWindow = 4,
                     QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                     QueueLimit = queueLimit
                 });
