@@ -11,6 +11,7 @@ import type {
   LoginResponse,
   NotificationPreferencesResponse,
   NotificationResponse,
+  PagedResult,
   PullRequestResponse,
   SavedSearchResponse,
   SearchResponse,
@@ -305,8 +306,23 @@ export async function changePassword(input: {
   });
 }
 
-export function getNotifications(): Promise<NotificationResponse[]> {
-  return api<NotificationResponse[]>("/notifications");
+export interface GetNotificationsParams {
+  page?: number;
+  pageSize?: number;
+  unreadOnly?: boolean;
+}
+
+export function getNotifications(
+  params: GetNotificationsParams = {},
+): Promise<PagedResult<NotificationResponse>> {
+  const search = new URLSearchParams();
+  if (params.page) search.set("page", String(params.page));
+  if (params.pageSize) search.set("pageSize", String(params.pageSize));
+  if (params.unreadOnly) search.set("unreadOnly", "true");
+  const qs = search.toString();
+  return api<PagedResult<NotificationResponse>>(
+    `/notifications${qs ? `?${qs}` : ""}`,
+  );
 }
 
 export async function markNotificationRead(id: string): Promise<void> {
@@ -315,6 +331,14 @@ export async function markNotificationRead(id: string): Promise<void> {
 
 export async function markAllNotificationsRead(): Promise<void> {
   await api("/notifications/read-all", { method: "POST" });
+}
+
+export async function deleteNotification(id: string): Promise<void> {
+  await api(`/notifications/${id}`, { method: "DELETE" });
+}
+
+export async function deleteAllReadNotifications(): Promise<void> {
+  await api("/notifications/read", { method: "DELETE" });
 }
 
 const EMPTY_ARRAY: readonly never[] = Object.freeze([]);
