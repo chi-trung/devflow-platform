@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, FolderKanban, Users, Trash2 } from "lucide-react";
-import { api, pagedItems } from "../lib/api";
+import { ArrowLeft, Plus, FolderKanban, Users, Trash2, X } from "lucide-react";
+import { api, pagedItems, removeWorkspaceMember, updateMemberRole } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ui/ToastProvider";
@@ -15,6 +15,7 @@ import { Badge } from "../components/ui/Badge";
 import { Avatar } from "../components/ui/Avatar";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
+import { useAuth } from "../auth/AuthContext";
 import type {
   ProjectResponse,
   TaskItemResponse,
@@ -43,6 +44,7 @@ export function WorkspacePage() {
   const { t } = useTranslation();
   const { workspaceId = "" } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   const {
     data: workspace,
@@ -139,6 +141,11 @@ export function WorkspacePage() {
   const { push } = useToast();
   const [pendingDeleteWorkspace, setPendingDeleteWorkspace] = useState(false);
   const [pendingDeleteProject, setPendingDeleteProject] = useState<ProjectResponse | null>(null);
+  const [pendingRemoveMember, setPendingRemoveMember] = useState<WorkspaceMemberResponse | null>(null);
+  const [changingRoleMemberId, setChangingRoleMemberId] = useState<string | null>(null);
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+
+  const currentUserId = currentUser?.id;
 
   async function deleteWorkspace() {
     try {
@@ -162,6 +169,70 @@ export function WorkspacePage() {
 
   const canManageMembers =
     workspace?.role === "Owner" || workspace?.role === "Admin";
+
+  async function handleRemoveMember(member: WorkspaceMemberResponse) {
+    if (member.userId === currentUserId) {
+      push(t("workspace.cannotRemoveSelf"), "error");
+      return;
+    }
+    setPendingRemoveMember(member);
+  }
+
+  async function confirmRemoveMember() {
+    const member = pendingRemoveMember;
+    if (!member) return;
+    setRemovingMemberId(member.userId);
+    try {
+      await removeWorkspaceMember(workspaceId, member.userId);
+      push(
+        t("workspace.removeMemberSuccess", {
+          name: member.displayName || member.username,
+        }),
+      );
+      setPendingRemoveMember(null);
+      reloadMembers();
+    } catch (err) {
+      push(
+        err instanceof Error ? err.message : t("workspace.removeMemberFailed"),
+        "error",
+      );
+    } finally {
+      setRemovingMemberId(null);
+    }
+  }
+
+  async function handleRoleChange(
+    member: WorkspaceMemberResponse,
+    newRole: string,
+  ) {
+    if (member.userId === currentUserId) {
+      push(t("workspace.cannotChangeOwnRole"), "error");
+      return;
+    }
+    if (newRole === member.role) return;
+    setChangingRoleMemberId(member.userId);
+    try {
+      await updateMemberRole(
+        workspaceId,
+        member.userId,
+        newRole as "Owner" | "Admin" | "Member",
+      );
+      push(
+        t("workspace.roleChangedSuccess", {
+          name: member.displayName || member.username,
+          role: newRole,
+        }),
+      );
+      reloadMembers();
+    } catch (err) {
+      push(
+        err instanceof Error ? err.message : t("workspace.roleChangeFailed"),
+        "error",
+      );
+    } finally {
+      setChangingRoleMemberId(null);
+    }
+  }
 
   async function handleInvite(event: FormEvent) {
     event.preventDefault();
@@ -489,25 +560,58 @@ export function WorkspacePage() {
                 <Skeleton className="h-16" />
               ) : (
                 <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {members.map((member) => (
-                    <li
-                      key={member.userId}
-                      className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
-                    >
-                      <Avatar name={member.displayName || member.username} id={member.userId} size="md" />
-                      <div className="min-w-0 flex-1 leading-tight">
-                        <p className="truncate text-sm font-medium">
-                          {member.displayName || member.username}
-                        </p>
-                        <p className="truncate font-mono text-[11px] text-muted-foreground">
-                          {member.email}
-                        </p>
-                      </div>
-                      <Badge tone={member.role === "Member" ? "neutral" : "teal"}>
-                        {member.role}
-                      </Badge>
-                    </li>
-                  ))}
+                  {members.map((member) => {
+                    const isSelf = member.userId === currentUserId;
+                    const isChangingRole = changingRoleMemberId === member.userId;
+                    const isRemoving = removingMemberId === member.userId;
+                    return (
+                      <li
+                        key={member.userId}
+                        className="flex flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar name={member.displayName || member.username} id={member.userId} size="md" />
+                          <div className="min-w-0 flex-1 leading-tight">
+                            <p className="truncate text-sm font-medium">
+                              {member.displayName || member.username}
+                            </p>
+                            <p className="truncate font-mono text-[11px] text-muted-foreground">
+                              {member.email}
+                            </p>
+                          </div>
+                          <Badge tone={member.role === "Member" ? "neutral" : "teal"}>
+                            {member.role}
+                          </Badge>
+                        </div>
+                        {canManageMembers && (
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={member.role}
+                              disabled={isChangingRole || isSelf}
+                              onChange={(e) => handleRoleChange(member, e.target.value)}
+                              className="flex-1 rounded-lg border border-border bg-surface px-2 py-1 text-xs transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none disabled:opacity-50"
+                              aria-label={t("workspace.roleLabel")}
+                            >
+                              <option value="Member">{t("common.member")}</option>
+                              <option value="Admin">{t("common.admin")}</option>
+                              <option value="Owner">{t("common.owner")}</option>
+                            </select>
+                            <button
+                              type="button"
+                              disabled={isRemoving || isSelf}
+                              onClick={() => handleRemoveMember(member)}
+                              aria-label={t("workspace.removeMemberNamedAria", {
+                                name: member.displayName || member.username,
+                              })}
+                              className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                            >
+                              <X className="size-4" aria-hidden />
+                            </button>
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </section>
@@ -539,6 +643,18 @@ export function WorkspacePage() {
             void deleteProject(project);
           }}
           onCancel={() => setPendingDeleteProject(null)}
+        />
+      )}
+
+      {pendingRemoveMember && (
+        <ConfirmDialog
+          title={t("workspace.removeMemberTitle")}
+          message={t("workspace.removeMemberConfirm", {
+            name: pendingRemoveMember.displayName || pendingRemoveMember.username,
+          })}
+          confirmLabel={t("common.delete")}
+          onConfirm={() => void confirmRemoveMember()}
+          onCancel={() => setPendingRemoveMember(null)}
         />
       )}
     </AppShell>
