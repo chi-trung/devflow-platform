@@ -15,6 +15,7 @@ import type {
 } from "../../types/api";
 import { DependencySection } from "./DependencySection";
 import { TimeTrackingSection } from "./TimeTrackingSection";
+import { SubtaskSection } from "./SubtaskSection";
 import { TaskFieldsSection } from "../fields/TaskFieldsSection";
 import { TaskPullRequests } from "../github/TaskPullRequests";
 import type { CurrentUser } from "../../auth/AuthContext";
@@ -465,6 +466,13 @@ export function TaskDetailPanel({
             projectId={projectId}
             task={task}
             allTasks={allTasks}
+            onChanged={onTaskChanged}
+          />
+
+          <SubtaskSection
+            workspaceId={workspaceId}
+            projectId={projectId}
+            task={task}
             onChanged={onTaskChanged}
           />
 
