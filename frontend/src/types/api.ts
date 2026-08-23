@@ -147,9 +147,17 @@ export interface NotificationResponse {
   message: string;
   createdAtUtc: string;
   readAtUtc: string | null;
-  taskId: string | null;
+  taskItemId: string | null;
   projectId: string | null;
   workspaceId: string | null;
+}
+
+export interface PagedResult<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export interface SearchTaskResult {

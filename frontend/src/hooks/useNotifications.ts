@@ -64,7 +64,7 @@ function fromApi(n: NotificationResponse): AppNotification {
     actorName: null,
     createdAtUtc: n.createdAtUtc,
     kind: kindFromText(n.type || n.message),
-    taskId: n.taskId ?? null,
+    taskId: n.taskItemId ?? null,
     workspaceId: n.workspaceId ?? null,
     projectId: n.projectId ?? null,
   };
@@ -143,7 +143,8 @@ export function useNotifications(
           ? await fetchActivityNotifications(workspaceId)
           : [];
       } else {
-        data = (await getNotifications()).map(fromApi);
+        const result = await getNotifications();
+        data = result.items.map(fromApi);
         modeRef.current = "api";
       }
       setNotifications(data.slice(0, MAX_ITEMS));

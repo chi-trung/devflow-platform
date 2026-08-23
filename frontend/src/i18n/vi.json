@@ -517,6 +517,21 @@
     "daysAgo_one": "{{count}} ngày trước",
     "daysAgo_other": "{{count}} ngày trước"
   },
+  "notificationPage": {
+    "filterAll": "Tất cả",
+    "filterUnread": "Chưa đọc",
+    "filterRead": "Đã đọc",
+    "emptyTitle": "Không có thông báo",
+    "emptyUnread": "Bạn không có thông báo chưa đọc.",
+    "emptyRead": "Bạn không có thông báo đã đọc.",
+    "deleteAllRead": "Xóa tất cả đã đọc",
+    "bulkDeleteTitle": "Xóa tất cả thông báo đã đọc?",
+    "bulkDeleteMessage": "Hành động này sẽ xóa vĩnh viễn tất cả thông báo bạn đã đọc. Không thể hoàn tác.",
+    "bulkDeleteConfirm": "Xóa tất cả đã đọc",
+    "markAsUnread": "Đánh dấu chưa đọc",
+    "delete": "Xóa",
+    "deleteAria": "Xóa thông báo {{id}}"
+  },
   "userMenu": {
     "profile": "Hồ sơ",
     "settings": "Cài đặt",

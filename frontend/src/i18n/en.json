@@ -517,6 +517,21 @@
     "daysAgo_one": "{{count}} day ago",
     "daysAgo_other": "{{count}} days ago"
   },
+  "notificationPage": {
+    "filterAll": "All",
+    "filterUnread": "Unread",
+    "filterRead": "Read",
+    "emptyTitle": "No notifications",
+    "emptyUnread": "You have no unread notifications.",
+    "emptyRead": "You have no read notifications.",
+    "deleteAllRead": "Delete all read",
+    "bulkDeleteTitle": "Delete all read notifications?",
+    "bulkDeleteMessage": "This will permanently remove all notifications you have already read. This action cannot be undone.",
+    "bulkDeleteConfirm": "Delete all read",
+    "markAsUnread": "Mark as unread",
+    "delete": "Delete",
+    "deleteAria": "Delete notification {{id}}"
+  },
   "userMenu": {
     "profile": "Profile",
     "settings": "Settings",
