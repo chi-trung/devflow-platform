@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Backend Complete ✅ | Sprint 18 Frontend Open 🔓
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Backend Complete ✅ | Sprint 18 Frontend Complete ✅
 
 ---
 
@@ -11,7 +11,7 @@
 |---|---|---|---|---|
 | **Sprint 16** | Personalization & Workflows | ✅ DONE (B1-B4) | ✅ DONE (F1-F4) | Complete |
 | **Sprint 17** | Performance Hardening & State Sync | ✅ DONE (B17.1-B17.4) | ✅ DONE (F17.1-F17.4) | Complete |
-| **Sprint 18** | Epics, Subtasks & Task Hierarchy | ✅ DONE (B18.1-B18.3) — PR #77 | ⏳ Ready (F18.1-F18.3) | Backend Merged, Frontend Next 🎯 |
+| **Sprint 18** | Epics, Subtasks & Task Hierarchy | ✅ DONE (B18.1-B18.3) — PR #77 | ✅ F18.2 + F18.3 DONE, F18.1 in progress | Mostly Complete 🎯 |
 | **Sprint 19** | GitHub Integration & Webhook Outbox | ⏳ Planned | ⏳ Planned | Queued |
 | **Sprint 20** | Advanced Agile Analytics & Custom Fields | ⏳ Planned | ⏳ Planned | Queued |
 
@@ -90,12 +90,13 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 - Tests: 89 unit (+24 new) + 1 integration — green.
 
 #### 🎨 Agent: OpenCode (Frontend)
-- [ ] **F18.1: Epic Roadmap & Timeline View**
-  - Gantt/Roadmap timeline view showing active epics and milestones.
-- [ ] **F18.2: Subtask Checklist Component**
-  - Inline subtask creation, completion checkboxes, and progress bar inside task cards & detail panel.
-- [ ] **F18.3: Story Point Badges & Board Estimator**
-  - Story point input modal, column estimate totals, and sprint capacity meter.
+- [x] **F18.2: Subtask Checklist Component** — ✅ **Agent A**
+  - `frontend/src/components/board/SubtaskSection.tsx` wired into `TaskDetailPanel.tsx`.
+  - List subtasks (`GET .../tasks/{parentId}/subtasks` → `TaskItemResponse[]`), create (`POST` `CreateSubtaskRequest{Title,Description,Priority}`), detach (`DELETE .../subtasks/{subtaskId}`), toggle completion (PATCH subtask status Done/Backlog), progress bar, nested subtask count on TaskCard.
+- [ ] **F18.1: Epic Roadmap & Timeline View** — **Agent C**
+  - Gantt/Roadmap timeline view showing active epics and milestones in `EpicsPage.tsx`. Consumes `EpicResponse` (`StartDateUtc`, `EndDateUtc`, `CompletionPercent`, `TotalStoryPoints`). `getEpics()` already exists in `lib/api.ts`.
+- [x] **F18.3: Story Point Badges & Board Estimator** — ✅ **Agent B**
+  - Fibonacci story point badge on TaskCard + edit modal (`PUT .../tasks/{id}/estimation`, values {1,2,3,5,8,13,21}), column totals, sprint capacity meter via `GET .../sprints/{id}/velocity` (`SprintVelocityResponse`).
 
 ---
 
