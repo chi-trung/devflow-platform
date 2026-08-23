@@ -84,7 +84,7 @@ export function TaskCard({
             {selected && <Check className="size-3" strokeWidth={3} aria-hidden />}
           </button>
         )}
-        <p className="min-w-0 flex-1 text-sm font-medium leading-snug">{task.title}</p>
+        <p className="min-w-0 flex-1 text-sm font-medium leading-snug truncate">{task.title}</p>
         <button
           type="button"
           onClick={(event) => {

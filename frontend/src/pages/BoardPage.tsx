@@ -12,6 +12,7 @@ import {
   Network,
   Keyboard,
   X,
+  Upload,
 } from "lucide-react";
 import {
   api,
@@ -600,7 +601,7 @@ export function BoardPage() {
 
   return (
     <AppShell>
-      <div className="flex h-full flex-col px-6 py-6">
+      <div className="flex h-full flex-col px-4 py-6 sm:px-6">
         <Link
           to={`/workspaces/${workspaceId}`}
           className="mb-3 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-150 hover:text-primary"
@@ -621,36 +622,38 @@ export function BoardPage() {
               {t("board.dragHint")}
             </p>
           </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/sprints`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98]"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <CalendarRange className="size-4" aria-hidden />
-                {t("nav.sprints")}
+                <span className="hidden xs:inline sm:inline">{t("nav.sprints")}</span>
               </Link>
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/reports`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98]"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <BarChart3 className="size-4" aria-hidden />
-                {t("nav.reports")}
+                <span className="hidden xs:inline sm:inline">{t("nav.reports")}</span>
               </Link>
               <Button
                 variant="outline"
                 onClick={() => setActivityOpen(true)}
                 title={t("board.activityLog")}
+                className="px-2 sm:px-3"
               >
                 <History className="size-4" aria-hidden />
-                {t("activity.projectActivity")}
+                <span className="hidden xs:inline sm:inline">{t("activity.projectActivity")}</span>
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setGraphOpen(true)}
                 title={t("board.dependencyGraph")}
+                className="px-2 sm:px-3"
               >
                 <Network className="size-4" aria-hidden />
-                {t("reports.burndown")}
+                <span className="hidden xs:inline sm:inline">{t("reports.burndown")}</span>
               </Button>
               <button
                 type="button"
@@ -661,7 +664,7 @@ export function BoardPage() {
               >
                 <Keyboard className="size-4" aria-hidden />
               </button>
-              <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 transition-colors duration-200 focus-within:border-primary">
+              <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-2 py-1.5 transition-colors duration-200 focus-within:border-primary">
               <Search className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
               <input
                 value={search}
@@ -669,7 +672,7 @@ export function BoardPage() {
                 placeholder={t("board.filterTasks")}
                 data-board-search
                 aria-label={t("board.filterSearchHint")}
-                className="w-44 bg-transparent text-sm placeholder:text-muted-foreground/50 focus:outline-none"
+                className="w-16 bg-transparent text-sm placeholder:text-muted-foreground/50 focus:outline-none sm:w-44"
               />
               {search && (
                 <button
@@ -682,6 +685,27 @@ export function BoardPage() {
                 </button>
               )}
             </label>
+            {!creating && (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => setImporting(true)}
+                  title={t("board.importTasks")}
+                  className="px-2 sm:px-3"
+                >
+                  <Upload className="size-4" aria-hidden />
+                  <span className="hidden xs:inline sm:inline">{t("board.importTasks")}</span>
+                </Button>
+                <Button
+                  onClick={() => setCreating(true)}
+                  title={t("board.newTask")}
+                  className="px-2 sm:px-3"
+                >
+                  <Plus className="size-4" aria-hidden />
+                  <span className="hidden xs:inline sm:inline">{t("board.newTask")}</span>
+                </Button>
+              </>
+            )}
             {!creating && (
               <>
                 <Button
