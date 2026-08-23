@@ -105,7 +105,9 @@ export function TaskDetailPanel({
       .catch((err: unknown) => {
         if (!cancelled) {
           setCommentError(
-            err instanceof Error ? err.message : "Failed to load task details.",
+            err instanceof Error
+              ? err.message
+              : t("board.loadDetailsFailed"),
           );
         }
       })
@@ -141,12 +143,12 @@ export function TaskDetailPanel({
         },
       );
 
-      if (!res.ok) throw new Error("Upload failed");
+      if (!res.ok) throw new Error(t("board.uploadFailed"));
       const created = (await res.json()) as TaskAttachmentResponse;
       setAttachments((curr) => [created, ...curr]);
-      push("File attached");
+      push(t("task.fileAttached"));
     } catch {
-      push("Failed to upload file", "error");
+      push(t("board.uploadFailed"), "error");
     } finally {
       setUploading(false);
       event.target.value = "";
@@ -163,7 +165,7 @@ export function TaskDetailPanel({
           },
         },
       );
-      if (!res.ok) throw new Error("Download failed");
+      if (!res.ok) throw new Error(t("board.downloadFailed"));
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -174,7 +176,7 @@ export function TaskDetailPanel({
       window.URL.revokeObjectURL(url);
       a.remove();
     } catch {
-      push("Failed to download file", "error");
+      push(t("board.downloadFailed"), "error");
     }
   }
 
@@ -185,15 +187,15 @@ export function TaskDetailPanel({
         { method: "DELETE" },
       );
       setAttachments((curr) => curr.filter((a) => a.id !== att.id));
-      push("Attachment removed");
+      push(t("task.attachmentRemoved"));
     } catch {
-      push("Failed to remove attachment", "error");
+      push(t("board.removeAttachmentFailed"), "error");
     }
   }
 
   async function saveChanges() {
     if (!title.trim()) {
-      setDetailError("Title can't be empty.");
+      setDetailError(t("task.titleRequired"));
       return;
     }
 
@@ -217,10 +219,10 @@ export function TaskDetailPanel({
         },
       );
       onTaskChanged();
-      push("Task updated");
+      push(t("task.taskUpdated"));
     } catch (err) {
       setDetailError(
-        err instanceof Error ? err.message : "Failed to update task.",
+        err instanceof Error ? err.message : t("board.updateFailed"),
       );
     } finally {
       setSaving(false);
@@ -240,10 +242,10 @@ export function TaskDetailPanel({
       );
       setComments((current) => [...current, created]);
       setNewComment("");
-      push("Comment added");
+      push(t("task.commentAdded"));
     } catch (err) {
       setCommentError(
-        err instanceof Error ? err.message : "Failed to add comment.",
+        err instanceof Error ? err.message : t("board.addCommentFailed"),
       );
     } finally {
       setPostingComment(false);
@@ -260,7 +262,7 @@ export function TaskDetailPanel({
       setComments((current) => current.filter((c) => c.id !== comment.id));
     } catch (err) {
       setCommentError(
-        err instanceof Error ? err.message : "Failed to delete comment.",
+        err instanceof Error ? err.message : t("board.deleteCommentFailed"),
       );
     }
   }
@@ -285,10 +287,10 @@ export function TaskDetailPanel({
         priority: task.priority,
         estimateMinutes: task.estimateMinutes ?? null,
       });
-      push("Saved as template");
+      push(t("task.savedAsTemplate"));
     } catch (err) {
       push(
-        err instanceof Error ? err.message : "Failed to save template.",
+        err instanceof Error ? err.message : t("board.saveTemplateFailed"),
         "error",
       );
     } finally {
@@ -310,16 +312,20 @@ export function TaskDetailPanel({
       onTaskChanged();
     } catch (err) {
       setDetailError(
-        err instanceof Error ? err.message : "Failed to update sprint.",
+        err instanceof Error ? err.message : t("board.updateSprintFailed"),
       );
     }
   }
 
   return (
-    <div className="fixed inset-0 z-40" role="dialog" aria-label="Task details">
+    <div
+      className="fixed inset-0 z-40"
+      role="dialog"
+      aria-label={t("board.detailsAria")}
+    >
       <button
         type="button"
-        aria-label="Close panel"
+        aria-label={t("board.closePanelAria")}
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-foreground/20"
       />
@@ -329,15 +335,15 @@ export function TaskDetailPanel({
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            aria-label="Task title"
+            aria-label={t("board.titleAria")}
             className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 font-display text-base font-semibold leading-snug transition-colors duration-200 hover:border-border focus:border-primary focus:bg-surface focus:outline-none"
           />
           <button
             type="button"
             onClick={() => void saveAsTemplate()}
             disabled={savingTemplate}
-            aria-label="Save as template"
-            title="Save as task template"
+            aria-label={t("board.saveTemplateAria")}
+            title={t("board.saveTemplateTitle")}
             className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-primary"
           >
             <BookmarkPlus className="size-4" aria-hidden />
@@ -345,7 +351,7 @@ export function TaskDetailPanel({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("board.closeAria")}
             className="rounded p-1 text-muted-foreground hover:text-foreground"
           >
             <X className="size-4" aria-hidden />
@@ -421,7 +427,7 @@ export function TaskDetailPanel({
               {sprints.map((sprint) => (
                 <option key={sprint.id} value={sprint.id}>
                   {sprint.name}
-                  {sprint.status === "Active" ? " (active)" : ""}
+                  {sprint.status === "Active" ? ` (${t("sprint.active")})` : ""}
                 </option>
               ))}
             </select>
@@ -449,7 +455,7 @@ export function TaskDetailPanel({
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               rows={3}
-              placeholder="Add more detail…"
+              placeholder={t("task.addDetail")}
               className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
             />
           </label>
@@ -504,9 +510,13 @@ export function TaskDetailPanel({
 
             <div className="flex flex-col gap-1.5">
               {attachmentsLoading ? (
-                <p className="text-xs text-muted-foreground">Loading…</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("task.loading")}
+                </p>
               ) : attachments.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No attachments.</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("task.noAttachments")}
+                </p>
               ) : (
                 attachments.map((att) => (
                   <div
@@ -526,7 +536,7 @@ export function TaskDetailPanel({
                       <button
                         type="button"
                         onClick={() => void downloadAttachment(att)}
-                        title="Download"
+                        title={t("board.download")}
                         className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-foreground"
                       >
                         <Download className="size-3.5" />
@@ -534,7 +544,7 @@ export function TaskDetailPanel({
                       <button
                         type="button"
                         onClick={() => void deleteAttachment(att)}
-                        title="Delete"
+                        title={t("common.delete")}
                         className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-destructive"
                       >
                         <Trash2 className="size-3.5" />
@@ -548,7 +558,7 @@ export function TaskDetailPanel({
 
           <section className="flex min-h-0 flex-1 flex-col">
             <h3 className="mb-2 text-sm font-medium">
-              Comments{" "}
+              {t("task.comments")}{" "}
               <span className="font-mono text-xs text-muted-foreground">
                 ({comments.length})
               </span>
@@ -562,10 +572,12 @@ export function TaskDetailPanel({
 
             <div className="flex flex-col gap-2">
               {commentsLoading ? (
-                <p className="text-sm text-muted-foreground">Loading…</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("task.loading")}
+                </p>
               ) : comments.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No comments yet.
+                  {t("task.noComments")}
                 </p>
               ) : (
                 comments.map((comment) => {
@@ -581,7 +593,7 @@ export function TaskDetailPanel({
                       <div className="mb-1 flex items-center justify-between gap-2">
                         <span className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
                           {mine ? (
-                            "you"
+                            t("task.you")
                           ) : author ? (
                             <span className="flex items-center gap-1.5">
                               <Avatar
@@ -600,10 +612,10 @@ export function TaskDetailPanel({
                           <button
                             type="button"
                             onClick={() => void deleteComment(comment)}
-                            aria-label="Delete comment"
+                            aria-label={t("task.deleteComment")}
                             className="text-xs text-muted-foreground hover:text-destructive"
                           >
-                            delete
+                            {t("task.deleteComment")}
                           </button>
                         )}
                       </div>
@@ -625,7 +637,7 @@ export function TaskDetailPanel({
           <textarea
             value={newComment}
             onChange={(event) => setNewComment(event.target.value)}
-            placeholder="Write a comment…"
+            placeholder={t("task.writeComment")}
             rows={2}
             maxLength={2000}
             className="flex-1 resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
@@ -635,7 +647,7 @@ export function TaskDetailPanel({
             size="sm"
             disabled={postingComment || !newComment.trim()}
           >
-            {postingComment ? "…" : "Send"}
+            {postingComment ? "…" : t("task.send")}
           </Button>
         </form>
       </aside>

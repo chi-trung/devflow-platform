@@ -1,4 +1,5 @@
 import { BarChart3 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { VelocityResponse } from "../../types/api";
 
 const W = 640;
@@ -14,6 +15,7 @@ interface VelocityChartProps {
 }
 
 export function VelocityChart({ data, className = "" }: VelocityChartProps) {
+  const { t } = useTranslation();
   const sprints = data.sprints;
 
   if (sprints.length === 0) {
@@ -21,7 +23,7 @@ export function VelocityChart({ data, className = "" }: VelocityChartProps) {
       <div
         className={`flex items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-sm text-muted-foreground ${className}`}
       >
-        No sprints yet — velocity appears after your first sprint.
+        {t("reports.noSprintsVelocity")}
       </div>
     );
   }
@@ -45,19 +47,19 @@ export function VelocityChart({ data, className = "" }: VelocityChartProps) {
       <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1">
         <h3 className="inline-flex items-center gap-1.5 font-display text-sm font-semibold">
           <BarChart3 className="size-4 text-primary" aria-hidden />
-          Sprint velocity
+          {t("reports.sprintVelocity")}
           <span className="ml-1 font-mono text-[11px] font-normal text-muted-foreground">
-            avg {Math.round(data.averageCompletionRate)}% completion
+            {t("reports.avgCompletion", { pct: Math.round(data.averageCompletionRate) })}
           </span>
         </h3>
         <div className="ml-auto flex items-center gap-4 font-mono text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <span className="size-2.5 rounded-sm bg-primary/25" aria-hidden />
-            Planned
+            {t("reports.planned")}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="size-2.5 rounded-sm bg-primary" aria-hidden />
-            Completed
+            {t("reports.completedLower")}
           </span>
         </div>
       </div>
@@ -65,7 +67,7 @@ export function VelocityChart({ data, className = "" }: VelocityChartProps) {
       <svg
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Velocity across ${sprints.length} sprints`}
+        aria-label={t("reports.velocityAria", { count: sprints.length })}
         className="w-full"
       >
         {ticks.map((v) => (
@@ -108,7 +110,7 @@ export function VelocityChart({ data, className = "" }: VelocityChartProps) {
                 fill="var(--color-primary)"
                 opacity="0.25"
               >
-                <title>{`${sprint.sprintName} — planned ${sprint.totalTasks}`}</title>
+                <title>{t("reports.plannedPoint", { name: sprint.sprintName, count: sprint.totalTasks })}</title>
               </rect>
               <rect
                 x={cx + 2}
@@ -118,7 +120,7 @@ export function VelocityChart({ data, className = "" }: VelocityChartProps) {
                 rx="3"
                 fill="var(--color-primary)"
               >
-                <title>{`${sprint.sprintName} — completed ${sprint.completedTasks}/${sprint.totalTasks} (${Math.round(sprint.completionRate * 100)}%)`}</title>
+                <title>{t("reports.completedPoint", { name: sprint.sprintName, done: sprint.completedTasks, total: sprint.totalTasks, pct: Math.round(sprint.completionRate * 100) })}</title>
               </rect>
               <text
                 x={cx}

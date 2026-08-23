@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { GitPullRequest } from "lucide-react";
 import { getProjectPRs } from "../../lib/api";
 import type { PullRequestResponse } from "../../types/api";
@@ -16,6 +17,7 @@ interface TaskPullRequestsProps {
 }
 
 export function TaskPullRequests({ workspaceId, projectId, taskId }: TaskPullRequestsProps) {
+  const { t } = useTranslation();
   const [prs, setPrs] = useState<PullRequestResponse[] | null>(null);
 
   useEffect(() => {
@@ -40,12 +42,12 @@ export function TaskPullRequests({ workspaceId, projectId, taskId }: TaskPullReq
     <section className="space-y-2">
       <h3 className="flex items-center gap-1.5 text-sm font-medium">
         <GitPullRequest className="size-4 text-muted-foreground" aria-hidden />
-        Linked PRs{" "}
+        {t("github.linkedPrs")}{" "}
         <span className="font-mono text-xs text-muted-foreground">({prs?.length ?? 0})</span>
       </h3>
 
       {!prs ? (
-        <p className="text-xs text-muted-foreground">Loading…</p>
+        <p className="text-xs text-muted-foreground">{t("common.loading")}</p>
       ) : (
         <div className="flex flex-col gap-1.5">
           {prs.map((pr) => (

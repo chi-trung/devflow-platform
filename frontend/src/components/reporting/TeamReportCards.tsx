@@ -32,15 +32,15 @@ export function TeamReportCards({ data, members, className = "" }: TeamReportCar
           {t("reports.teamWorkload")}
         </h3>
         <span className="ml-auto font-mono text-[11px] text-muted-foreground">
-          {data.totalCompleted}/{data.totalTasks} done ·{" "}
-          {formatMinutes(data.totalMinutesLogged)} logged
+          {t("reports.tasksDone", { done: data.totalCompleted, total: data.totalTasks })} ·{" "}
+          {formatMinutes(data.totalMinutesLogged)} {t("timeTracking.logged")}
         </span>
       </div>
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {data.members.map((member) => {
           const profile = members.find((m) => m.userId === member.userId);
-          const name = profile?.displayName || member.userName || profile?.username || "member";
+          const name = profile?.displayName || member.userName || profile?.username || t("common.member");
           const completion =
             member.tasksAssigned > 0
               ? Math.round((member.tasksCompleted / member.tasksAssigned) * 100)
@@ -55,7 +55,7 @@ export function TeamReportCards({ data, members, className = "" }: TeamReportCar
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{name}</p>
                   <p className="font-mono text-[10px] text-muted-foreground">
-                    {formatMinutes(member.totalMinutesLogged)} logged
+                    {formatMinutes(member.totalMinutesLogged)} {t("timeTracking.logged")}
                   </p>
                 </div>
                 <span className="ml-auto rounded-md bg-elevated px-2 py-0.5 font-mono text-[11px]">
@@ -73,7 +73,7 @@ export function TeamReportCards({ data, members, className = "" }: TeamReportCar
                 aria-valuenow={member.tasksCompleted}
                 aria-valuemin={0}
                 aria-valuemax={maxCompleted}
-                aria-label={`${name} completed tasks`}
+                aria-label={t("reports.completedTasksAria", { name })}
                 className="mt-1 h-1.5 overflow-hidden rounded-full bg-elevated"
               >
                 <div

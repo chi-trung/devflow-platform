@@ -59,7 +59,7 @@ export function ReportsPage() {
 
   const rangeError =
     from && to && new Date(from) > new Date(to)
-      ? "Start date must be before end date."
+      ? t("reports.startDateAfterEnd")
       : null;
 
   const { push } = useToast();
@@ -79,7 +79,7 @@ export function ReportsPage() {
       URL.revokeObjectURL(url);
     } catch (err) {
       push(
-        err instanceof Error ? err.message : "Export failed.",
+        err instanceof Error ? err.message : t("reports.exportFailed"),
         "error",
       );
     } finally {
@@ -102,7 +102,11 @@ export function ReportsPage() {
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="font-display text-2xl font-semibold tracking-tight">
-                {project ? `Reports · ${project.name}` : <Skeleton className="h-8 w-56" />}
+                {project ? (
+                  t("reports.titleWithName", { name: project.name })
+                ) : (
+                  <Skeleton className="h-8 w-56" />
+                )}
               </h1>
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">
@@ -142,7 +146,7 @@ export function ReportsPage() {
               value={from}
               max={to || undefined}
               onChange={(event) => setFrom(event.target.value)}
-              aria-label="Burndown start date"
+              aria-label={t("reports.burndownStartDate")}
               className="bg-transparent focus:outline-none"
             />
             <span className="text-muted-foreground">→</span>
@@ -151,7 +155,7 @@ export function ReportsPage() {
               value={to}
               min={from || undefined}
               onChange={(event) => setTo(event.target.value)}
-              aria-label="Burndown end date"
+              aria-label={t("reports.burndownEndDate")}
               className="bg-transparent focus:outline-none"
             />
           </label>

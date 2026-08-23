@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Moon, Sun } from "lucide-react";
 import { applyTheme, getTheme, type Theme } from "../../lib/theme";
 
@@ -8,6 +9,7 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ className = "", onThemeChange }: ThemeToggleProps) {
+  const { t } = useTranslation();
   const [theme, setThemeState] = useState<Theme>(() => getTheme());
 
   function choose(next: Theme) {
@@ -27,7 +29,7 @@ export function ThemeToggle({ className = "", onThemeChange }: ThemeToggleProps)
   return (
     <div
       role="radiogroup"
-      aria-label="Color theme"
+      aria-label={t("ui.colorThemeAria")}
       className={`inline-flex w-full max-w-56 rounded-lg border border-border bg-surface p-0.5 ${className}`}
     >
       <button
@@ -38,7 +40,7 @@ export function ThemeToggle({ className = "", onThemeChange }: ThemeToggleProps)
         className={optionClass(theme === "dark")}
       >
         <Moon className="size-4" aria-hidden />
-        Dark
+        {t("ui.dark")}
       </button>
       <button
         type="button"
@@ -48,7 +50,7 @@ export function ThemeToggle({ className = "", onThemeChange }: ThemeToggleProps)
         className={optionClass(theme === "light")}
       >
         <Sun className="size-4" aria-hidden />
-        Light
+        {t("ui.light")}
       </button>
     </div>
   );

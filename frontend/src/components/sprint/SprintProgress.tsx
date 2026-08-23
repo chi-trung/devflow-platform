@@ -29,7 +29,7 @@ export function SprintProgress({
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={pct}
-        aria-label={`Sprint progress: ${completed} of ${total} tasks completed`}
+        aria-label={t("sprint.progressAria", { completed, total })}
         className="h-1.5 overflow-hidden rounded-full bg-elevated"
       >
         <div

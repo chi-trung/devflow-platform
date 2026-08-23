@@ -64,7 +64,7 @@ export function ImportTasksModal({
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
       <button
         type="button"
-        aria-label="Close"
+        aria-label={t("board.closeAria")}
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-black/50"
       />
@@ -84,7 +84,7 @@ export function ImportTasksModal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close dialog"
+            aria-label={t("board.closeDialogAria")}
             className="ml-auto rounded p-1 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
           >
             <X className="size-4" aria-hidden />

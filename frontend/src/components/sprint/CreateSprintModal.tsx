@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { CalendarRange, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { createSprint } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -18,6 +19,7 @@ export function CreateSprintModal({
   onClose,
   onCreated,
 }: CreateSprintModalProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [goal, setGoal] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export function CreateSprintModal({
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!name.trim()) {
-      setError("Sprint name is required.");
+      setError(t("sprint.nameRequired"));
       return;
     }
     setBusy(true);
@@ -49,7 +51,7 @@ export function CreateSprintModal({
       onCreated();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create sprint.");
+      setError(err instanceof Error ? err.message : t("sprint.createFailed"));
       setBusy(false);
     }
   }
@@ -58,7 +60,7 @@ export function CreateSprintModal({
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
       <button
         type="button"
-        aria-label="Close"
+        aria-label={t("sprint.closeAria")}
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-black/50"
       />
@@ -73,12 +75,12 @@ export function CreateSprintModal({
             <CalendarRange className="size-4" aria-hidden />
           </span>
           <h2 id="create-sprint-title" className="font-display font-semibold">
-            New sprint
+            {t("sprint.newSprint")}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close dialog"
+            aria-label={t("sprint.closeDialogAria")}
             className="ml-auto rounded p-1 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
           >
             <X className="size-4" aria-hidden />
@@ -87,38 +89,38 @@ export function CreateSprintModal({
 
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3">
           <label className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium">Name</span>
+            <span className="text-xs font-medium">{t("sprint.nameLabel")}</span>
             <Input
               ref={nameRef}
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Sprint 12"
+              placeholder={t("sprint.sprintNamePlaceholder")}
               invalid={error !== null && !name.trim()}
               disabled={busy}
             />
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium">Goal</span>
+            <span className="text-xs font-medium">{t("sprint.goal")}</span>
             <Input
               value={goal}
               onChange={(event) => setGoal(event.target.value)}
-              placeholder="What should this sprint achieve? (optional)"
+              placeholder={t("sprint.goalPlaceholder")}
               disabled={busy}
             />
           </label>
 
           <p className="text-xs text-muted-foreground">
-            Start and end dates are picked when the sprint is started.
+            {t("sprint.datesHint")}
           </p>
 
           {error && <ErrorAlert message={error} />}
 
           <div className="mt-1 flex justify-end gap-2">
             <Button variant="ghost" onClick={onClose} disabled={busy}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={busy}>
-              {busy ? "Creating…" : "Create sprint"}
+              {busy ? t("sprint.creating") : t("sprint.createSprint")}
             </Button>
           </div>
         </form>

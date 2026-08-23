@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ListPlus } from "lucide-react";
 import { getCustomFields, getTaskFieldValues, setTaskFieldValue } from "../../lib/api";
 import type {
@@ -13,6 +14,7 @@ interface TaskFieldsSectionProps {
 }
 
 export function TaskFieldsSection({ workspaceId, projectId, taskId }: TaskFieldsSectionProps) {
+  const { t } = useTranslation();
   const [fields, setFields] = useState<CustomFieldResponse[] | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -104,14 +106,14 @@ export function TaskFieldsSection({ workspaceId, projectId, taskId }: TaskFields
     <section className="space-y-2">
       <h3 className="flex items-center gap-1.5 text-sm font-medium">
         <ListPlus className="size-4 text-muted-foreground" aria-hidden />
-        Fields
+        {t("fields.taskFieldsTitle")}
         {savingId && (
-          <span className="font-mono text-[10px] text-muted-foreground">saving…</span>
+          <span className="font-mono text-[10px] text-muted-foreground">{t("fields.saving")}</span>
         )}
       </h3>
 
       {!fields ? (
-        <p className="text-xs text-muted-foreground">Loading…</p>
+        <p className="text-xs text-muted-foreground">{t("common.loading")}</p>
       ) : (
         <div className="grid grid-cols-2 gap-2">
           {fields.map((field) => (

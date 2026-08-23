@@ -81,7 +81,7 @@ export function TaskDistribution({ data }: TaskDistributionProps) {
 
   return (
     <section
-      aria-label="Task distribution"
+      aria-label={t("dashboard.distribution")}
       className="rounded-xl border border-border bg-card p-5"
     >
       <h2 className="mb-4 inline-flex items-center gap-1.5 font-display font-semibold">
@@ -101,7 +101,7 @@ export function TaskDistribution({ data }: TaskDistributionProps) {
               height={SIZE}
               viewBox={`0 0 ${SIZE} ${SIZE}`}
               role="img"
-              aria-label="Tasks by status"
+              aria-label={t("dashboard.tasksByStatus")}
             >
               <g transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}>
                 <circle
@@ -181,7 +181,7 @@ export function TaskDistribution({ data }: TaskDistributionProps) {
               ))}
             </ul>
 
-            <div className="space-y-2" role="list" aria-label="Tasks by priority">
+            <div className="space-y-2" role="list" aria-label={t("dashboard.tasksByPriority")}>
               {PRIORITY_ORDER.map((priority) => {
                 const count = data.tasksByPriority[priority] ?? 0;
                 if (count === 0) return null;
@@ -193,7 +193,9 @@ export function TaskDistribution({ data }: TaskDistributionProps) {
                     onClick={() =>
                       openBoard(`?priority=${encodeURIComponent(priority)}`)
                     }
-                    title={`Show ${priority} priority tasks on the board`}
+                    title={t("dashboard.showPriorityAria", {
+                      priority: t(`task.${priority.toLowerCase()}`),
+                    })}
                     className="group flex w-full cursor-pointer items-center gap-2.5"
                   >
                     <span className="w-16 shrink-0 text-left font-mono text-[11px] text-muted-foreground group-hover:text-foreground">

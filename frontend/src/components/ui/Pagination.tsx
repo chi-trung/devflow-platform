@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
@@ -20,6 +21,7 @@ export function Pagination({
   pageSize,
   className = "",
 }: PaginationProps) {
+  const { t } = useTranslation();
   const windowSize = 5;
   let start = Math.max(1, page - Math.floor(windowSize / 2));
   const end = Math.min(pageCount, start + windowSize - 1);
@@ -32,16 +34,16 @@ export function Pagination({
 
   return (
     <nav
-      aria-label="Pagination"
+      aria-label={t("pagination.label")}
       className={`flex items-center justify-between gap-4 ${className}`}
     >
       {rangeFrom !== null && rangeTo !== null && total !== undefined ? (
         <p className="text-sm text-muted-foreground">
-          Showing{" "}
-          <span className="font-medium text-foreground">
-            {rangeFrom}&ndash;{rangeTo}
-          </span>{" "}
-          of <span className="font-medium text-foreground">{total}</span> tasks
+          {t("pagination.showing", {
+            from: rangeFrom,
+            to: rangeTo,
+            total,
+          })}
         </p>
       ) : (
         <span />
@@ -53,7 +55,7 @@ export function Pagination({
           className={`${pageButton} border border-border text-muted-foreground hover:border-border-strong hover:text-foreground`}
           onClick={() => onChange(page - 1)}
           disabled={page <= 1}
-          aria-label="Previous page"
+          aria-label={t("pagination.prev")}
         >
           <ChevronLeft className="size-4" aria-hidden />
         </button>
@@ -118,7 +120,7 @@ export function Pagination({
           className={`${pageButton} border border-border text-muted-foreground hover:border-border-strong hover:text-foreground`}
           onClick={() => onChange(page + 1)}
           disabled={page >= pageCount}
-          aria-label="Next page"
+          aria-label={t("pagination.next")}
         >
           <ChevronRight className="size-4" aria-hidden />
         </button>

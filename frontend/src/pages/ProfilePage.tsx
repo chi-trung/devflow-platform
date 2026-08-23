@@ -107,7 +107,7 @@ export function ProfilePage() {
         </header>
 
         <section
-          aria-label="Account details"
+          aria-label={t("profile.accountDetails")}
           className="rounded-xl border border-border bg-surface p-5"
         >
           <div className="mb-4 flex items-center gap-2.5">
@@ -148,7 +148,7 @@ export function ProfilePage() {
         </section>
 
         <section
-          aria-label="Change password"
+          aria-label={t("profile.changePassword")}
           className="rounded-xl border border-border bg-surface p-5"
         >
           <div className="mb-4 flex items-center gap-2.5">

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { History, X } from "lucide-react";
 import type { ActivityResponse } from "../../types/api";
 import { Avatar } from "../ui/Avatar";
@@ -15,6 +16,7 @@ export function ActivityDrawer({
   activities,
   loading,
 }: ActivityDrawerProps) {
+  const { t } = useTranslation();
   if (!open) return null;
 
   return (
@@ -24,7 +26,7 @@ export function ActivityDrawer({
           <div className="flex items-center gap-2">
             <History className="size-5 text-primary" aria-hidden />
             <h2 className="font-display font-semibold text-foreground">
-              Project Activity
+              {t("activity.projectActivity")}
             </h2>
           </div>
           <button
@@ -50,7 +52,7 @@ export function ActivityDrawer({
             </div>
           ) : !activities || activities.length === 0 ? (
             <div className="py-12 text-center text-sm text-muted-foreground">
-              No activity recorded yet in this project.
+              {t("activity.noActivity")}
             </div>
           ) : (
             activities.map((act) => {

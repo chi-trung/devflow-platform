@@ -21,20 +21,26 @@ export function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
   const { t } = useTranslation();
   const SHORTCUTS = getShortcuts(t);
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-label="Keyboard shortcuts">
+    <div
+      className="fixed inset-0 z-50"
+      role="dialog"
+      aria-label={t("keyboard.title")}
+    >
       <button
         type="button"
-        aria-label="Close help"
+        aria-label={t("keyboard.closeHelpAria")}
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-foreground/30"
       />
       <div className="absolute left-1/2 top-1/2 w-[min(92vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface p-5 shadow-[0_0_60px_rgba(0,0,0,0.5)]">
         <header className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-base font-semibold">{t("nav.sprints")}</h2>
+          <h2 className="font-display text-base font-semibold">
+            {t("keyboard.title")}
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("board.closeAria")}
             className="rounded p-1 text-muted-foreground hover:text-foreground"
           >
             <X className="size-4" aria-hidden />
@@ -53,7 +59,8 @@ export function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
           ))}
         </dl>
         <p className="mt-4 font-mono text-[10px] text-muted-foreground">
-          Search operators: status:done · priority:high · assignee:me · label:bug · is:blocked
+          {t("keyboard.searchOperatorsPrefix")} status:done · priority:high ·
+          assignee:me · label:bug · is:blocked
         </p>
       </div>
     </div>

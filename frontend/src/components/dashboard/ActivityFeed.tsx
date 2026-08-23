@@ -27,7 +27,7 @@ export function ActivityFeed({ items, workspaceId }: ActivityFeedProps) {
   const { t } = useTranslation();
   return (
     <section
-      aria-label="Recent activity"
+      aria-label={t("dashboard.recentActivity")}
       className="rounded-xl border border-border bg-card p-5"
     >
       <h2 className="mb-4 inline-flex items-center gap-1.5 font-display font-semibold">

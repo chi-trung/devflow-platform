@@ -1,5 +1,6 @@
 import { CalendarRange } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { SprintResponse, TaskItemResponse } from "../../types/api";
 import { SprintProgress } from "./SprintProgress";
 
@@ -47,6 +48,7 @@ interface TaskRowProps {
 }
 
 function TaskRow({ task }: TaskRowProps) {
+  const { t } = useTranslation();
   return (
     <li
       draggable
@@ -59,7 +61,7 @@ function TaskRow({ task }: TaskRowProps) {
         event.currentTarget.classList.remove("opacity-40");
       }}
       className="flex cursor-grab items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-2 transition-all duration-200 hover:border-border-strong hover:bg-elevated active:cursor-grabbing active:scale-[0.99]"
-      aria-label={`Task: ${task.title}`}
+      aria-label={t("sprint.boardTaskAria", { title: task.title })}
     >
       <span
         className={`size-1.5 shrink-0 rounded-full ${priorityDot[task.priority]}`}
@@ -72,11 +74,11 @@ function TaskRow({ task }: TaskRowProps) {
         }`}
       >
         {task.status === "Done"
-          ? "done"
+          ? t("sprint.colDone")
           : task.status === "InProgress"
-            ? "wip"
+            ? t("sprint.colWip")
             : task.status === "InReview"
-              ? "review"
+              ? t("sprint.colReview")
               : ""}
       </span>
     </li>
@@ -96,12 +98,13 @@ export function SprintBoard({
   onAssign,
   onRemove,
 }: SprintBoardProps) {
+  const { t } = useTranslation();
   const backlogTasks = tasks.filter((t) => !t.sprintId);
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[300px_1fr]">
       <section
-        aria-label="Backlog — tasks without a sprint"
+        aria-label={t("sprint.backlogColumnAria")}
         data-drag-over="false"
         {...dragHandlers((taskId) => {
           const task = tasks.find((t) => t.id === taskId);
@@ -111,7 +114,7 @@ export function SprintBoard({
       >
         <header className="flex items-center gap-2 px-1 pb-1">
           <h3 className="font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Backlog
+            {t("board.backlog")}
           </h3>
           <span className="ml-auto rounded-md bg-elevated px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
             {backlogTasks.length}
@@ -124,7 +127,7 @@ export function SprintBoard({
           ))}
           {backlogTasks.length === 0 && (
             <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
-              Drop tasks here to remove them from their sprint
+              {t("sprint.dropTasksRemove")}
             </p>
           )}
         </ul>
@@ -142,7 +145,7 @@ export function SprintBoard({
           return (
             <section
               key={sprint.id}
-              aria-label={`Sprint ${sprint.name}`}
+              aria-label={t("sprint.sprintColumnAria", { name: sprint.name })}
               data-drag-over="false"
               {...(locked ? {} : dragHandlers((taskId) => onAssign(taskId, sprint.id)))}
               className="flex min-h-72 flex-col gap-2 rounded-xl border border-border bg-surface p-3 transition-colors duration-200 data-[drag-over=true]:border-primary/50 data-[drag-over=true]:bg-primary/5"
@@ -183,7 +186,7 @@ export function SprintBoard({
                 ))}
                 {sprintTasks.length === 0 && (
                   <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
-                    {locked ? "No tasks" : "Drop tasks here"}
+                    {locked ? t("sprint.noTasksInCol") : t("board.dropHere")}
                   </p>
                 )}
               </ul>

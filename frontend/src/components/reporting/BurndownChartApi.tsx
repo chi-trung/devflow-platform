@@ -1,5 +1,6 @@
 import { useId, useState } from "react";
 import { TrendingDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { BurndownResponse } from "../../types/api";
 
 const W = 640;
@@ -30,6 +31,7 @@ function formatFull(iso: string): string {
 }
 
 export function BurndownChartApi({ data, className = "" }: BurndownChartApiProps) {
+  const { t } = useTranslation();
   const gradientId = useId();
   const [hover, setHover] = useState<number | null>(null);
 
@@ -42,7 +44,7 @@ export function BurndownChartApi({ data, className = "" }: BurndownChartApiProps
       <div
         className={`flex items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-sm text-muted-foreground ${className}`}
       >
-        No burndown data for this range.
+        {t("reports.noBurndownData")}
       </div>
     );
   }
@@ -89,9 +91,13 @@ export function BurndownChartApi({ data, className = "" }: BurndownChartApiProps
       <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1">
         <h3 className="inline-flex items-center gap-1.5 font-display text-sm font-semibold">
           <TrendingDown className="size-4 text-primary" aria-hidden />
-          Burndown
+          {t("reports.burndown")}
           <span className="ml-1 font-mono text-[11px] font-normal text-muted-foreground">
-            {formatDay(data.startDate)} → {formatDay(data.endDate)} · {data.totalTasks} tasks
+            {t("reports.rangeHeader", {
+              start: formatDay(data.startDate),
+              end: formatDay(data.endDate),
+              count: data.totalTasks,
+            })}
           </span>
         </h3>
         <div className="ml-auto flex items-center gap-4 font-mono text-[11px] text-muted-foreground">
@@ -99,14 +105,14 @@ export function BurndownChartApi({ data, className = "" }: BurndownChartApiProps
             <svg width="18" height="6" aria-hidden>
               <line x1="0" y1="3" x2="18" y2="3" stroke="var(--color-muted-foreground)" strokeWidth="1.5" strokeDasharray="4 3" />
             </svg>
-            Ideal
+            {t("reports.ideal")}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <svg width="18" height="6" aria-hidden>
               <line x1="0" y1="3" x2="18" y2="3" stroke="var(--color-primary)" strokeWidth="2" />
               <circle cx="9" cy="3" r="2.5" fill="var(--color-primary)" />
             </svg>
-            Remaining
+            {t("reports.remaining")}
           </span>
         </div>
       </div>
@@ -114,7 +120,7 @@ export function BurndownChartApi({ data, className = "" }: BurndownChartApiProps
       <svg
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Burndown chart from ${data.startDate} to ${data.endDate}`}
+        aria-label={t("reports.chartAria", { start: data.startDate, end: data.endDate })}
         className="w-full"
         onMouseLeave={() => setHover(null)}
       >
@@ -202,7 +208,7 @@ export function BurndownChartApi({ data, className = "" }: BurndownChartApiProps
               strokeWidth="1.5"
               className="transition-all duration-150"
             />
-            <title>{`${formatFull(p.date)} — ${p.remainingTasks} remaining (ideal ${p.idealRemaining})`}</title>
+            <title>{t("reports.pointTitle", { date: formatFull(p.date), count: p.remainingTasks, ideal: p.idealRemaining })}</title>
             <rect
               x={x(i) - plotW / (2 * Math.max(1, days - 1))}
               y={PAD_T}
@@ -224,11 +230,15 @@ export function BurndownChartApi({ data, className = "" }: BurndownChartApiProps
       <div className="mt-1 flex min-h-5 items-center justify-between font-mono text-[10px] text-muted-foreground">
         <span>
           {hovered
-            ? `${formatFull(hovered.date)} · ${hovered.remainingTasks} left · ideal ${hovered.idealRemaining}`
-            : `${data.totalTasks} tasks in range`}
+            ? t("reports.hoverPoint", {
+                date: formatFull(hovered.date),
+                count: hovered.remainingTasks,
+                ideal: hovered.idealRemaining,
+              })
+            : t("reports.tasksInRange", { count: data.totalTasks })}
         </span>
         {lastDoneIndex >= 0 && hovered == null && (
-          <span>hover for daily detail</span>
+          <span>{t("reports.hoverForDetail")}</span>
         )}
       </div>
     </div>

@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
 
 type ToastType = "success" | "error" | "info";
@@ -35,6 +36,7 @@ const ACCENTS: Record<ToastType, string> = {
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextId = useRef(0);
 
@@ -69,7 +71,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <p className="flex-1 text-sm text-foreground">{toast.message}</p>
               <button
                 type="button"
-                aria-label="Dismiss"
+                aria-label={t("ui.dismiss")}
                 onClick={() => dismiss(toast.id)}
                 className="text-muted-foreground transition-colors duration-150 hover:text-foreground"
               >

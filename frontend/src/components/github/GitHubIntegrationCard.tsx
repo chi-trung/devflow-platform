@@ -41,7 +41,7 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
       setIntegration(integration ?? null);
       setPrs(pulls);
     } catch {
-      setError("Failed to load GitHub data.");
+      setError(t("github.loadFailed"));
     } finally {
       setLoaded(true);
     }
@@ -63,7 +63,7 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
       setRepoUrl("");
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to link repository.");
+      setError(err instanceof Error ? err.message : t("github.linkFailed"));
     } finally {
       setBusy(false);
     }
@@ -77,7 +77,7 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
       setIntegration(null);
       setPrs([]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to unlink.");
+      setError(err instanceof Error ? err.message : t("github.unlinkFailed"));
     } finally {
       setBusy(false);
     }
@@ -95,7 +95,7 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
             type="button"
             onClick={() => void handleUnlink()}
             disabled={busy}
-            title="Unlink repository"
+            title={t("github.unlinkRepoTitle")}
             className="ml-auto inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors duration-150 hover:border-destructive hover:text-destructive disabled:opacity-40"
           >
             <Unlink className="size-3" aria-hidden />
@@ -112,7 +112,7 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
             value={repoUrl}
             onChange={(event) => setRepoUrl(event.target.value)}
             placeholder="https://github.com/org/repo"
-            aria-label="Repository URL"
+            aria-label={t("github.repoUrlAria")}
             className="min-w-0 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
           />
           <button

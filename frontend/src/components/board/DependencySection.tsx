@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link2, Plus, Trash2, TriangleAlert } from "lucide-react";
 import {
   addTaskDependency,
@@ -9,13 +10,6 @@ import type {
   TaskDependencyResponse,
   TaskItemResponse,
 } from "../../types/api";
-
-const statusLabel: Record<TaskItemResponse["status"], string> = {
-  Backlog: "Backlog",
-  InProgress: "In Progress",
-  InReview: "In Review",
-  Done: "Done",
-};
 
 interface DependencySectionProps {
   workspaceId: string;
@@ -32,6 +26,13 @@ export function DependencySection({
   allTasks,
   onChanged,
 }: DependencySectionProps) {
+  const { t } = useTranslation();
+  const statusLabel: Record<TaskItemResponse["status"], string> = {
+    Backlog: t("task.backlogStatus"),
+    InProgress: t("task.inProgressStatus"),
+    InReview: t("task.inReviewStatus"),
+    Done: t("task.doneStatus"),
+  };
   const [dependencies, setDependencies] = useState<
     TaskDependencyResponse[] | null
   >(null);
@@ -51,7 +52,9 @@ export function DependencySection({
       .catch((err: unknown) => {
         if (!cancelled) {
           setError(
-            err instanceof Error ? err.message : "Failed to load dependencies.",
+            err instanceof Error
+              ? err.message
+              : t("dependency.failedToLoad"),
           );
           setDependencies([]);
         }
@@ -85,7 +88,9 @@ export function DependencySection({
       setPickerOpen(false);
       onChanged();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add dependency.");
+      setError(
+        err instanceof Error ? err.message : t("dependency.failedToAdd"),
+      );
     } finally {
       setAddingId(null);
     }
@@ -100,7 +105,9 @@ export function DependencySection({
       );
       onChanged();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to remove dependency.");
+      setError(
+        err instanceof Error ? err.message : t("dependency.failedToRemove"),
+      );
     }
   }
 
@@ -109,7 +116,7 @@ export function DependencySection({
       <div className="flex items-center justify-between">
         <h3 className="flex items-center gap-1.5 text-sm font-medium">
           <Link2 className="size-4 text-muted-foreground" aria-hidden />
-          Blocked by{" "}
+          {t("dependency.blockedBy")}{" "}
           <span className="font-mono text-xs text-muted-foreground">
             ({dependencies?.length ?? 0})
           </span>
@@ -120,15 +127,20 @@ export function DependencySection({
           aria-expanded={pickerOpen}
           className="text-xs font-medium text-primary hover:underline"
         >
-          {pickerOpen ? "Cancel" : "+ Link task"}
+          {pickerOpen ? t("common.cancel") : t("dependency.linkTask")}
         </button>
       </div>
 
       {dependencies && dependencies.length > 0 && (
         <p className="flex items-start gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-600 dark:text-amber-300">
           <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-          This task can't move forward until {dependencies.length}{" "}
-          {dependencies.length === 1 ? "blocker is" : "blockers are"} done.
+          {t("dependency.blockerCantMove", {
+            count: dependencies.length,
+            plural:
+              dependencies.length === 1
+                ? t("dependency.blockerIs")
+                : t("dependency.blockersAre"),
+          })}
         </p>
       )}
 
@@ -139,14 +151,14 @@ export function DependencySection({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search tasks in this project…"
+            placeholder={t("dependency.searchTasks")}
             autoFocus
             className="mb-1.5 w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
           />
           <div className="flex flex-col">
             {candidates.length === 0 ? (
               <p className="px-1 py-1.5 text-xs text-muted-foreground">
-                No matching tasks.
+                {t("dependency.noMatchingTasks")}
               </p>
             ) : (
               candidates.map((candidate) => (
@@ -170,9 +182,13 @@ export function DependencySection({
       )}
 
       {!dependencies ? (
-        <p className="text-xs text-muted-foreground">Loading…</p>
+        <p className="text-xs text-muted-foreground">
+          {t("dependency.loading")}
+        </p>
       ) : dependencies.length === 0 ? (
-        <p className="text-xs text-muted-foreground">No blockers linked.</p>
+        <p className="text-xs text-muted-foreground">
+          {t("dependency.noBlockers")}
+        </p>
       ) : (
         <div className="flex flex-col gap-1.5">
           {dependencies.map((dependency) => (
@@ -192,7 +208,9 @@ export function DependencySection({
               <button
                 type="button"
                 onClick={() => void removeDependency(dependency)}
-                aria-label={`Remove blocker ${dependency.blockerTitle}`}
+                aria-label={t("dependency.removeBlockerAria", {
+                  title: dependency.blockerTitle,
+                })}
                 className="rounded p-1 text-muted-foreground opacity-80 transition-all duration-150 hover:text-destructive group-hover:opacity-100"
               >
                 <Trash2 className="size-3.5" aria-hidden />

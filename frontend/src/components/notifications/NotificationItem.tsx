@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import i18n, { type TFunction } from "i18next";
 import { ArrowRightLeft, Bell, MessageSquare, UserPlus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Avatar } from "../ui/Avatar";
@@ -13,15 +15,16 @@ const kindMeta: Record<
   other: { icon: Bell, accent: "text-muted-foreground" },
 };
 
-export function timeAgo(utc: string): string {
+export function timeAgo(utc: string, t?: TFunction): string {
+  const translate: TFunction = t ?? i18n.t.bind(i18n);
   const seconds = Math.floor((Date.now() - new Date(utc).getTime()) / 1000);
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return translate("notification.justNow");
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 60) return translate("notification.minsAgo", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  if (hours < 24) return translate("notification.hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+  if (days < 7) return translate("notification.daysAgo", { count: days });
   return new Date(utc).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
@@ -39,6 +42,7 @@ export function NotificationItem({
   unread,
   onClick,
 }: NotificationItemProps) {
+  const { t } = useTranslation();
   const meta = kindMeta[notification.kind];
   const Icon = meta.icon;
 
@@ -67,13 +71,13 @@ export function NotificationItem({
           {notification.message}
         </span>
         <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground">
-          {timeAgo(notification.createdAtUtc)}
+          {timeAgo(notification.createdAtUtc, t)}
         </span>
       </span>
       {unread && (
         <span
           className="mt-1.5 size-2 shrink-0 rounded-full bg-primary"
-          aria-label="Unread"
+          aria-label={t("notification.unread")}
         />
       )}
     </button>

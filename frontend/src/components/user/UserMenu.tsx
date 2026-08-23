@@ -70,7 +70,7 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((value) => !value)}
-        aria-label="User menu"
+        aria-label={t("ui.userMenuAria")}
         aria-expanded={open}
         className={
           compact

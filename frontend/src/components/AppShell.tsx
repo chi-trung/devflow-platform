@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   CalendarRange,
@@ -24,6 +25,7 @@ const BOARD_PATH_KEY = "devflow.lastBoardPath";
 const SPRINT_PATH_KEY = "devflow.lastSprintPath";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -101,14 +103,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const mobileNavItems = [
     {
       key: "home",
-      label: "Home",
+      label: t("nav.home"),
       icon: House,
       active: location.pathname === "/",
       onClick: () => navigate("/"),
     },
     {
       key: "board",
-      label: "Board",
+      label: t("nav.board"),
       icon: KanbanSquare,
       active: onBoardRoute,
       onClick: () =>
@@ -121,7 +123,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     },
     {
       key: "sprints",
-      label: "Sprints",
+      label: t("nav.sprints"),
       icon: CalendarRange,
       active: onSprintsRoute,
       onClick: () =>
@@ -134,14 +136,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     },
     {
       key: "search",
-      label: "Search",
+      label: t("nav.search"),
       icon: Search,
       active: false,
       onClick: () => setPaletteOpen(true),
     },
     {
       key: "profile",
-      label: "Profile",
+      label: t("nav.profile"),
       icon: CircleUserRound,
       active: location.pathname === "/profile",
       onClick: () => navigate("/profile"),
@@ -173,7 +175,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
           <button
             type="button"
-            aria-label="Close menu"
+            aria-label={t("ui.closeMenuAria")}
             onClick={() => setDrawerOpen(false)}
             className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground lg:hidden"
           >
@@ -188,7 +190,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             className="flex w-full cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground"
           >
             <Search className="size-3.5" aria-hidden />
-            <span className="flex-1 text-left">Search…</span>
+            <span className="flex-1 text-left">{t("nav.searchPlaceholder")}</span>
             <kbd className="rounded border border-border bg-surface px-1 py-0.5 font-mono text-[10px]">
               ⌃K
             </kbd>
@@ -196,7 +198,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <section>
             <h2 className="px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-              Workspaces
+              {t("nav.workspaces")}
             </h2>
             <ul className="space-y-0.5">
               {(workspaces ?? []).map((workspace) => {
@@ -230,7 +232,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {workspaceId && (
             <section>
               <h2 className="px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-                Projects
+                {t("nav.projects")}
               </h2>
               <ul className="space-y-0.5">
                 {(projects ?? []).map((project) => (
@@ -254,7 +256,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated/60 hover:text-foreground"
             >
               <Plus className="size-4" aria-hidden />
-              New workspace
+              {t("nav.newWorkspace")}
             </Link>
           </section>
         </nav>
@@ -275,7 +277,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {drawerOpen && (
         <button
           type="button"
-          aria-label="Close menu"
+          aria-label={t("ui.closeMenuAria")}
           onClick={() => setDrawerOpen(false)}
           className="fixed inset-0 z-[55] cursor-default bg-black/50 backdrop-blur-sm lg:hidden"
         />
@@ -285,7 +287,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            aria-label="Open menu"
+            aria-label={t("ui.openMenuAria")}
             onClick={() => setDrawerOpen(true)}
             className="-ml-1 cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
           >
@@ -312,7 +314,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       <nav
-        aria-label="Primary"
+        aria-label={t("ui.primaryNavAria")}
         className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
       >
         {mobileNavItems.map(({ key, label, icon: Icon, active, onClick }) => (

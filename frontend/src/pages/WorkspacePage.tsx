@@ -143,20 +143,20 @@ export function WorkspacePage() {
   async function deleteWorkspace() {
     try {
       await api(`/workspaces/${workspaceId}`, { method: "DELETE" });
-      push("Workspace deleted");
+      push(t("workspace.deleted"));
       navigate("/");
     } catch (err) {
-      push(err instanceof Error ? err.message : "Failed to delete workspace", "error");
+      push(err instanceof Error ? err.message : t("workspace.deleteFailed"), "error");
     }
   }
 
   async function deleteProject(project: ProjectResponse) {
     try {
       await api(`/workspaces/${workspaceId}/projects/${project.id}`, { method: "DELETE" });
-      push(`"${project.name}" archived`);
+      push(t("workspace.archivedNamed", { name: project.name }));
       reload();
     } catch (err) {
-      push(err instanceof Error ? err.message : "Failed to archive project", "error");
+      push(err instanceof Error ? err.message : t("workspace.archiveFailed"), "error");
     }
   }
 
@@ -168,7 +168,7 @@ export function WorkspacePage() {
     setInviteError(null);
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteEmail.trim())) {
-      setInviteError("Enter a valid email address.");
+      setInviteError(t("workspace.inviteInvalidEmail"));
       return;
     }
 
@@ -185,9 +185,9 @@ export function WorkspacePage() {
       setInviteRole("Member");
       setInviting(false);
       reloadMembers();
-      push(`Invitation sent to ${inviteEmail.trim()}`);
+      push(t("workspace.inviteSentTo", { email: inviteEmail.trim() }));
     } catch (err) {
-      setInviteError(err instanceof Error ? err.message : "Failed to invite.");
+      setInviteError(err instanceof Error ? err.message : t("workspace.inviteFailed"));
     } finally {
       setInviteSubmitting(false);
     }
@@ -200,7 +200,7 @@ export function WorkspacePage() {
     setFormError(null);
 
     if (!name.trim()) {
-      setFormError("Project name is required.");
+      setFormError(t("workspace.projectNameRequired"));
       return;
     }
 
@@ -220,7 +220,7 @@ export function WorkspacePage() {
       setCreating(false);
       reload();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Failed to create.");
+      setFormError(err instanceof Error ? err.message : t("workspace.createFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -240,7 +240,7 @@ export function WorkspacePage() {
         {wsLoading ? (
           <Skeleton className="h-20" />
         ) : wsError || !workspace ? (
-          <ErrorAlert message={wsError ?? "Workspace not found."} />
+          <ErrorAlert message={wsError ?? t("workspace.notFound")} />
         ) : (
           <>
             <div className="mb-8 flex items-end justify-between gap-4">
@@ -261,8 +261,8 @@ export function WorkspacePage() {
               <div className="flex items-center gap-2">
                 {!creating && (
                   <Button onClick={() => setCreating(true)}>
-                    <Plus className="size-4" aria-hidden />
-                    {t("common.create")} project
+                  <Plus className="size-4" aria-hidden />
+                  {t("workspace.createProject")}
                   </Button>
                 )}
                 {workspace.role === "Owner" && (
@@ -285,7 +285,7 @@ export function WorkspacePage() {
               >
                 {formError && <ErrorAlert message={formError} />}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_140px]">
-                  <Field label="Name" htmlFor="proj-name">
+                  <Field label={t("workspace.projName")} htmlFor="proj-name">
                     <Input
                       id="proj-name"
                       placeholder="Website Ban Hang"
@@ -294,7 +294,7 @@ export function WorkspacePage() {
                       autoFocus
                     />
                   </Field>
-                  <Field label="Key" htmlFor="proj-key" hint={autoKey}>
+                  <Field label={t("workspace.projKey")} htmlFor="proj-key" hint={autoKey}>
                     <Input
                       id="proj-key"
                       placeholder="WBH"
@@ -305,20 +305,22 @@ export function WorkspacePage() {
                     />
                   </Field>
                 </div>
-                <Field label="Description" htmlFor="proj-desc">
+                <Field label={t("workspace.projDescription")} htmlFor="proj-desc">
                   <Input
                     id="proj-desc"
-                    placeholder="What does this project deliver?"
+                    placeholder={t("workspace.projDescPlaceholder")}
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                   />
                 </Field>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={submitting}>
-                    {submitting ? "Creating…" : "Create project"}
+                    {submitting
+                      ? t("workspace.creatingProject")
+                      : t("workspace.createProjectBtn")}
                   </Button>
                   <Button variant="ghost" onClick={() => setCreating(false)}>
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                 </div>
               </form>
@@ -338,15 +340,14 @@ export function WorkspacePage() {
                   <FolderKanban className="size-6" aria-hidden />
                 </span>
                 <p className="font-display text-lg font-semibold">
-                  No projects yet
+                  {t("workspace.noProjectsYet")}
                 </p>
                 <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                  Projects hold your boards and tasks. Create the first one in
-                  this workspace.
+                  {t("workspace.noProjectsDesc")}
                 </p>
                 <Button className="mt-5" onClick={() => setCreating(true)}>
                   <Plus className="size-4" aria-hidden />
-                  New project
+                  {t("workspace.newProject")}
                 </Button>
               </div>
             ) : (
@@ -373,7 +374,9 @@ export function WorkspacePage() {
                             e.stopPropagation();
                             setPendingDeleteProject(project);
                           }}
-                          aria-label={`Archive ${project.name}`}
+                          aria-label={t("workspace.archiveNamedAria", {
+                            name: project.name,
+                          })}
                           className="absolute right-2 top-2 z-10 rounded p-1 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-destructive group-hover:opacity-100"
                         >
                           <Trash2 className="size-3.5" aria-hidden />
@@ -397,7 +400,10 @@ export function WorkspacePage() {
                         <div className="mt-auto pt-4">
                           <div className="mb-1.5 flex justify-between font-mono text-[11px] text-muted-foreground">
                             <span>
-                              {project.done}/{project.total} done
+                              {t("workspace.progressDone", {
+                                done: project.done,
+                                total: project.total,
+                              })}
                             </span>
                             <span>{percent}%</span>
                           </div>
@@ -442,7 +448,7 @@ export function WorkspacePage() {
                 >
                   {inviteError && <ErrorAlert message={inviteError} />}
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_150px]">
-                    <Field label="Email" htmlFor="invite-email">
+                    <Field label={t("workspace.emailLabel")} htmlFor="invite-email">
                       <Input
                         id="invite-email"
                         type="email"
@@ -452,24 +458,26 @@ export function WorkspacePage() {
                         autoFocus
                       />
                     </Field>
-                    <Field label="Role" htmlFor="invite-role">
+                    <Field label={t("workspace.roleLabel")} htmlFor="invite-role">
                       <select
                         id="invite-role"
                         value={inviteRole}
                         onChange={(event) => setInviteRole(event.target.value)}
                         className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
                       >
-                        <option>Member</option>
-                        <option>Admin</option>
+                        <option value="Member">{t("common.member")}</option>
+                        <option value="Admin">{t("common.admin")}</option>
                       </select>
                     </Field>
                   </div>
                   <div className="flex gap-2">
                     <Button type="submit" disabled={inviteSubmitting}>
-                      {inviteSubmitting ? "Inviting…" : "Send invite"}
+                      {inviteSubmitting
+                        ? t("workspace.inviting")
+                        : t("workspace.sendInvite")}
                     </Button>
                     <Button variant="ghost" onClick={() => setInviting(false)}>
-                      Cancel
+                      {t("common.cancel")}
                     </Button>
                   </div>
                 </form>
@@ -509,7 +517,7 @@ export function WorkspacePage() {
 
       {pendingDeleteWorkspace && (
         <ConfirmDialog
-          title={t("task.delete") + " workspace?"}
+          title={t("workspace.deleteWorkspaceTitle")}
           message={t("task.deleteConfirm")}
           onConfirm={() => {
             setPendingDeleteWorkspace(false);
@@ -521,8 +529,10 @@ export function WorkspacePage() {
 
       {pendingDeleteProject && (
         <ConfirmDialog
-          title={t("task.delete") + " project?"}
-          message={`\"${pendingDeleteProject.name}\" will be archived and hidden from the board.`}
+          title={t("workspace.archiveProjectTitle")}
+          message={t("workspace.archiveProjectMsg", {
+            name: pendingDeleteProject.name,
+          })}
           onConfirm={() => {
             const project = pendingDeleteProject;
             setPendingDeleteProject(null);

@@ -1,5 +1,6 @@
 import { KanbanSquare, Check } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 
 interface AuthLayoutProps {
@@ -11,11 +12,11 @@ interface AuthLayoutProps {
   children: ReactNode;
 }
 
-const HIGHLIGHTS = [
-  "Kanban board with drag & drop",
-  "Role-based workspaces",
-  "Sprint planning built in",
-];
+const HIGHLIGHT_KEYS = [
+  "workspace.authFeature1",
+  "workspace.authFeature2",
+  "workspace.authFeature3",
+] as const;
 
 export function AuthLayout({
   title,
@@ -25,6 +26,7 @@ export function AuthLayout({
   footerLinkLabel,
   children,
 }: AuthLayoutProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex min-h-dvh">
       <div className="relative hidden flex-1 flex-col justify-between overflow-hidden border-r border-border bg-surface p-10 lg:flex">
@@ -48,22 +50,22 @@ export function AuthLayout({
 
         <div className="max-w-md">
           <p className="font-display text-4xl font-semibold leading-tight tracking-tight text-balance">
-            Where your team ships.
+            {t("workspace.authTagline")}
           </p>
           <ul className="mt-6 space-y-3">
-            {HIGHLIGHTS.map((item) => (
-              <li key={item} className="flex items-center gap-3 text-sm">
+            {HIGHLIGHT_KEYS.map((key) => (
+              <li key={key} className="flex items-center gap-3 text-sm">
                 <span className="flex size-5 items-center justify-center rounded-md bg-primary/15 text-primary">
                   <Check className="size-3" aria-hidden />
                 </span>
-                {item}
+                {t(key)}
               </li>
             ))}
           </ul>
         </div>
 
         <p className="font-mono text-xs text-muted-foreground">
-          plan · build · review · ship
+          {t("workspace.authMotto")}
         </p>
       </div>
 

@@ -56,9 +56,9 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
       setOptions("");
       await refresh();
       onChanged();
-      push("Field created");
+      push(t("field.created"));
     } catch (err) {
-      push(err instanceof Error ? err.message : "Failed to create field.", "error");
+      push(err instanceof Error ? err.message : t("field.createFailed"), "error");
     } finally {
       setBusy(false);
     }
@@ -70,7 +70,7 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
       setFields((current) => (current ?? []).filter((f) => f.id !== field.id));
       onChanged();
     } catch (err) {
-      push(err instanceof Error ? err.message : "Failed to delete field.", "error");
+      push(err instanceof Error ? err.message : t("field.deleteFailed"), "error");
     }
   }
 
@@ -127,7 +127,7 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
       </form>
 
       {!fields ? (
-        <p className="text-xs text-muted-foreground">Loading…</p>
+        <p className="text-xs text-muted-foreground">{t("common.loading")}</p>
       ) : fields.length === 0 ? (
         <p className="text-xs text-muted-foreground">
           {t("field.noFields")}
@@ -147,7 +147,7 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
               <button
                 type="button"
                 onClick={() => void handleDelete(field)}
-                aria-label={`Delete field ${field.name}`}
+                aria-label={t("field.deleteAria", { name: field.name })}
                 className="rounded-full p-0.5 text-muted-foreground transition-colors duration-150 hover:text-destructive"
               >
                 <Trash2 className="size-3" aria-hidden />

@@ -51,9 +51,9 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
       setName("");
       const fresh = await getTemplates(workspaceId, projectId);
       setTemplates(fresh);
-      push("Template created");
+      push(t("template.created"));
     } catch (err) {
-      push(err instanceof Error ? err.message : "Failed to create template.", "error");
+      push(err instanceof Error ? err.message : t("templates.createFailed"), "error");
     } finally {
       setBusy(false);
     }
@@ -62,10 +62,10 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
   async function handleApply(template: TemplateResponse) {
     try {
       await applyTemplate(workspaceId, projectId, template.id);
-      push(`Applied "${template.name}" — task created`);
+      push(t("template.applied", { name: template.name }));
       onChanged();
     } catch (err) {
-      push(err instanceof Error ? err.message : "Failed to apply template.", "error");
+      push(err instanceof Error ? err.message : t("templates.applyFailed"), "error");
     }
   }
 
@@ -74,7 +74,7 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
       await deleteTemplate(workspaceId, projectId, template.id);
       setTemplates((current) => (current ?? []).filter((t) => t.id !== template.id));
     } catch (err) {
-      push(err instanceof Error ? err.message : "Failed to delete template.", "error");
+      push(err instanceof Error ? err.message : t("templates.deleteFailed"), "error");
     }
   }
 
@@ -93,7 +93,7 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder={t("template.namePlaceholder")}
-          aria-label="Template name"
+          aria-label={t("templates.nameAria")}
           maxLength={60}
           className="min-w-0 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
         />
@@ -104,7 +104,9 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
           className="rounded-md border border-border bg-card px-1.5 py-1.5 text-sm focus:border-primary focus:outline-none"
         >
           {["Low", "Medium", "High", "Critical"].map((p) => (
-            <option key={p}>{p}</option>
+            <option key={p} value={p}>
+              {t(`task.${p.toLowerCase()}`)}
+            </option>
           ))}
         </select>
         <button
@@ -118,7 +120,7 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
       </form>
 
       {!templates ? (
-        <p className="text-xs text-muted-foreground">Loading…</p>
+        <p className="text-xs text-muted-foreground">{t("common.loading")}</p>
       ) : templates.length === 0 ? (
         <p className="text-xs text-muted-foreground">{t("template.noTemplates")}</p>
       ) : (
@@ -140,16 +142,16 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
                 <button
                   type="button"
                   onClick={() => void handleApply(template)}
-                  title="Create task from template"
+                  title={t("templates.createFromTitle")}
                   className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 font-medium transition-colors duration-150 hover:border-primary hover:text-primary"
                 >
                   <Play className="size-3" aria-hidden />
-                  Apply
+                  {t("template.apply")}
                 </button>
                 <button
                   type="button"
                   onClick={() => void handleDelete(template)}
-                  aria-label={`Delete template ${template.name}`}
+                  aria-label={t("templates.deleteAria", { name: template.name })}
                   className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-destructive"
                 >
                   <Trash2 className="size-3.5" aria-hidden />

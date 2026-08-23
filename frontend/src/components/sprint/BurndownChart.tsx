@@ -1,5 +1,6 @@
 import { useId } from "react";
 import { TrendingDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { TaskItemResponse } from "../../types/api";
 
 const DAY_MS = 86_400_000;
@@ -45,6 +46,7 @@ export function BurndownChart({
   tasks,
   className = "",
 }: BurndownChartProps) {
+  const { t } = useTranslation();
   const gradientId = useId();
 
   const total = tasks.length;
@@ -57,7 +59,7 @@ export function BurndownChart({
       <div
         className={`flex items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-sm text-muted-foreground ${className}`}
       >
-        Add a start and end date to track the burndown.
+        {t("sprint.burndownAddDates")}
       </div>
     );
   }
@@ -67,7 +69,7 @@ export function BurndownChart({
       <div
         className={`flex items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-sm text-muted-foreground ${className}`}
       >
-        No tasks in this sprint yet — add some to see the burndown.
+        {t("sprint.burndownNoTasks")}
       </div>
     );
   }
@@ -129,7 +131,7 @@ export function BurndownChart({
       <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1">
         <h3 className="inline-flex items-center gap-1.5 font-display text-sm font-semibold">
           <TrendingDown className="size-4 text-primary" aria-hidden />
-          Burndown
+          {t("reports.burndown")}
         </h3>
         <div className="ml-auto flex items-center gap-4 font-mono text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
@@ -144,7 +146,7 @@ export function BurndownChart({
                 strokeDasharray="4 3"
               />
             </svg>
-            Ideal
+            {t("sprint.ideal")}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <svg width="18" height="6" aria-hidden>
@@ -158,7 +160,7 @@ export function BurndownChart({
               />
               <circle cx="9" cy="3" r="2.5" fill="var(--color-primary)" />
             </svg>
-            Remaining
+            {t("sprint.remaining")}
           </span>
         </div>
       </div>
@@ -166,7 +168,7 @@ export function BurndownChart({
       <svg
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Sprint burndown chart, ${total} tasks`}
+        aria-label={t("sprint.sprintChartAria", { count: total })}
         className="w-full"
       >
         <defs>
@@ -231,7 +233,7 @@ export function BurndownChart({
               fill="var(--color-muted-foreground)"
               fontFamily="var(--font-mono)"
             >
-              today
+              {t("sprint.today")}
             </text>
           </g>
         )}
@@ -271,7 +273,7 @@ export function BurndownChart({
 
       {lastVisibleDay < totalDays - 1 && (
         <p className="mt-1 text-right font-mono text-[10px] text-muted-foreground">
-          {totalDays - 1 - lastVisibleDay}d remaining in sprint
+          {t("sprint.daysRemaining", { days: totalDays - 1 - lastVisibleDay })}
         </p>
       )}
     </div>

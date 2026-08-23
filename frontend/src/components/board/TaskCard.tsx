@@ -1,16 +1,21 @@
+import { useTranslation } from "react-i18next";
 import { Check, Clock, Link2 } from "lucide-react";
 import type { TaskItemResponse, WorkspaceMemberResponse } from "../../types/api";
 import { formatMinutes } from "../../lib/format";
 import { Avatar } from "../ui/Avatar";
 
-const priorityMeta: Record<
-  TaskItemResponse["priority"],
-  { label: string; dot: string }
-> = {
-  Critical: { label: "Urgent", dot: "bg-destructive" },
-  High: { label: "High", dot: "bg-amber-300" },
-  Medium: { label: "Medium", dot: "bg-primary" },
-  Low: { label: "Low", dot: "bg-muted-foreground/50" },
+const priorityDot: Record<TaskItemResponse["priority"], string> = {
+  Critical: "bg-destructive",
+  High: "bg-amber-300",
+  Medium: "bg-primary",
+  Low: "bg-muted-foreground/50",
+};
+
+const priorityLabelKey: Record<TaskItemResponse["priority"], string> = {
+  Critical: "task.urgent",
+  High: "task.high",
+  Medium: "task.medium",
+  Low: "task.low",
 };
 
 interface TaskCardProps {
@@ -32,7 +37,7 @@ export function TaskCard({
   selected = false,
   onToggleSelect,
 }: TaskCardProps) {
-  const priority = priorityMeta[task.priority];
+  const { t } = useTranslation();
   const assignee = members.find((m) => m.userId === task.assigneeId);
   const overdue =
     task.dueDateUtc !== null &&
@@ -56,7 +61,7 @@ export function TaskCard({
           ? "border-primary ring-1 ring-primary/40"
           : "border-border hover:border-border-strong"
       }`}
-      aria-label={`Task: ${task.title}`}
+      aria-label={t("taskCard.aria", { title: task.title })}
     >
       <div className="flex items-start justify-between gap-2">
         {(selectionMode || selected) && onToggleSelect && (
@@ -64,7 +69,7 @@ export function TaskCard({
             type="button"
             role="checkbox"
             aria-checked={selected}
-            aria-label={`Select task ${task.title}`}
+            aria-label={t("taskCard.selectAria", { title: task.title })}
             onClick={(event) => {
               event.stopPropagation();
               onToggleSelect(task.id);
@@ -85,7 +90,7 @@ export function TaskCard({
             event.stopPropagation();
             onDelete(task);
           }}
-          aria-label={`Delete task ${task.title}`}
+          aria-label={t("taskCard.deleteAria", { title: task.title })}
           className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-all duration-150 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
         >
           <svg viewBox="0 0 16 16" className="size-3.5" fill="currentColor" aria-hidden>
@@ -96,12 +101,12 @@ export function TaskCard({
 
       <div className="mt-2.5 flex items-center gap-2">
         <span className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
-          <span className={`size-1.5 rounded-full ${priority.dot}`} aria-hidden />
-          {priority.label}
+          <span className={`size-1.5 rounded-full ${priorityDot[task.priority]}`} aria-hidden />
+          {t(priorityLabelKey[task.priority])}
         </span>
         {task.dueDateUtc && (
           <time
-            title={overdue ? "Overdue" : undefined}
+            title={overdue ? t("taskCard.overdue") : undefined}
             className={`font-mono text-[11px] ${overdue ? "font-semibold text-destructive" : "text-muted-foreground"}`}
           >
             {new Date(task.dueDateUtc).toLocaleDateString(undefined, {
@@ -112,11 +117,11 @@ export function TaskCard({
         )}
         {task.isBlocked && (
           <span
-            title="Blocked by dependencies"
+            title={t("task.blockedByDependencies")}
             className="flex items-center gap-1 rounded-md bg-destructive/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-destructive"
           >
             <Link2 className="size-3" aria-hidden />
-            Blocked
+            {t("task.blocked")}
           </span>
         )}
         {(task.totalLoggedMinutes ?? 0) > 0 && (
@@ -128,7 +133,9 @@ export function TaskCard({
         {assignee && (
           <span
             className="ml-auto"
-            title={`Assigned to ${assignee.displayName || assignee.username}`}
+            title={t("taskCard.assigneeAria", {
+              name: assignee.displayName || assignee.username,
+            })}
           >
             <Avatar name={assignee.displayName || assignee.username} id={assignee.userId} />
           </span>

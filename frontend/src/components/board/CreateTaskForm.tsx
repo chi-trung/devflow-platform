@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../ui/Button";
 import { Field } from "../ui/Field";
 import { Input } from "../ui/Input";
@@ -16,6 +17,7 @@ interface CreateTaskFormProps {
 }
 
 export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] =
@@ -29,7 +31,7 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
     setError(null);
 
     if (!title.trim()) {
-      setError("Title is required.");
+      setError(t("task.titleRequiredCreate"));
       return;
     }
 
@@ -48,7 +50,9 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
       setPriority("Medium");
       setDueDate("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create task.");
+      setError(
+        err instanceof Error ? err.message : t("board.createTaskFailed"),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -63,17 +67,17 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
       {error && <ErrorAlert message={error} />}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_150px_150px]">
-        <Field label="Title" htmlFor="task-title">
+        <Field label={t("task.title")} htmlFor="task-title">
           <Input
             id="task-title"
-            placeholder="What needs to be done?"
+            placeholder={t("task.whatNeedsToBeDone")}
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             autoFocus
           />
         </Field>
 
-        <Field label="Priority" htmlFor="task-priority">
+        <Field label={t("task.priority")} htmlFor="task-priority">
           <select
             id="task-priority"
             value={priority}
@@ -82,14 +86,14 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
             }
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
           >
-            <option>Low</option>
-            <option>Medium</option>
-            <option>High</option>
-            <option>Critical</option>
+            <option value="Low">{t("task.low")}</option>
+            <option value="Medium">{t("task.medium")}</option>
+            <option value="High">{t("task.high")}</option>
+            <option value="Critical">{t("task.critical")}</option>
           </select>
         </Field>
 
-        <Field label="Due date" htmlFor="task-due">
+        <Field label={t("task.dueDate")} htmlFor="task-due">
           <Input
             id="task-due"
             type="date"
@@ -99,10 +103,10 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
         </Field>
       </div>
 
-      <Field label="Description" htmlFor="task-desc">
+      <Field label={t("task.description")} htmlFor="task-desc">
         <Input
           id="task-desc"
-          placeholder="Optional details…"
+          placeholder={t("task.optionalDetails")}
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
@@ -110,10 +114,10 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
 
       <div className="flex gap-2">
         <Button type="submit" disabled={submitting}>
-          {submitting ? "Adding…" : "Add task"}
+          {submitting ? t("task.adding") : t("task.addTask")}
         </Button>
         <Button variant="ghost" onClick={onCancel}>
-          Cancel
+          {t("common.cancel")}
         </Button>
       </div>
     </form>

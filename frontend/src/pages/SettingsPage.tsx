@@ -80,6 +80,7 @@ function EmailEventRow({
 }
 
 export function SettingsPage() {
+  const { t } = useTranslation();
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const { push } = useToast();
@@ -96,11 +97,11 @@ export function SettingsPage() {
   const [confirmSignOut, setConfirmSignOut] = useState(false);
 
   const EMAIL_EVENTS: { key: string; label: string; hint: string }[] = [
-    { key: "assigned", label: "Task assigned to me", hint: "Someone assigns you a task" },
-    { key: "mentioned", label: "I'm mentioned", hint: "Your name appears in a comment" },
-    { key: "statusChanged", label: "Status changed on my tasks", hint: "A task you own moves columns" },
-    { key: "dueSoon", label: "Due date reminders", hint: "24h before a task of yours is due" },
-    { key: "sprintStarted", label: "Sprint started", hint: "A sprint in your workspace kicks off" },
+    { key: "assigned", label: t("settings.assignedToMe"), hint: t("settings.assignedHint") },
+    { key: "mentioned", label: t("settings.imMentioned"), hint: t("settings.mentionedHint") },
+    { key: "statusChanged", label: t("settings.statusChanged"), hint: t("settings.statusChangedHint") },
+    { key: "dueSoon", label: t("settings.dueSoon"), hint: t("settings.dueSoonHint") },
+    { key: "sprintStarted", label: t("settings.sprintStarted"), hint: t("settings.sprintStartedHint") },
   ];
 
   function readEmailEvent(key: string): boolean {
@@ -134,20 +135,20 @@ export function SettingsPage() {
 
   function handleThemeChange(_next: Theme) {
     saveSettings({}, emailNotifications);
-    push("Appearance updated");
+    push(t("settings.appearanceUpdated"));
   }
 
   function handleEmailToggle(value: boolean) {
     setEmailNotifications(value);
     saveSettings({ emailNotifications: value }, value);
-    push(value ? "Email notifications on" : "Email notifications off");
+    push(value ? t("settings.emailOn") : t("settings.emailOff"));
   }
 
   async function handleSignOutAll() {
     setConfirmSignOut(false);
     localStorage.removeItem("devflow.settings.email");
     await logout();
-    push("Signed out");
+    push(t("settings.signedOut"));
     navigate("/login");
   }
 
@@ -156,27 +157,27 @@ export function SettingsPage() {
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-8">
         <header>
           <h1 className="font-display text-2xl font-semibold tracking-tight">
-            Settings
+            {t("settings.title")}
           </h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Preferences are saved on this device.
+            {t("settings.preferences")}
           </p>
         </header>
 
         <section
-          aria-label="Account"
+          aria-label={t("settings.account")}
           className="rounded-xl border border-border bg-surface p-5"
         >
           <div className="mb-4 flex items-center gap-2.5">
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <UserRound className="size-4" aria-hidden />
             </span>
-            <h2 className="font-display font-semibold">Account</h2>
+            <h2 className="font-display font-semibold">{t("settings.account")}</h2>
             <Link
               to="/profile"
               className="ml-auto text-sm font-medium text-primary underline-offset-2 hover:underline"
             >
-              Edit profile
+              {t("settings.editProfile")}
             </Link>
           </div>
           <div className="flex items-center gap-3.5">
@@ -197,21 +198,21 @@ export function SettingsPage() {
         </section>
 
         <section
-          aria-label="Appearance"
+          aria-label={t("settings.appearance")}
           className="rounded-xl border border-border bg-surface p-5"
         >
           <div className="mb-4 flex items-center gap-2.5">
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Palette className="size-4" aria-hidden />
             </span>
-            <h2 className="font-display font-semibold">Appearance</h2>
+            <h2 className="font-display font-semibold">{t("settings.appearance")}</h2>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-medium">Color theme</p>
+              <p className="text-sm font-medium">{t("settings.colorTheme")}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Dark is the DevFlow signature look; Light is great in daylight.
+                {t("settings.themeDesc")}
               </p>
             </div>
             <ThemeToggle onThemeChange={handleThemeChange} />
@@ -221,28 +222,27 @@ export function SettingsPage() {
         <LanguageSection />
 
         <section
-          aria-label="Notification preferences"
+          aria-label={t("settings.notifications")}
           className="rounded-xl border border-border bg-surface p-5"
         >
           <div className="mb-4 flex items-center gap-2.5">
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <BellRing className="size-4" aria-hidden />
             </span>
-            <h2 className="font-display font-semibold">Notifications</h2>
+            <h2 className="font-display font-semibold">{t("settings.notifications")}</h2>
           </div>
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium">Email notifications</p>
+              <p className="text-sm font-medium">{t("settings.emailNotifications")}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Get an email when someone assigns or mentions you. (Coming soon
-                — preference saved locally for now.)
+                {t("settings.emailDesc")} ({t("settings.emailComingSoon")})
               </p>
             </div>
             <Switch
               checked={emailNotifications}
               onChange={handleEmailToggle}
-              label="Email notifications"
+              label={t("settings.emailNotifications")}
             />
           </div>
 
@@ -260,7 +260,7 @@ export function SettingsPage() {
                 />
               ))}
               <p className="font-mono text-[10px] text-muted-foreground">
-                Saved locally — server-side delivery lands with the email-preferences API.
+                {t("settings.savedLocally")}
               </p>
             </div>
           )}
@@ -269,7 +269,7 @@ export function SettingsPage() {
         <WebhooksSection />
 
         <section
-          aria-label="Danger zone"
+          aria-label={t("settings.dangerZone")}
           className="rounded-xl border border-destructive/30 bg-destructive/5 p-5"
         >
           <div className="mb-4 flex items-center gap-2.5">
@@ -277,20 +277,20 @@ export function SettingsPage() {
               <TriangleAlert className="size-4" aria-hidden />
             </span>
             <h2 className="font-display font-semibold text-destructive">
-              Danger Zone
+              {t("settings.dangerZone")}
             </h2>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-medium">Sign out</p>
+              <p className="text-sm font-medium">{t("settings.signOut")}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Ends your session on this device and clears local preferences.
+                {t("settings.signOutDesc")}
               </p>
             </div>
             <Button variant="danger" onClick={() => setConfirmSignOut(true)}>
               <LogOut className="size-4" aria-hidden />
-              Sign out
+              {t("settings.signOut")}
             </Button>
           </div>
         </section>
@@ -298,9 +298,9 @@ export function SettingsPage() {
 
       {confirmSignOut && (
         <ConfirmDialog
-          title="Sign out?"
-          message="You'll need to sign in again to access your workspaces."
-          confirmLabel="Sign out"
+          title={t("settings.signOutTitle")}
+          message={t("settings.signOutConfirmMsg")}
+          confirmLabel={t("settings.signOut")}
           onConfirm={() => void handleSignOutAll()}
           onCancel={() => setConfirmSignOut(false)}
         />
@@ -310,7 +310,7 @@ export function SettingsPage() {
 }
 
 function LanguageSection() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { push } = useToast();
 
   const languages = [
@@ -320,21 +320,21 @@ function LanguageSection() {
 
   return (
     <section
-      aria-label="Language"
+      aria-label={t("settings.language")}
       className="rounded-xl border border-border bg-surface p-5"
     >
       <div className="mb-4 flex items-center gap-2.5">
         <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <Globe className="size-4" aria-hidden />
         </span>
-        <h2 className="font-display font-semibold">Language</h2>
+        <h2 className="font-display font-semibold">{t("settings.language")}</h2>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-medium">Language</p>
+          <p className="text-sm font-medium">{t("settings.language")}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Choose your preferred language for the interface.
+            {t("settings.languageDesc")}
           </p>
         </div>
         <div className="flex gap-2">
@@ -345,7 +345,7 @@ function LanguageSection() {
               onClick={() => {
                 void i18n.changeLanguage(lang.code);
                 localStorage.setItem("devflow.language", lang.code);
-                push(`Language changed to ${lang.label}`);
+                push(t("settings.languageChangedTo", { language: lang.label }));
               }}
               className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors duration-150 ${
                 i18n.language === lang.code

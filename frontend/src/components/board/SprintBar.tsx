@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { CalendarRange, Plus, Play, Flag } from "lucide-react";
 import { api } from "../../lib/api";
 import { Button } from "../ui/Button";
@@ -34,6 +35,7 @@ export function SprintBar({
   workspaceId,
   projectId,
 }: SprintBarProps) {
+  const { t } = useTranslation();
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [goal, setGoal] = useState("");
@@ -50,7 +52,7 @@ export function SprintBar({
   async function handleCreate(event: FormEvent) {
     event.preventDefault();
     if (!name.trim()) {
-      setError("Sprint name is required.");
+      setError(t("sprint.nameRequired"));
       return;
     }
     setBusy(true);
@@ -65,7 +67,7 @@ export function SprintBar({
       setCreating(false);
       onChanged();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create sprint.");
+      setError(err instanceof Error ? err.message : t("sprint.createFailed"));
     } finally {
       setBusy(false);
     }
@@ -73,7 +75,7 @@ export function SprintBar({
 
   async function handleStart(sprintId: string) {
     if (!startDate || !endDate) {
-      setError("Pick both start and end dates.");
+      setError(t("sprint.pickDates"));
       return;
     }
     setBusy(true);
@@ -91,7 +93,7 @@ export function SprintBar({
       setEndDate("");
       onChanged();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to start sprint.");
+      setError(err instanceof Error ? err.message : t("sprint.startFailed"));
     } finally {
       setBusy(false);
     }
@@ -104,7 +106,7 @@ export function SprintBar({
       await api(`${base}/${sprintId}/complete`, { method: "POST" });
       onChanged();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to complete sprint.");
+      setError(err instanceof Error ? err.message : t("sprint.completeFailed"));
     } finally {
       setBusy(false);
     }
@@ -116,18 +118,18 @@ export function SprintBar({
         <CalendarRange className="size-4 shrink-0 text-primary" aria-hidden />
 
         <label className="flex items-center gap-2 text-sm">
-          <span className="sr-only">Sprint filter</span>
+          <span className="sr-only">{t("sprint.filterSrOnly")}</span>
           <select
             value={filter}
             onChange={(event) => onFilterChange(event.target.value)}
             className="rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
           >
-            <option value="all">All tasks</option>
-            <option value="none">No sprint</option>
+            <option value="all">{t("sprint.allTasks")}</option>
+            <option value="none">{t("sprint.noSprintFilter")}</option>
             {sprints.map((sprint) => (
               <option key={sprint.id} value={sprint.id}>
                 {sprint.name}
-                {sprint.status !== "Completed" ? "" : " (done)"}
+                {sprint.status !== "Completed" ? "" : t("sprint.doneSuffix")}
               </option>
             ))}
           </select>
@@ -136,7 +138,7 @@ export function SprintBar({
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {active && (
             <>
-              <Badge tone="teal">active</Badge>
+              <Badge tone="teal">{t("sprint.active")}</Badge>
               <span className="text-sm font-medium">{active.name}</span>
               <span className="font-mono text-[11px] text-muted-foreground">
                 {fmt(active.startDateUtc)} – {fmt(active.endDateUtc)}
@@ -149,7 +151,7 @@ export function SprintBar({
                   onClick={() => void handleComplete(active.id)}
                 >
                   <Flag className="size-3.5" aria-hidden />
-                  Complete
+                  {t("sprint.complete")}
                 </Button>
               )}
             </>
@@ -166,24 +168,24 @@ export function SprintBar({
                     onClick={() => setStartingId(sprint.id)}
                   >
                     <Play className="size-3.5" aria-hidden />
-                    Start “{sprint.name}”
+                    {t("sprint.start")} “{sprint.name}”
                   </Button>
                 )
               ) : (
                 <span key={sprint.id} className="text-sm text-muted-foreground">
-                  Planned: {sprint.name}
+                  {t("sprint.plannedNamed", { name: sprint.name })}
                 </span>
               ),
             )}
 
           {!active && planned.length === 0 && (
-            <span className="text-sm text-muted-foreground">No sprints yet</span>
+            <span className="text-sm text-muted-foreground">{t("sprint.noSprintsYet")}</span>
           )}
 
           {canManage && !creating && (
             <Button size="sm" onClick={() => setCreating(true)}>
               <Plus className="size-3.5" aria-hidden />
-              New sprint
+              {t("sprint.newSprint")}
             </Button>
           )}
         </div>
@@ -195,25 +197,25 @@ export function SprintBar({
         <form onSubmit={handleCreate} className="flex flex-col gap-3 rise" noValidate>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr]">
             <Input
-              placeholder="Sprint name — e.g. Sprint 12"
+              placeholder={t("sprint.sprintNamePlaceholderLong")}
               value={name}
               onChange={(event) => setName(event.target.value)}
               autoFocus
-              aria-label="Sprint name"
+              aria-label={t("sprint.sprintName")}
             />
             <Input
-              placeholder="Goal — what should this sprint achieve?"
+              placeholder={t("sprint.goalPlaceholderLong")}
               value={goal}
               onChange={(event) => setGoal(event.target.value)}
-              aria-label="Sprint goal"
+              aria-label={t("sprint.goalAria")}
             />
           </div>
           <div className="flex gap-2">
             <Button type="submit" size="sm" disabled={busy}>
-              {busy ? "Creating…" : "Create sprint"}
+              {busy ? t("sprint.creating") : t("sprint.createSprint")}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setCreating(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
         </form>
@@ -222,7 +224,7 @@ export function SprintBar({
       {startingId && (
         <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-3 rise">
           <label className="flex flex-col gap-1 text-xs font-medium">
-            Start date
+            {t("sprint.startDate")}
             <Input
               type="date"
               value={startDate}
@@ -231,7 +233,7 @@ export function SprintBar({
             />
           </label>
           <label className="flex flex-col gap-1 text-xs font-medium">
-            End date
+            {t("sprint.endDate")}
             <Input
               type="date"
               value={endDate}
@@ -240,10 +242,10 @@ export function SprintBar({
             />
           </label>
           <Button size="sm" disabled={busy} onClick={() => void handleStart(startingId)}>
-            {busy ? "Starting…" : "Confirm start"}
+            {busy ? t("sprint.starting") : t("sprint.confirmStart")}
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setStartingId(null)}>
-            Cancel
+            {t("common.cancel")}
           </Button>
         </div>
       )}

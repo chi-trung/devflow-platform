@@ -174,11 +174,11 @@ export function SprintPlanningPage() {
     try {
       await assignTaskToSprint(workspaceId, projectId, sprintId, taskId);
       const target = allSprints.find((s) => s.id === sprintId);
-      push(`Added to ${target?.name ?? "sprint"}`);
+      push(t("sprint.addedTo", { name: target?.name ?? "sprint" }));
     } catch (err) {
       reload();
-      setBoardError(err instanceof Error ? err.message : "Failed to move task.");
-      push("Couldn't move that task", "error");
+      setBoardError(err instanceof Error ? err.message : t("sprint.failedToMove"));
+      push(t("sprint.couldntMove"), "error");
     }
   }
 
@@ -190,22 +190,22 @@ export function SprintPlanningPage() {
 
     try {
       await removeTaskFromSprint(workspaceId, projectId, sprintId, taskId);
-      push("Moved to backlog");
+      push(t("sprint.movedToBacklog"));
     } catch (err) {
       reload();
-      setBoardError(err instanceof Error ? err.message : "Failed to move task.");
-      push("Couldn't move that task", "error");
+      setBoardError(err instanceof Error ? err.message : t("sprint.failedToMove"));
+      push(t("sprint.couldntMove"), "error");
     }
   }
 
   async function handleStart() {
     if (!startingId) return;
     if (!startDate || !endDate) {
-      setBoardError("Pick both start and end dates.");
+      setBoardError(t("sprint.pickDates"));
       return;
     }
     if (endDate <= startDate) {
-      setBoardError("End date must be after the start date.");
+      setBoardError(t("sprint.endDateAfterStart"));
       return;
     }
 
@@ -218,10 +218,10 @@ export function SprintPlanningPage() {
       });
       closeStart();
       reloadSprints();
-      push("Sprint started");
+      push(t("sprint.sprintStarted"));
     } catch (err) {
       setBoardError(
-        err instanceof Error ? err.message : "Failed to start sprint.",
+        err instanceof Error ? err.message : t("sprint.failedToStart"),
       );
     } finally {
       setBusy(false);
@@ -235,10 +235,10 @@ export function SprintPlanningPage() {
       await completeSprint(workspaceId, projectId, sprint.id);
       reloadSprints();
       reload();
-      push(`“${sprint.name}” completed`);
+      push(t("sprint.completedNamed", { name: sprint.name }));
     } catch (err) {
       setBoardError(
-        err instanceof Error ? err.message : "Failed to complete sprint.",
+        err instanceof Error ? err.message : t("sprint.failedToComplete"),
       );
     } finally {
       setBusy(false);
@@ -269,8 +269,8 @@ export function SprintPlanningPage() {
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">
               {project
-                ? `Group backlog work into timeboxed sprints for ${project.name}.`
-                : "Group backlog work into timeboxed sprints."}
+                ? t("sprint.planDescFor", { name: project.name })
+                : t("sprint.planDesc")}
             </p>
           </div>
           {canManage && (
@@ -322,7 +322,7 @@ export function SprintPlanningPage() {
 
             {active && (
               <section
-                aria-label="Active sprint"
+                aria-label={t("sprint.activeSprint")}
                 className="rise mb-4 rounded-xl border border-primary/30 bg-surface p-4"
               >
                 <div className="mb-1 flex flex-wrap items-center gap-2.5">
@@ -337,7 +337,7 @@ export function SprintPlanningPage() {
                   <span className="ml-auto font-mono text-[11px] text-muted-foreground">
                     {fmt(active.startDateUtc)} – {fmt(active.endDateUtc)}
                     {active.endDateUtc &&
-                      ` · ${daysLeft(active.endDateUtc)}d left`}
+                      ` · ${t("sprint.daysLeft", { days: daysLeft(active.endDateUtc) })}`}
                   </span>
                 </div>
                 {active.goal && (
@@ -379,9 +379,9 @@ export function SprintPlanningPage() {
             )}
 
             {planned.length > 0 && (
-              <section aria-label="Planned sprints" className="mb-4">
+              <section aria-label={t("sprint.plannedSprints")} className="mb-4">
                 <h2 className="mb-2 px-1 font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Planned
+                  {t("sprint.planned")}
                 </h2>
                 <div className="flex flex-col gap-2">
                   {planned.map((sprint) => (
@@ -397,11 +397,11 @@ export function SprintPlanningPage() {
                         <h3 className="text-sm font-semibold">{sprint.name}</h3>
                         <Badge tone="violet">{t("sprint.planned")}</Badge>
                         <span className="ml-auto font-mono text-[11px] text-muted-foreground">
-                          {
-                            tasks.filter((t) => t.sprintId === sprint.id)
-                              .length
-                          }{" "}
-                          tasks
+                          {t("sprint.tasksCount", {
+                            count: tasks.filter(
+                              (task) => task.sprintId === sprint.id,
+                            ).length,
+                          })}
                         </span>
                         {canManage && startingId !== sprint.id && (
                           <Button
@@ -459,7 +459,7 @@ export function SprintPlanningPage() {
                             disabled={busy}
                             onClick={closeStart}
                           >
-                            Cancel
+                            {t("common.cancel")}
                           </Button>
                         </div>
                       )}
@@ -469,7 +469,7 @@ export function SprintPlanningPage() {
               </section>
             )}
 
-            <section aria-label="Plan work" className="mb-2 mt-1">
+            <section aria-label={t("sprint.planWork")} className="mb-2 mt-1">
               <h2 className="mb-2 px-1 font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {t("sprint.planWork")}
               </h2>
@@ -489,7 +489,7 @@ export function SprintPlanningPage() {
             </section>
 
             {completed.length > 0 && (
-              <section aria-label="Completed sprints" className="mt-6">
+              <section aria-label={t("sprint.completedSprints")} className="mt-6">
                 <h2 className="mb-2 px-1 font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {t("sprint.completed")}
                 </h2>
@@ -540,14 +540,14 @@ export function SprintPlanningPage() {
                   aria-hidden
                 />
                 <p className="text-sm text-muted-foreground">
-                  No tasks yet — create tasks on the{" "}
+                  {t("sprint.noTasksYetBefore")}{" "}
                   <Link
                     to={`/workspaces/${workspaceId}/projects/${projectId}`}
                     className="font-medium text-primary underline-offset-2 hover:underline"
                   >
-                    board
+                    {t("sprint.boardLink")}
                   </Link>{" "}
-                  first, then drag them into a sprint here.
+                  {t("sprint.noTasksYetAfter")}
                 </p>
               </div>
             )}
@@ -562,16 +562,16 @@ export function SprintPlanningPage() {
           onClose={() => setModalOpen(false)}
           onCreated={() => {
             reloadSprints();
-            push("Sprint created");
+            push(t("sprint.sprintCreated"));
           }}
         />
       )}
 
       {pendingComplete && (
         <ConfirmDialog
-          title={`Complete “${pendingComplete.name}”?`}
-          message="The sprint will be marked as done. Tasks that aren't finished stay assigned to it."
-          confirmLabel="Complete sprint"
+          title={t("sprint.completeNamedTitle", { name: pendingComplete.name })}
+          message={t("sprint.completeConfirm")}
+          confirmLabel={t("sprint.completeSprint")}
           onConfirm={() => void handleComplete(pendingComplete)}
           onCancel={() => setPendingComplete(null)}
         />

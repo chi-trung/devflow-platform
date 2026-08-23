@@ -143,7 +143,7 @@ export function CommandPalette({
     list.push({
       id: "signout",
       label: t("userMenu.logout"),
-      group: "Actions",
+      group: t("commandPalette.actionsGroup"),
       keywords: "logout exit",
       run: () => void logout(),
     });
@@ -181,7 +181,7 @@ export function CommandPalette({
         {
           id: `task-${task.id}`,
           label: `${task.projectKey} · ${task.title}`,
-          group: "Tasks",
+          group: t("commandPalette.tasksGroup"),
           keywords: task.status,
           run: () =>
             navigate(
@@ -266,10 +266,10 @@ export function CommandPalette({
   let lastGroup = "";
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-label="Command palette">
+    <div className="fixed inset-0 z-50" role="dialog" aria-label={t("commandPalette.paletteAria")}>
       <button
         type="button"
-        aria-label="Close palette"
+        aria-label={t("commandPalette.closePalette")}
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-black/50"
       />
@@ -305,7 +305,7 @@ export function CommandPalette({
               className="rounded-md border border-border bg-surface px-1.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:border-border-strong focus:outline-none"
             >
               <option value="">{t("commandPalette.anyStatus")}</option>
-              <option value="Backlog">Backlog</option>
+              <option value="Backlog">{t("task.backlogStatus")}</option>
               <option value="InProgress">{t("board.inProgress")}</option>
               <option value="InReview">{t("board.inReview")}</option>
               <option value="Done">{t("board.done")}</option>
@@ -317,10 +317,10 @@ export function CommandPalette({
               className="rounded-md border border-border bg-surface px-1.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:border-border-strong focus:outline-none"
             >
               <option value="">{t("commandPalette.anyPriority")}</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Critical">Critical</option>
+              <option value="Low">{t("task.low")}</option>
+              <option value="Medium">{t("task.medium")}</option>
+              <option value="High">{t("task.high")}</option>
+              <option value="Critical">{t("task.critical")}</option>
             </select>
             <select
               aria-label={t("commandPalette.dueFilter")}
@@ -379,8 +379,8 @@ export function CommandPalette({
         </ul>
 
         <footer className="flex items-center gap-3 border-t border-border px-4 py-2 font-mono text-[10px] text-muted-foreground">
-          <span>↑↓ navigate</span>
-          <span>↵ open</span>
+          <span>{t("commandPalette.navigateHint")}</span>
+          <span>{t("commandPalette.openHint")}</span>
           <span className="ml-auto flex items-center gap-1">
             <LogOut className="size-3" aria-hidden />
             {t("userMenu.logout")}

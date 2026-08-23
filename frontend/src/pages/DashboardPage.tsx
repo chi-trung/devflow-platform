@@ -154,13 +154,13 @@ export function DashboardPage() {
         )}
 
         {selectedWsId && workspaces && workspaces.length > 0 && (
-          <section aria-label="Overview" className="mb-10">
+          <section aria-label={t("dashboard.overview")} className="mb-10">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display text-lg font-semibold tracking-tight">
                 {t("dashboard.overview")}
               </h2>
               <select
-                aria-label="Workspace"
+                aria-label={t("dashboard.workspace")}
                 value={selectedWsId}
                 onChange={(event) => setSelectedWsId(event.target.value)}
                 className="cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"

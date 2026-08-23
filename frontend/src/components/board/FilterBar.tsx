@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Filter, Link2, X } from "lucide-react";
 import {
   deleteFilterPreset,
@@ -26,6 +27,7 @@ export function FilterBar({
   current,
   onChange,
 }: FilterBarProps) {
+  const { t } = useTranslation();
   const [version, setVersion] = useState(0);
   const [presetName, setPresetName] = useState("");
   const [activePreset, setActivePreset] = useState<string | null>(null);
@@ -70,44 +72,53 @@ export function FilterBar({
   }
 
   const chips: { key: keyof BoardFilterState; label: string }[] = [];
-  if (current.priority) chips.push({ key: "priority", label: `Priority: ${current.priority}` });
-  if (current.assignee === "none") chips.push({ key: "assignee", label: "Unassigned" });
+  if (current.priority)
+    chips.push({ key: "priority", label: t("filter.chipPriority", { value: current.priority }) });
+  if (current.assignee === "none")
+    chips.push({ key: "assignee", label: t("filter.unassigned") });
   else if (current.assignee) {
     const member = members.find((m) => m.userId === current.assignee);
     chips.push({
       key: "assignee",
-      label: `Assignee: ${member?.displayName || member?.username || "user"}`,
+      label: t("filter.chipAssignee", {
+        value: member?.displayName || member?.username || "user",
+      }),
     });
   }
   if (current.label) {
     const label = labels.find((l) => l.id === current.label);
-    chips.push({ key: "label", label: `Label: ${label?.name ?? "?"}` });
+    chips.push({
+      key: "label",
+      label: t("filter.chipLabel", { value: label?.name ?? "?" }),
+    });
   }
-  if (current.dueFrom) chips.push({ key: "dueFrom", label: `Due ≥ ${current.dueFrom}` });
-  if (current.dueTo) chips.push({ key: "dueTo", label: `Due ≤ ${current.dueTo}` });
+  if (current.dueFrom)
+    chips.push({ key: "dueFrom", label: t("filter.chipDueFrom", { date: current.dueFrom }) });
+  if (current.dueTo)
+    chips.push({ key: "dueTo", label: t("filter.chipDueTo", { date: current.dueTo }) });
   if (current.blockedOnly)
-    chips.push({ key: "blockedOnly", label: "Blocked only" });
+    chips.push({ key: "blockedOnly", label: t("filter.blockedOnly") });
 
   return (
     <section
-      aria-label="Board filters"
+      aria-label={t("filter.filters")}
       className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2"
     >
       <span className="flex items-center gap-1.5 font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         <Filter className="size-3.5" aria-hidden />
-        Filters
+        {t("filter.filters")}
       </span>
 
       <select
-        aria-label="Filter by assignee"
+        aria-label={t("filter.filterByAssignee")}
         value={current.assignee}
         onChange={(event) =>
           onChange({ assignee: event.target.value, })
         }
         className={inputClass}
       >
-        <option value="">All assignees</option>
-        <option value="none">Unassigned</option>
+        <option value="">{t("filter.allAssignees")}</option>
+        <option value="none">{t("filter.unassigned")}</option>
         {members.map((member) => (
           <option key={member.userId} value={member.userId}>
             {member.displayName || member.username}
@@ -116,26 +127,26 @@ export function FilterBar({
       </select>
 
       <select
-        aria-label="Filter by priority"
+        aria-label={t("filter.filterByPriority")}
         value={current.priority}
         onChange={(event) => onChange({ priority: event.target.value })}
         className={inputClass}
       >
-        <option value="">Any priority</option>
-        <option value="Critical">Critical</option>
-        <option value="High">High</option>
-        <option value="Medium">Medium</option>
-        <option value="Low">Low</option>
+        <option value="">{t("filter.anyPriority")}</option>
+        <option value="Critical">{t("task.critical")}</option>
+        <option value="High">{t("task.high")}</option>
+        <option value="Medium">{t("task.medium")}</option>
+        <option value="Low">{t("task.low")}</option>
       </select>
 
       {labels.length > 0 && (
         <select
-          aria-label="Filter by label"
+          aria-label={t("filter.filterByLabel")}
           value={current.label}
           onChange={(event) => onChange({ label: event.target.value })}
           className={inputClass}
         >
-          <option value="">Any label</option>
+          <option value="">{t("filter.anyLabel")}</option>
           {labels.map((label) => (
             <option key={label.id} value={label.id}>
               {label.name}
@@ -145,20 +156,20 @@ export function FilterBar({
       )}
 
       <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        Due from
+        {t("filter.dueFrom")}
         <input
           type="date"
-          aria-label="Due date from"
+          aria-label={t("filter.dueDateFrom")}
           value={current.dueFrom}
           onChange={(event) => onChange({ dueFrom: event.target.value })}
           className={inputClass}
         />
       </label>
       <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        to
+        {t("filter.to")}
         <input
           type="date"
-          aria-label="Due date to"
+          aria-label={t("filter.dueDateTo")}
           value={current.dueTo}
           onChange={(event) => onChange({ dueTo: event.target.value })}
           className={inputClass}
@@ -169,7 +180,7 @@ export function FilterBar({
         type="button"
         onClick={() => onChange({ blockedOnly: !current.blockedOnly })}
         aria-pressed={current.blockedOnly}
-        title="Show only blocked tasks"
+        title={t("filter.showBlockedOnly")}
         className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm transition-all duration-200 active:scale-[0.98] ${
           current.blockedOnly
             ? "border-destructive/50 bg-destructive/10 text-destructive"
@@ -177,20 +188,20 @@ export function FilterBar({
         }`}
       >
         <Link2 className="size-3.5" aria-hidden />
-        Blocked
+        {t("filter.blocked")}
       </button>
 
       <div className="ml-auto flex flex-wrap items-center gap-1.5">
         {(presetNames.length > 0 || activePreset) && (
           <select
-            aria-label="Load filter preset"
+            aria-label={t("filter.loadPreset")}
             value=""
             onChange={(event) => {
               if (event.target.value) applyPreset(event.target.value);
             }}
             className={`${inputClass} max-w-40`}
           >
-            <option value="">Presets…</option>
+            <option value="">{t("filter.presets")}</option>
             {presetNames.map((name) => (
               <option key={name} value={name}>
                 {name}
@@ -206,7 +217,7 @@ export function FilterBar({
             <button
               type="button"
               onClick={() => handleDelete(activePreset)}
-              aria-label={`Delete preset ${activePreset}`}
+              aria-label={t("filter.deletePresetAria", { name: activePreset })}
               className="rounded p-1 text-muted-foreground hover:text-destructive"
             >
               <X className="size-3.5" aria-hidden />
@@ -224,8 +235,8 @@ export function FilterBar({
                   handleSave();
                 }
               }}
-              placeholder="Save as…"
-              aria-label="Preset name"
+              placeholder={t("filter.saveAs")}
+              aria-label={t("filter.presetName")}
               maxLength={30}
               className={`${inputClass} w-28`}
             />
@@ -235,7 +246,7 @@ export function FilterBar({
               disabled={!presetName.trim()}
               className="rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-medium text-foreground transition-colors duration-150 hover:border-primary disabled:opacity-40"
             >
-              Save
+              {t("filter.save")}
             </button>
           </span>
         )}
@@ -255,7 +266,7 @@ export function FilterBar({
                 )
               }
               className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-elevated px-3 py-1 text-xs font-medium text-foreground transition-colors duration-150 hover:border-border-strong"
-              title="Clear filter"
+              title={t("filter.clearFilter")}
             >
               {chip.label}
               <X className="size-3.5 text-muted-foreground" aria-hidden />

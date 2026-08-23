@@ -403,7 +403,7 @@ export function BoardPage() {
       push(successMessage);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Bulk action failed.";
+        err instanceof Error ? err.message : t("board.bulkActionFailed");
       setBoardError(message);
       push(message, "error");
     }
@@ -444,9 +444,9 @@ export function BoardPage() {
     if (!task || task.status === status) return;
 
     if (task.isBlocked) {
-      const message = `"${task.title}" is blocked — resolve its blockers first.`;
+      const message = t("board.blockedMoveDetail", { title: task.title });
       setBoardError(message);
-      push("Task is blocked", "error");
+      push(t("task.blocked"), "error");
       return;
     }
 
@@ -479,11 +479,15 @@ export function BoardPage() {
           }),
         },
       );
-      push(`Moved to ${COLUMNS.find((c) => c.status === status)?.title}`);
+      push(
+        t("task.movedTo", {
+          column: COLUMNS.find((c) => c.status === status)?.title,
+        }),
+      );
     } catch (err) {
       reload();
-      setBoardError(err instanceof Error ? err.message : "Failed to move task.");
-      push("Couldn't move that task", "error");
+      setBoardError(err instanceof Error ? err.message : t("board.moveFailed"));
+      push(t("board.couldntMoveTask"), "error");
     }
   }
 
@@ -499,7 +503,7 @@ export function BoardPage() {
     );
     setCreating(false);
     reload();
-    push("Task created");
+    push(t("board.taskCreated"));
   }
 
   async function deleteTask(task: TaskItemResponse) {
@@ -510,9 +514,10 @@ export function BoardPage() {
         { method: "DELETE" },
       );
       reload();
-      push("Task deleted");
+      push(t("board.taskDeleted"));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to delete task.";
+      const message =
+        err instanceof Error ? err.message : t("board.deleteFailed");
       setBoardError(message);
       push(message, "error");
     }
@@ -559,7 +564,7 @@ export function BoardPage() {
               <Button
                 variant="outline"
                 onClick={() => setActivityOpen(true)}
-                title="View project activity log"
+                title={t("board.activityLog")}
               >
                 <History className="size-4" aria-hidden />
                 {t("activity.projectActivity")}
@@ -567,7 +572,7 @@ export function BoardPage() {
               <Button
                 variant="outline"
                 onClick={() => setGraphOpen(true)}
-                title="Dependency graph"
+                title={t("board.dependencyGraph")}
               >
                 <Network className="size-4" aria-hidden />
                 {t("reports.burndown")}
@@ -575,8 +580,8 @@ export function BoardPage() {
               <button
                 type="button"
                 onClick={() => setHelpOpen(true)}
-                aria-label="Keyboard shortcuts"
-                title="Keyboard shortcuts (?)"
+                aria-label={t("board.keyboardShortcuts")}
+                title={`${t("board.keyboardShortcuts")} (?)`}
                 className="rounded-lg border border-border p-2 text-muted-foreground transition-all duration-200 hover:border-border-strong hover:text-foreground active:scale-[0.98]"
               >
                 <Keyboard className="size-4" aria-hidden />
@@ -588,14 +593,14 @@ export function BoardPage() {
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder={t("board.filterTasks")}
                 data-board-search
-                aria-label="Filter tasks by title or search operators"
+                aria-label={t("board.filterSearchHint")}
                 className="w-44 bg-transparent text-sm placeholder:text-muted-foreground/50 focus:outline-none"
               />
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  aria-label="Clear filter"
+                  aria-label={t("board.clearFilter")}
                   className="text-muted-foreground hover:text-foreground"
                 >
                   <X className="size-3.5" aria-hidden />
@@ -752,14 +757,14 @@ export function BoardPage() {
 
       {confirmBulkDelete && selectedIds.size > 0 && (
         <ConfirmDialog
-          title={`${t("common.delete")} ${selectedIds.size} task${selectedIds.size === 1 ? "" : "s"}?`}
+          title={t("board.deleteTasksConfirm", { count: selectedIds.size })}
           message={t("task.deleteConfirm")}
           onConfirm={() => {
             setConfirmBulkDelete(false);
             void runBulk(
               () =>
                 bulkDeleteTasks(workspaceId, projectId, [...selectedIds]),
-              `Deleted ${selectedIds.size} task${selectedIds.size === 1 ? "" : "s"}`,
+              t("board.deletedTasksCount", { count: selectedIds.size }),
             );
           }}
           onCancel={() => setConfirmBulkDelete(false)}
@@ -773,7 +778,7 @@ export function BoardPage() {
               {selectedIds.size} {t("common.confirm")}
             </span>
             <select
-              aria-label="Bulk move to status"
+              aria-label={t("board.bulkMoveToStatus")}
               value={bulkStatus}
               onChange={(event) => {
                 const status = event.target.value;
@@ -782,7 +787,7 @@ export function BoardPage() {
                   void runBulk(
                     () =>
                       bulkMoveTasks(workspaceId, projectId, [...selectedIds], status as TaskItemResponse["status"]),
-                    `Moved ${selectedIds.size} task${selectedIds.size === 1 ? "" : "s"}`,
+                    t("board.movedTasksCount", { count: selectedIds.size }),
                   );
               }}
               className="rounded-md border border-border bg-card px-2 py-1.5 text-xs focus:border-primary focus:outline-none"
@@ -795,7 +800,7 @@ export function BoardPage() {
               ))}
             </select>
             <select
-              aria-label="Bulk assign member"
+              aria-label={t("board.bulkAssignMember")}
               value={bulkAssignee}
               onChange={(event) => {
                 const assignee = event.target.value;
@@ -809,7 +814,7 @@ export function BoardPage() {
                         [...selectedIds],
                         assignee === "none" ? null : assignee,
                       ),
-                    `Updated ${selectedIds.size} task${selectedIds.size === 1 ? "" : "s"}`,
+                    t("board.updatedTasksCount", { count: selectedIds.size }),
                   );
               }}
               className="max-w-36 rounded-md border border-border bg-card px-2 py-1.5 text-xs focus:border-primary focus:outline-none"
@@ -832,8 +837,8 @@ export function BoardPage() {
             <button
               type="button"
               onClick={() => setSelectedIds(new Set())}
-              aria-label="Clear selection"
-              title="Clear selection (Esc)"
+              aria-label={t("board.clearSelection")}
+              title={`${t("board.clearSelection")} (Esc)`}
               className="rounded p-1 text-muted-foreground hover:text-foreground"
             >
               <X className="size-4" aria-hidden />

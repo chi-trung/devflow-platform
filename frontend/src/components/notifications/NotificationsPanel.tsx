@@ -98,7 +98,7 @@ export function NotificationsPanel({
           if (!open) refresh();
           setOpen((value) => !value);
         }}
-        aria-label={`${t("notification.notifications")}${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+        aria-label={`${t("notification.notifications")}${unreadCount > 0 ? ` ${t("notification.unreadSuffix", { count: unreadCount })}` : ""}`}
         aria-expanded={open}
         className="relative rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
       >

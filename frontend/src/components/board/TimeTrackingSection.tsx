@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Clock, Play, Square, Trash2, TriangleAlert } from "lucide-react";
 import {
   api,
@@ -44,6 +45,7 @@ export function TimeTrackingSection({
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const startedAtRef = useRef<number | null>(null);
   const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
+  const { t } = useTranslation();
   const { push } = useToast();
 
   useEffect(() => {
@@ -56,7 +58,7 @@ export function TimeTrackingSection({
       .catch((err: unknown) => {
         if (!cancelled) {
           setError(
-            err instanceof Error ? err.message : "Failed to load time entries.",
+            err instanceof Error ? err.message : t("timeTracking.loadFailed"),
           );
           setEntries([]);
         }
@@ -99,7 +101,7 @@ export function TimeTrackingSection({
     if (trimmed !== "") {
       const parsed = parseFloat(trimmed);
       if (!Number.isFinite(parsed) || parsed < 0) {
-        setError("Estimate must be a number of hours.");
+        setError(t("timeTracking.estimateMustBeNumber"));
         return;
       }
       minutes = Math.round(parsed * 60);
@@ -123,9 +125,9 @@ export function TimeTrackingSection({
         },
       );
       onChanged();
-      push("Estimate saved");
+      push(t("timeTracking.estimateSaved"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save estimate.");
+      setError(err instanceof Error ? err.message : t("timeTracking.saveEstimateFailed"));
     } finally {
       setSavingEstimate(false);
     }
@@ -137,7 +139,7 @@ export function TimeTrackingSection({
     const m = parseInt(extraMinutes || "0", 10) || 0;
     const total = h * 60 + m;
     if (total <= 0) {
-      setError("Enter the time spent (greater than zero).");
+      setError(t("timeTracking.enterTimeSpent"));
       return;
     }
     setLogging(true);
@@ -154,10 +156,10 @@ export function TimeTrackingSection({
       setEntryDescription("");
       setTimerRunning(false);
       setElapsedSeconds(0);
-      push(`Logged ${formatMinutes(total)}`);
+      push(t("timeTracking.loggedTotal", { time: formatMinutes(total) }));
       onChanged();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to log time.");
+      setError(err instanceof Error ? err.message : t("timeTracking.logFailed"));
     } finally {
       setLogging(false);
     }
@@ -170,7 +172,7 @@ export function TimeTrackingSection({
       setEntries((current) => (current ?? []).filter((e) => e.id !== entry.id));
       onChanged();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete entry.");
+      setError(err instanceof Error ? err.message : t("timeTracking.deleteEntryFailed"));
     }
   }
 
@@ -188,7 +190,7 @@ export function TimeTrackingSection({
       <div className="flex items-center justify-between gap-2">
         <h3 className="flex items-center gap-1.5 text-sm font-medium">
           <Clock className="size-4 text-muted-foreground" aria-hidden />
-          Time tracking
+          {t("timeTracking.timeTracking")}
         </h3>
         {timerRunning ? (
           <button
@@ -205,11 +207,11 @@ export function TimeTrackingSection({
           <button
             type="button"
             onClick={startTimer}
-            title="Start tracking"
+            title={t("timeTracking.startTracking")}
             className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-all duration-200 hover:border-primary active:scale-[0.98]"
           >
             <Play className="size-3" aria-hidden />
-            Start
+            {t("timeTracking.start")}
           </button>
         )}
       </div>
@@ -218,7 +220,7 @@ export function TimeTrackingSection({
 
       <div className="flex items-center gap-2">
         <label className="flex flex-1 items-center gap-1.5 text-xs text-muted-foreground">
-          Estimate (h)
+          {t("timeTracking.estimateHours")}
           <input
             type="number"
             min={0}
@@ -236,12 +238,14 @@ export function TimeTrackingSection({
             disabled={savingEstimate}
             className="rounded-md border border-border bg-card px-2 py-1 text-xs font-medium transition-colors duration-150 hover:border-primary disabled:opacity-40"
           >
-            {savingEstimate ? "…" : "Save"}
+            {savingEstimate ? "…" : t("timeTracking.save")}
           </button>
         )}
         <span className="ml-auto font-mono text-xs text-muted-foreground">
-          {formatMinutes(loggedTotal)} logged
-          {estimate != null ? ` · est. ${formatMinutes(estimate)}` : ""}
+          {t("timeTracking.loggedTotal", { time: formatMinutes(loggedTotal) })}
+          {estimate != null
+            ? ` ${t("timeTracking.estPrefix", { time: formatMinutes(estimate) })}`
+            : ""}
         </span>
       </div>
 
@@ -263,7 +267,9 @@ export function TimeTrackingSection({
       {overBudget && (
         <p className="flex items-start gap-1.5 rounded-lg border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
           <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-          Over estimate by {formatMinutes(loggedTotal - (estimate ?? 0))}.
+          {t("timeTracking.overEstimate", {
+            time: formatMinutes(loggedTotal - (estimate ?? 0)),
+          })}
         </p>
       )}
 
@@ -275,7 +281,7 @@ export function TimeTrackingSection({
           value={hours}
           onChange={(event) => setHours(event.target.value)}
           placeholder="h"
-          aria-label="Hours spent"
+          aria-label={t("timeTracking.hoursAria")}
           className="w-14 rounded-md border border-border bg-surface px-1.5 py-1.5 text-sm focus:border-primary focus:outline-none"
         />
         <input
@@ -286,7 +292,7 @@ export function TimeTrackingSection({
           value={extraMinutes}
           onChange={(event) => setExtraMinutes(event.target.value)}
           placeholder="m"
-          aria-label="Minutes spent"
+          aria-label={t("timeTracking.minutesAria")}
           className="w-14 rounded-md border border-border bg-surface px-1.5 py-1.5 text-sm focus:border-primary focus:outline-none"
         />
         <textarea
@@ -294,7 +300,7 @@ export function TimeTrackingSection({
           value={entryDescription}
           onChange={(event) => setEntryDescription(event.target.value)}
           rows={1}
-          placeholder="What did you do?"
+          placeholder={t("timeTracking.whatDidYouDo")}
           maxLength={500}
           className="min-w-0 flex-1 resize-none rounded-md border border-border bg-surface px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
         />
@@ -303,15 +309,15 @@ export function TimeTrackingSection({
           disabled={logging}
           className="shrink-0 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium transition-colors duration-150 hover:border-primary disabled:opacity-40"
         >
-          {logging ? "…" : "Log"}
+          {logging ? "…" : t("timeTracking.log")}
         </button>
       </form>
 
       {!entries ? (
-        <p className="text-xs text-muted-foreground">Loading…</p>
+        <p className="text-xs text-muted-foreground">{t("common.loading")}</p>
       ) : entries.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          No time logged yet — hit Start or log manually.
+          {t("timeTracking.noTimeLogged")}
         </p>
       ) : (
         <div className="flex flex-col gap-1.5">
@@ -325,7 +331,9 @@ export function TimeTrackingSection({
                 <div className="min-w-0">
                   <p className="truncate text-foreground">
                     {entry.description || (
-                      <span className="text-muted-foreground">No description</span>
+                      <span className="text-muted-foreground">
+                        {t("timeTracking.noDescription")}
+                      </span>
                     )}
                   </p>
                   <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
@@ -343,7 +351,7 @@ export function TimeTrackingSection({
                   <button
                     type="button"
                     onClick={() => void removeEntry(entry)}
-                    aria-label="Delete time entry"
+                    aria-label={t("timeTracking.deleteEntryAria")}
                     className="rounded p-1 text-muted-foreground opacity-80 transition-all duration-150 hover:text-destructive group-hover:opacity-100"
                   >
                     <Trash2 className="size-3.5" aria-hidden />

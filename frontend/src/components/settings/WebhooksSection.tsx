@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Cable, Copy, Eye, EyeOff, Trash2 } from "lucide-react";
 import {
   api,
@@ -14,13 +15,14 @@ import { Button } from "../ui/Button";
 import { ConfirmDialog } from "../ConfirmDialog";
 
 const WEBHOOK_EVENTS = [
-  { value: "task.created", label: "Task created" },
-  { value: "task.updated", label: "Task updated" },
-  { value: "task.completed", label: "Task completed" },
-  { value: "comment.created", label: "Comment added" },
+  { value: "task.created", labelKey: "webhooks.eventTaskCreated" },
+  { value: "task.updated", labelKey: "webhooks.eventTaskUpdated" },
+  { value: "task.completed", labelKey: "webhooks.eventTaskCompleted" },
+  { value: "comment.created", labelKey: "webhooks.eventCommentAdded" },
 ];
 
 export function WebhooksSection() {
+  const { t } = useTranslation();
   const { push } = useToast();
 
   const [workspaces, setWorkspaces] = useState<WorkspaceResponse[]>([]);
@@ -97,11 +99,11 @@ export function WebhooksSection() {
   async function handleCreate() {
     if (!workspaceId) return;
     if (!/^https?:\/\//i.test(url.trim())) {
-      push("Enter a valid http(s) URL.", "error");
+      push(t("webhooks.invalidUrl"), "error");
       return;
     }
     if (selectedEvents.size === 0) {
-      push("Pick at least one event.", "error");
+      push(t("webhooks.pickEvent"), "error");
       return;
     }
     setSubmitting(true);
@@ -115,9 +117,9 @@ export function WebhooksSection() {
       setUrl("");
       setSecret("");
       setSelectedEvents(new Set(["task.created"]));
-      push("Webhook registered");
+      push(t("webhooks.registered"));
     } catch (err) {
-      push(err instanceof Error ? err.message : "Couldn't register webhook.", "error");
+      push(err instanceof Error ? err.message : t("webhooks.registerFailed"), "error");
     } finally {
       setSubmitting(false);
     }
@@ -136,16 +138,16 @@ export function WebhooksSection() {
         [webhook.id]: full.secret ?? "",
       }));
     } catch {
-      push("Couldn't load the signing secret.", "error");
+      push(t("webhooks.secretLoadFailed"), "error");
     }
   }
 
   async function handleCopySecret(webhookId: string) {
     try {
       await navigator.clipboard.writeText(revealedSecrets[webhookId]);
-      push("Secret copied");
+      push(t("webhooks.secretCopied"));
     } catch {
-      push("Clipboard unavailable.", "error");
+      push(t("webhooks.clipboardUnavailable"), "error");
     }
   }
 
@@ -156,35 +158,35 @@ export function WebhooksSection() {
     try {
       await deleteWebhook(workspaceId, target.id);
       setWebhooks((current) => current.filter((w) => w.id !== target.id));
-      push("Webhook removed");
+      push(t("webhooks.removed"));
     } catch {
-      push("Couldn't remove webhook.", "error");
+      push(t("webhooks.removeFailed"), "error");
     }
   }
 
   return (
     <section
-      aria-label="Webhooks"
+      aria-label={t("webhooks.title")}
       className="rounded-xl border border-border bg-surface p-5"
     >
       <div className="mb-4 flex items-center gap-2.5">
         <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <Cable className="size-4" aria-hidden />
         </span>
-        <h2 className="font-display font-semibold">Webhooks</h2>
+        <h2 className="font-display font-semibold">{t("webhooks.title")}</h2>
       </div>
 
       {workspacesLoading ? (
         <div className="skeleton h-10 w-full" />
       ) : workspaces.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Create a workspace first to register webhooks.
+          {t("webhooks.createWorkspaceFirst")}
         </p>
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <label className="text-sm font-medium" htmlFor="webhook-workspace">
-              Workspace
+              {t("webhooks.workspaceLabel")}
             </label>
             <select
               id="webhook-workspace"
@@ -195,7 +197,7 @@ export function WebhooksSection() {
               }}
               className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
             >
-              {!workspaceId && <option value="">Select…</option>}
+              {!workspaceId && <option value="">{t("webhooks.selectWorkspace")}</option>}
               {workspaces.map((workspace) => (
                 <option key={workspace.id} value={workspace.id}>
                   {workspace.name}
@@ -226,19 +228,19 @@ export function WebhooksSection() {
                       : "border-border text-muted-foreground hover:border-border-strong hover:text-foreground"
                   }`}
                 >
-                  {event.label}
+                  {t(event.labelKey)}
                 </button>
               ))}
             </div>
             <input
               type="text"
-              placeholder="Signing secret (optional)"
+              placeholder={t("webhooks.secretPlaceholder")}
               value={secret}
               onChange={(event) => setSecret(event.target.value)}
               className="w-full rounded-lg border border-border bg-surface px-3 py-2 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-primary"
             />
             <Button onClick={() => void handleCreate()} disabled={submitting}>
-              {submitting ? "Registering…" : "Add webhook"}
+              {submitting ? t("webhooks.registering") : t("webhooks.addWebhook")}
             </Button>
           </div>
 
@@ -251,7 +253,7 @@ export function WebhooksSection() {
               </div>
             ) : webhooks.length === 0 && workspaceId ? (
               <p className="py-6 text-center text-sm text-muted-foreground">
-                No webhooks yet for this workspace.
+                {t("webhooks.noWebhooks")}
               </p>
             ) : (
               webhooks.map((webhook) => (
@@ -266,7 +268,7 @@ export function WebhooksSection() {
                     <div className="flex shrink-0 items-center gap-1">
                       <button
                         type="button"
-                        aria-label="Toggle signing secret"
+                        aria-label={t("webhooks.toggleSecret")}
                         onClick={() => void handleRevealSecret(webhook)}
                         className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-foreground"
                       >
@@ -278,7 +280,7 @@ export function WebhooksSection() {
                       </button>
                       <button
                         type="button"
-                        aria-label="Remove webhook"
+                        aria-label={t("webhooks.removeWebhookAria")}
                         onClick={() => setPendingDelete(webhook)}
                         className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-destructive"
                       >
@@ -299,12 +301,12 @@ export function WebhooksSection() {
                   {revealedSecrets[webhook.id] !== undefined && (
                     <div className="flex items-center gap-2 rounded-lg border border-border bg-elevated px-2.5 py-1.5">
                       <code className="min-w-0 flex-1 truncate font-mono text-[11px] text-foreground">
-                        {revealedSecrets[webhook.id] || "(no secret set)"}
+                        {revealedSecrets[webhook.id] || t("webhooks.noSecretSet")}
                       </code>
                       {revealedSecrets[webhook.id] && (
                         <button
                           type="button"
-                          aria-label="Copy secret"
+                          aria-label={t("webhooks.copySecret")}
                           onClick={() => void handleCopySecret(webhook.id)}
                           className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-foreground"
                         >
@@ -319,16 +321,16 @@ export function WebhooksSection() {
           </div>
 
           <p className="mt-3 font-mono text-[10px] text-muted-foreground">
-            Deliveries are signed with HMAC-SHA256 in the X-DevFlow-Signature header.
+            {t("webhooks.hmacHint")}
           </p>
         </>
       )}
 
       {pendingDelete && (
         <ConfirmDialog
-          title="Remove webhook?"
-          message={`Events will stop being delivered to ${pendingDelete.url}.`}
-          confirmLabel="Remove"
+          title={t("webhooks.removeTitle")}
+          message={t("webhooks.removeMsg", { url: pendingDelete.url })}
+          confirmLabel={t("webhooks.removeConfirm")}
           onConfirm={() => void handleConfirmDelete()}
           onCancel={() => setPendingDelete(null)}
         />
