@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Backend Complete ✅ | Sprint 18 Frontend Complete ✅
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅
 
 ---
 
@@ -11,8 +11,8 @@
 |---|---|---|---|---|
 | **Sprint 16** | Personalization & Workflows | ✅ DONE (B1-B4) | ✅ DONE (F1-F4) | Complete |
 | **Sprint 17** | Performance Hardening & State Sync | ✅ DONE (B17.1-B17.4) | ✅ DONE (F17.1-F17.4) | Complete |
-| **Sprint 18** | Epics, Subtasks & Task Hierarchy | ✅ DONE (B18.1-B18.3) — PR #77 | ✅ F18.2 + F18.3 DONE, F18.1 in progress | Mostly Complete 🎯 |
-| **Sprint 19** | GitHub Integration & Webhook Outbox | ⏳ B19.1-2 (Agent B), B19.3 ✅ (C) | ✅ F19.1-2 (Agent C), F19.3 ⏳ | In Progress 🎯 |
+| **Sprint 18** | Epics, Subtasks & Task Hierarchy | ✅ DONE (B18.1-B18.3) — PR #77 | ✅ DONE (F18.1-F18.3) — PR #89-91 | Complete |
+| **Sprint 19** | GitHub Integration & Webhook Outbox | ✅ DONE (B19.1-B19.3) — PR #93 | ✅ DONE (F19.1-F19.3) — PR #92 | Complete ✅ |
 | **Sprint 20** | Advanced Agile Analytics & Custom Fields | ⏳ Planned | ⏳ Planned | Queued |
 
 ---
@@ -105,23 +105,25 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 **Goal:** Turn DevFlow into the central source of truth for software engineers with automatic Git syncing.
 
-#### 🤖 Agent: Codebuff (Backend)
-- [ ] **B19.1: GitHub App Webhook Ingestion**
-  - Handle `push`, `pull_request`, `issue` webhooks.
-  - Auto-parse task keys (e.g. `DF-104: Fix CORS headers`).
-- [ ] **B19.2: Smart Task State Transitions**
-  - PR opened $\rightarrow$ Move task to **In Review**.
-  - PR merged $\rightarrow$ Move task to **Done** + log Git committer as contributor.
+#### 🤖 Agent: Codebuff (Backend) — ✅ COMPLETE (PR #93)
+- [x] **B19.1: GitHub App Webhook Ingestion** — ✅ **Agent B**
+  - `POST /api/v1/webhooks/github` handles `push`/`pull_request`/`issues`, HMAC-SHA256 signature verify (`X-Hub-Signature-256`), async processing.
+  - `TaskKeyParser.ParseKeys()` regex `<PROJECT_KEY>-<number>` (dedup, case-insensitive).
+- [x] **B19.2: Smart Task State Transitions** — ✅ **Agent B**
+  - PR opened → task → **In Review**; PR merged → task → **Done** + activity log.
+  - Fixed in review: `pull_request.merged` boolean + `action` (not non-existent state values); safe payload parsing.
 - [x] **B19.3: Personal Access Tokens (PAT)** — ✅ **Agent C**
-  - Entity, migration, repository, CQRS (Create/List/Revoke), PatController (`/users/me/pat`), 5 unit tests.
+  - Entity, migration, repository, CQRS (Create/List/Revoke), PatController (`/users/me/pat`), 4 unit tests.
   - Token format `df_<48 hex>`, SHA256 hash, scopes (`read`/`write`/`tasks`/`admin`), expiration, revoke.
 
-#### 🎨 Agent: OpenCode (Frontend)
+#### 🎨 Agent: OpenCode (Frontend) — ✅ COMPLETE (PR #92)
 - [x] **F19.1: GitHub Integration Settings UI** — ✅ **Agent C**
   - Webhook secret management (PUT webhook-secret) + payload URL display, branch rule toggles (localStorage), PAT generator (calls backend API).
 - [x] **F19.2: Git Branch & PR Widget in Task Detail** — ✅ **Agent C**
   - Branch derivation from PR URL/title, CI/CD placeholder (`CI: —`), direct GitHub link button, author display.
-- [ ] **F19.3: Personal Access Token Generator**
+- [x] **F19.3: Personal Access Token Generator** — ✅ **Agent B**
+  - Standalone `PATSection.tsx` in Settings page (create modal, one-time token copy, revoke list).
+  - Fixed in review: scopes aligned to backend (`read`/`write`/`tasks`/`admin`), deduped render in SettingsPage.**
 
 ---
 
