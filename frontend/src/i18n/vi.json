@@ -18,7 +18,8 @@
     "epics": "Epics",
     "savedSearches": "Saved Searches",
     "labels": "Labels",
-    "customFields": "Custom Fields"
+    "customFields": "Custom Fields",
+    "templates": "Templates"
   },
   "dashboard": {
     "title": "Workspaces",
@@ -367,14 +368,32 @@
     "title": "Mẫu task",
     "taskTemplates": "Mẫu task",
     "create": "Tạo mẫu",
+    "createTitle": "Tạo Template",
     "apply": "Áp dụng mẫu",
     "saveAs": "Lưu thành mẫu",
     "name": "Tên mẫu",
     "namePlaceholder": "Tên mẫu…",
+    "titleLabel": "Tiêu đề task",
+    "titlePlaceholder": "VD: Sửa lỗi đăng nhập",
+    "descriptionLabel": "Mô tả",
+    "descriptionPlaceholder": "Mô tả tùy chọn cho task.",
+    "priorityLabel": "Ưu tiên",
+    "estimateLabel": "Ước tính (phút)",
+    "estimatePlaceholder": "VD: 60",
     "defaultPriority": "Ưu tiên mặc định",
     "noTemplates": "Chưa có mẫu nào.",
     "created": "Đã tạo mẫu",
-    "applied": "Đã áp dụng \"{{name}}\" — task đã tạo"
+    "applied": "Đã áp dụng \"{{name}}\" — task đã tạo",
+    "loadFailed": "Không tải được danh sách mẫu.",
+    "saveFailed": "Không lưu được mẫu.",
+    "applyFailed": "Không áp dụng được mẫu.",
+    "deleteFailed": "Không xóa được mẫu.",
+    "emptyTitle": "Chưa có mẫu nào",
+    "emptyDescription": "Tạo mẫu để nhanh chóng tạo các task chuẩn hóa.",
+    "deleteTitle": "Xóa mẫu?",
+    "deleteMessage": "Hành động này sẽ xóa vĩnh viễn \"{{name}}\". Không thể hoàn tác.",
+    "deleteConfirm": "Xóa",
+    "delete": "Xóa mẫu"
   },
   "field": {
     "title": "Trường tùy chỉnh",

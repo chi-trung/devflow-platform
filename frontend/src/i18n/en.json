@@ -18,7 +18,8 @@
     "epics": "Epics",
     "savedSearches": "Saved Searches",
     "labels": "Labels",
-    "customFields": "Custom Fields"
+    "customFields": "Custom Fields",
+    "templates": "Templates"
   },
   "dashboard": {
     "title": "Workspaces",
@@ -367,14 +368,32 @@
     "title": "Templates",
     "taskTemplates": "Task templates",
     "create": "Create template",
+    "createTitle": "Create Template",
     "apply": "Apply template",
     "saveAs": "Save as template",
     "name": "Template name",
     "namePlaceholder": "Template name…",
+    "titleLabel": "Task title",
+    "titlePlaceholder": "e.g. Fix login bug",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Optional description for the task.",
+    "priorityLabel": "Priority",
+    "estimateLabel": "Estimate (minutes)",
+    "estimatePlaceholder": "e.g. 60",
     "defaultPriority": "Default priority",
     "noTemplates": "No templates yet.",
     "created": "Template created",
-    "applied": "Applied \"{{name}}\" — task created"
+    "applied": "Applied \"{{name}}\" — task created",
+    "loadFailed": "Failed to load templates.",
+    "saveFailed": "Failed to save template.",
+    "applyFailed": "Failed to apply template.",
+    "deleteFailed": "Failed to delete template.",
+    "emptyTitle": "No templates yet",
+    "emptyDescription": "Create templates to quickly create standardized tasks.",
+    "deleteTitle": "Delete template?",
+    "deleteMessage": "This will permanently delete \"{{name}}\". This action cannot be undone.",
+    "deleteConfirm": "Delete",
+    "delete": "Delete template"
   },
   "field": {
     "title": "Custom Fields",

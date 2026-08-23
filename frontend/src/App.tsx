@@ -17,6 +17,7 @@ const SavedSearchesPage = lazy(() => import("./pages/SavedSearchesPage").then(m 
 const EpicsPage = lazy(() => import("./pages/EpicsPage").then(m => ({ default: m.EpicsPage })));
 const LabelsPage = lazy(() => import("./pages/LabelsPage").then(m => ({ default: m.LabelsPage })));
 const CustomFieldsPage = lazy(() => import("./pages/CustomFieldsPage").then(m => ({ default: m.CustomFieldsPage })));
+const TemplatesPage = lazy(() => import("./pages/TemplatesPage").then(m => ({ default: m.TemplatesPage })));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
 
 function LoadingFallback() {
@@ -68,6 +69,10 @@ export default function App() {
                 <Route
                   path="/workspaces/:workspaceId/projects/:projectId/fields"
                   element={<CustomFieldsPage />}
+                />
+                <Route
+                  path="/workspaces/:workspaceId/projects/:projectId/templates"
+                  element={<TemplatesPage />}
                 />
               </Route>
               <Route path="*" element={<NotFoundPage />} />
