@@ -12,6 +12,7 @@ using DevFlow.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -71,12 +72,25 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
 
 builder.Services.AddAuthorization();
 
+// Behind reverse proxies (Render, Vercel, nginx) RemoteIpAddress is the
+// proxy's address, so forwarded headers must be applied before anything
+// that reads the client IP — otherwise all clients share one rate-limit
+// partition and trip 429s together.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Accept forwarded headers from any proxy: cloud hosts rotate edge IPs.
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 // Rate limiting configuration
 var rateLimitConfig = builder.Configuration.GetSection("RateLimiting");
 var rateLimitEnabled = rateLimitConfig.GetValue("Enabled", true);
-var permitLimit = rateLimitConfig.GetValue("PermitLimit", 100);
+var permitLimit = rateLimitConfig.GetValue("PermitLimit", 200);
 var windowSeconds = rateLimitConfig.GetValue("WindowSeconds", 60);
-var queueLimit = rateLimitConfig.GetValue("QueueLimit", 10);
+var queueLimit = rateLimitConfig.GetValue("QueueLimit", 20);
 
 if (rateLimitEnabled)
 {
@@ -87,6 +101,15 @@ if (rateLimitEnabled)
         options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
         {
             var endpoint = context.GetEndpoint();
+
+            // Realtime hubs negotiate/poll frequently and health probes are
+            // automated — counting them against the client quota starves the
+            // SPA of API calls.
+            if (context.Request.Path.StartsWithSegments("/hubs") ||
+                context.Request.Path.StartsWithSegments("/health"))
+            {
+                return RateLimitPartition.GetNoLimiter<string>("unlimited");
+            }
 
             // Auth endpoints get stricter limits to prevent brute-force attacks.
             var isAuthEndpoint = endpoint?.Metadata
@@ -197,6 +220,10 @@ if (!string.IsNullOrWhiteSpace(redisConnection))
 }
 
 var app = builder.Build();
+
+// Must be the first middleware: it rewrites RemoteIpAddress from
+// X-Forwarded-For so rate limiting partitions per real client.
+app.UseForwardedHeaders();
 
 // Apply pending EF Core migrations so a fresh database (e.g. a managed
 // cloud instance) is ready on first boot.
