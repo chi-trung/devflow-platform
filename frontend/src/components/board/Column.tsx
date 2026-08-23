@@ -24,6 +24,9 @@ interface ColumnProps {
   selectionMode?: boolean;
   selectedIds?: ReadonlySet<string>;
   onToggleSelect?: (taskId: string) => void;
+  workspaceId: string;
+  projectId: string;
+  onEstimationSaved?: (taskId: string, storyPoints: number | null) => void;
 }
 
 const COLUMN_META: Record<
@@ -47,6 +50,9 @@ export function Column({
   selectionMode = false,
   selectedIds,
   onToggleSelect,
+  workspaceId,
+  projectId,
+  onEstimationSaved,
 }: ColumnProps) {
   const meta = COLUMN_META[status];
   const Icon = meta.icon;
@@ -129,9 +135,14 @@ export function Column({
         <h2 className="font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {title}
         </h2>
-        <span className="ml-auto rounded-md bg-elevated px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+        <span className="rounded-md bg-elevated px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
           {tasks.length}
         </span>
+        {tasks.some((t) => t.storyPoints != null) && (
+          <span className="rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary">
+            {tasks.reduce((sum, t) => sum + (t.storyPoints ?? 0), 0)} pts
+          </span>
+        )}
       </header>
 
       <div className="flex flex-col gap-2">
@@ -145,6 +156,9 @@ export function Column({
             selectionMode={selectionMode}
             selected={selectedIds?.has(task.id) ?? false}
             onToggleSelect={onToggleSelect}
+            workspaceId={workspaceId}
+            projectId={projectId}
+            onEstimationSaved={onEstimationSaved}
           />
         ))}
         {hiddenCount > 0 && (

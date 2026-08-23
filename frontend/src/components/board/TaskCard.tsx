@@ -1,22 +1,10 @@
 import { useTranslation } from "react-i18next";
-import { Check, Clock, Link2 } from "lucide-react";
+import { useState } from "react";
+import { Check, Clock, Link2, Hash, ListChecks } from "lucide-react";
 import type { TaskItemResponse, WorkspaceMemberResponse } from "../../types/api";
 import { formatMinutes } from "../../lib/format";
 import { Avatar } from "../ui/Avatar";
-
-const priorityDot: Record<TaskItemResponse["priority"], string> = {
-  Critical: "bg-destructive",
-  High: "bg-amber-300",
-  Medium: "bg-primary",
-  Low: "bg-muted-foreground/50",
-};
-
-const priorityLabelKey: Record<TaskItemResponse["priority"], string> = {
-  Critical: "task.urgent",
-  High: "task.high",
-  Medium: "task.medium",
-  Low: "task.low",
-};
+import { EstimationModal } from "../estimation/EstimationModal";
 
 interface TaskCardProps {
   task: TaskItemResponse;
@@ -26,6 +14,9 @@ interface TaskCardProps {
   selectionMode?: boolean;
   selected?: boolean;
   onToggleSelect?: (taskId: string) => void;
+  workspaceId: string;
+  projectId: string;
+  onEstimationSaved?: (taskId: string, storyPoints: number | null) => void;
 }
 
 export function TaskCard({
@@ -36,6 +27,9 @@ export function TaskCard({
   selectionMode = false,
   selected = false,
   onToggleSelect,
+  workspaceId,
+  projectId,
+  onEstimationSaved,
 }: TaskCardProps) {
   const { t } = useTranslation();
   const assignee = members.find((m) => m.userId === task.assigneeId);
@@ -43,6 +37,11 @@ export function TaskCard({
     task.dueDateUtc !== null &&
     task.status !== "Done" &&
     new Date(task.dueDateUtc).getTime() < Date.now();
+  const [estimationOpen, setEstimationOpen] = useState(false);
+
+  async function handleEstimationSaved(storyPoints: number | null) {
+    onEstimationSaved?.(task.id, storyPoints);
+  }
 
   return (
     <div
@@ -105,6 +104,20 @@ export function TaskCard({
           <span className={`size-1.5 rounded-full ${priorityDot[task.priority]}`} aria-hidden />
           {t(priorityLabelKey[task.priority])}
         </span>
+        {task.storyPoints != null && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setEstimationOpen(true);
+            }}
+            className="flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary transition-colors duration-150 hover:bg-primary/20"
+            title={t("estimation.title")}
+          >
+            <Hash className="size-3" aria-hidden />
+            {task.storyPoints}
+          </button>
+        )}
         {task.dueDateUtc && (
           <time
             title={overdue ? t("taskCard.overdue") : undefined}
@@ -131,6 +144,15 @@ export function TaskCard({
             {formatMinutes(task.totalLoggedMinutes ?? 0)}
           </span>
         )}
+        {(task.subtaskCount ?? 0) > 0 && (
+          <span
+            title={t("subtask.nestedCount", { count: task.subtaskCount })}
+            className="flex items-center gap-1 rounded-md bg-muted-foreground/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground"
+          >
+            <ListChecks className="size-3" aria-hidden />
+            {task.subtaskCount}
+          </span>
+        )}
         {assignee && (
           <span
             className="ml-auto"
@@ -142,6 +164,15 @@ export function TaskCard({
           </span>
         )}
       </div>
+      <EstimationModal
+        open={estimationOpen}
+        onClose={() => setEstimationOpen(false)}
+        workspaceId={workspaceId}
+        projectId={projectId}
+        taskId={task.id}
+        currentEstimate={task.storyPoints ?? null}
+        onSaved={handleEstimationSaved}
+      />
     </div>
   );
 }

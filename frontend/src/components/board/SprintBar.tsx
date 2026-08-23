@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { CalendarRange, Plus, Play, Flag } from "lucide-react";
-import { api } from "../../lib/api";
+import { CalendarRange, Plus, Play, Flag, Gauge } from "lucide-react";
+import { api, getVelocity } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { Input } from "../ui/Input";
 import { ErrorAlert } from "../ui/ErrorAlert";
-import type { SprintResponse } from "../../types/api";
+import type { SprintResponse, SprintVelocity } from "../../types/api";
 
 interface SprintBarProps {
   sprints: SprintResponse[];
@@ -44,6 +44,27 @@ export function SprintBar({
   const [endDate, setEndDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [velocity, setVelocity] = useState<SprintVelocity | null>(null);
+
+  useEffect(() => {
+    if (!filter || filter === "all" || filter === "none") {
+      setVelocity(null);
+      return;
+    }
+    let cancelled = false;
+    getVelocity(workspaceId, projectId)
+      .then((data) => {
+        if (cancelled) return;
+        const match = data.sprints.find((v) => v.sprintId === filter);
+        setVelocity(match ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setVelocity(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [filter, workspaceId, projectId]);
 
   const base = `/workspaces/${workspaceId}/projects/${projectId}/sprints`;
   const active = sprints.find((s) => s.status === "Active");
@@ -143,6 +164,12 @@ export function SprintBar({
               <span className="font-mono text-[11px] text-muted-foreground">
                 {fmt(active.startDateUtc)} – {fmt(active.endDateUtc)}
               </span>
+              {velocity && (
+                <span className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">
+                  <Gauge className="size-3" aria-hidden />
+                  {velocity.completedStoryPoints}/{velocity.totalStoryPoints} pts
+                </span>
+              )}
               {canManage && (
                 <Button
                   size="sm"

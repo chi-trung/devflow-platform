@@ -461,6 +461,10 @@ export function BoardPage() {
     }
   }
 
+  function handleEstimationSaved(_taskId: string, _storyPoints: number | null) {
+    reload();
+  }
+
   // Live updates: any change made by anyone in this project triggers a
   // debounced refetch, so open boards stay in sync across browsers.
   useEffect(() => {
@@ -896,6 +900,9 @@ export function BoardPage() {
                     selectionMode={selectedIds.size > 0}
                     selectedIds={selectedIds}
                     onToggleSelect={toggleSelect}
+                    workspaceId={workspaceId}
+                    projectId={projectId}
+                    onEstimationSaved={handleEstimationSaved}
                   />
                 </div>
               ))}

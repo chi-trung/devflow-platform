@@ -279,7 +279,9 @@
     "colReview": "review",
     "closeAria": "Close",
     "closeDialogAria": "Close dialog",
-    "nameLabel": "Name"
+    "nameLabel": "Name",
+    "capacityMeter": "Sprint capacity",
+    "storyPoints": "story points"
   },
   "activity": {
     "projectActivity": "Project Activity",
@@ -661,7 +663,13 @@
     "deleteTitle": "Delete epic?",
     "deleteMessage": "This will permanently delete \"{{name}}\". This action cannot be undone.",
     "deleteConfirm": "Delete",
-    "delete": "Delete epic"
+    "delete": "Delete epic",
+    "roadmapTitle": "Roadmap",
+    "roadmapNoDates": "Add start and end dates to your epics to plot them on the timeline.",
+    "roadmapUnscheduled": "Unscheduled",
+    "roadmapView": "Roadmap",
+    "listView": "List",
+    "milestone": "Milestone"
   },
   "common": {
     "save": "Save",
@@ -738,6 +746,13 @@
     "deleteAria": "Delete task {{title}}",
     "overdue": "Overdue",
     "assigneeAria": "Assigned to {{name}}"
+  },
+  "estimation": {
+    "title": "Set Story Points",
+    "description": "Choose a Fibonacci estimate for this task.",
+    "clear": "Clear",
+    "saved": "Estimation saved",
+    "saveFailed": "Failed to save estimation."
   },
   "webhooks": {
     "title": "Webhooks",
@@ -940,5 +955,22 @@
     "deletePrConfirm": "Remove",
     "deletePr": "Remove PR",
     "viewPr": "View PR"
+  },
+  "subtask": {
+    "subtasks": "Subtasks",
+    "progress": "{{done}}/{{total}} done",
+    "addSubtask": "Add subtask",
+    "addPlaceholder": "Add a subtask…",
+    "adding": "Adding…",
+    "addFailed": "Failed to add subtask.",
+    "loadFailed": "Failed to load subtasks.",
+    "detachFailed": "Failed to remove subtask.",
+    "toggleFailed": "Failed to update subtask.",
+    "empty": "No subtasks yet. Break this task into smaller steps.",
+    "toggleDoneAria": "Mark as done",
+    "toggleOpenAria": "Mark as open",
+    "detachAria": "Remove subtask",
+    "nestedCount": "{{count}} subtask",
+    "nestedCountPlural": "{{count}} subtasks"
   }
 }

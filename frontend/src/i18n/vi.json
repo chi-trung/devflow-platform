@@ -279,7 +279,9 @@
     "colReview": "đang review",
     "closeAria": "Đóng",
     "closeDialogAria": "Đóng hộp thoại",
-    "nameLabel": "Tên"
+    "nameLabel": "Tên",
+    "capacityMeter": "Công suất sprint",
+    "storyPoints": "story points"
   },
   "activity": {
     "projectActivity": "Hoạt động dự án",
@@ -661,7 +663,13 @@
     "deleteTitle": "Xóa epic?",
     "deleteMessage": "Hành động này sẽ xóa vĩnh viễn \"{{name}}\". Không thể hoàn tác.",
     "deleteConfirm": "Xóa",
-    "delete": "Xóa epic"
+    "delete": "Xóa epic",
+    "roadmapTitle": "Lộ trình",
+    "roadmapNoDates": "Thêm ngày bắt đầu và kết thúc để hiển thị epic trên dòng thời gian.",
+    "roadmapUnscheduled": "Chưa lên lịch",
+    "roadmapView": "Lộ trình",
+    "listView": "Danh sách",
+    "milestone": "Mốc"
   },
   "common": {
     "save": "Lưu",
@@ -738,6 +746,13 @@
     "deleteAria": "Xóa task {{title}}",
     "overdue": "Quá hạn",
     "assigneeAria": "Được gán cho {{name}}"
+  },
+  "estimation": {
+    "title": "Đặt Story Points",
+    "description": "Chọn ước lượng Fibonacci cho task này.",
+    "clear": "Xóa",
+    "saved": "Đã lưu ước lượng",
+    "saveFailed": "Không lưu được ước lượng."
   },
   "webhooks": {
     "title": "Webhooks",
@@ -940,5 +955,22 @@
     "deletePrConfirm": "Remove",
     "deletePr": "Remove PR",
     "viewPr": "View PR"
+  },
+  "subtask": {
+    "subtasks": "Công việc con",
+    "progress": "{{done}}/{{total}} xong",
+    "addSubtask": "Thêm công việc con",
+    "addPlaceholder": "Thêm công việc con…",
+    "adding": "Đang thêm…",
+    "addFailed": "Không thêm được công việc con.",
+    "loadFailed": "Không tải được công việc con.",
+    "detachFailed": "Không xóa được công việc con.",
+    "toggleFailed": "Không cập nhật được công việc con.",
+    "empty": "Chưa có công việc con. Hãy chia nhỏ tác vụ này thành các bước nhỏ hơn.",
+    "toggleDoneAria": "Đánh dấu đã xong",
+    "toggleOpenAria": "Đánh dấu chưa xong",
+    "detachAria": "Xóa công việc con",
+    "nestedCount": "{{count}} công việc con",
+    "nestedCountPlural": "{{count}} công việc con"
   }
 }

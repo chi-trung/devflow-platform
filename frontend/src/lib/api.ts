@@ -438,6 +438,21 @@ export function getVelocity(
   );
 }
 
+export async function setTaskEstimation(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+  storyPoints: number | null,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/estimation`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ storyPoints }),
+    },
+  );
+}
+
 export function getTeamReport(
   workspaceId: string,
 ): Promise<TeamReportResponse> {

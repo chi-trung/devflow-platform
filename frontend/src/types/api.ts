@@ -58,6 +58,9 @@ export interface TaskItemResponse {
   totalLoggedMinutes?: number;
   labelIds?: string[];
   position?: number;
+  storyPoints?: number | null;
+  /** Number of completed child subtasks, when the backend includes it. */
+  subtaskCount?: number;
 }
 
 export interface TaskDependencyResponse {
@@ -240,9 +243,11 @@ export interface BurndownResponse {
 export interface SprintVelocity {
   sprintId: string;
   sprintName: string;
-  completedTasks: number;
   totalTasks: number;
-  completionRate: number;
+  completedTasks: number;
+  totalStoryPoints: number;
+  completedStoryPoints: number;
+  completionPercent: number;
 }
 
 export interface VelocityResponse {
