@@ -47,6 +47,7 @@ export function TaskCard({
   return (
     <div
       draggable
+      data-task-id={task.id}
       onClick={() => onSelect(task.id)}
       onDragStart={(event) => {
         event.dataTransfer.setData("text/plain", task.id);

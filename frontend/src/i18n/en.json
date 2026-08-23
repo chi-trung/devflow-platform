@@ -497,7 +497,9 @@
     "signOutTitle": "Sign out?",
     "signOutConfirmMsg": "You'll need to sign in again to access your workspaces.",
     "languageDesc": "Choose your preferred language for the interface.",
-    "languageChangedTo": "Language changed to {{language}}"
+    "languageChangedTo": "Language changed to {{language}}",
+    "syncedToAccount": "Synced to your account.",
+    "prefsSaveFailed": "Couldn't save notification preferences."
   },
   "notification": {
     "notifications": "Notifications",
@@ -541,7 +543,15 @@
     "paletteAria": "Command palette",
     "closePalette": "Close palette",
     "navigateHint": "↑↓ navigate",
-    "openHint": "↵ open"
+    "openHint": "↵ open",
+    "savedGroup": "Saved searches",
+    "saveThisSearch": "Save this search",
+    "savedNamePlaceholder": "Name this search…",
+    "savedSearchSaved": "Search saved.",
+    "savedSearchSaveFailed": "Couldn't save search.",
+    "savedSearchDeleted": "Saved search removed.",
+    "savedSearchDeleteFailed": "Couldn't remove saved search.",
+    "deleteSavedAria": "Delete saved search {{name}}"
   },
   "import": {
     "title": "Import tasks",
@@ -648,7 +658,16 @@
     "eventTaskUpdated": "Task updated",
     "eventTaskCompleted": "Task completed",
     "eventCommentAdded": "Comment added",
-    "createWorkspaceFirst": "Create a workspace first to register webhooks."
+    "createWorkspaceFirst": "Create a workspace first to register webhooks.",
+    "sendTest": "Send test",
+    "testRequestFailed": "Test request failed.",
+    "testTitle": "Webhook test",
+    "testDelivered": "Delivered",
+    "testFailed": "Delivery failed",
+    "testLatency": "Latency",
+    "testStatus": "HTTP status",
+    "testError": "Error",
+    "testClose": "Close"
   },
   "templates": {
     "createFailed": "Failed to create template.",

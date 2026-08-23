@@ -19,6 +19,7 @@ import {
   bulkDeleteTasks,
   bulkMoveTasks,
   pagedItems,
+  reorderTasks,
 } from "../lib/api";
 import { createProjectConnection } from "../lib/realtime";
 import { useApi } from "../hooks/useApi";
@@ -318,6 +319,43 @@ export function BoardPage() {
     }
   }, [deepLinkTaskId, tasks, setSearchParams]);
 
+  // Saved-search handoff from the command palette (?fs=<json>).
+  const fsParam = searchParams.get("fs");
+  useEffect(() => {
+    if (!fsParam) return;
+    try {
+      const parsed = JSON.parse(fsParam) as {
+        q?: string;
+        priority?: string;
+        due?: string;
+      };
+      if (typeof parsed.q === "string" && parsed.q) setSearch(parsed.q);
+      if (
+        ["Low", "Medium", "High", "Critical"].includes(parsed.priority ?? "")
+      ) {
+        setPriorityFilter(parsed.priority as string);
+      }
+      const now = new Date();
+      const day = (d: Date) => d.toISOString().slice(0, 10);
+      if (parsed.due === "overdue") setDueTo(day(now));
+      else if (parsed.due === "today") {
+        setDueFrom(day(now));
+        setDueTo(day(now));
+      } else if (parsed.due === "week") {
+        setDueTo(day(new Date(now.getTime() + 7 * 86400000)));
+      }
+    } catch {}
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("fs");
+        return next;
+      },
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Keyboard shortcuts: n=new, / or f=focus filter, ?=help,
   // Ctrl+A=select visible, Delete=bulk delete, Esc=step back.
   useEffect(() => {
@@ -439,11 +477,15 @@ export function BoardPage() {
     };
   }, [projectId, reload, reloadSprints, reloadActivities]);
 
-  async function moveTask(taskId: string, status: TaskItemResponse["status"]) {
+  async function moveTask(
+    taskId: string,
+    status: TaskItemResponse["status"],
+    beforeTaskId?: string | null,
+  ) {
     const task = tasks.find((t) => t.id === taskId);
-    if (!task || task.status === status) return;
+    if (!task || (!beforeTaskId && task.status === status)) return;
 
-    if (task.isBlocked) {
+    if (task.isBlocked && task.status !== status) {
       const message = t("board.blockedMoveDetail", { title: task.title });
       setBoardError(message);
       push(t("task.blocked"), "error");
@@ -451,34 +493,44 @@ export function BoardPage() {
     }
 
     setBoardError(null);
-    setTasks((current) =>
-      current.map((t) =>
-        t.id === taskId
-          ? {
-              ...t,
-              status,
-              completedAtUtc:
-                status === "Done" ? new Date().toISOString() : null,
-            }
-          : t,
-      ),
-    );
+
+    const moved: TaskItemResponse = {
+      ...task,
+      status,
+      completedAtUtc: status === "Done" ? new Date().toISOString() : null,
+    };
+    const rest = tasks.filter((t) => t.id !== taskId);
+
+    let insertAt: number;
+    if (beforeTaskId) {
+      const idx = rest.findIndex((t) => t.id === beforeTaskId);
+      insertAt = idx >= 0 ? idx : rest.length;
+    } else {
+      insertAt = rest.length;
+      for (let i = rest.length - 1; i >= 0; i--) {
+        if (rest[i].status === status) {
+          insertAt = i + 1;
+          break;
+        }
+      }
+    }
+
+    const next = [...rest.slice(0, insertAt), moved, ...rest.slice(insertAt)];
+    setTasks(next);
+
+    const affectedStatuses = new Set([
+      task.status as string,
+      status as string,
+    ]);
+    const payload = [...affectedStatuses].flatMap((col) => {
+      let position = 0;
+      return next
+        .filter((item) => item.status === col)
+        .map((item) => ({ id: item.id, status: col, position: position++ }));
+    });
 
     try {
-      await api(
-        `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({
-            title: task.title,
-            description: task.description,
-            status,
-            priority: task.priority,
-            assigneeId: task.assigneeId,
-            dueDateUtc: task.dueDateUtc,
-          }),
-        },
-      );
+      await reorderTasks(workspaceId, projectId, payload);
       push(
         t("task.movedTo", {
           column: COLUMNS.find((c) => c.status === status)?.title,

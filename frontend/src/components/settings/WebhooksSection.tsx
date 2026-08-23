@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Cable, Copy, Eye, EyeOff, Trash2 } from "lucide-react";
+import { Cable, CheckCircle2, Copy, Eye, EyeOff, Trash2, XCircle, Zap } from "lucide-react";
 import {
   api,
   createWebhook,
@@ -8,8 +8,13 @@ import {
   getWebhook,
   getWebhooks,
   pagedItems,
+  testWebhook,
 } from "../../lib/api";
-import type { WebhookResponse, WorkspaceResponse } from "../../types/api";
+import type {
+  WebhookResponse,
+  WebhookTestResponse,
+  WorkspaceResponse,
+} from "../../types/api";
 import { useToast } from "../ui/ToastProvider";
 import { Button } from "../ui/Button";
 import { ConfirmDialog } from "../ConfirmDialog";
@@ -45,6 +50,11 @@ export function WebhooksSection() {
   const [pendingDelete, setPendingDelete] = useState<WebhookResponse | null>(
     null,
   );
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<{
+    url: string;
+    result: WebhookTestResponse;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -164,6 +174,22 @@ export function WebhooksSection() {
     }
   }
 
+  async function handleTest(webhook: WebhookResponse) {
+    if (!workspaceId || testingId) return;
+    setTestingId(webhook.id);
+    try {
+      const result = await testWebhook(workspaceId, webhook.id);
+      setTestResult({ url: webhook.url, result });
+    } catch (err) {
+      push(
+        err instanceof Error ? err.message : t("webhooks.testRequestFailed"),
+        "error",
+      );
+    } finally {
+      setTestingId(null);
+    }
+  }
+
   return (
     <section
       aria-label={t("webhooks.title")}
@@ -268,6 +294,21 @@ export function WebhooksSection() {
                     <div className="flex shrink-0 items-center gap-1">
                       <button
                         type="button"
+                        aria-label={t("webhooks.sendTest")}
+                        title={t("webhooks.sendTest")}
+                        disabled={testingId !== null}
+                        onClick={() => void handleTest(webhook)}
+                        className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-primary disabled:opacity-40"
+                      >
+                        <Zap
+                          className={`size-3.5 ${
+                            testingId === webhook.id ? "animate-pulse text-primary" : ""
+                          }`}
+                          aria-hidden
+                        />
+                      </button>
+                      <button
+                        type="button"
                         aria-label={t("webhooks.toggleSecret")}
                         onClick={() => void handleRevealSecret(webhook)}
                         className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-foreground"
@@ -334,6 +375,68 @@ export function WebhooksSection() {
           onConfirm={() => void handleConfirmDelete()}
           onCancel={() => setPendingDelete(null)}
         />
+      )}
+
+      {testResult && (
+        <div className="fixed inset-0 z-50" role="dialog" aria-label={t("webhooks.testTitle")}>
+          <button
+            type="button"
+            aria-label={t("webhooks.testClose")}
+            onClick={() => setTestResult(null)}
+            className="absolute inset-0 cursor-default bg-black/50 backdrop-blur-sm"
+          />
+          <div className="absolute left-1/2 top-1/2 w-[min(92vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface p-5 shadow-[0_0_60px_rgba(0,0,0,0.5)] rise">
+            <header
+              className={`mb-3 flex items-center gap-2.5 ${
+                testResult.result.delivered ? "text-primary" : "text-destructive"
+              }`}
+            >
+              {testResult.result.delivered ? (
+                <CheckCircle2 className="size-5" aria-hidden />
+              ) : (
+                <XCircle className="size-5" aria-hidden />
+              )}
+              <h3 className="font-display text-base font-semibold">
+                {testResult.result.delivered
+                  ? t("webhooks.testDelivered")
+                  : t("webhooks.testFailed")}
+              </h3>
+            </header>
+
+            <p className="mb-4 truncate font-mono text-[11px] text-muted-foreground">
+              {testResult.url}
+            </p>
+
+            <dl className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3.5 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-muted-foreground">{t("webhooks.testLatency")}</dt>
+                <dd className="font-mono font-semibold">
+                  {testResult.result.latencyMs} ms
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-muted-foreground">{t("webhooks.testStatus")}</dt>
+                <dd className="font-mono font-semibold">
+                  {testResult.result.statusCode > 0
+                    ? `HTTP ${testResult.result.statusCode}`
+                    : "—"}
+                </dd>
+              </div>
+              {testResult.result.error && (
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="shrink-0 text-destructive">{t("webhooks.testError")}</dt>
+                  <dd className="text-right font-mono text-xs text-destructive">
+                    {testResult.result.error}
+                  </dd>
+                </div>
+              )}
+            </dl>
+
+            <Button className="mt-4 w-full" onClick={() => setTestResult(null)}>
+              {t("webhooks.testClose")}
+            </Button>
+          </div>
+        </div>
       )}
     </section>
   );

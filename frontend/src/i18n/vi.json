@@ -497,7 +497,9 @@
     "signOutTitle": "Đăng xuất?",
     "signOutConfirmMsg": "Bạn sẽ cần đăng nhập lại để truy cập không gian làm việc của mình.",
     "languageDesc": "Chọn ngôn ngữ hiển thị cho giao diện.",
-    "languageChangedTo": "Đã đổi ngôn ngữ sang {{language}}"
+    "languageChangedTo": "Đã đổi ngôn ngữ sang {{language}}",
+    "syncedToAccount": "Đồng bộ với tài khoản của bạn.",
+    "prefsSaveFailed": "Không lưu được tuỳ chọn thông báo."
   },
   "notification": {
     "notifications": "Thông báo",
@@ -541,7 +543,15 @@
     "paletteAria": "Bảng lệnh",
     "closePalette": "Đóng bảng lệnh",
     "navigateHint": "↑↓ di chuyển",
-    "openHint": "↵ mở"
+    "openHint": "↵ mở",
+    "savedGroup": "Tìm kiếm đã lưu",
+    "saveThisSearch": "Lưu tìm kiếm này",
+    "savedNamePlaceholder": "Đặt tên cho tìm kiếm…",
+    "savedSearchSaved": "Đã lưu tìm kiếm.",
+    "savedSearchSaveFailed": "Không lưu được tìm kiếm.",
+    "savedSearchDeleted": "Đã xoá tìm kiếm đã lưu.",
+    "savedSearchDeleteFailed": "Không xoá được tìm kiếm đã lưu.",
+    "deleteSavedAria": "Xoá tìm kiếm đã lưu {{name}}"
   },
   "import": {
     "title": "Nhập task từ file",
@@ -648,7 +658,16 @@
     "eventTaskUpdated": "Task được cập nhật",
     "eventTaskCompleted": "Task hoàn thành",
     "eventCommentAdded": "Bình luận được thêm",
-    "createWorkspaceFirst": "Hãy tạo workspace trước để đăng ký webhook."
+    "createWorkspaceFirst": "Hãy tạo workspace trước để đăng ký webhook.",
+    "sendTest": "Gửi thử",
+    "testRequestFailed": "Gửi request thử thất bại.",
+    "testTitle": "Kiểm tra webhook",
+    "testDelivered": "Đã gửi thành công",
+    "testFailed": "Gửi thất bại",
+    "testLatency": "Độ trễ",
+    "testStatus": "Trạng thái HTTP",
+    "testError": "Lỗi",
+    "testClose": "Đóng"
   },
   "templates": {
     "createFailed": "Không tạo được mẫu.",

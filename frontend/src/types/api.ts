@@ -285,3 +285,25 @@ export interface WebhookResponse {
   secret?: string;
   createdAtUtc: string;
 }
+
+export interface WebhookTestResponse {
+  delivered: boolean;
+  statusCode: number;
+  latencyMs: number;
+  error: string | null;
+}
+
+export interface NotificationPreferencesResponse {
+  emailOnAssignment: boolean;
+  emailOnMention: boolean;
+  emailOnSprintStarted: boolean;
+}
+
+export interface SavedSearchResponse {
+  id: string;
+  name: string;
+  workspaceId: string;
+  query: string;
+  filtersJson: string | null;
+  createdAtUtc: string;
+}

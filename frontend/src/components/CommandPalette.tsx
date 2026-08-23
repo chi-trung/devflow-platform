@@ -1,12 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Search, CornerDownLeft, LogOut, Loader2 } from "lucide-react";
-import { api, pagedItems, searchWorkspace } from "../lib/api";
+import {
+  Search,
+  CornerDownLeft,
+  LogOut,
+  Loader2,
+  BookmarkPlus,
+  X,
+} from "lucide-react";
+import {
+  api,
+  createSavedSearch,
+  deleteSavedSearch,
+  getSavedSearches,
+  pagedItems,
+  searchWorkspace,
+} from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
+import { useToast } from "./ui/ToastProvider";
 import type {
   ProjectResponse,
+  SavedSearchResponse,
   SearchResponse,
   WorkspaceResponse,
 } from "../types/api";
@@ -17,6 +33,12 @@ interface Command {
   group: string;
   keywords: string;
   run: () => void;
+  onDelete?: () => void;
+}
+
+interface SavedFilters {
+  priority?: string;
+  due?: string;
 }
 
 interface CommandPaletteProps {
@@ -33,6 +55,7 @@ export function CommandPalette({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { push } = useToast();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const [remoteResults, setRemoteResults] = useState<SearchResponse | null>(
@@ -42,8 +65,27 @@ export function CommandPalette({
   const [statusFilter, setStatusFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
   const [dueFilter, setDueFilter] = useState("");
+  const [saveMode, setSaveMode] = useState(false);
+  const [savedName, setSavedName] = useState("");
+  const [savingSearch, setSavingSearch] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+
+  const hasActiveFilters = Boolean(
+    query.trim() || statusFilter || priorityFilter || dueFilter,
+  );
+
+  const { data: savedRaw, reload: reloadSaved } = useApi<SavedSearchResponse[]>(
+    () => (open ? getSavedSearches() : Promise.resolve([])),
+    [open],
+  );
+  const savedSearches = useMemo(
+    () =>
+      (savedRaw ?? []).filter(
+        (saved) => !workspaceId || saved.workspaceId === workspaceId,
+      ),
+    [savedRaw, workspaceId],
+  );
 
   const { data: workspacesRaw } = useApi<unknown>(
     () => (open ? api("/workspaces") : Promise.resolve([])),
@@ -115,8 +157,53 @@ export function CommandPalette({
     };
   }, [open, query, workspaceId, statusFilter, priorityFilter, dueRange]);
 
+  function savedSearchTargetPath(): string {
+    try {
+      const last = localStorage.getItem("devflow.lastBoardPath");
+      if (last && last.startsWith(`/workspaces/${workspaceId}/`)) return last;
+    } catch {}
+    if (projects && projects.length > 0) {
+      return `/workspaces/${workspaceId}/projects/${projects[0].id}`;
+    }
+    return `/workspaces/${workspaceId}`;
+  }
+
   const commands = useMemo<Command[]>(() => {
     const list: Command[] = [];
+
+    for (const saved of savedSearches) {
+      let filters: SavedFilters = {};
+      try {
+        filters = saved.filtersJson
+          ? (JSON.parse(saved.filtersJson) as SavedFilters)
+          : {};
+      } catch {}
+
+      const fs = encodeURIComponent(
+        JSON.stringify({
+          q: saved.query ?? "",
+          priority: filters.priority ?? "",
+          due: filters.due ?? "",
+        }),
+      );
+
+      list.push({
+        id: `saved-${saved.id}`,
+        label: saved.name,
+        group: t("commandPalette.savedGroup"),
+        keywords: `${saved.query ?? ""} ${filters.priority ?? ""}`,
+        run: () =>
+          navigate(`${savedSearchTargetPath()}?fs=${fs}`),
+        onDelete: () => {
+          void deleteSavedSearch(saved.id)
+            .then(() => {
+              push(t("commandPalette.savedSearchDeleted"));
+              reloadSaved();
+            })
+            .catch(() => push(t("commandPalette.savedSearchDeleteFailed"), "error"));
+        },
+      });
+    }
 
     for (const workspace of workspaces ?? []) {
       list.push({
@@ -149,7 +236,17 @@ export function CommandPalette({
     });
 
     return list;
-  }, [workspaces, projects, workspaceId, navigate, logout, t]);
+  }, [
+    savedSearches,
+    workspaces,
+    projects,
+    workspaceId,
+    navigate,
+    logout,
+    t,
+    push,
+    reloadSaved,
+  ]);
 
   const projectIdByKey = useMemo(() => {
     const map = new Map<string, string>();
@@ -223,6 +320,8 @@ export function CommandPalette({
       setStatusFilter("");
       setPriorityFilter("");
       setDueFilter("");
+      setSaveMode(false);
+      setSavedName("");
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [open]);
@@ -246,6 +345,37 @@ export function CommandPalette({
     if (!command) return;
     onClose();
     command.run();
+  }
+
+  async function handleSaveSearch() {
+    if (!workspaceId || !hasActiveFilters) return;
+    const name = savedName.trim();
+    if (!name || savingSearch) return;
+    setSavingSearch(true);
+    try {
+      await createSavedSearch({
+        name,
+        workspaceId,
+        query: query.trim(),
+        filtersJson: JSON.stringify({
+          priority: priorityFilter,
+          due: dueFilter,
+        }),
+      });
+      push(t("commandPalette.savedSearchSaved"));
+      setSaveMode(false);
+      setSavedName("");
+      reloadSaved();
+    } catch (err) {
+      push(
+        err instanceof Error
+          ? err.message
+          : t("commandPalette.savedSearchSaveFailed"),
+        "error",
+      );
+    } finally {
+      setSavingSearch(false);
+    }
   }
 
   function handleKeyDown(event: React.KeyboardEvent) {
@@ -336,6 +466,53 @@ export function CommandPalette({
           </div>
         )}
 
+        {workspaceId && hasActiveFilters && (
+          <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
+            {saveMode ? (
+              <>
+                <BookmarkPlus className="size-3.5 shrink-0 text-primary" aria-hidden />
+                <input
+                  value={savedName}
+                  autoFocus
+                  onChange={(event) => setSavedName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void handleSaveSearch();
+                    } else if (event.key === "Escape") {
+                      event.stopPropagation();
+                      setSaveMode(false);
+                      setSavedName("");
+                    }
+                  }}
+                  placeholder={t("commandPalette.savedNamePlaceholder")}
+                  maxLength={60}
+                  aria-label={t("commandPalette.saveThisSearch")}
+                  className="w-full bg-transparent py-0.5 text-xs placeholder:text-muted-foreground/50 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleSaveSearch()}
+                  disabled={!savedName.trim() || savingSearch}
+                  aria-label={t("commandPalette.saveThisSearch")}
+                  className="shrink-0 rounded-md border border-primary bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-medium text-primary disabled:opacity-40"
+                >
+                  {savingSearch ? t("common.loading") : t("filter.save")}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setSaveMode(true)}
+                className="flex w-full items-center gap-1.5 rounded-md px-1 py-0.5 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:text-primary"
+              >
+                <BookmarkPlus className="size-3.5" aria-hidden />
+                {t("commandPalette.saveThisSearch")}
+              </button>
+            )}
+          </div>
+        )}
+
         <ul ref={listRef} className="max-h-80 overflow-y-auto p-2">
           {results.length === 0 && !searching && (
             <li className="px-3 py-8 text-center text-sm text-muted-foreground">
@@ -368,8 +545,31 @@ export function CommandPalette({
                       : "text-muted-foreground"
                   }`}
                 >
-                  <span className="truncate">{command.label}</span>
-                  {index === selected && (
+                  <span className="min-w-0 flex-1 truncate">{command.label}</span>
+                  {command.onDelete && (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      aria-label={t("commandPalette.deleteSavedAria", {
+                        name: command.label,
+                      })}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        command.onDelete?.();
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          command.onDelete?.();
+                        }
+                      }}
+                      className="shrink-0 cursor-pointer rounded p-0.5 text-muted-foreground transition-colors duration-150 hover:text-destructive"
+                    >
+                      <X className="size-3.5" aria-hidden />
+                    </span>
+                  )}
+                  {index === selected && !command.onDelete && (
                     <CornerDownLeft className="size-3.5 shrink-0" aria-hidden />
                   )}
                 </button>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -9,7 +9,13 @@ import {
   TriangleAlert,
   UserRound,
 } from "lucide-react";
-import { updateSettings, type AppSettings } from "../lib/api";
+import {
+  getNotificationPreferences,
+  updateNotificationPreferences,
+  updateSettings,
+  type AppSettings,
+} from "../lib/api";
+import type { NotificationPreferencesResponse } from "../types/api";
 import type { Theme } from "../lib/theme";
 import { useAuth } from "../auth/AuthContext";
 import { useToast } from "../components/ui/ToastProvider";
@@ -24,10 +30,12 @@ function Switch({
   checked,
   onChange,
   label,
+  disabled = false,
 }: {
   checked: boolean;
   onChange: (value: boolean) => void;
   label: string;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -35,10 +43,11 @@ function Switch({
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ${
-        checked ? "bg-primary" : "bg-elevated border border-border"
-      }`}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 ${
+        disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+      } ${checked ? "bg-primary" : "bg-elevated border border-border"}`}
     >
       <span
         className={`absolute top-0.5 size-5 rounded-full bg-card shadow transition-all duration-200 ${
@@ -52,15 +61,14 @@ function Switch({
 function EmailEventRow({
   label,
   hint,
-  read,
+  checked,
   onChange,
 }: {
   label: string;
   hint: string;
-  read: () => boolean;
+  checked: boolean;
   onChange: (value: boolean) => void;
 }) {
-  const [checked, setChecked] = useState(read);
   return (
     <div className="flex items-center justify-between gap-4">
       <div>
@@ -69,10 +77,7 @@ function EmailEventRow({
       </div>
       <Switch
         checked={checked}
-        onChange={(value) => {
-          setChecked(value);
-          onChange(value);
-        }}
+        onChange={onChange}
         label={label}
       />
     </div>
@@ -85,42 +90,86 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const { push } = useToast();
 
-  const [emailNotifications, setEmailNotifications] = useState<boolean>(() => {
-    const savedEmail = localStorage.getItem("devflow.settings.email");
-    if (savedEmail !== null) return savedEmail === "true";
-    try {
-      const raw = localStorage.getItem("devflow.settings");
-      if (raw) return JSON.parse(raw).emailNotifications === true;
-    } catch {}
-    return false;
-  });
+  const [prefs, setPrefs] = useState<NotificationPreferencesResponse | null>(
+    null,
+  );
+  const [prefsLoading, setPrefsLoading] = useState(true);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
 
-  const EMAIL_EVENTS: { key: string; label: string; hint: string }[] = [
-    { key: "assigned", label: t("settings.assignedToMe"), hint: t("settings.assignedHint") },
-    { key: "mentioned", label: t("settings.imMentioned"), hint: t("settings.mentionedHint") },
-    { key: "statusChanged", label: t("settings.statusChanged"), hint: t("settings.statusChangedHint") },
-    { key: "dueSoon", label: t("settings.dueSoon"), hint: t("settings.dueSoonHint") },
-    { key: "sprintStarted", label: t("settings.sprintStarted"), hint: t("settings.sprintStartedHint") },
+  useEffect(() => {
+    let cancelled = false;
+    getNotificationPreferences()
+      .then((loaded) => {
+        if (!cancelled) setPrefs(loaded);
+      })
+      .catch(() => {
+        if (!cancelled)
+          setPrefs({
+            emailOnAssignment: true,
+            emailOnMention: true,
+            emailOnSprintStarted: true,
+          });
+      })
+      .finally(() => {
+        if (!cancelled) setPrefsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const emailNotifications = prefs
+    ? prefs.emailOnAssignment ||
+      prefs.emailOnMention ||
+      prefs.emailOnSprintStarted
+    : false;
+
+  const EMAIL_EVENTS: {
+    key: keyof NotificationPreferencesResponse;
+    label: string;
+    hint: string;
+  }[] = [
+    { key: "emailOnAssignment", label: t("settings.assignedToMe"), hint: t("settings.assignedHint") },
+    { key: "emailOnMention", label: t("settings.imMentioned"), hint: t("settings.mentionedHint") },
+    { key: "emailOnSprintStarted", label: t("settings.sprintStarted"), hint: t("settings.sprintStartedHint") },
   ];
 
-  function readEmailEvent(key: string): boolean {
+  async function persistPrefs(
+    next: NotificationPreferencesResponse,
+  ): Promise<boolean> {
     try {
-      const raw = localStorage.getItem("devflow.settings.emailEvents");
-      if (!raw) return true;
-      return (JSON.parse(raw) as Record<string, boolean>)[key] !== false;
-    } catch {
+      await updateNotificationPreferences(next);
       return true;
+    } catch {
+      push(t("settings.prefsSaveFailed"), "error");
+      return false;
     }
   }
 
-  function writeEmailEvent(key: string, value: boolean) {
-    let map: Record<string, boolean> = {};
-    try {
-      map = JSON.parse(localStorage.getItem("devflow.settings.emailEvents") ?? "{}");
-    } catch {}
-    map[key] = value;
-    localStorage.setItem("devflow.settings.emailEvents", JSON.stringify(map));
+  function handlePrefToggle(
+    key: keyof NotificationPreferencesResponse,
+    value: boolean,
+  ) {
+    if (!prefs) return;
+    const next = { ...prefs, [key]: value };
+    setPrefs(next);
+    void persistPrefs(next).then((ok) => {
+      if (!ok) setPrefs(prefs);
+    });
+  }
+
+  function handleMasterEmailToggle(value: boolean) {
+    if (!prefs) return;
+    const next: NotificationPreferencesResponse = {
+      emailOnAssignment: value,
+      emailOnMention: value,
+      emailOnSprintStarted: value,
+    };
+    setPrefs(next);
+    void persistPrefs(next).then((ok) => {
+      if (!ok) setPrefs(prefs);
+      else push(value ? t("settings.emailOn") : t("settings.emailOff"));
+    });
   }
 
   function saveSettings(patch: Partial<AppSettings>, emailPref: boolean) {
@@ -138,15 +187,8 @@ export function SettingsPage() {
     push(t("settings.appearanceUpdated"));
   }
 
-  function handleEmailToggle(value: boolean) {
-    setEmailNotifications(value);
-    saveSettings({ emailNotifications: value }, value);
-    push(value ? t("settings.emailOn") : t("settings.emailOff"));
-  }
-
   async function handleSignOutAll() {
     setConfirmSignOut(false);
-    localStorage.removeItem("devflow.settings.email");
     await logout();
     push(t("settings.signedOut"));
     navigate("/login");
@@ -236,31 +278,30 @@ export function SettingsPage() {
             <div>
               <p className="text-sm font-medium">{t("settings.emailNotifications")}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {t("settings.emailDesc")} ({t("settings.emailComingSoon")})
+                {t("settings.emailDesc")}
               </p>
             </div>
             <Switch
               checked={emailNotifications}
-              onChange={handleEmailToggle}
+              disabled={prefsLoading}
+              onChange={handleMasterEmailToggle}
               label={t("settings.emailNotifications")}
             />
           </div>
 
-          {emailNotifications && (
+          {emailNotifications && prefs && (
             <div className="rise mt-4 flex flex-col gap-3 rounded-lg border border-border bg-card p-3.5">
               {EMAIL_EVENTS.map((event) => (
                 <EmailEventRow
                   key={event.key}
                   label={event.label}
                   hint={event.hint}
-                  read={() => readEmailEvent(event.key)}
-                  onChange={(value) => {
-                    writeEmailEvent(event.key, value);
-                  }}
+                  checked={prefs[event.key]}
+                  onChange={(value) => handlePrefToggle(event.key, value)}
                 />
               ))}
               <p className="font-mono text-[10px] text-muted-foreground">
-                {t("settings.savedLocally")}
+                {t("settings.syncedToAccount")}
               </p>
             </div>
           )}

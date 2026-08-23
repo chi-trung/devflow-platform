@@ -9,7 +9,7 @@
 
 | Sprint | Focus Area | Backend (Codebuff) | Frontend (OpenCode) | Status |
 |---|---|---|---|---|
-| **Sprint 16** | Personalization & Workflows | ✅ DONE (B1-B4) | 🔄 In Progress (F1-F4) | Finalizing |
+| **Sprint 16** | Personalization & Workflows | ✅ DONE (B1-B4) | ✅ DONE (F1-F4) | Complete |
 | **Sprint 17** | Performance Hardening & State Sync | ⏳ Ready | ⏳ Ready | 🎯 Next Up |
 | **Sprint 18** | Epics, Subtasks & Task Hierarchy | ⏳ Planned | ⏳ Planned | Queued |
 | **Sprint 19** | GitHub Integration & Webhook Outbox | ⏳ Planned | ⏳ Planned | Queued |
@@ -27,11 +27,17 @@
 - [x] **B3: Task Manual Ordering** (`PUT /api/v1/workspaces/{wsId}/projects/{projId}/tasks/reorder`)
 - [x] **B4: Saved Searches** (`GET/POST/DELETE /api/v1/users/me/saved-searches`)
 
-#### 🎨 Agent: OpenCode (`frontend/src/`) — IN PROGRESS ⚡
-- [ ] **F1: Settings Notification Toggles** — Connect UI to Notification Preferences API.
-- [ ] **F2: Webhook "Send Test" Button** — Realtime response latency and delivery status modal.
-- [ ] **F3: Drag-Reorder Persistence** — Sync manual task column position with `tasks/reorder` API.
-- [ ] **F4: Command Palette Saved Searches** — Quick save filter presets & search chip shortcuts.
+#### 🎨 Agent: OpenCode (`frontend/src/`) — COMPLETED ✅
+- [x] **F1: Settings Notification Toggles** — Connected to Notification Preferences API (3 server-backed toggles, master switch, optimistic save w/ rollback).
+- [x] **F2: Webhook "Send Test" Button** — Per-webhook Zap button + result modal (delivered ✓/✗, HTTP status, latency ms, error).
+- [x] **F3: Drag-Reorder Persistence** — Index-aware column drops; moves persist via `tasks/reorder` (status + position per affected column).
+- [x] **F4: Command Palette Saved Searches** — Save current query/filters to API, run from palette via `?fs=` handoff to BoardPage, inline delete.
+
+> **⚠️ Backend follow-up for F3 fidelity (Codebuff, B16.5):**
+> `GET .../tasks` currently orders by `CreatedAtUtc DESC` and `TaskItemResponse` does not
+> expose `Position`. Reorder saves correctly to DB, but reload ignores saved order.
+> Fix = order by `Position` in `TaskItemRepository.GetForProjectPagedAsync` + add
+> `position` to `TaskItemResponse`. Frontend already sends/consumes it.
 
 ---
 

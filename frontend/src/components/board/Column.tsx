@@ -9,7 +9,11 @@ interface ColumnProps {
   status: TaskItemResponse["status"];
   tasks: TaskItemResponse[];
   members: WorkspaceMemberResponse[];
-  onDropTask: (taskId: string, status: TaskItemResponse["status"]) => void;
+  onDropTask: (
+    taskId: string,
+    status: TaskItemResponse["status"],
+    beforeTaskId?: string | null,
+  ) => void;
   onDelete: (task: TaskItemResponse) => void;
   onSelect: (taskId: string) => void;
   selectionMode?: boolean;
@@ -61,7 +65,21 @@ export function Column({
         event.preventDefault();
         delete event.currentTarget.dataset.dragOver;
         const taskId = event.dataTransfer.getData("text/plain");
-        if (taskId) onDropTask(taskId, status);
+        if (!taskId) return;
+
+        let beforeTaskId: string | null = null;
+        const cards = Array.from(
+          event.currentTarget.querySelectorAll<HTMLElement>("[data-task-id]"),
+        );
+        for (const card of cards) {
+          if (card.dataset.taskId === taskId) continue;
+          const rect = card.getBoundingClientRect();
+          if (event.clientY < rect.top + rect.height / 2) {
+            beforeTaskId = card.dataset.taskId ?? null;
+            break;
+          }
+        }
+        onDropTask(taskId, status, beforeTaskId);
       }}
       data-drag-over="false"
       className="group/column flex min-h-72 w-full flex-1 flex-col gap-2 rounded-xl border border-border bg-surface p-3 transition-colors duration-200 data-[drag-over=true]:border-primary/50 data-[drag-over=true]:bg-primary/5"
