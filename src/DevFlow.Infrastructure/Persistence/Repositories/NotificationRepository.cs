@@ -57,4 +57,20 @@ public sealed class NotificationRepository(DevFlowDbContext dbContext) : INotifi
             notification.MarkAsRead();
         }
     }
+
+    public async Task DeleteAsync(Notification notification, CancellationToken cancellationToken = default)
+    {
+        dbContext.Notifications.Remove(notification);
+        await Task.CompletedTask;
+    }
+
+    public async Task DeleteAllReadForUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var read = await dbContext.Notifications
+            .Where(n => n.UserId == userId && n.ReadAtUtc != null)
+            .ToListAsync(cancellationToken);
+
+        dbContext.Notifications.RemoveRange(read);
+        await Task.CompletedTask;
+    }
 }
