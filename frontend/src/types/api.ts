@@ -340,3 +340,35 @@ export interface SavedSearchResponse {
   filtersJson: string | null;
   createdAtUtc: string;
 }
+
+export interface EpicResponse {
+  id: string;
+  projectId: string;
+  name: string;
+  description: string | null;
+  startDateUtc: string | null;
+  endDateUtc: string | null;
+  totalTasks: number;
+  completedTasks: number;
+  completionPercent: number;
+  totalStoryPoints: number;
+  completedStoryPoints: number;
+}
+
+export interface EpicCreatedResponse {
+  id: string;
+}
+
+export interface CreateEpicRequest {
+  name: string;
+  description?: string | null;
+  startDateUtc?: string | null;
+  endDateUtc?: string | null;
+}
+
+export interface UpdateEpicRequest {
+  name: string;
+  description?: string | null;
+  startDateUtc?: string | null;
+  endDateUtc?: string | null;
+}

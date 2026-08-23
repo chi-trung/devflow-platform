@@ -1,9 +1,12 @@
 import type {
   BurndownResponse,
   CreateLabelRequest,
+  CreateEpicRequest,
   CustomFieldResponse,
   CustomFieldValueResponse,
   DashboardData,
+  EpicCreatedResponse,
+  EpicResponse,
   FieldErrors,
   GitHubIntegrationResponse,
   ImportResultResponse,
@@ -22,6 +25,7 @@ import type {
   TeamReportResponse,
   TemplateResponse,
   TimeEntryResponse,
+  UpdateEpicRequest,
   UserProfileResponse,
   VelocityResponse,
   WebhookResponse,
@@ -563,6 +567,55 @@ export async function deleteCustomField(
 ): Promise<void> {
   await api(
     `/workspaces/${workspaceId}/projects/${projectId}/fields/${fieldId}`,
+    { method: "DELETE" },
+  );
+}
+
+export function getEpics(
+  workspaceId: string,
+  projectId: string,
+): Promise<EpicResponse[]> {
+  return api<EpicResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/epics`,
+  );
+}
+
+export async function createEpic(
+  workspaceId: string,
+  projectId: string,
+  input: CreateEpicRequest,
+): Promise<EpicCreatedResponse> {
+  return api<EpicCreatedResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/epics`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function updateEpic(
+  workspaceId: string,
+  projectId: string,
+  epicId: string,
+  input: UpdateEpicRequest,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/epics/${epicId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function deleteEpic(
+  workspaceId: string,
+  projectId: string,
+  epicId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/epics/${epicId}`,
     { method: "DELETE" },
   );
 }
