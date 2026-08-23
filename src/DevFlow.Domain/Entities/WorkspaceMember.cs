@@ -42,4 +42,9 @@ public class WorkspaceMember : BaseEntity, IAuditableEntity
 
         return new WorkspaceMember(workspaceId, userId, role);
     }
+
+    public void UpdateRole(WorkspaceRole role)
+    {
+        Role = role;
+    }
 }

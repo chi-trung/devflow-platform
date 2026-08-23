@@ -83,6 +83,28 @@ public sealed class WorkspaceRepository(DevFlowDbContext dbContext) : IWorkspace
         await dbContext.WorkspaceMembers.AddAsync(member, cancellationToken);
     }
 
+    public async Task RemoveMemberAsync(Guid workspaceId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        var member = await dbContext.WorkspaceMembers
+            .FirstOrDefaultAsync(m => m.WorkspaceId == workspaceId && m.UserId == userId, cancellationToken);
+
+        if (member is not null)
+        {
+            dbContext.WorkspaceMembers.Remove(member);
+        }
+    }
+
+    public async Task UpdateMemberRoleAsync(Guid workspaceId, Guid userId, WorkspaceRole newRole, CancellationToken cancellationToken = default)
+    {
+        var member = await dbContext.WorkspaceMembers
+            .FirstOrDefaultAsync(m => m.WorkspaceId == workspaceId && m.UserId == userId, cancellationToken);
+
+        if (member is not null)
+        {
+            member.UpdateRole(newRole);
+        }
+    }
+
     public void Delete(Workspace workspace)
     {
         dbContext.Workspaces.Remove(workspace);

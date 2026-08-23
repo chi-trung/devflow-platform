@@ -105,4 +105,36 @@ public sealed class WorkspacesController(ISender sender) : ControllerBase
 
         return StatusCode(StatusCodes.Status201Created, member);
     }
+
+    [HttpDelete("{id:guid}/members/{userId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> RemoveMember(Guid id, Guid userId, CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Workspaces.RemoveMembers.RemoveMemberCommand(id, userId),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpPatch("{id:guid}/members/{userId:guid}/role")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateMemberRole(
+        Guid id,
+        Guid userId,
+        UpdateMemberRoleRequest request,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Workspaces.UpdateMemberRole.UpdateMemberRoleCommand(id, userId, request.Role),
+            cancellationToken);
+
+        return NoContent();
+    }
 }
