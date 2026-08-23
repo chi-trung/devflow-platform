@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, BarChart3, Download, FileJson, FileSpreadsheet, LineChart } from "lucide-react";
-import { api, exportTasks, getBurndown, getTeamReport, getVelocity } from "../lib/api";
+import { api, exportTasks, getBurndown, getTeamReport, getVelocity, getCycleLeadTime, getVelocityHistory } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useToast } from "../components/ui/ToastProvider";
 import { AppShell } from "../components/AppShell";
@@ -10,6 +10,8 @@ import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { BurndownChartApi } from "../components/reporting/BurndownChartApi";
 import { VelocityChart } from "../components/reporting/VelocityChart";
+import { CycleLeadTimeChart } from "../components/reporting/CycleLeadTimeChart";
+import { VelocityTrendChart } from "../components/reporting/VelocityTrendChart";
 import { TeamReportCards } from "../components/reporting/TeamReportCards";
 import { TeamPerformancePanel } from "../components/dashboard/TeamPerformancePanel";
 import { GitHubIntegrationCard } from "../components/github/GitHubIntegrationCard";
@@ -52,6 +54,12 @@ export function ReportsPage() {
 
   const { data: velocity, error: velocityError, loading: velocityLoading } =
     useApi(() => getVelocity(workspaceId, projectId), [workspaceId, projectId]);
+
+  const { data: cycleLead, error: cycleLeadError, loading: cycleLeadLoading } =
+    useApi(() => getCycleLeadTime(workspaceId, projectId), [workspaceId, projectId]);
+
+  const { data: velocityHistory, error: velocityHistoryError, loading: velocityHistoryLoading } =
+    useApi(() => getVelocityHistory(workspaceId, projectId), [workspaceId, projectId]);
 
   const { data: team, error: teamError, loading: teamLoading } = useApi(
     () => getTeamReport(workspaceId),
@@ -188,6 +196,22 @@ export function ReportsPage() {
               <VelocityChart data={velocity} />
             ) : null}
           </div>
+
+          {cycleLeadLoading ? (
+            <Skeleton className="h-72" />
+          ) : cycleLeadError ? (
+            <ErrorAlert message={cycleLeadError} />
+          ) : cycleLead ? (
+            <CycleLeadTimeChart data={cycleLead} />
+          ) : null}
+
+          {velocityHistoryLoading ? (
+            <Skeleton className="h-72" />
+          ) : velocityHistoryError ? (
+            <ErrorAlert message={velocityHistoryError} />
+          ) : velocityHistory ? (
+            <VelocityTrendChart data={velocityHistory} />
+          ) : null}
 
           {teamLoading ? (
             <Skeleton className="h-40" />

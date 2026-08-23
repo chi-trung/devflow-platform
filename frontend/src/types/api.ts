@@ -392,3 +392,23 @@ export interface PatCreatedResponse {
   id: string;
   token: string;
 }
+
+export interface CycleLeadTimeResponse {
+  cycleTimeP50: number;
+  cycleTimeP90: number;
+  leadTimeP50: number;
+  leadTimeP90: number;
+  tasks: Array<{ taskId: string; title: string; cycleTimeDays: number; leadTimeDays: number }>;
+}
+
+export interface VelocityHistoryResponse {
+  points: Array<{
+    sprintId: string;
+    sprintName: string;
+    totalStoryPoints: number;
+    completedStoryPoints: number;
+    endDateUtc: string;
+  }>;
+  averageCompleted: number;
+  averageTotal: number;
+}

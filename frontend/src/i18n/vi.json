@@ -295,6 +295,10 @@
     "projectActivity": "Hoạt động dự án",
     "noActivity": "Chưa có hoạt động nào được ghi nhận trong dự án này."
   },
+  "taskDetail": {
+    "customFields": "Trường tùy chỉnh",
+    "noCustomFields": "Chưa có giá trị trường tùy chỉnh nào cho task này."
+  },
   "timeTracking": {
     "timeTracking": "Theo dõi thời gian",
     "startTracking": "Bắt đầu theo dõi",
@@ -374,7 +378,22 @@
     "completedTasksAria": "{{name}} đã hoàn thành task",
     "velocityAria": "Vận tốc qua {{count}} sprint",
     "plannedPoint": "{{name}} — dự kiến {{count}}",
-    "completedPoint": "{{name}} — hoàn thành {{done}}/{{total}} ({{pct}}%)"
+    "completedPoint": "{{name}} — hoàn thành {{done}}/{{total}} ({{pct}}%)",
+    "cycleLeadTime": "Thời gian chu kỳ / Lead time",
+    "velocityTrend": "Xu hướng tốc độ",
+    "cycleTimeP50": "Cycle P50",
+    "cycleTimeP90": "Cycle P90",
+    "leadTimeP50": "Lead P50",
+    "leadTimeP90": "Lead P90",
+    "days": "ngày",
+    "analyticsUnavailable": "Chưa có endpoint phân tích.",
+    "noCycleLeadData": "Chưa có dữ liệu cycle/lead time.",
+    "noVelocityHistory": "Chưa có lịch sử tốc độ.",
+    "cycleTimeLabel": "Cycle time",
+    "leadTimeLabel": "Lead time",
+    "avgCompletedPoints": "tb {{pct}} pts",
+    "velocityTrendAria": "Xu hướng tốc độ qua {{count}} sprint",
+    "cycleLeadTimeAria": "Cycle và lead time qua {{count}} task"
   },
   "template": {
     "title": "Mẫu task",

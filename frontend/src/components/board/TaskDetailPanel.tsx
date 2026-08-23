@@ -16,6 +16,7 @@ import type {
 import { DependencySection } from "./DependencySection";
 import { TimeTrackingSection } from "./TimeTrackingSection";
 import { SubtaskSection } from "./SubtaskSection";
+import { CustomFieldsSection } from "./CustomFieldsSection";
 import { TaskFieldsSection } from "../fields/TaskFieldsSection";
 import { TaskPullRequests } from "../github/TaskPullRequests";
 import type { CurrentUser } from "../../auth/AuthContext";
@@ -474,6 +475,12 @@ export function TaskDetailPanel({
             projectId={projectId}
             task={task}
             onChanged={onTaskChanged}
+          />
+
+          <CustomFieldsSection
+            workspaceId={workspaceId}
+            projectId={projectId}
+            taskId={task.id}
           />
 
           <TimeTrackingSection

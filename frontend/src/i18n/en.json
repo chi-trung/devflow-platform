@@ -291,6 +291,10 @@
     "capacityMeter": "Sprint capacity",
     "storyPoints": "story points"
   },
+  "taskDetail": {
+    "customFields": "Custom Fields",
+    "noCustomFields": "No custom field values set for this task."
+  },
   "activity": {
     "projectActivity": "Project Activity",
     "noActivity": "No activity recorded yet in this project."
@@ -374,7 +378,22 @@
     "completedTasksAria": "{{name}} completed tasks",
     "velocityAria": "Velocity across {{count}} sprints",
     "plannedPoint": "{{name}} — planned {{count}}",
-    "completedPoint": "{{name}} — completed {{done}}/{{total}} ({{pct}}%)"
+    "completedPoint": "{{name}} — completed {{done}}/{{total}} ({{pct}}%)",
+    "cycleLeadTime": "Cycle / Lead Time",
+    "velocityTrend": "Velocity Trend",
+    "cycleTimeP50": "Cycle P50",
+    "cycleTimeP90": "Cycle P90",
+    "leadTimeP50": "Lead P50",
+    "leadTimeP90": "Lead P90",
+    "days": "d",
+    "analyticsUnavailable": "Analytics endpoints are not yet available.",
+    "noCycleLeadData": "No cycle/lead time data yet.",
+    "noVelocityHistory": "No velocity history yet.",
+    "cycleTimeLabel": "Cycle time",
+    "leadTimeLabel": "Lead time",
+    "avgCompletedPoints": "avg {{pct}} pts",
+    "velocityTrendAria": "Velocity trend across {{count}} sprints",
+    "cycleLeadTimeAria": "Cycle and lead time across {{count}} tasks"
   },
   "template": {
     "title": "Templates",

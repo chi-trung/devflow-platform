@@ -5,6 +5,8 @@ import type { TaskItemResponse, WorkspaceMemberResponse } from "../../types/api"
 import { formatMinutes } from "../../lib/format";
 import { Avatar } from "../ui/Avatar";
 import { EstimationModal } from "../estimation/EstimationModal";
+import { useApi } from "../../hooks/useApi";
+import { getTaskFieldValues } from "../../lib/api";
 
 const priorityDot: Record<TaskItemResponse["priority"], string> = {
   Critical: "bg-destructive",
@@ -52,6 +54,11 @@ export function TaskCard({
     task.status !== "Done" &&
     new Date(task.dueDateUtc).getTime() < Date.now();
   const [estimationOpen, setEstimationOpen] = useState(false);
+
+  const { data: customFields = [] } = useApi(
+    () => getTaskFieldValues(workspaceId, projectId, task.id),
+    [workspaceId, projectId, task.id],
+  );
 
   async function handleEstimationSaved(storyPoints: number | null) {
     onEstimationSaved?.(task.id, storyPoints);
@@ -167,6 +174,18 @@ export function TaskCard({
             {task.subtaskCount}
           </span>
         )}
+        {(customFields ?? [])
+          .filter((field) => field.value != null && field.value !== "")
+          .slice(0, 3)
+          .map((field) => (
+            <span
+              key={field.fieldId}
+              title={`${field.fieldName}: ${field.value}`}
+              className="rounded bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
+            >
+              {field.fieldName}: {field.value}
+            </span>
+          ))}
         {assignee && (
           <span
             className="ml-auto"

@@ -5,6 +5,7 @@ import type {
   ActivityResponse,
   CustomFieldResponse,
   CustomFieldValueResponse,
+  CycleLeadTimeResponse,
   DashboardData,
   EpicCreatedResponse,
   EpicResponse,
@@ -30,6 +31,7 @@ import type {
   TimeEntryResponse,
   UpdateEpicRequest,
   UserProfileResponse,
+  VelocityHistoryResponse,
   VelocityResponse,
   WebhookResponse,
   WebhookTestResponse,
@@ -1034,4 +1036,22 @@ export async function updateMemberRole(
     method: "PATCH",
     body: JSON.stringify({ role }),
   });
+}
+
+export function getCycleLeadTime(
+  workspaceId: string,
+  projectId: string,
+): Promise<CycleLeadTimeResponse> {
+  return api<CycleLeadTimeResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/reporting/cycle-lead-time`,
+  );
+}
+
+export function getVelocityHistory(
+  workspaceId: string,
+  projectId: string,
+): Promise<VelocityHistoryResponse> {
+  return api<VelocityHistoryResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/reporting/velocity-history`,
+  );
 }
