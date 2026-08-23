@@ -13,7 +13,7 @@
 | **Sprint 17** | Performance Hardening & State Sync | ✅ DONE (B17.1-B17.4) | ✅ DONE (F17.1-F17.4) | Complete |
 | **Sprint 18** | Epics, Subtasks & Task Hierarchy | ✅ DONE (B18.1-B18.3) — PR #77 | ✅ DONE (F18.1-F18.3) — PR #89-91 | Complete |
 | **Sprint 19** | GitHub Integration & Webhook Outbox | ✅ DONE (B19.1-B19.3) — PR #93 | ✅ DONE (F19.1-F19.3) — PR #92 | Complete ✅ |
-| **Sprint 20** | Advanced Agile Analytics & Custom Fields | ⏳ Planned | ⏳ Planned | Queued |
+| **Sprint 20** | Advanced Agile Analytics & Custom Fields | ⏳ B20.1-2 (Agent B), B20.3 (Agent A) | ⏳ F20.1-2 (Agent C), F20.3 (Agent A) | In Progress 🎯 |
 
 ---
 
@@ -131,24 +131,24 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 **Goal:** Enterprise analytics, customizable workflows, and comprehensive team insights.
 
-#### 🤖 Agent: Codebuff (Backend)
-- [ ] **B20.1: Agile Analytics Engine**
-  - Sprint Burndown snapshot recorder (daily ideal vs actual point burn).
-  - Velocity history tracking across past 10 sprints.
-  - Cycle Time & Lead Time percentile computation (P50, P90).
-- [ ] **B20.2: Custom Fields Engine**
-  - Dynamic schemas: Dropdown, Number, Text, User, Date.
-  - Value storage with strict type validation per workspace.
-- [ ] **B20.3: Sprint Rollover Automation**
-  - On sprint complete: automatically roll unfinished tasks to next planned sprint or backlog.
+> **Hiện trạng trước Sprint 20:** Custom Fields backend đã HOÀN CHỈNH (CRUD + SetValue + GetTaskValues — `CustomFieldsController`, `TaskCustomFieldValue` entity, `CustomFieldsPage.tsx` builder). Reporting backend đã có Burndown/Velocity/Team Report + charts. Story points đã có. → **Sprint 20 tập trung vào gap thật**: Cycle/Lead Time, Velocity history trend, Sprint Rollover, CFD, Team dashboard, Custom Field value render trên card.
 
-#### 🎨 Agent: OpenCode (Frontend)
-- [ ] **F20.1: Interactive Burndown & Velocity Charts**
-  - Zoomable SVG/Canvas charts with confidence bands and export to PNG/CSV.
-- [ ] **F20.2: Team Performance & Lead Time Dashboard**
-  - Cumulative Flow Diagram (CFD) and bottleneck heatmaps.
-- [ ] **F20.3: Custom Field Builder & Card Renderer**
-  - Settings page custom field builder + dynamic form fields on Kanban cards & detail drawers.
+#### 🤖 Agent: Codebuff (Backend) — Agent B & A
+- [ ] **B20.1: Cycle Time & Lead Time Analytics (Agent B)**
+  - Thêm `StartedAtUtc` field cho TaskItem (track khi task vào InProgress) + migration.
+  - `GET .../reporting/cycle-lead-time` — Cycle Time (InProgress→Done) & Lead Time (Created→Done), trả P50/P90 + per-task breakdown.
+- [ ] **B20.2: Velocity History Trend (Agent B)**
+  - `GET .../reporting/velocity-history` — aggregate 10 sprints gần nhất (story points completed, per-sprint), dùng `GET .../sprints/{id}/velocity` có sẵn.
+- [ ] **B20.3: Sprint Rollover Automation (Agent A)**
+  - `POST .../sprints/{id}/rollover` — tự động chuyển task chưa hoàn thành sang sprint planned tiếp theo (hoặc backlog), ghi activity log. Entity method `Sprint.Complete()` nếu thiếu.
+
+#### 🎨 Agent: OpenCode (Frontend) — Agent C & A
+- [ ] **F20.1: Custom Field Values on Kanban Cards (Agent C)**
+  - Render `TaskCustomFieldValue` trên TaskCard (badge nhỏ dưới title) + hiển thị/editing values trong TaskDetailPanel. Dùng `getTaskCustomFieldValues` + `setCustomFieldValue` API có sẵn.
+- [ ] **F20.2: Cycle/Lead Time & Velocity Trend Charts (Agent C)**
+  - `frontend/src/components/reporting/CycleLeadTimeChart.tsx` + `VelocityTrendChart.tsx` wired vào ReportsPage. Export CSV nếu đơn giản.
+- [ ] **F20.3: Team Performance Dashboard (Agent A)**
+  - `frontend/src/components/dashboard/TeamPerformancePanel.tsx` — Cumulative Flow Diagram (CFD) từ dữ liệu reporting + team report (P50/P90 cycle time).
 
 ---
 
