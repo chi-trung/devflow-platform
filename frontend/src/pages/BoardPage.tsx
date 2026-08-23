@@ -701,6 +701,13 @@ export function BoardPage() {
                 <Activity className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("activity.title")}</span>
               </Link>
+              <Link
+                to={`/workspaces/${workspaceId}/search`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+              >
+                <Search className="size-4" aria-hidden />
+                <span className="hidden xs:inline sm:inline">{t("search.title")}</span>
+              </Link>
               <Button
                 variant="outline"
                 onClick={() => setActivityOpen(true)}

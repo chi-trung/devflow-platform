@@ -527,6 +527,22 @@
     "syncedToAccount": "Synced to your account.",
     "prefsSaveFailed": "Couldn't save notification preferences."
   },
+  "search": {
+    "title": "Search",
+    "description": "Search tasks and projects across the workspace.",
+    "placeholder": "Search by keyword…",
+    "allStatuses": "All statuses",
+    "allPriorities": "All priorities",
+    "search": "Search",
+    "searching": "Searching…",
+    "loadFailed": "Failed to load search results.",
+    "emptyTitle": "Search the workspace",
+    "emptyDescription": "Use the form above to find tasks and projects.",
+    "tasksTitle": "Tasks ({{count}})",
+    "projectsTitle": "Projects ({{count}})",
+    "noResults": "No results found",
+    "noResultsDescription": "Try adjusting your search or filters."
+  },
   "savedSearch": {
     "title": "Saved Searches",
     "description": "Quick access to your saved filters and queries.",

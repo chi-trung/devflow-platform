@@ -527,6 +527,22 @@
     "syncedToAccount": "Đồng bộ với tài khoản của bạn.",
     "prefsSaveFailed": "Không lưu được tuỳ chọn thông báo."
   },
+  "search": {
+    "title": "Tìm kiếm",
+    "description": "Tìm kiếm công việc và dự án trên toàn bộ không gian làm việc.",
+    "placeholder": "Tìm kiếm theo từ khóa…",
+    "allStatuses": "Tất cả trạng thái",
+    "allPriorities": "Tất cả mức độ ưu tiên",
+    "search": "Tìm kiếm",
+    "searching": "Đang tìm kiếm…",
+    "loadFailed": "Không tải được kết quả tìm kiếm.",
+    "emptyTitle": "Tìm kiếm trong không gian làm việc",
+    "emptyDescription": "Sử dụng biểu mẫu bên trên để tìm công việc và dự án.",
+    "tasksTitle": "Công việc ({{count}})",
+    "projectsTitle": "Dự án ({{count}})",
+    "noResults": "Không tìm thấy kết quả",
+    "noResultsDescription": "Thử điều chỉnh từ khóa hoặc bộ lọc tìm kiếm."
+  },
   "savedSearch": {
     "title": "Saved Searches",
     "description": "Quick access to your saved filters and queries.",
