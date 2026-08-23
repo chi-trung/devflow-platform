@@ -12,7 +12,7 @@
 | **Sprint 16** | Personalization & Workflows | ✅ DONE (B1-B4) | ✅ DONE (F1-F4) | Complete |
 | **Sprint 17** | Performance Hardening & State Sync | ✅ DONE (B17.1-B17.4) | ✅ DONE (F17.1-F17.4) | Complete |
 | **Sprint 18** | Epics, Subtasks & Task Hierarchy | ✅ DONE (B18.1-B18.3) — PR #77 | ✅ F18.2 + F18.3 DONE, F18.1 in progress | Mostly Complete 🎯 |
-| **Sprint 19** | GitHub Integration & Webhook Outbox | ⏳ Planned | ⏳ Planned | Queued |
+| **Sprint 19** | GitHub Integration & Webhook Outbox | ⏳ B19.1-2 (Agent B), B19.3 ✅ (C) | ✅ F19.1-2 (Agent C), F19.3 ⏳ | In Progress 🎯 |
 | **Sprint 20** | Advanced Agile Analytics & Custom Fields | ⏳ Planned | ⏳ Planned | Queued |
 
 ---
@@ -112,16 +112,16 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 - [ ] **B19.2: Smart Task State Transitions**
   - PR opened $\rightarrow$ Move task to **In Review**.
   - PR merged $\rightarrow$ Move task to **Done** + log Git committer as contributor.
-- [ ] **B19.3: Personal Access Tokens (PAT)**
-  - Allow CLI tools, GitHub Actions, and bots to query & mutate DevFlow securely.
+- [x] **B19.3: Personal Access Tokens (PAT)** — ✅ **Agent C**
+  - Entity, migration, repository, CQRS (Create/List/Revoke), PatController (`/users/me/pat`), 5 unit tests.
+  - Token format `df_<48 hex>`, SHA256 hash, scopes (`read`/`write`/`tasks`/`admin`), expiration, revoke.
 
 #### 🎨 Agent: OpenCode (Frontend)
-- [ ] **F19.1: GitHub Integration Settings UI**
-  - Repository linking, webhook secret management, and branch rule configurations.
-- [ ] **F19.2: Git Branch & PR Widget in Task Detail**
-  - Show linked branches, open pull requests, CI/CD check status, and direct GitHub links.
+- [x] **F19.1: GitHub Integration Settings UI** — ✅ **Agent C**
+  - Webhook secret management (PUT webhook-secret) + payload URL display, branch rule toggles (localStorage), PAT generator (calls backend API).
+- [x] **F19.2: Git Branch & PR Widget in Task Detail** — ✅ **Agent C**
+  - Branch derivation from PR URL/title, CI/CD placeholder (`CI: —`), direct GitHub link button, author display.
 - [ ] **F19.3: Personal Access Token Generator**
-  - Scoped token creation modal with expiration dates and copyable secrets.
 
 ---
 
