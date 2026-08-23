@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { CalendarRange, Plus, Play, Flag, Gauge } from "lucide-react";
 import { api, getVelocity } from "../../lib/api";

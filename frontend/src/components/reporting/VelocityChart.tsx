@@ -120,7 +120,7 @@ export function VelocityChart({ data, className = "" }: VelocityChartProps) {
                 rx="3"
                 fill="var(--color-primary)"
               >
-                <title>{t("reports.completedPoint", { name: sprint.sprintName, done: sprint.completedTasks, total: sprint.totalTasks, pct: Math.round(sprint.completionRate * 100) })}</title>
+                <title>{t("reports.completedPoint", { name: sprint.sprintName, done: sprint.completedTasks, total: sprint.totalTasks, pct: Math.round(sprint.completionPercent) })}</title>
               </rect>
               <text
                 x={cx}
@@ -143,7 +143,7 @@ export function VelocityChart({ data, className = "" }: VelocityChartProps) {
                 fontFamily="var(--font-mono)"
                 opacity="0.8"
               >
-                {Math.round(sprint.completionRate * 100)}%
+                {Math.round(sprint.completionPercent)}%
               </text>
             </g>
           );

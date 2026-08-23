@@ -6,6 +6,20 @@ import { formatMinutes } from "../../lib/format";
 import { Avatar } from "../ui/Avatar";
 import { EstimationModal } from "../estimation/EstimationModal";
 
+const priorityDot: Record<TaskItemResponse["priority"], string> = {
+  Critical: "bg-destructive",
+  High: "bg-amber-300",
+  Medium: "bg-primary",
+  Low: "bg-muted-foreground/50",
+};
+
+const priorityLabelKey: Record<TaskItemResponse["priority"], string> = {
+  Critical: "task.urgent",
+  High: "task.high",
+  Medium: "task.medium",
+  Low: "task.low",
+};
+
 interface TaskCardProps {
   task: TaskItemResponse;
   members: WorkspaceMemberResponse[];

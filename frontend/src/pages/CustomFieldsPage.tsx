@@ -137,8 +137,6 @@ export function CustomFieldsPage() {
     }
   }
 
-  const typeLabel = FIELD_TYPES.find((ft) => ft.value === fieldType)?.labelKey;
-
   return (
     <AppShell>
       <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
@@ -287,7 +285,6 @@ export function CustomFieldsPage() {
             {fields.map((field) => {
               const isEditing = editingId === field.id;
               const currentTypeLabel = FIELD_TYPES.find((ft) => ft.value === field.fieldType)?.labelKey;
-              const editTypeLabel = FIELD_TYPES.find((ft) => ft.value === editFieldType)?.labelKey;
 
               return (
                 <li
