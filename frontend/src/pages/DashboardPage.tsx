@@ -17,7 +17,8 @@ import { StatsCards } from "../components/dashboard/StatsCards";
 import { CumulativeFlow } from "../components/dashboard/CumulativeFlow";
 import { TaskDistribution } from "../components/dashboard/TaskDistribution";
 import { ActivityFeed } from "../components/dashboard/ActivityFeed";
-import type { WorkspaceResponse } from "../types/api";
+import { DashboardCycleLeadChart } from "../components/dashboard/DashboardCycleLeadChart";
+import type { ProjectResponse, WorkspaceResponse } from "../types/api";
 
 function slugify(name: string): string {
   return name
@@ -46,6 +47,9 @@ export function DashboardPage() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedWsId, setSelectedWsId] = useState("");
 
+  const [projects, setProjects] = useState<ProjectResponse[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+
   useEffect(() => {
     const ws = pagedItems<WorkspaceResponse>(workspacesRaw);
     if (ws.length > 0) {
@@ -54,6 +58,27 @@ export function DashboardPage() {
       );
     }
   }, [workspacesRaw]);
+
+  useEffect(() => {
+    if (!selectedWsId) return;
+    let cancelled = false;
+    void api<unknown>(`/workspaces/${selectedWsId}/projects`)
+      .then((raw) => {
+        if (!cancelled) {
+          const list = pagedItems<ProjectResponse>(raw);
+          setProjects(list);
+          setSelectedProjectId((current) =>
+            list.length > 0 && list.some((p) => p.id === current) ? current : list[0]?.id ?? "",
+          );
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setProjects([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedWsId]);
 
   const {
     data: dashboard,
@@ -160,18 +185,34 @@ export function DashboardPage() {
               <h2 className="font-display text-lg font-semibold tracking-tight">
                 {t("dashboard.overview")}
               </h2>
-              <select
-                aria-label={t("dashboard.workspace")}
-                value={selectedWsId}
-                onChange={(event) => setSelectedWsId(event.target.value)}
-                className="cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-              >
-                {workspaces.map((workspace) => (
-                  <option key={workspace.id} value={workspace.id}>
-                    {workspace.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex flex-wrap items-center gap-2">
+                {projects.length > 0 && (
+                  <select
+                    aria-label={t("dashboard.project")}
+                    value={selectedProjectId}
+                    onChange={(event) => setSelectedProjectId(event.target.value)}
+                    className="cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  >
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <select
+                  aria-label={t("dashboard.workspace")}
+                  value={selectedWsId}
+                  onChange={(event) => setSelectedWsId(event.target.value)}
+                  className="cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  {workspaces.map((workspace) => (
+                    <option key={workspace.id} value={workspace.id}>
+                      {workspace.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {dashboardLoading ? (
@@ -196,6 +237,13 @@ export function DashboardPage() {
             ) : dashboard ? (
               <>
                 <StatsCards data={dashboard.data} className="mb-4" />
+                {selectedProjectId && (
+                  <DashboardCycleLeadChart
+                    workspaceId={selectedWsId}
+                    projectId={selectedProjectId}
+                    className="mb-4"
+                  />
+                )}
                 <CumulativeFlow data={dashboard.data} className="mb-4" />
                 <div className="grid gap-4 lg:grid-cols-2">
                   <TaskDistribution data={dashboard.data} />

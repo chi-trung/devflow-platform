@@ -21,7 +21,9 @@
     "customFields": "Custom Fields",
     "templates": "Templates",
     "webhooks": "Webhooks",
-    "github": "GitHub"
+    "github": "GitHub",
+    "personal": "Cá nhân",
+    "myTasks": "Việc của tôi"
   },
   "dashboard": {
     "title": "Workspaces",
@@ -63,7 +65,10 @@
     "p50": "P50",
     "p90": "P90",
     "days": "ng",
-    "analyticsUnavailable": "Dữ liệu cycle/lead time chưa có"
+    "analyticsUnavailable": "Dữ liệu cycle/lead time chưa có",
+    "project": "Dự án",
+    "cycleLeadTitle": "Cycle / Lead Time",
+    "exportCsv": "Xuất CSV"
   },
   "board": {
     "backlog": "Chờ xử lý",
@@ -119,6 +124,13 @@
     "saveTemplateFailed": "Không thể lưu mẫu.",
     "createTaskFailed": "Tạo task thất bại.",
     "showMore": "Xem thêm {count}"
+  },
+  "myTasks": {
+    "title": "Việc của tôi",
+    "subtitle": "Tất cả công việc được giao cho bạn trong workspace này.",
+    "empty": "Bạn chưa được giao việc nào.",
+    "dueDate": "Hạn: {{date}}",
+    "sprint": "Sprint: {{name}}"
   },
   "task": {
     "title": "Tiêu đề",
