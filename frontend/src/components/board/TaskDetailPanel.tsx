@@ -110,35 +110,62 @@ export function TaskDetailPanel({
     let cancelled = false;
     setCommentsLoading(true);
     setAttachmentsLoading(true);
+    setCommentError(null);
 
-    Promise.all([
+    // Free-tier hosts (Render) cold-start in 1–3 s; the very first request
+    // after a period of inactivity can fail with a connection error. Retry
+    // once so a transient cold-start failure doesn't leave the panel stuck.
+    const loadWithRetry = async <T,>(
+      load: () => Promise<T>,
+    ): Promise<T> => {
+      try {
+        return await load();
+      } catch (firstError: unknown) {
+        await new Promise((resolve) => setTimeout(resolve, 1_000));
+        return load();
+      }
+    };
+
+    const loadComments = loadWithRetry<CommentResponse[]>(() =>
       api<CommentResponse[]>(
         `/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/comments`,
       ),
+    );
+    const loadAttachments = loadWithRetry<TaskAttachmentResponse[]>(() =>
       api<TaskAttachmentResponse[]>(
         `/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/attachments`,
       ),
-    ])
-      .then(([comms, atts]) => {
+    );
+
+    // Comments and attachments are independent — a failure in one must not
+    // hide the other, so they resolve separately (comments render first).
+    loadComments
+      .then((comms) => {
         if (!cancelled) {
           setComments(comms);
-          setAttachments(atts);
+          setCommentError(null);
         }
       })
       .catch((err: unknown) => {
         if (!cancelled) {
           setCommentError(
-            err instanceof Error
-              ? err.message
-              : t("board.loadDetailsFailed"),
+            err instanceof Error ? err.message : t("board.loadDetailsFailed"),
           );
         }
       })
       .finally(() => {
-        if (!cancelled) {
-          setCommentsLoading(false);
-          setAttachmentsLoading(false);
-        }
+        if (!cancelled) setCommentsLoading(false);
+      });
+
+    loadAttachments
+      .then((atts) => {
+        if (!cancelled) setAttachments(atts);
+      })
+      .catch(() => {
+        // Attachments are secondary; don't block the panel on them.
+      })
+      .finally(() => {
+        if (!cancelled) setAttachmentsLoading(false);
       });
 
     return () => {
