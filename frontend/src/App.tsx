@@ -22,6 +22,7 @@ const WebhooksPage = lazy(() => import("./pages/WebhooksPage").then(m => ({ defa
 const GitHubPage = lazy(() => import("./pages/GitHubPage").then(m => ({ default: m.GitHubPage })));
 const ActivitiesPage = lazy(() => import("./pages/ActivitiesPage").then(m => ({ default: m.ActivitiesPage })));
 const SearchPage = lazy(() => import("./pages/SearchPage").then(m => ({ default: m.SearchPage })));
+const MyTasksPage = lazy(() => import("./pages/MyTasksPage").then(m => ({ default: m.MyTasksPage })));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
 
 function LoadingFallback() {
@@ -89,6 +90,10 @@ export default function App() {
                 <Route
                   path="/workspaces/:workspaceId/projects/:projectId/activities"
                   element={<ActivitiesPage />}
+                />
+                <Route
+                  path="/workspaces/:workspaceId/my-tasks"
+                  element={<MyTasksPage />}
                 />
                 <Route
                   path="/workspaces/:workspaceId/search"

@@ -7,6 +7,7 @@ import {
   FolderKanban,
   House,
   KanbanSquare,
+  ListTodo,
   Menu,
   Plus,
   Search,
@@ -137,6 +138,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ),
     },
     {
+      key: "myTasks",
+      label: t("nav.myTasks"),
+      icon: ListTodo,
+      active: location.pathname.endsWith("/my-tasks"),
+      onClick: () => {
+        if (workspaceId) {
+          navigate(`/workspaces/${workspaceId}/my-tasks`);
+        } else if (workspaces?.length) {
+          navigate(`/workspaces/${workspaces[0].id}/my-tasks`);
+        }
+      },
+    },
+    {
       key: "search",
       label: t("nav.search"),
       icon: Search,
@@ -248,6 +262,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </Link>
                   </li>
                 ))}
+              </ul>
+            </section>
+          )}
+
+          {workspaceId && (
+            <section>
+              <h2 className="px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                {t("nav.personal")}
+              </h2>
+              <ul className="space-y-0.5">
+                <li>
+                  <Link
+                    to={`/workspaces/${workspaceId}/my-tasks`}
+                    className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors duration-150 ${
+                      location.pathname.endsWith("/my-tasks")
+                        ? "bg-elevated font-semibold text-foreground"
+                        : "text-muted-foreground hover:bg-elevated/60 hover:text-foreground"
+                    }`}
+                  >
+                    <ListTodo className="size-4" aria-hidden />
+                    {t("nav.myTasks")}
+                  </Link>
+                </li>
               </ul>
             </section>
           )}
