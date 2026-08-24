@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 In Progress 🔄**
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | Sprint 27 In Progress 🔄
 
 ---
 
@@ -17,7 +17,7 @@
 | **Sprint 23** | Performance & UX Evolution (SWR cache + code-splitting + optimistic UX) | ✅ Backend verified already optimized | ✅ DONE (A23.1) SWR cache + prefetch + vendor chunks — PR #103; (A23.2) optimistic task create + preconnect — PR #104 | Complete ✅ |
 | **Sprint 24** | Real Caching, Google OAuth, Live Presence, Import/Export | ✅ DONE (B24.1) real Redis cache wiring — PR #105; (A24.1) Google OAuth PKCE — PR #107 | ✅ DONE (C24.1-4) presence avatars + inline child task + skeleton + tab title — PR #108; (D24.1-2) import/export + search — PR #106 | Complete ✅ |
 | **Sprint 25** | Guardrails & Collaboration Depth (RBAC + Presence + Watchers + Activity) | ✅ DONE (A25.1) RBAC hardening — PR #109; (B25.1-2) presence broadcast + task watchers — PR #110, #111 | ✅ DONE (C25.1-2) presence fix + role-aware UI — PR #112; (D25.1-2) activity transparency — PR #110 | Complete ✅ |
-| **Sprint 26** | Performance & Data Integrity Hardening (Dashboard perf + Outbox DLQ + Soft-delete + Watchers UI + FE tests + CI safety) | 🔄 Agent A: A26.1 Dashboard rewrite, A26.2 Outbox DLQ, A26.3 Sprint delete; Agent B: B26.1 unified notification prefs, B26.2 soft-delete + restore | 🔄 Agent C: C26.1 task watcher UI, C26.2 dashboard actor names + empty states; Agent D: D26.1 Vitest + FE tests, D26.2 CI safety | In Progress 🔄 |
+| **Sprint 26** | Performance & Data Integrity Hardening (Dashboard perf + Outbox DLQ + Soft-delete + Watchers UI + FE tests + CI safety) | ✅ Agent A: A26.1 Dashboard rewrite, A26.2 Outbox DLQ, A26.3 Sprint delete, A26.4 review/merge; Agent B: B26.1 unified notification prefs, B26.2 soft-delete + restore | ✅ Agent C: C26.1 task watcher UI, C26.2 dashboard actor names + empty states; Agent D: D26.1 Vitest + FE tests, D26.2 CI safety | Complete ✅ |
 
 ---
 
@@ -301,29 +301,31 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-### 🚀 Sprint 26 — Performance & Data Integrity Hardening 🔄
+### 🚀 Sprint 26 — Performance & Data Integrity Hardening ✅
 
 **Goal:** Sửa các implementation còn nông (shallow) trước khi scale: dashboard/search N+1, notification prefs bị bỏ qua bởi pipeline, outbox retry vô hạn, không có soft-delete, watchers backend nhưng thiếu UI, và CI không có safety rails.
 
-> **Plan:** `docs/sprint26/plan.md` — 9 tasks / 4 agents. Xem chi tiết từng task (approach + acceptance criteria + files) tại đó.
+> **Plan:** `docs/sprint26/plan.md` — 9 tasks / 4 agents.
+
+> **PRs:** #117 (B26.1+2), #119 (A26.1-3), #118 (D26.1-2 + C26.1-2).
 
 #### 🚀 Agent A (Team Lead — Backend Performance & Correctness)
-- [ ] **A26.1: Dashboard single-query + actor names** — bỏ vòng lặp per-project N+1 trong `GetDashboardQueryHandler`; batch fetch; resolve `ActorName` theo pattern `GetDisplayNamesAsync` (đã có ở `ListActivitiesQueryHandler`).
-- [ ] **A26.2: Outbox DLQ / retry cap** — thêm `RetryCount`/`FailedPermanentlyAt` + `MaxRetries`; `GetUnprocessedAsync` loại message chết; log lỗi thay vì `catch {}`.
-- [ ] **A26.3: Sprint DELETE endpoint** — `DELETE .../sprints/{sprintId}` (Admin), tasks về backlog, activity log.
-- [ ] **A26.4: Review & merge B/C/D PRs** — đối chiếu AC, chạy `dotnet test` / `npm run build`, merge khi xanh.
+- [x] **A26.1: Dashboard single-query + actor names** — batch `GetForProjectsAsync` (window function), resolve `ActorName` qua `GetDisplayNamesAsync`, fallback "Someone".
+- [x] **A26.2: Outbox DLQ / retry cap** — `MaxRetries = 10`, `FailedPermanentlyAt`, `CanRetry`; `GetUnprocessedAsync` loại message dead-lettered.
+- [x] **A26.3: Sprint DELETE endpoint** — `DELETE .../sprints/{sprintId}` (Admin), tasks về backlog, activity log.
+- [x] **A26.4: Review & merge B/C/D PRs** — cố định i18n parity + soft-delete restore bug (xem bên dưới); merge #118.
 
 #### 🤖 Agent B (Backend — Notification & Data Integrity)
-- [ ] **B26.1: Unified notification preferences** — `NotificationBehavior` inject `INotificationPreferencesRepository`, check prefs trước khi persist/send; thêm in-app mute toggles + email template cho các event còn thiếu.
-- [ ] **B26.2: Soft-delete + archive-restore** — `DeletedAtUtc` + global query filter + interceptor; `RestoreProjectCommand` + `POST .../projects/{id}/restore`.
+- [x] **B26.1: Unified notification preferences** — `NotificationBehavior` check `InApp*` prefs trước khi tạo notification; thêm in-app mute toggles.
+- [x] **B26.2: Soft-delete + archive-restore** — `DeletedAtUtc` + global query filter + `SoftDeleteInterceptor`; `RestoreProjectCommand` + `POST .../projects/{id}/restore`. *(Follow-up fix: `Archive()` giờ stamp `DeletedAtUtc`; `Restore()` xoá nó; `GetByIdIncludingDeletedAsync` bỏ query filter — soft-delete path trước đó không hoạt động end-to-end.)*
 
 #### 🎨 Agent C (Frontend — Watchers UI + Dashboard)
-- [ ] **C26.1: Task watcher UI** — backend đã có trên main (PR #111); thêm watch/unwatch eye toggle vào `TaskDetailPanel.tsx` + `api.ts` + i18n (en/vi parity).
-- [ ] **C26.2: Dashboard actor names + empty states** — consume `actorName` từ backend A26.1; thêm empty/loading states cho recent-activity + upcoming-deadlines.
+- [x] **C26.1: Task watcher UI** — watch/unwatch eye toggle trong `TaskDetailPanel.tsx` + `api.ts` (`watchTask`/`unwatchTask`/`isWatchingTask`).
+- [x] **C26.2: Dashboard actor names + empty states** — `actorName` fallback + upcoming-deadlines section + empty states.
 
 #### 🚀 Agent D (Frontend Tests + CI Safety)
-- [ ] **D26.1: Vitest + first FE tests** — vitest + testing-library + jsdom; ~10 tests (utils + components); `npm run test` script.
-- [ ] **D26.2: CI safety rails** — auto-merge yêu cầu approving review; integration tests chạy trên Postgres thật (service container), không silent-fallback InMemory.
+- [x] **D26.1: Vitest + first FE tests** — vitest + testing-library + jsdom; 30 tests (utils, components, i18n parity); `npm run test`.
+- [x] **D26.2: CI safety rails** — auto-merge chạy trên `pull_request_review` (approved) thay vì mở PR; integration tests trên Postgres 17 service container; `tsc --noEmit`; `BRANCH_PROTECTION.md`.
 
 
 
@@ -341,5 +343,5 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-*DevFlow Architecture Team — Updated 2026-08-24 (Sprint 26 in progress)*
+*DevFlow Architecture Team — Updated 2026-08-24 (Sprint 26 complete)*
 
