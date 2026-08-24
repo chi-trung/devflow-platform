@@ -65,7 +65,7 @@ public class ExportProjectTasksHandler(
 
 // ── New: full project backup (JSON + Excel) ──────────────────────────────
 
-[RequireWorkspaceRole(WorkspaceRole.Member)]
+[RequireWorkspaceRole(WorkspaceRole.Admin)]
 public sealed record ExportProjectBackupQuery(
     Guid WorkspaceId,
     Guid ProjectId,

@@ -20,7 +20,7 @@ internal static class EntityIdSetter
     }
 }
 
-[RequireWorkspaceRole(WorkspaceRole.Member)]
+[RequireWorkspaceRole(WorkspaceRole.Admin)]
 public sealed record ImportProjectBackupCommand(
     Guid WorkspaceId,
     Guid ProjectId,

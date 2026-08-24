@@ -5,7 +5,7 @@ using MediatR;
 
 namespace DevFlow.Application.Features.Epics.Delete;
 
-[RequireWorkspaceRole(WorkspaceRole.Member)]
+[RequireWorkspaceRole(WorkspaceRole.Admin)]
 public sealed record DeleteEpicCommand(
     Guid WorkspaceId,
     Guid ProjectId,
