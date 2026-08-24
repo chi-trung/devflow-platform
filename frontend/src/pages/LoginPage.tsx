@@ -7,6 +7,7 @@ import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { Input } from "../components/ui/Input";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
+import { GoogleSignInButton } from "../components/GoogleSignInButton";
 import { ApiError } from "../lib/api";
 
 export function LoginPage() {
@@ -81,6 +82,14 @@ export function LoginPage() {
         <Button type="submit" disabled={submitting}>
           {submitting ? t("auth.signingIn") : t("auth.signIn")}
         </Button>
+
+        <div className="relative flex items-center gap-2">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">{t("auth.or")}</span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
+        <GoogleSignInButton />
       </form>
     </AuthLayout>
   );
