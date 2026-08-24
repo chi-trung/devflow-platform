@@ -21,7 +21,9 @@
     "customFields": "Custom Fields",
     "templates": "Templates",
     "webhooks": "Webhooks",
-    "github": "GitHub"
+    "github": "GitHub",
+    "personal": "Personal",
+    "myTasks": "My Tasks"
   },
   "dashboard": {
     "title": "Workspaces",
@@ -63,7 +65,10 @@
     "p50": "P50",
     "p90": "P90",
     "days": "d",
-    "analyticsUnavailable": "Cycle/lead time analytics not available yet"
+    "analyticsUnavailable": "Cycle/lead time analytics not available yet",
+    "project": "Project",
+    "cycleLeadTitle": "Cycle / Lead Time",
+    "exportCsv": "Export CSV"
   },
   "board": {
     "backlog": "Backlog",
@@ -119,6 +124,13 @@
     "saveTemplateFailed": "Failed to save template.",
     "createTaskFailed": "Failed to create task.",
     "showMore": "Show {count} more"
+  },
+  "myTasks": {
+    "title": "My Tasks",
+    "subtitle": "Everything assigned to you across this workspace.",
+    "empty": "You have no assigned tasks yet.",
+    "dueDate": "Due: {{date}}",
+    "sprint": "Sprint: {{name}}"
   },
   "task": {
     "title": "Title",
