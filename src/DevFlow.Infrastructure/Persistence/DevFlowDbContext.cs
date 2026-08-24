@@ -69,5 +69,8 @@ public class DevFlowDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);
+
+        modelBuilder.Entity<Project>().HasQueryFilter(p => p.DeletedAtUtc == null);
+        modelBuilder.Entity<TaskItem>().HasQueryFilter(t => t.DeletedAtUtc == null);
     }
 }

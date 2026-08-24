@@ -3,7 +3,7 @@ using DevFlow.Domain.Enums;
 
 namespace DevFlow.Domain.Entities;
 
-public class TaskItem : BaseEntity, IAuditableEntity
+public class TaskItem : BaseEntity, IAuditableEntity, ISoftDeletable
 {
     private TaskItem()
     {
@@ -55,6 +55,8 @@ public class TaskItem : BaseEntity, IAuditableEntity
     public DateTimeOffset CreatedAtUtc { get; set; }
 
     public DateTimeOffset? UpdatedAtUtc { get; set; }
+
+    public DateTimeOffset? DeletedAtUtc { get; set; }
 
     public static TaskItem Create(
         Guid projectId,

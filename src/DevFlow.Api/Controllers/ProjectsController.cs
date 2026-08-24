@@ -102,6 +102,22 @@ public sealed class ProjectsController(ISender sender) : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("{projectId:guid}/restore")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Restore(
+        Guid workspaceId,
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Projects.Restore.RestoreProjectCommand(workspaceId, projectId),
+            cancellationToken);
+
+        return NoContent();
+    }
+
     [HttpGet("{projectId:guid}/activities")]
     [ProducesResponseType(typeof(Application.Features.Activities.ActivityResponsePage), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
