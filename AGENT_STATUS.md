@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅**
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅** | **Sprint 29 In Progress 🚧**
 
 ---
 
@@ -20,6 +20,7 @@
 | **Sprint 26** | Performance & Data Integrity Hardening (Dashboard perf + Outbox DLQ + Soft-delete + Watchers UI + FE tests + CI safety) | ✅ Agent A: A26.1 Dashboard rewrite, A26.2 Outbox DLQ, A26.3 Sprint delete, A26.4 review/merge; Agent B: B26.1 unified notification prefs, B26.2 soft-delete + restore | ✅ Agent C: C26.1 task watcher UI, C26.2 dashboard actor names + empty states; Agent D: D26.1 Vitest + FE tests, D26.2 CI safety | Complete ✅ |
 | **Sprint 27** | Search & Event Coverage (DB-level search + pagination + Email 4 events + Restore UI + Prefs UI + DB backup) | ✅ Agent A: A27.1 global search rewrite — PR #121, A27.2 review/merge; Agent B: B27.1 email templates+toggles, B27.2 unit tests — PR #122 | ✅ Agent C: C27.1 paginated search UI, C27.2 archived-project list + Restore UI — PR #123; Agent D: D27.1 prefs settings UI, D27.2 DB backup automation — PR #120 | Complete ✅ |
 | **Sprint 28** | Webhook Reliability & Project Mgmt UX (DLQ fix + admin retry + test coverage + reporting/search polish + project settings UI + analytics tiles + notification mentions) | ✅ Agent A: A28.1 webhook DLQ fix + admin retry endpoint — PR #124; A28.2 review/merge — PRs #125, #127, #128, #129, #130; Agent B: B28.1 tests Bulk/Export/Import/Users, B28.2 reporting trends + search sort/custom-field — PR #125 | ✅ Agent C: C28.1 project settings UI + Dialog/EmptyState, C28.2 search filter parity + sort — PR #129; Agent D: D28.1 workspace analytics tiles, D28.2 mention filter + settings link + vi.json — PR #127 | Complete ✅ |
+| **Sprint 29** | File Upload Safety & Settings Polish (upload size/type limits + workspace/sprint/template edit + bulk ops UX + attachment upload UX + vi.json completion + notification badge) | 🚧 Agent A: A29.1 file upload size limit + type whitelist; A29.2 Workspace/Sprint/Template PUT endpoints; A29.3 review/merge; Agent B: B29.1 attachment pagination + cache headers, B29.2 notification batch-delete + unread-count, B29.3 tests | 🚧 Agent C: C29.1 bulk ops UI (select-all + batch action bar), C29.2 attachment upload progress/error/retry; Agent D: D29.1 workspace/sprint/template edit UI, D29.2 vi.json 122 keys + AppShell badge | In Progress 🚧 |
 
 ---
 
@@ -381,6 +382,33 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
+### 🚀 Sprint 29 — File Upload Safety & Settings Polish 🚧 In Progress
+
+**Goal:** Chặn crash từ upload file quá lớn trên Render (bytea không giới hạn), thêm rename workspace/sprint/template (thiếu PUT endpoints), hoàn thiện bulk operations UX + attachment upload UX, dịch nốt 122 key vi.json, thêm unread badge cho AppShell.
+
+> **Plan:** `docs/sprint29/plan.md` — 8 tasks / 4 agents.
+> **Prompts:** `docs/sprint29/prompts/prompt-{B,C,D}.md`.
+
+#### 🚀 Agent A (Team Lead — Backend File Safety + Settings)
+- [ ] **A29.1: File upload size limit + type whitelist** — `[RequestSizeLimit(10 MB)]` + `[RequestFormLimits]` trên `UploadAttachment`; whitelist type (image/pdf/text/json/office); reject `.exe/.dll/.bat/.sh/.cmd/.ps1/.js/.vbs/.scr`; `Kestrel:MaxRequestBodySize`.
+- [ ] **A29.2: Workspace PUT + Sprint PUT + Template PUT** — `UpdateWorkspaceCommand` (name/desc), `UpdateSprintCommand` (name/goal), `UpdateTemplateCommand` (name/desc); Admin-gated; 2+ tests mỗi handler.
+- [ ] **A29.3: Review & merge B/C/D PRs** — `dotnet test`/`npm run build` + i18n parity; update AGENT_STATUS.md.
+
+#### 🤖 Agent B (Backend — Attachments + Notifications Depth)
+- [ ] **B29.1: Attachment pagination + cache headers** — `GetForTaskAsync(skip, take)` + total; `Last-Modified`/`Cache-Control` + `Content-Disposition` (inline image/pdf, attachment khác).
+- [ ] **B29.2: Notification batch-delete + unread-count** — `POST /notifications/batch-delete`; `GET /notifications/unread-count?workspaceId=` hiệu quả.
+- [ ] **B29.3: Tests mới** — ≥8 tests (attachment pagination, batch-delete, Update handlers).
+
+#### 🎨 Agent C (Frontend — Bulk Ops + Attachment UX)
+- [ ] **C29.1: Bulk operations UI** — checkbox select-all per column header (indeterminate), floating batch action bar (count + status/assignee/delete/clear), keyboard Ctrl+A/Esc.
+- [ ] **C29.2: Attachment upload progress/error/retry** — XHR progress bar per file, client validation (>10 MB + dangerous ext), upload queue (max 5), retry per file.
+
+#### 🚀 Agent D (Frontend + i18n — Settings UI + i18n)
+- [ ] **D29.1: Workspace/Sprint/Template edit UI** — Dialog + `updateWorkspace`/`updateSprint`/`updateTemplate`, Admin-gated.
+- [ ] **D29.2: vi.json 122 keys + AppShell badge** — dịch nốt label/customField/webhook/github/sections; unread count badge trên bell trong sidebar.
+
+---
+
 ## 🔒 Multi-Agent Coordination Guidelines
 
 1. **Branch Prefixes:**
@@ -395,5 +423,5 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-*DevFlow Architecture Team — Updated 2026-08-24 (Sprint 28 Complete ✅)*
+*DevFlow Architecture Team — Updated 2026-08-24 (Sprint 29 In Progress 🚧)*
 
