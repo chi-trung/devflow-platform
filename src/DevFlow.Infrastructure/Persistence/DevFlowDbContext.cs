@@ -62,6 +62,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
+    public DbSet<TaskWatcher> TaskWatchers => Set<TaskWatcher>();
+
     public DbSet<SocialLogin> SocialLogins => Set<SocialLogin>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

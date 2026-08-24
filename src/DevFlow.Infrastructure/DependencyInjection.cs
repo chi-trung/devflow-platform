@@ -52,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<ITemplateRepository, TemplateRepository>();
         services.AddScoped<ICustomFieldRepository, CustomFieldRepository>();
         services.AddScoped<IWebhookRepository, WebhookRepository>();
+        services.AddScoped<ITaskWatcherRepository, TaskWatcherRepository>();
         services.AddScoped<INotificationPreferencesRepository, NotificationPreferencesRepository>();
         services.AddScoped<IPersonalAccessTokenRepository, PersonalAccessTokenRepository>();
         services.AddScoped<ISocialLoginRepository, SocialLoginRepository>();

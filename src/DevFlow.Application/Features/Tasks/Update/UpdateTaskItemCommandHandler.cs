@@ -15,6 +15,7 @@ public sealed class UpdateTaskItemCommandHandler(
     IUserRepository userRepository,
     INotificationRepository notificationRepository,
     INotificationPreferencesRepository preferencesRepository,
+    ITaskWatcherRepository watcherRepository,
     IEmailService emailService,
     IRealtimeNotificationService realtimeNotificationService,
     IActivityLogRepository activityLog,
@@ -133,6 +134,45 @@ public sealed class UpdateTaskItemCommandHandler(
                             task.Id.ToString())
                         .ContinueWith(_ => Task.CompletedTask, TaskContinuationOptions.OnlyOnCanceled);
                 }
+            }
+        }
+
+        // Notify watchers when the task changes (status or assignment)
+        if (task.Status != oldStatus || command.AssigneeId != oldAssigneeId)
+        {
+            var watchers = await watcherRepository.GetByTaskAsync(task.Id, cancellationToken);
+            var notifiedIds = new HashSet<Guid>();
+            if (command.AssigneeId is not null) notifiedIds.Add(command.AssigneeId.Value);
+
+            foreach (var watcher in watchers.Where(w => w.UserId != userContext.UserId && !notifiedIds.Contains(w.UserId)))
+            {
+                var message = task.Status != oldStatus
+                    ? $"status changed to {task.Status} on \"{task.Title}\""
+                    : $"\"{task.Title}\" was updated";
+
+                var notification = Notification.Create(
+                    watcher.UserId,
+                    "TaskUpdate",
+                    message,
+                    task.Id,
+                    project.Id,
+                    project.WorkspaceId);
+
+                await notificationRepository.AddAsync(notification, cancellationToken);
+
+                await realtimeNotificationService.NotifyUserAsync(
+                    watcher.UserId,
+                    "TaskUpdate",
+                    message,
+                    task.Id,
+                    project.Id,
+                    project.WorkspaceId,
+                    cancellationToken);
+            }
+
+            if (watchers.Count > 0)
+            {
+                await unitOfWork.SaveChangesAsync(cancellationToken);
             }
         }
     }

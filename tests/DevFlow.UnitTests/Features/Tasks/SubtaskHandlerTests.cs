@@ -17,6 +17,7 @@ public class SubtaskHandlerTests
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly INotificationRepository _notificationRepository = Substitute.For<INotificationRepository>();
     private readonly INotificationPreferencesRepository _preferencesRepository = Substitute.For<INotificationPreferencesRepository>();
+    private readonly ITaskWatcherRepository _watcherRepository = Substitute.For<ITaskWatcherRepository>();
     private readonly IRealtimeNotificationService _realtimeService = Substitute.For<IRealtimeNotificationService>();
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
     private readonly IActivityLogRepository _activityLogRepository = Substitute.For<IActivityLogRepository>();
@@ -119,6 +120,7 @@ public class SubtaskHandlerTests
             _userRepository,
             _notificationRepository,
             _preferencesRepository,
+            _watcherRepository,
             _emailService,
             _realtimeService,
             _activityLogRepository,
@@ -156,6 +158,7 @@ public class SubtaskHandlerTests
             _userRepository,
             _notificationRepository,
             _preferencesRepository,
+            _watcherRepository,
             _emailService,
             _realtimeService,
             _activityLogRepository,
