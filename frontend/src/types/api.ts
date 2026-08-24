@@ -177,9 +177,40 @@ export interface SearchProjectResult {
   status: string;
 }
 
+export interface SearchEpicResult {
+  id: string;
+  name: string;
+  projectKey: string;
+}
+
+export interface SearchLabelResult {
+  id: string;
+  name: string;
+  color: string;
+  projectKey: string;
+}
+
+export interface SearchUserResult {
+  id: string;
+  displayName: string;
+  username: string;
+}
+
+export interface SearchCommentResult {
+  id: string;
+  content: string;
+  taskItemId: string;
+  taskTitle: string;
+  projectKey: string;
+}
+
 export interface SearchResponse {
   tasks: SearchTaskResult[];
   projects: SearchProjectResult[];
+  epics: SearchEpicResult[];
+  labels: SearchLabelResult[];
+  users: SearchUserResult[];
+  comments: SearchCommentResult[];
 }
 
 export interface ImportResultResponse {
@@ -261,6 +292,13 @@ export interface TeamMemberStats {
   tasksAssigned: number;
   tasksCompleted: number;
   totalMinutesLogged: number;
+  inProgressCount: number;
+  avgCycleTimeDays: number | null;
+}
+
+export interface TeamReportTrends {
+  completedDelta: number;
+  cycleTimeDelta: number | null;
 }
 
 export interface TeamReportResponse {
@@ -268,6 +306,7 @@ export interface TeamReportResponse {
   totalTasks: number;
   totalCompleted: number;
   totalMinutesLogged: number;
+  trends: TeamReportTrends;
 }
 
 export interface GitHubIntegrationResponse {

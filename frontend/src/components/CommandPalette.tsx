@@ -297,9 +297,47 @@ export function CommandPalette({
         navigate(`/workspaces/${workspaceId}/projects/${project.id}`),
     }));
 
+    const epicCommands: Command[] = (remoteResults.epics ?? []).flatMap((epic) => {
+      const projectId = projectIdByKey.get(epic.projectKey.toUpperCase());
+      if (!projectId || !workspaceId) return [];
+      return [
+        {
+          id: `epic-${epic.id}`,
+          label: `${epic.projectKey} · ${epic.name}`,
+          group: t("nav.epics"),
+          keywords: "epic",
+          run: () =>
+            navigate(`/workspaces/${workspaceId}/projects/${projectId}/epics`),
+        },
+      ];
+    });
+
+    const labelCommands: Command[] = (remoteResults.labels ?? []).flatMap((label) => {
+      const projectId = projectIdByKey.get(label.projectKey.toUpperCase());
+      if (!projectId || !workspaceId) return [];
+      return [
+        {
+          id: `label-${label.id}`,
+          label: `${label.projectKey} · ${label.name}`,
+          group: t("nav.labels"),
+          keywords: "label",
+          run: () =>
+            navigate(`/workspaces/${workspaceId}/projects/${projectId}/labels`),
+        },
+      ];
+    });
+
+    const userCommands: Command[] = (remoteResults.users ?? []).map((user) => ({
+      id: `user-${user.id}`,
+      label: `@${user.username} · ${user.displayName}`,
+      group: t("commandPalette.tasksGroup"),
+      keywords: "user member",
+      run: () => {},
+    }));
+
     const others = localMatches.filter((command) => command.group !== t("nav.projects"));
 
-    return [...remoteProjects, ...taskCommands, ...others];
+    return [...remoteProjects, ...taskCommands, ...epicCommands, ...labelCommands, ...userCommands, ...others];
   }, [
     commands,
     query,

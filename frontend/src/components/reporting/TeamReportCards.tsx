@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Users } from "lucide-react";
+import { Users, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { formatMinutes } from "../../lib/format";
 import type { TeamReportResponse, WorkspaceMemberResponse } from "../../types/api";
 import { Avatar } from "../ui/Avatar";
@@ -22,8 +22,6 @@ export function TeamReportCards({ data, members, className = "" }: TeamReportCar
     );
   }
 
-  const maxCompleted = Math.max(1, ...data.members.map((m) => m.tasksCompleted));
-
   return (
     <div className={`space-y-3 ${className}`}>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -37,53 +35,79 @@ export function TeamReportCards({ data, members, className = "" }: TeamReportCar
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-        {data.members.map((member) => {
-          const profile = members.find((m) => m.userId === member.userId);
-          const name = profile?.displayName || member.userName || profile?.username || t("common.member");
-          const completion =
-            member.tasksAssigned > 0
-              ? Math.round((member.tasksCompleted / member.tasksAssigned) * 100)
-              : 0;
-          return (
-            <article
-              key={member.userId}
-              className="rounded-xl border border-border bg-card p-3 transition-colors duration-200 hover:border-border-strong"
-            >
-              <div className="flex items-center gap-2">
-                <Avatar name={name} id={member.userId} />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{name}</p>
-                  <p className="font-mono text-[10px] text-muted-foreground">
-                    {formatMinutes(member.totalMinutesLogged)} {t("timeTracking.logged")}
-                  </p>
-                </div>
-                <span className="ml-auto rounded-md bg-elevated px-2 py-0.5 font-mono text-[11px]">
-                  {completion}%
+      {/* Trend summary */}
+      {data.trends && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-3">
+          <div className="flex items-center gap-1.5">
+            {data.trends.completedDelta > 0 ? (
+              <TrendingUp className="size-4 text-green-500" aria-hidden />
+            ) : data.trends.completedDelta < 0 ? (
+              <TrendingDown className="size-4 text-red-500" aria-hidden />
+            ) : (
+              <Minus className="size-4 text-muted-foreground" aria-hidden />
+            )}
+            <span className="font-mono text-xs">
+              {t("reports.vsPrevSprint")}:{" "}
+              <span className={data.trends.completedDelta > 0 ? "text-green-500" : data.trends.completedDelta < 0 ? "text-red-500" : ""}>
+                {data.trends.completedDelta > 0 ? "+" : ""}{data.trends.completedDelta} {t("reports.completedLower")}
+              </span>
+            </span>
+          </div>
+          {data.trends.cycleTimeDelta !== null && (
+            <div className="flex items-center gap-1.5">
+              {data.trends.cycleTimeDelta < 0 ? (
+                <TrendingUp className="size-4 text-green-500" aria-hidden />
+              ) : data.trends.cycleTimeDelta > 0 ? (
+                <TrendingDown className="size-4 text-red-500" aria-hidden />
+              ) : (
+                <Minus className="size-4 text-muted-foreground" aria-hidden />
+              )}
+              <span className="font-mono text-xs">
+                Cycle time:{" "}
+                <span className={data.trends.cycleTimeDelta < 0 ? "text-green-500" : data.trends.cycleTimeDelta > 0 ? "text-red-500" : ""}>
+                  {data.trends.cycleTimeDelta > 0 ? "+" : ""}{data.trends.cycleTimeDelta?.toFixed(1)}d
                 </span>
-              </div>
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
-              <div className="mt-2.5 flex items-center justify-between font-mono text-[11px] text-muted-foreground">
-                <span>{member.tasksCompleted} {t("reports.completed")}</span>
-                <span>{member.tasksAssigned} {t("reports.assigned")}</span>
-              </div>
-
-              <div
-                role="progressbar"
-                aria-valuenow={member.tasksCompleted}
-                aria-valuemin={0}
-                aria-valuemax={maxCompleted}
-                aria-label={t("reports.completedTasksAria", { name })}
-                className="mt-1 h-1.5 overflow-hidden rounded-full bg-elevated"
-              >
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-500"
-                  style={{ width: `${Math.round((member.tasksCompleted / maxCompleted) * 100)}%` }}
-                />
-              </div>
-            </article>
-          );
-        })}
+      {/* Member table */}
+      <div className="overflow-x-auto rounded-xl border border-border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border bg-elevated/50">
+              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">{t("reports.member")}</th>
+              <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">{t("reports.completed")}</th>
+              <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">{t("reports.inProgress")}</th>
+              <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">{t("reports.avgCycleTime")}</th>
+              <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">{t("reports.assigned")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.members.map((member) => {
+              const profile = members.find((m) => m.userId === member.userId);
+              const name = profile?.displayName || member.userName || profile?.username || t("common.member");
+              return (
+                <tr key={member.userId} className="border-b border-border last:border-0 hover:bg-elevated/30">
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <Avatar name={name} id={member.userId} />
+                      <span className="font-medium">{name}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-2.5 text-right font-mono">{member.tasksCompleted}</td>
+                  <td className="px-4 py-2.5 text-right font-mono">{member.inProgressCount}</td>
+                  <td className="px-4 py-2.5 text-right font-mono">
+                    {member.avgCycleTimeDays !== null ? `${member.avgCycleTimeDays}d` : "—"}
+                  </td>
+                  <td className="px-4 py-2.5 text-right font-mono">{member.tasksAssigned}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
