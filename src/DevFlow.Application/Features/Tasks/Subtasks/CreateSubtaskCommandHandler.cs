@@ -9,6 +9,8 @@ namespace DevFlow.Application.Features.Tasks.Subtasks;
 public sealed class CreateSubtaskCommandHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
+    IActivityLogRepository activityLog,
+    IUserContext userContext,
     IUnitOfWork unitOfWork) : IRequestHandler<CreateSubtaskCommand, SubtaskCreatedResponse>
 {
     public async Task<SubtaskCreatedResponse> Handle(
@@ -53,6 +55,16 @@ public sealed class CreateSubtaskCommandHandler(
         }
 
         await taskItemRepository.AddAsync(subtask, cancellationToken);
+
+        var log = ActivityLog.Create(
+            command.WorkspaceId,
+            command.ProjectId,
+            parent.Id,
+            userContext.UserId,
+            "added subtask",
+            subtask.Title);
+        await activityLog.AddAsync(log, cancellationToken);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new SubtaskCreatedResponse(subtask.Id, parent.Id);

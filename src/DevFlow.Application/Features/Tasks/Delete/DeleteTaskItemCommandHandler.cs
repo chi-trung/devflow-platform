@@ -9,6 +9,8 @@ namespace DevFlow.Application.Features.Tasks.Delete;
 public sealed class DeleteTaskItemCommandHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
+    IActivityLogRepository activityLog,
+    IUserContext userContext,
     IUnitOfWork unitOfWork) : IRequestHandler<DeleteTaskItemCommand>
 {
     public async Task Handle(DeleteTaskItemCommand command, CancellationToken cancellationToken)
@@ -28,6 +30,16 @@ public sealed class DeleteTaskItemCommandHandler(
         }
 
         await taskItemRepository.RemoveAsync(task, cancellationToken);
+
+        var log = ActivityLog.Create(
+            command.WorkspaceId,
+            command.ProjectId,
+            task.Id,
+            userContext.UserId,
+            "deleted task",
+            task.Title);
+        await activityLog.AddAsync(log, cancellationToken);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

@@ -19,6 +19,7 @@ public class CreateCommentMentionNotificationTests
     private readonly IRealtimeNotificationService _realtimeService = Substitute.For<IRealtimeNotificationService>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
+    private readonly IActivityLogRepository _activityLogRepository = Substitute.For<IActivityLogRepository>();
     private readonly IUserContext _userContext = Substitute.For<IUserContext>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
@@ -151,6 +152,7 @@ public class CreateCommentMentionNotificationTests
             _preferencesRepository,
             _emailService,
             _realtimeService,
+            _activityLogRepository,
             _userContext,
             _unitOfWork);
         var command = new CreateCommentCommand(

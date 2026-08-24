@@ -17,6 +17,8 @@ public sealed class UpdateTaskItemCommandHandler(
     INotificationPreferencesRepository preferencesRepository,
     IEmailService emailService,
     IRealtimeNotificationService realtimeNotificationService,
+    IActivityLogRepository activityLog,
+    IUserContext userContext,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateTaskItemCommand>
 {
     public async Task Handle(UpdateTaskItemCommand command, CancellationToken cancellationToken)
@@ -50,6 +52,7 @@ public sealed class UpdateTaskItemCommandHandler(
         }
 
         var oldAssigneeId = task.AssigneeId;
+        var oldStatus = task.Status;
 
         task.UpdateDetails(command.Title, command.Description, command.Priority, command.DueDateUtc);
         task.ChangeStatus(command.Status);
@@ -59,6 +62,34 @@ public sealed class UpdateTaskItemCommandHandler(
         if (task.Status == TaskItemStatus.Done && task.ParentTaskId is not null)
         {
             await CompleteParentIfAllSubtasksDoneAsync(task, cancellationToken);
+        }
+
+        // Log meaningful changes so the activity feed reflects what actually happened.
+        if (task.Status != oldStatus)
+        {
+            var statusLog = ActivityLog.Create(
+                command.WorkspaceId,
+                command.ProjectId,
+                task.Id,
+                userContext.UserId,
+                "moved task to",
+                task.Status.ToString());
+            await activityLog.AddAsync(statusLog, cancellationToken);
+        }
+
+        if (command.AssigneeId != oldAssigneeId)
+        {
+            var assigneeName = command.AssigneeId is null
+                ? "unassigned"
+                : (await userRepository.GetByIdAsync(command.AssigneeId.Value, cancellationToken))?.DisplayName ?? "a user";
+            var assignLog = ActivityLog.Create(
+                command.WorkspaceId,
+                command.ProjectId,
+                task.Id,
+                userContext.UserId,
+                "assigned task to",
+                assigneeName);
+            await activityLog.AddAsync(assignLog, cancellationToken);
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
