@@ -1,6 +1,7 @@
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Email;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
 using MediatR;
@@ -10,6 +11,8 @@ namespace DevFlow.Application.Features.Workspaces.UpdateMemberRole;
 public sealed class UpdateMemberRoleCommandHandler(
     IWorkspaceRepository workspaceRepository,
     IUserRepository userRepository,
+    INotificationPreferencesRepository preferencesRepository,
+    IEmailService emailService,
     IUserContext userContext,
     IActivityLogRepository activityLogRepository,
     ICacheService cacheService,
@@ -59,6 +62,22 @@ public sealed class UpdateMemberRoleCommandHandler(
             "changed role of",
             $"{targetName} to {command.Role}");
         await activityLogRepository.AddAsync(log, cancellationToken);
+
+        // Email the affected user (RoleChanged event) if they haven't muted it
+        if (targetUser is not null && !string.IsNullOrWhiteSpace(targetUser.Email))
+        {
+            var prefs = await preferencesRepository.GetByUserIdAsync(command.UserId, cancellationToken);
+            if (prefs?.EmailOnRoleChanged != false)
+            {
+                _ = emailService.SendRoleChangedEmailAsync(
+                        targetUser.Email,
+                        workspace.Name,
+                        command.Role.ToString(),
+                        actorName,
+                        command.WorkspaceId.ToString())
+                    .ContinueWith(_ => Task.CompletedTask, TaskContinuationOptions.OnlyOnCanceled);
+            }
+        }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }

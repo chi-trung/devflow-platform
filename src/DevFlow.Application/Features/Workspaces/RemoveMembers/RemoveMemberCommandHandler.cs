@@ -1,6 +1,7 @@
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Email;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
 using MediatR;
@@ -10,6 +11,8 @@ namespace DevFlow.Application.Features.Workspaces.RemoveMembers;
 public sealed class RemoveMemberCommandHandler(
     IWorkspaceRepository workspaceRepository,
     IUserRepository userRepository,
+    INotificationPreferencesRepository preferencesRepository,
+    IEmailService emailService,
     IUserContext userContext,
     IActivityLogRepository activityLogRepository,
     ICacheService cacheService,
@@ -54,6 +57,21 @@ public sealed class RemoveMemberCommandHandler(
             "removed",
             $"{targetName} from workspace");
         await activityLogRepository.AddAsync(log, cancellationToken);
+
+        // Email the removed user (RemovedFromWorkspace event) if they haven't muted it
+        if (targetUser is not null && !string.IsNullOrWhiteSpace(targetUser.Email))
+        {
+            var prefs = await preferencesRepository.GetByUserIdAsync(command.UserId, cancellationToken);
+            if (prefs?.EmailOnRemovedFromWorkspace != false)
+            {
+                _ = emailService.SendRemovedFromWorkspaceEmailAsync(
+                        targetUser.Email,
+                        workspace.Name,
+                        actorName,
+                        command.WorkspaceId.ToString())
+                    .ContinueWith(_ => Task.CompletedTask, TaskContinuationOptions.OnlyOnCanceled);
+            }
+        }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }

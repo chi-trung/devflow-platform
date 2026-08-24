@@ -138,6 +138,29 @@ public sealed class UpdateTaskItemCommandHandler(
             }
         }
 
+        // Notify the assignee when the task status changes
+        if (task.Status != oldStatus && task.AssigneeId is not null)
+        {
+            var assignee = await userRepository.GetByIdAsync(task.AssigneeId.Value, cancellationToken);
+            if (assignee is not null)
+            {
+                var prefs = await preferencesRepository.GetByUserIdAsync(assignee.Id, cancellationToken);
+                if (prefs?.EmailOnStatusChanged != false && !string.IsNullOrWhiteSpace(assignee.Email))
+                {
+                    _ = emailService.SendTaskStatusChangedEmailAsync(
+                            assignee.Email,
+                            command.Title,
+                            project.Name,
+                            task.Status.ToString(),
+                            "A team member",
+                            project.WorkspaceId.ToString(),
+                            project.Id.ToString(),
+                            task.Id.ToString())
+                        .ContinueWith(_ => Task.CompletedTask, TaskContinuationOptions.OnlyOnCanceled);
+                }
+            }
+        }
+
         // Notify watchers when the task changes (status or assignment)
         if (task.Status != oldStatus || command.AssigneeId != oldAssigneeId)
         {

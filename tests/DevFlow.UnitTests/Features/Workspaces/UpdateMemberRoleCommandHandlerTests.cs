@@ -1,5 +1,6 @@
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Email;
 using DevFlow.Application.Features.Workspaces.UpdateMemberRole;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
@@ -11,6 +12,8 @@ public class UpdateMemberRoleCommandHandlerTests
 {
     private readonly IWorkspaceRepository _workspaceRepository = Substitute.For<IWorkspaceRepository>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
+    private readonly INotificationPreferencesRepository _preferencesRepository = Substitute.For<INotificationPreferencesRepository>();
+    private readonly IEmailService _emailService = Substitute.For<IEmailService>();
     private readonly IUserContext _userContext = Substitute.For<IUserContext>();
     private readonly IActivityLogRepository _activityLogRepository = Substitute.For<IActivityLogRepository>();
     private readonly ICacheService _cacheService = Substitute.For<ICacheService>();
@@ -27,7 +30,7 @@ public class UpdateMemberRoleCommandHandlerTests
     public UpdateMemberRoleCommandHandlerTests()
     {
         _handler = new UpdateMemberRoleCommandHandler(
-            _workspaceRepository, _userRepository, _userContext, _activityLogRepository, _cacheService, _unitOfWork);
+            _workspaceRepository, _userRepository, _preferencesRepository, _emailService, _userContext, _activityLogRepository, _cacheService, _unitOfWork);
 
         _workspaceRepository.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Workspace.Create("Acme", "acme", null));
