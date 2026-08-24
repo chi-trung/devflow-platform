@@ -104,6 +104,8 @@
     "childTaskCreated": "Child task created",
     "commentsLoading": "Loading comments…",
     "addChildTaskAria": "Add a child task",
+    "adminOnly": "Admin only",
+    "adminOnlyHint": "This action requires Admin permissions.",
     "bulkMoveToStatus": "Bulk move to status",
     "bulkAssignMember": "Bulk assign member",
     "deleteTasksConfirm_one": "Delete {{count}} task?",

@@ -217,9 +217,10 @@ export function BoardPage() {
 
   const myRole = members?.find((m) => m.userId === currentUser?.id)?.role;
   const canManageSprints = myRole === "Owner" || myRole === "Admin";
+  const isAdmin = myRole === "Owner" || myRole === "Admin";
 
   const { visibleUsers: presenceUsers, remainingCount: presenceRemaining, totalOnline: presenceTotal } =
-    usePresence(projectId, members ?? []);
+    usePresence(projectId, members ?? [], currentUser?.id ?? null);
 
   useEffect(() => {
     if (project?.name) {
@@ -822,7 +823,7 @@ export function BoardPage() {
                 </button>
               )}
             </label>
-            {!creating && (
+            {!creating && isAdmin && (
               <>
                 <Button
                   variant="ghost"
@@ -843,20 +844,11 @@ export function BoardPage() {
                 </Button>
               </>
             )}
-            {!creating && (
-              <>
-                <Button
-                  variant="ghost"
-                  onClick={() => setImporting(true)}
-                  disabled={loading}
-                >
-                  {t("board.importTasks")}
-                </Button>
-                <Button onClick={() => setCreating(true)}>
-                  <Plus className="size-4" aria-hidden />
-                  {t("board.newTask")}
-                </Button>
-              </>
+            {!creating && !isAdmin && (
+              <Button onClick={() => setCreating(true)} title={t("board.newTask")} className="px-2 sm:px-3">
+                <Plus className="size-4" aria-hidden />
+                <span className="hidden xs:inline sm:inline">{t("board.newTask")}</span>
+              </Button>
             )}
           </div>
         </div>
@@ -1113,6 +1105,7 @@ export function BoardPage() {
             reload();
             reloadSprints();
           }}
+          isAdmin={isAdmin}
         />
       )}
 

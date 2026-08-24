@@ -13,6 +13,7 @@ const MAX_VISIBLE = 5;
 export function usePresence(
   projectId: string | undefined,
   members: WorkspaceMemberResponse[] = [],
+  currentUserId?: string | null,
 ) {
   const [onlineIds, setOnlineIds] = useState<Set<string>>(new Set());
   const [currentUserPresence, setCurrentUserPresence] = useState<string | null>(null);
@@ -29,17 +30,7 @@ export function usePresence(
     if (!projectId) return;
     const connection = createProjectConnection(projectId);
 
-    let selfId: string | null = null;
-
-    try {
-      const raw = localStorage.getItem("devflow.currentUser");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        selfId = parsed?.id ?? parsed?.userId ?? null;
-      }
-    } catch {
-      // ignore
-    }
+    const selfId = currentUserId ?? null;
 
     function handleUserJoined(payload: unknown) {
       const record = payload as Record<string, unknown>;
@@ -83,7 +74,7 @@ export function usePresence(
       connection.off("user-left", handleUserLeft);
       void connection.stop();
     };
-  }, [projectId]);
+  }, [projectId, currentUserId]);
 
   const visibleUsers = useMemo(() => {
     const users: PresenceUser[] = [];
