@@ -2,7 +2,7 @@ import type {
   BurndownResponse,
   CreateLabelRequest,
   CreateEpicRequest,
-  ActivityResponse,
+  ActivityResponsePage,
   CustomFieldResponse,
   CustomFieldValueResponse,
   CycleLeadTimeResponse,
@@ -667,12 +667,30 @@ export async function deleteTemplate(
   );
 }
 
+export interface GetActivitiesFilters {
+  actorUserId?: string;
+  taskItemId?: string;
+  action?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}
+
 export function getActivities(
   workspaceId: string,
   projectId: string,
-): Promise<ActivityResponse[]> {
-  return api<ActivityResponse[]>(
-    `/workspaces/${workspaceId}/projects/${projectId}/activities`,
+  filters: GetActivitiesFilters = {},
+): Promise<ActivityResponsePage> {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== null && value !== "") {
+      params.set(key, String(value));
+    }
+  }
+  const qs = params.toString();
+  return api<ActivityResponsePage>(
+    `/workspaces/${workspaceId}/projects/${projectId}/activities${qs ? `?${qs}` : ""}`,
   );
 }
 

@@ -996,7 +996,19 @@
     "noActivity": "No activity yet",
     "loadFailed": "Failed to load activity.",
     "emptyTitle": "No activity yet",
-    "emptyDescription": "Activity will appear here as changes are made to tasks and other items."
+    "emptyDescription": "Activity will appear here as changes are made to tasks and other items.",
+    "filter": "Filter",
+    "filterActor": "Actor",
+    "filterAction": "Action",
+    "allMembers": "All members",
+    "allActions": "All actions",
+    "dateFrom": "From date",
+    "dateTo": "To date",
+    "clearFilters": "Clear filters",
+    "showingCount": "{{count}} activities total",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "pageOf": "Page {{current}} / {{total}}"
   },
   "webhook": {
     "title": "Webhooks",

@@ -10,4 +10,19 @@ public interface IActivityLogRepository
         Guid projectId,
         int take,
         CancellationToken cancellationToken = default);
+
+    Task<ActivityLogPage> GetFilteredAsync(
+        Guid projectId,
+        Guid? actorUserId,
+        Guid? taskItemId,
+        string? action,
+        DateTimeOffset? fromUtc,
+        DateTimeOffset? toUtc,
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default);
 }
+
+public sealed record ActivityLogPage(
+    IReadOnlyList<ActivityLog> Items,
+    int TotalCount);

@@ -103,17 +103,33 @@ public sealed class ProjectsController(ISender sender) : ControllerBase
     }
 
     [HttpGet("{projectId:guid}/activities")]
-    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Activities.ActivityResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Application.Features.Activities.ActivityResponsePage), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ListActivities(
         Guid workspaceId,
         Guid projectId,
-        CancellationToken cancellationToken)
+        [FromQuery] Guid? actorUserId = null,
+        [FromQuery] Guid? taskItemId = null,
+        [FromQuery] string? action = null,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50,
+        CancellationToken cancellationToken = default)
     {
-        var activities = await sender.Send(
-            new Application.Features.Activities.ListActivitiesQuery(workspaceId, projectId),
+        var result = await sender.Send(
+            new Application.Features.Activities.ListActivitiesQuery(
+                workspaceId,
+                projectId,
+                actorUserId,
+                taskItemId,
+                action,
+                from,
+                to,
+                Math.Clamp(pageSize, 1, 200),
+                page),
             cancellationToken);
 
-        return Ok(activities);
+        return Ok(result);
     }
 }
