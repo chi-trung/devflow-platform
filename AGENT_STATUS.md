@@ -12,7 +12,7 @@
 | **Sprint 18** | Epics, Subtasks & Task Hierarchy | ✅ DONE (B18.1-B18.3) — PR #77 | ✅ DONE (F18.1-F18.3) — PR #89-91 | Complete |
 | **Sprint 19** | GitHub Integration & Webhook Outbox | ✅ DONE (B19.1-B19.3) — PR #93 | ✅ DONE (F19.1-F19.3) — PR #92 | Complete ✅ |
 | **Sprint 20** | Advanced Agile Analytics & Custom Fields | ✅ DONE (B20.1-3) — PR #94, #95 | ✅ DONE (F20.1-3) — PR #94 | Complete ✅ |
-| **Sprint 21** | Live Team Experience (Notifications + My Work + Dashboard) | ⏳ B21.1-3 (Agent B) | ⏳ F21.1-2 (Agent C), A21.1-2 (Agent A) | In Progress 🎯 |
+| **Sprint 21** | Live Team Experience (Notifications + My Work + Dashboard) | ⏳ B21.1-3 (Agent B) | ✅ F21.1-2 (Agent C) — PR #96, ✅ A21.1 (Agent A) — PR #97 | In Progress 🎯 |
 
 ---
 
@@ -181,11 +181,11 @@ blockers/blocked-by toggle). Landed on main via PR #76.
   - Export CSV button cho chart data (CycleLeadTimeChart).
 
 #### 🚀 Agent A (Team Lead)
-- [ ] **A21.1: My Tasks Cross-Project Page (Backend + Frontend)**
+- [x] **A21.1: My Tasks Cross-Project Page (Backend + Frontend)** ✅ (PR #97, merged)
   - `GET /api/v1/workspaces/{wsId}/my-tasks` — trả tasks assigned to current user across all projects.
   - `MyTasksPage.tsx` — card/table list, click → navigate to board.
   - `AppShell.tsx` — nav item "My Tasks".
-  - Test: 3+ unit tests.
+  - Test: 3+ unit tests (6 written, 152/152 green).
 - [ ] **A21.2: Review & merge B/C PRs**
 
 
