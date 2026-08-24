@@ -13,7 +13,10 @@ public sealed class UpdateTaskItemCommandHandler(
     ITaskItemRepository taskItemRepository,
     IWorkspaceRepository workspaceRepository,
     IUserRepository userRepository,
+    INotificationRepository notificationRepository,
+    INotificationPreferencesRepository preferencesRepository,
     IEmailService emailService,
+    IRealtimeNotificationService realtimeNotificationService,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateTaskItemCommand>
 {
     public async Task Handle(UpdateTaskItemCommand command, CancellationToken cancellationToken)
@@ -60,18 +63,45 @@ public sealed class UpdateTaskItemCommandHandler(
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Send email when a new user is assigned
+        // Notify the new assignee when a task is assigned
         if (command.AssigneeId is not null && command.AssigneeId != oldAssigneeId)
         {
             var assignee = await userRepository.GetByIdAsync(command.AssigneeId.Value, cancellationToken);
-            if (assignee is not null && !string.IsNullOrWhiteSpace(assignee.Email))
+            if (assignee is not null)
             {
-                _ = emailService.SendTaskAssignedEmailAsync(
-                    assignee.Email,
-                    command.Title,
-                    project.Name,
-                    "A team member")
-                    .ContinueWith(_ => Task.CompletedTask, TaskContinuationOptions.OnlyOnCanceled);
+                var notification = Notification.Create(
+                    assignee.Id,
+                    "Assignment",
+                    $"assigned you to \"{command.Title}\"",
+                    task.Id,
+                    project.Id,
+                    project.WorkspaceId);
+
+                await notificationRepository.AddAsync(notification, cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+
+                await realtimeNotificationService.NotifyUserAsync(
+                    assignee.Id,
+                    "Assignment",
+                    $"assigned you to \"{command.Title}\"",
+                    task.Id,
+                    project.Id,
+                    project.WorkspaceId,
+                    cancellationToken);
+
+                var prefs = await preferencesRepository.GetByUserIdAsync(assignee.Id, cancellationToken);
+                if (prefs?.EmailOnAssignment != false && !string.IsNullOrWhiteSpace(assignee.Email))
+                {
+                    _ = emailService.SendTaskAssignedEmailAsync(
+                            assignee.Email,
+                            command.Title,
+                            project.Name,
+                            "A team member",
+                            project.WorkspaceId.ToString(),
+                            project.Id.ToString(),
+                            task.Id.ToString())
+                        .ContinueWith(_ => Task.CompletedTask, TaskContinuationOptions.OnlyOnCanceled);
+                }
             }
         }
     }

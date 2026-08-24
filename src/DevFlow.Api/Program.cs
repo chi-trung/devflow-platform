@@ -160,6 +160,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IRealtimeNotifier, SignalRProjectNotifier>();
 builder.Services.AddSingleton<INotificationBroadcaster, NotificationBroadcaster>();
+builder.Services.AddSingleton<IRealtimeNotificationService, SignalRNotificationService>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, UserContext>();

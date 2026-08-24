@@ -15,6 +15,8 @@ public class CreateCommentMentionNotificationTests
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
     private readonly ICommentRepository _commentRepository = Substitute.For<ICommentRepository>();
     private readonly INotificationRepository _notificationRepository = Substitute.For<INotificationRepository>();
+    private readonly INotificationPreferencesRepository _preferencesRepository = Substitute.For<INotificationPreferencesRepository>();
+    private readonly IRealtimeNotificationService _realtimeService = Substitute.For<IRealtimeNotificationService>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
     private readonly IUserContext _userContext = Substitute.For<IUserContext>();
@@ -146,7 +148,9 @@ public class CreateCommentMentionNotificationTests
             _commentRepository,
             _userRepository,
             _notificationRepository,
+            _preferencesRepository,
             _emailService,
+            _realtimeService,
             _userContext,
             _unitOfWork);
         var command = new CreateCommentCommand(

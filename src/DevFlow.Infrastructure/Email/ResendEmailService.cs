@@ -13,31 +13,43 @@ public sealed class ResendEmailService(HttpClient httpClient, IConfiguration con
 
     private readonly string _fromEmail = configuration["RESEND_FROM_EMAIL"] ?? "DevFlow <onboarding@resend.dev>";
 
-    public Task SendTaskAssignedEmailAsync(string toEmail, string taskTitle, string projectName, string assignedBy)
+    private string FrontendUrl =>
+        (configuration["FRONTEND_URL"] ?? "http://localhost:5173").TrimEnd('/');
+
+    public Task SendTaskAssignedEmailAsync(
+        string toEmail, string taskTitle, string projectName, string assignedBy,
+        string workspaceId, string projectId, string taskId)
     {
+        var taskUrl = $"{FrontendUrl}/workspaces/{workspaceId}/projects/{projectId}/board?selectedTaskId={taskId}";
         return SendEmailAsync(toEmail, $"New task assigned to you — {taskTitle}", $"""
             <h2>You've been assigned a task</h2>
             <p><strong>{assignedBy}</strong> assigned you to <strong>{taskTitle}</strong> in project <strong>{projectName}</strong>.</p>
-            <p><a href="#">Open DevFlow →</a></p>
+            <p><a href="{taskUrl}">Open DevFlow →</a></p>
         """);
     }
 
-    public Task SendMentionEmailAsync(string toEmail, string taskTitle, string comment, string mentionedBy)
+    public Task SendMentionEmailAsync(
+        string toEmail, string taskTitle, string comment, string mentionedBy,
+        string workspaceId, string projectId, string taskId)
     {
+        var taskUrl = $"{FrontendUrl}/workspaces/{workspaceId}/projects/{projectId}/board?selectedTaskId={taskId}";
         return SendEmailAsync(toEmail, $"You were mentioned in a comment — {taskTitle}", $"""
             <h2>You were mentioned</h2>
             <p><strong>{mentionedBy}</strong> mentioned you in a comment on <strong>{taskTitle}</strong>:</p>
             <blockquote style="border-left:3px solid #14b8a6;padding-left:12px;color:#555;">{comment}</blockquote>
-            <p><a href="#">Open DevFlow →</a></p>
+            <p><a href="{taskUrl}">Open DevFlow →</a></p>
         """);
     }
 
-    public Task SendSprintStartedEmailAsync(string toEmail, string sprintName, string projectName)
+    public Task SendSprintStartedEmailAsync(
+        string toEmail, string sprintName, string projectName,
+        string workspaceId, string projectId, string sprintId)
     {
+        var sprintUrl = $"{FrontendUrl}/workspaces/{workspaceId}/projects/{projectId}/sprints/{sprintId}";
         return SendEmailAsync(toEmail, $"Sprint started — {sprintName}", $"""
             <h2>Sprint started</h2>
             <p>Sprint <strong>{sprintName}</strong> has started in project <strong>{projectName}</strong>.</p>
-            <p><a href="#">Open DevFlow →</a></p>
+            <p><a href="{sprintUrl}">Open DevFlow →</a></p>
         """);
     }
 
