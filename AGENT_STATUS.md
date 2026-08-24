@@ -220,9 +220,9 @@ blockers/blocked-by toggle). Landed on main via PR #76.
   - Backend: per-member breakdown + trend indicators. Frontend: member table + trend chips.
 
 #### 🚀 Agent A (Team Lead)
-- [ ] **A22.1: Activity Log Coverage**
+- [x] **A22.1: Activity Log Coverage** — PR #99 ✅
   - Thêm ActivityLog vào task create/update/delete, subtask, comment handlers.
-  - Test: 3+ unit tests.
+  - Test: 3+ unit tests (153/153 green).
 - [ ] **A22.2: Review & merge B/C/D PRs**
 
 
