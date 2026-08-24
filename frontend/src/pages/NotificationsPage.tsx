@@ -25,6 +25,7 @@ const PAGE_SIZE = 20;
 
 interface NotificationRow {
   id: string;
+  type: string;
   message: string;
   actorName: string | null;
   createdAtUtc: string;
@@ -36,7 +37,7 @@ interface NotificationRow {
   isRead: boolean;
 }
 
-type NotificationFilter = "all" | "unread" | "read";
+type NotificationFilter = "all" | "unread" | "read" | "mentions";
 
 function kindFromText(text: string): NotificationRow["kind"] {
   const t = text.toLowerCase();
@@ -49,6 +50,7 @@ function kindFromText(text: string): NotificationRow["kind"] {
 function fromApi(n: NotificationResponse): NotificationRow {
   return {
     id: n.id,
+    type: n.type,
     message: n.message,
     actorName: n.actorName ?? null,
     createdAtUtc: n.createdAtUtc,
@@ -96,6 +98,8 @@ export function NotificationsPage() {
           setNotifications(rows.filter((n) => n.isRead));
         } else if (filterTab === "unread") {
           setNotifications(rows.filter((n) => !n.isRead));
+        } else if (filterTab === "mentions") {
+          setNotifications(rows.filter((n) => n.type?.toLowerCase() === "mention"));
         } else {
           setNotifications(rows);
         }

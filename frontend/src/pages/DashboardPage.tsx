@@ -18,6 +18,8 @@ import { CumulativeFlow } from "../components/dashboard/CumulativeFlow";
 import { TaskDistribution } from "../components/dashboard/TaskDistribution";
 import { ActivityFeed } from "../components/dashboard/ActivityFeed";
 import { DashboardCycleLeadChart } from "../components/dashboard/DashboardCycleLeadChart";
+import { TeamReportPanel } from "../components/dashboard/TeamReportPanel";
+import { SprintHealthCard } from "../components/dashboard/SprintHealthCard";
 import type { ProjectResponse, WorkspaceResponse } from "../types/api";
 
 function slugify(name: string): string {
@@ -251,6 +253,15 @@ export function DashboardPage() {
                     items={dashboard.data.recentActivity}
                     workspaceId={selectedWsId}
                   />
+                </div>
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <TeamReportPanel workspaceId={selectedWsId} />
+                  {selectedProjectId && (
+                    <SprintHealthCard
+                      workspaceId={selectedWsId}
+                      projectId={selectedProjectId}
+                    />
+                  )}
                 </div>
                 {dashboard.data.upcomingDeadlines.length > 0 ? (
                   <section aria-label={t("dashboard.upcomingDeadlines")} className="mt-4 rounded-xl border border-border bg-card p-5">
