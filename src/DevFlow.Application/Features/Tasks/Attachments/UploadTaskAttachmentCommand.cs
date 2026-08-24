@@ -30,6 +30,24 @@ public sealed class UploadTaskAttachmentCommandHandler(
     IUnitOfWork unitOfWork)
     : IRequestHandler<UploadTaskAttachmentCommand, TaskAttachmentResponse>
 {
+    private const long MaxFileSize = 10 * 1024 * 1024; // 10 MB
+
+    private static readonly string[] AllowedContentTypes =
+    [
+        "image/",
+        "application/pdf",
+        "text/",
+        "application/json",
+        "application/vnd.openxmlformats-officedocument.",
+        "application/vnd.ms-excel",
+        "application/msword",
+    ];
+
+    private static readonly string[] BlockedExtensions =
+    [
+        ".exe", ".dll", ".bat", ".sh", ".cmd", ".ps1", ".js", ".vbs", ".scr", ".msi", ".com", ".jar",
+    ];
+
     public async Task<TaskAttachmentResponse> Handle(
         UploadTaskAttachmentCommand command,
         CancellationToken cancellationToken)
@@ -45,6 +63,8 @@ public sealed class UploadTaskAttachmentCommandHandler(
         {
             throw new NotFoundException(nameof(TaskItem), command.TaskId);
         }
+
+        ValidateFile(command);
 
         var attachment = TaskAttachment.Create(
             command.TaskId,
@@ -63,5 +83,43 @@ public sealed class UploadTaskAttachmentCommandHandler(
             attachment.ContentType,
             attachment.FileSize,
             attachment.CreatedAtUtc);
+    }
+
+    private static void ValidateFile(UploadTaskAttachmentCommand command)
+    {
+        if (command.FileSize <= 0 || command.Data.Length == 0)
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["File"] = ["File is empty."],
+            });
+        }
+
+        if (command.FileSize > MaxFileSize)
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["File"] = [$"File exceeds the {MaxFileSize / 1024 / 1024} MB size limit."],
+            });
+        }
+
+        var extension = Path.GetExtension(command.FileName).ToLowerInvariant();
+        if (BlockedExtensions.Contains(extension))
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["File"] = [$"File type '{extension}' is not allowed for security reasons."],
+            });
+        }
+
+        var contentType = command.ContentType.ToLowerInvariant();
+        var allowed = AllowedContentTypes.Any(prefix => contentType.StartsWith(prefix, StringComparison.Ordinal));
+        if (!allowed)
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                ["File"] = [$"File type '{command.ContentType}' is not allowed. Allowed: images, PDF, text, JSON, Office documents."],
+            });
+        }
     }
 }

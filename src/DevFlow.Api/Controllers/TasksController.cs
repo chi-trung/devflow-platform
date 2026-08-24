@@ -117,10 +117,13 @@ public sealed class TasksController(ISender sender) : ControllerBase
     }
 
     [HttpPost("{taskId:guid}/attachments")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 10_485_760)]
     [ProducesResponseType(typeof(Application.Features.Tasks.Attachments.TaskAttachmentResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status413PayloadTooLarge)]
     public async Task<IActionResult> UploadAttachment(
         Guid workspaceId,
         Guid projectId,

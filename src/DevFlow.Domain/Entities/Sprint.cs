@@ -45,6 +45,17 @@ public class Sprint : BaseEntity, IAuditableEntity
         return new Sprint(projectId, name.Trim(), goal?.Trim());
     }
 
+    public void UpdateDetails(string name, string? goal)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Name is required.", nameof(name));
+        }
+
+        Name = name.Trim();
+        Goal = goal?.Trim();
+    }
+
     public void Start(DateTimeOffset startDateUtc, DateTimeOffset endDateUtc)
     {
         if (Status != SprintStatus.Planned)

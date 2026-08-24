@@ -85,6 +85,7 @@ public sealed class GlobalExceptionHandlingMiddleware
             ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
             ForbiddenAccessException => (StatusCodes.Status403Forbidden, "Forbidden"),
             UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
+            BadHttpRequestException badRequest => (badRequest.StatusCode, "Request too large"),
             _ => (StatusCodes.Status500InternalServerError, "Internal server error")
         };
 }

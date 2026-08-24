@@ -26,6 +26,26 @@ public sealed class TemplatesController(ISender sender) : ControllerBase
         return StatusCode(StatusCodes.Status201Created, id);
     }
 
+    [HttpPut("{templateId:guid}")]
+    [ProducesResponseType(typeof(Application.Features.Templates.TemplateResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Update(
+        Guid workspaceId,
+        Guid projectId,
+        Guid templateId,
+        UpdateTemplateRequest request,
+        CancellationToken ct)
+    {
+        var template = await sender.Send(
+            new Application.Features.Templates.UpdateTemplateCommand(
+                workspaceId, projectId, templateId, request.Name, request.Description),
+            ct);
+
+        return Ok(template);
+    }
+
     [HttpPost("{templateId:guid}/apply")]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status201Created)]
     public async Task<IActionResult> Apply(Guid workspaceId, Guid projectId, Guid templateId, CancellationToken ct)
@@ -45,3 +65,5 @@ public sealed class TemplatesController(ISender sender) : ControllerBase
 
 public sealed record CreateTemplateRequest(
     string Name, string? Title, string? Description, string Priority, int? EstimateMinutes);
+
+public sealed record UpdateTemplateRequest(string Name, string? Description);
