@@ -1,4 +1,5 @@
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Common.Models;
 using DevFlow.Application.Features.Search;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
@@ -8,27 +9,15 @@ namespace DevFlow.UnitTests.Features.Search;
 
 public class SearchQueryHandlerTests
 {
-    private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
-    private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
-    private readonly IEpicRepository _epicRepository = Substitute.For<IEpicRepository>();
-    private readonly ILabelRepository _labelRepository = Substitute.For<ILabelRepository>();
-    private readonly ICommentRepository _commentRepository = Substitute.For<ICommentRepository>();
+    private readonly ISearchRepository _searchRepository = Substitute.For<ISearchRepository>();
     private readonly IWorkspaceRepository _workspaceRepository = Substitute.For<IWorkspaceRepository>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
-    private readonly Project _project;
-
-    public SearchQueryHandlerTests()
-    {
-        _project = Project.Create(_workspaceId, "DevFlow Core", "DEV", null);
-        _projectRepository.GetForWorkspaceAsync(_workspaceId, Arg.Any<CancellationToken>())
-            .Returns(new[] { _project });
-    }
 
     [Fact]
     public async Task Handle_ShouldReturnEmptyResult_WhenKeywordIsEmpty()
     {
-        var handler = CreateHandler();
+        var handler = new SearchQueryHandler(_searchRepository, _workspaceRepository);
         var query = new SearchQuery(_workspaceId, "");
 
         var result = await handler.Handle(query, CancellationToken.None);
@@ -39,81 +28,163 @@ public class SearchQueryHandlerTests
         Assert.Empty(result.Labels);
         Assert.Empty(result.Users);
         Assert.Empty(result.Comments);
+        Assert.Equal(0, result.Pagination.TotalTasks);
     }
 
     [Fact]
     public async Task Handle_ShouldSearchTasks_ByTitle()
     {
-        var task = Domain.Entities.TaskItem.Create(_project.Id, "Fix login bug", null, TaskItemPriority.High);
-        _taskItemRepository.GetForProjectAsync(_project.Id, null, Arg.Any<CancellationToken>())
-            .Returns(new[] { task });
+        _searchRepository.SearchTasksAsync(
+                _workspaceId,
+                Arg.Any<string>(),
+                Arg.Any<TaskItemSearchFilters>(),
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new PagedSearchItems<TaskItemSearchRow>([
+                new TaskItemSearchRow(Guid.NewGuid(), "Fix login bug", "Backlog", Guid.NewGuid(), "DEV")
+            ], 1));
+        _searchRepository.SearchProjectsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchEpicsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchLabelsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchCommentsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedSearchItems<CommentSearchRow>([], 0));
+        _workspaceRepository.GetMembersAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns([]);
 
-        var handler = CreateHandler();
+        var handler = new SearchQueryHandler(_searchRepository, _workspaceRepository);
         var query = new SearchQuery(_workspaceId, "login");
 
         var result = await handler.Handle(query, CancellationToken.None);
 
         Assert.Single(result.Tasks);
         Assert.Equal("Fix login bug", result.Tasks[0].Title);
-    }
-
-    [Fact]
-    public async Task Handle_ShouldSearchEpics_ByName()
-    {
-        var epic = Epic.Create(_project.Id, "Mobile App v2", "Description");
-        _epicRepository.GetForProjectAsync(_project.Id, Arg.Any<CancellationToken>())
-            .Returns(new[] { epic });
-
-        var handler = CreateHandler();
-        var query = new SearchQuery(_workspaceId, "mobile");
-
-        var result = await handler.Handle(query, CancellationToken.None);
-
-        Assert.Single(result.Epics);
-        Assert.Equal("Mobile App v2", result.Epics[0].Name);
-    }
-
-    [Fact]
-    public async Task Handle_ShouldSearchLabels_ByName()
-    {
-        var label = Label.Create(_project.Id, "Bug", "#ff0000");
-        _labelRepository.GetForProjectAsync(_project.Id, Arg.Any<CancellationToken>())
-            .Returns(new[] { label });
-
-        var handler = CreateHandler();
-        var query = new SearchQuery(_workspaceId, "bug");
-
-        var result = await handler.Handle(query, CancellationToken.None);
-
-        Assert.Single(result.Labels);
-        Assert.Equal("Bug", result.Labels[0].Name);
+        Assert.Equal("DEV", result.Tasks[0].ProjectKey);
+        Assert.Equal(1, result.Pagination.TotalTasks);
     }
 
     [Fact]
     public async Task Handle_ShouldSearchUsers_ByDisplayName()
     {
-        var userId = Guid.NewGuid();
-        var members = new[] { (UserId: userId, Email: "test@test.com", Username: "testuser", DisplayName: "Test Member", Role: WorkspaceRole.Member) };
+        _searchRepository.SearchTasksAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<TaskItemSearchFilters>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedSearchItems<TaskItemSearchRow>([], 0));
+        _searchRepository.SearchProjectsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchEpicsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchLabelsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchCommentsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedSearchItems<CommentSearchRow>([], 0));
         _workspaceRepository.GetMembersAsync(_workspaceId, Arg.Any<CancellationToken>())
-            .Returns(members);
+            .Returns(new[] { (UserId: Guid.NewGuid(), Email: "test@test.com", Username: "testuser", DisplayName: "Test Member", Role: WorkspaceRole.Member) });
 
-        var handler = CreateHandler();
+        var handler = new SearchQueryHandler(_searchRepository, _workspaceRepository);
         var query = new SearchQuery(_workspaceId, "member");
 
         var result = await handler.Handle(query, CancellationToken.None);
 
         Assert.Single(result.Users);
         Assert.Equal("Test Member", result.Users[0].DisplayName);
+        Assert.Equal(1, result.Pagination.TotalUsers);
     }
 
-    private SearchQueryHandler CreateHandler()
+    [Fact]
+    public async Task Handle_ShouldReturnPaginationMetadata_WithPageAndPageSize()
     {
-        return new SearchQueryHandler(
-            _projectRepository,
-            _taskItemRepository,
-            _epicRepository,
-            _labelRepository,
-            _commentRepository,
-            _workspaceRepository);
+        _searchRepository.SearchTasksAsync(
+                _workspaceId,
+                Arg.Any<string>(),
+                Arg.Any<TaskItemSearchFilters>(),
+                0, 10, Arg.Any<CancellationToken>())
+            .Returns(new PagedSearchItems<TaskItemSearchRow>([
+                new TaskItemSearchRow(Guid.NewGuid(), "task 1", "Backlog", Guid.NewGuid(), "DEV"),
+                new TaskItemSearchRow(Guid.NewGuid(), "task 2", "Backlog", Guid.NewGuid(), "DEV")
+            ], 25));
+        _searchRepository.SearchProjectsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchEpicsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchLabelsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchCommentsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedSearchItems<CommentSearchRow>([], 0));
+        _workspaceRepository.GetMembersAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+
+        var handler = new SearchQueryHandler(_searchRepository, _workspaceRepository);
+        var query = new SearchQuery(_workspaceId, "task", Page: 1, PageSize: 10);
+
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        Assert.Equal(2, result.Tasks.Count);
+        Assert.Equal(25, result.Pagination.TotalTasks);
+        Assert.Equal(1, result.Pagination.Page);
+        Assert.Equal(10, result.Pagination.PageSize);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldNotFilterByKeyword_WhenKeywordPassedToRepository()
+    {
+        _searchRepository.SearchTasksAsync(
+                _workspaceId,
+                "login",
+                Arg.Any<TaskItemSearchFilters>(),
+                0, 10, Arg.Any<CancellationToken>())
+            .Returns(new PagedSearchItems<TaskItemSearchRow>([], 0));
+        _searchRepository.SearchProjectsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchEpicsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchLabelsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchCommentsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedSearchItems<CommentSearchRow>([], 0));
+        _workspaceRepository.GetMembersAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+
+        var handler = new SearchQueryHandler(_searchRepository, _workspaceRepository);
+        var query = new SearchQuery(_workspaceId, "  login  ");
+
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        await _searchRepository.Received(1).SearchTasksAsync(
+            _workspaceId, "login", Arg.Any<TaskItemSearchFilters>(), 0, 10, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldPassParsedFilters_ToTaskRepository()
+    {
+        _searchRepository.SearchTasksAsync(
+                _workspaceId,
+                "login",
+                Arg.Any<TaskItemSearchFilters>(),
+                0, 10, Arg.Any<CancellationToken>())
+            .Returns(new PagedSearchItems<TaskItemSearchRow>([], 0));
+        _searchRepository.SearchProjectsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchEpicsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchLabelsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+        _searchRepository.SearchCommentsAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedSearchItems<CommentSearchRow>([], 0));
+        _workspaceRepository.GetMembersAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+
+        var handler = new SearchQueryHandler(_searchRepository, _workspaceRepository);
+        var query = new SearchQuery(_workspaceId, "login", Status: "inreview", Priority: "high");
+
+        await handler.Handle(query, CancellationToken.None);
+
+        await _searchRepository.Received(1).SearchTasksAsync(
+            _workspaceId,
+            "login",
+            Arg.Is<TaskItemSearchFilters>(f => f.Status == TaskItemStatus.InReview && f.Priority == TaskItemPriority.High),
+            0, 10,
+            Arg.Any<CancellationToken>());
     }
 }

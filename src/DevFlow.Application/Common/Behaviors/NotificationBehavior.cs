@@ -89,10 +89,14 @@ public sealed class NotificationBehavior<TRequest, TResponse> : IPipelineBehavio
     {
         return notificationType.ToLowerInvariant() switch
         {
-            "commentadded" or "mention" => prefs.InAppOnMention,
-            "taskassigned" or "assignment" or "statuschanged" => prefs.InAppOnAssignment,
+            "mention" => prefs.InAppOnMention,
+            "commentadded" => prefs.InAppOnCommentAdded,
+            "taskassigned" or "assignment" => prefs.InAppOnAssignment,
+            "statuschanged" => prefs.InAppOnStatusChanged,
             "sprintstarted" => prefs.InAppOnSprintStarted,
-            _ => true, // RoleChanged, RemovedFromWorkspace, etc. have no mute toggle
+            "rolechanged" => prefs.InAppOnRoleChanged,
+            "removedfromworkspace" => prefs.InAppOnRemovedFromWorkspace,
+            _ => true,
         };
     }
 }

@@ -35,7 +35,15 @@ public sealed class NotificationPreferencesController(
             prefs.EmailOnSprintStarted,
             prefs.InAppOnAssignment,
             prefs.InAppOnMention,
-            prefs.InAppOnSprintStarted));
+            prefs.InAppOnSprintStarted,
+            prefs.EmailOnStatusChanged,
+            prefs.InAppOnStatusChanged,
+            prefs.EmailOnCommentAdded,
+            prefs.InAppOnCommentAdded,
+            prefs.EmailOnRoleChanged,
+            prefs.InAppOnRoleChanged,
+            prefs.EmailOnRemovedFromWorkspace,
+            prefs.InAppOnRemovedFromWorkspace));
     }
 
     [HttpPut]
@@ -60,6 +68,14 @@ public sealed class NotificationPreferencesController(
         prefs.InAppOnAssignment = request.InAppOnAssignment;
         prefs.InAppOnMention = request.InAppOnMention;
         prefs.InAppOnSprintStarted = request.InAppOnSprintStarted;
+        prefs.EmailOnStatusChanged = request.EmailOnStatusChanged;
+        prefs.InAppOnStatusChanged = request.InAppOnStatusChanged;
+        prefs.EmailOnCommentAdded = request.EmailOnCommentAdded;
+        prefs.InAppOnCommentAdded = request.InAppOnCommentAdded;
+        prefs.EmailOnRoleChanged = request.EmailOnRoleChanged;
+        prefs.InAppOnRoleChanged = request.InAppOnRoleChanged;
+        prefs.EmailOnRemovedFromWorkspace = request.EmailOnRemovedFromWorkspace;
+        prefs.InAppOnRemovedFromWorkspace = request.InAppOnRemovedFromWorkspace;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return NoContent();
@@ -71,7 +87,15 @@ public sealed class NotificationPreferencesController(
         bool EmailOnSprintStarted,
         bool InAppOnAssignment,
         bool InAppOnMention,
-        bool InAppOnSprintStarted);
+        bool InAppOnSprintStarted,
+        bool EmailOnStatusChanged,
+        bool InAppOnStatusChanged,
+        bool EmailOnCommentAdded,
+        bool InAppOnCommentAdded,
+        bool EmailOnRoleChanged,
+        bool InAppOnRoleChanged,
+        bool EmailOnRemovedFromWorkspace,
+        bool InAppOnRemovedFromWorkspace);
 
     public sealed record UpdateNotificationPreferencesRequest(
         bool EmailOnAssignment,
@@ -79,5 +103,13 @@ public sealed class NotificationPreferencesController(
         bool EmailOnSprintStarted,
         bool InAppOnAssignment,
         bool InAppOnMention,
-        bool InAppOnSprintStarted);
+        bool InAppOnSprintStarted,
+        bool EmailOnStatusChanged,
+        bool InAppOnStatusChanged,
+        bool EmailOnCommentAdded,
+        bool InAppOnCommentAdded,
+        bool EmailOnRoleChanged,
+        bool InAppOnRoleChanged,
+        bool EmailOnRemovedFromWorkspace,
+        bool InAppOnRemovedFromWorkspace);
 }

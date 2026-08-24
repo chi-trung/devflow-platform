@@ -1,6 +1,10 @@
 using DevFlow.Application.Common.Behaviors;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Comments;
+using DevFlow.Application.Features.Comments.Create;
 using DevFlow.Application.Features.Tasks.Update;
+using DevFlow.Application.Features.Workspaces.RemoveMembers;
+using DevFlow.Application.Features.Workspaces.UpdateMemberRole;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
 using MediatR;
@@ -58,7 +62,7 @@ public class NotificationBehaviorGatingTests
     public async Task ShouldSkipNotification_WhenInAppPreferenceIsDisabled()
     {
         var prefs = NotificationPreferences.Create(_recipientId);
-        prefs.InAppOnAssignment = false;
+        prefs.InAppOnStatusChanged = false;
         _preferencesRepository.GetByUserIdAsync(_recipientId, Arg.Any<CancellationToken>()).Returns(prefs);
 
         var behavior = CreateBehavior();
@@ -95,5 +99,62 @@ public class NotificationBehaviorGatingTests
         await behavior.Handle(command, () => Task.FromResult(Unit.Value), CancellationToken.None);
 
         await _notificationRepository.DidNotReceive().AddAsync(Arg.Any<Notification>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CommentAdded_ShouldSkip_WhenInAppOnCommentAddedDisabled()
+    {
+        var prefs = NotificationPreferences.Create(_recipientId);
+        prefs.InAppOnCommentAdded = false;
+        _preferencesRepository.GetByUserIdAsync(_recipientId, Arg.Any<CancellationToken>()).Returns(prefs);
+
+        var behavior = new NotificationBehavior<CreateCommentCommand, CommentResponse>(
+            _notificationRepository, _preferencesRepository, _userContext, _userRepository, _unitOfWork,
+            Substitute.For<ILogger<NotificationBehavior<CreateCommentCommand, CommentResponse>>>());
+
+        var command = new CreateCommentCommand(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "nice work", AssigneeId: _recipientId);
+
+        await behavior.Handle(command, () => Task.FromResult(new CommentResponse(Guid.NewGuid(), Guid.NewGuid(), _actorId, "nice work", DateTimeOffset.UtcNow)), CancellationToken.None);
+
+        await _notificationRepository.DidNotReceive().AddAsync(Arg.Any<Notification>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RoleChanged_ShouldSkip_WhenInAppOnRoleChangedDisabled()
+    {
+        var prefs = NotificationPreferences.Create(_recipientId);
+        prefs.InAppOnRoleChanged = false;
+        _preferencesRepository.GetByUserIdAsync(_recipientId, Arg.Any<CancellationToken>()).Returns(prefs);
+
+        var behavior = new NotificationBehavior<UpdateMemberRoleCommand, Unit>(
+            _notificationRepository, _preferencesRepository, _userContext, _userRepository, _unitOfWork,
+            Substitute.For<ILogger<NotificationBehavior<UpdateMemberRoleCommand, Unit>>>());
+
+        var command = new UpdateMemberRoleCommand(Guid.NewGuid(), _recipientId, WorkspaceRole.Admin);
+
+        await behavior.Handle(command, () => Task.FromResult(Unit.Value), CancellationToken.None);
+
+        await _notificationRepository.DidNotReceive().AddAsync(Arg.Any<Notification>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RemovedFromWorkspace_ShouldCreate_WhenToggleEnabled()
+    {
+        var prefs = NotificationPreferences.Create(_recipientId);
+        prefs.InAppOnRemovedFromWorkspace = true;
+        _preferencesRepository.GetByUserIdAsync(_recipientId, Arg.Any<CancellationToken>()).Returns(prefs);
+
+        var behavior = new NotificationBehavior<RemoveMemberCommand, Unit>(
+            _notificationRepository, _preferencesRepository, _userContext, _userRepository, _unitOfWork,
+            Substitute.For<ILogger<NotificationBehavior<RemoveMemberCommand, Unit>>>());
+
+        var command = new RemoveMemberCommand(Guid.NewGuid(), _recipientId);
+
+        await behavior.Handle(command, () => Task.FromResult(Unit.Value), CancellationToken.None);
+
+        await _notificationRepository.Received(1).AddAsync(
+            Arg.Is<Notification>(n => n.Type == "RemovedFromWorkspace"),
+            Arg.Any<CancellationToken>());
     }
 }

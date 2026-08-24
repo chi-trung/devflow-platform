@@ -47,10 +47,7 @@ public sealed class GitHubWebhookController(
 
         if (!string.IsNullOrEmpty(integration.WebhookSecret))
         {
-            var expected = "sha256=" + ComputeHmacSha256(integration.WebhookSecret, body);
-            if (!CryptographicOperations.FixedTimeEquals(
-                Encoding.UTF8.GetBytes(expected),
-                Encoding.UTF8.GetBytes(signature)))
+            if (!GitHubWebhookSignature.Verify(integration.WebhookSecret, body, signature))
             {
                 return Unauthorized();
             }
@@ -136,14 +133,5 @@ public sealed class GitHubWebhookController(
         {
             return null;
         }
-    }
-
-    private static string ComputeHmacSha256(string secret, string message)
-    {
-        var keyBytes = Encoding.UTF8.GetBytes(secret);
-        var messageBytes = Encoding.UTF8.GetBytes(message);
-        using var hmac = new HMACSHA256(keyBytes);
-        var hash = hmac.ComputeHash(messageBytes);
-        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 }

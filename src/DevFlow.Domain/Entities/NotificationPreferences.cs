@@ -13,6 +13,14 @@ public class NotificationPreferences : BaseEntity
     public bool InAppOnAssignment { get; set; } = true;
     public bool InAppOnMention { get; set; } = true;
     public bool InAppOnSprintStarted { get; set; } = true;
+    public bool EmailOnStatusChanged { get; set; } = true;
+    public bool InAppOnStatusChanged { get; set; } = true;
+    public bool EmailOnCommentAdded { get; set; } = true;
+    public bool InAppOnCommentAdded { get; set; } = true;
+    public bool EmailOnRoleChanged { get; set; } = true;
+    public bool InAppOnRoleChanged { get; set; } = true;
+    public bool EmailOnRemovedFromWorkspace { get; set; } = true;
+    public bool InAppOnRemovedFromWorkspace { get; set; } = true;
 
     public static NotificationPreferences Create(Guid userId)
     {
