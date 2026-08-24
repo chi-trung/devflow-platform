@@ -405,7 +405,11 @@
     "leadTimeLabel": "Lead time",
     "avgCompletedPoints": "tb {{pct}} pts",
     "velocityTrendAria": "Xu hướng tốc độ qua {{count}} sprint",
-    "cycleLeadTimeAria": "Cycle và lead time qua {{count}} task"
+    "cycleLeadTimeAria": "Cycle và lead time qua {{count}} task",
+    "member": "Thành viên",
+    "inProgress": "Đang thực hiện",
+    "avgCycleTime": "TB Cycle",
+    "vsPrevSprint": "so với sprint trước"
   },
   "template": {
     "title": "Mẫu task",
@@ -570,7 +574,7 @@
   },
   "search": {
     "title": "Tìm kiếm",
-    "description": "Tìm kiếm công việc và dự án trên toàn bộ không gian làm việc.",
+    "description": "Tìm kiếm công việc, dự án và nhiều hơn nữa trên toàn bộ không gian làm việc.",
     "placeholder": "Tìm kiếm theo từ khóa…",
     "allStatuses": "Tất cả trạng thái",
     "allPriorities": "Tất cả mức độ ưu tiên",
@@ -578,11 +582,17 @@
     "searching": "Đang tìm kiếm…",
     "loadFailed": "Không tải được kết quả tìm kiếm.",
     "emptyTitle": "Tìm kiếm trong không gian làm việc",
-    "emptyDescription": "Sử dụng biểu mẫu bên trên để tìm công việc và dự án.",
+    "emptyDescription": "Sử dụng biểu mẫu bên trên để tìm công việc, dự án, epics, nhãn, thành viên và bình luận.",
     "tasksTitle": "Công việc ({{count}})",
     "projectsTitle": "Dự án ({{count}})",
     "noResults": "Không tìm thấy kết quả",
-    "noResultsDescription": "Thử điều chỉnh từ khóa hoặc bộ lọc tìm kiếm."
+    "noResultsDescription": "Thử điều chỉnh từ khóa hoặc bộ lọc tìm kiếm.",
+    "tabTasks": "Công việc",
+    "tabProjects": "Dự án",
+    "tabEpics": "Epics",
+    "tabLabels": "Nhãn",
+    "tabUsers": "Thành viên",
+    "tabComments": "Bình luận"
   },
   "savedSearch": {
     "title": "Saved Searches",
@@ -614,7 +624,12 @@
     "hoursAgo_one": "{{count}} giờ trước",
     "hoursAgo_other": "{{count}} giờ trước",
     "daysAgo_one": "{{count}} ngày trước",
-    "daysAgo_other": "{{count}} ngày trước"
+    "daysAgo_other": "{{count}} ngày trước",
+    "allCaughtUp": "Đã xem hết",
+    "cleanup": "Dọn dẹp",
+    "cleanupTitle": "Dọn dẹp thông báo đã đọc?",
+    "cleanupMessage": "Thao tác này sẽ xóa vĩnh viễn tất cả thông báo bạn đã đọc.",
+    "cleanupConfirm": "Dọn dẹp"
   },
   "notificationPage": {
     "filterAll": "Tất cả",
@@ -708,7 +723,11 @@
     "roadmapUnscheduled": "Chưa lên lịch",
     "roadmapView": "Lộ trình",
     "listView": "Danh sách",
-    "milestone": "Mốc"
+    "milestone": "Mốc",
+    "completionBadge": "{{pct}}% hoàn thành",
+    "overdue": "Quá hạn",
+    "dueSoon": "Sắp đến hạn",
+    "onTrack": "Đúng tiến độ"
   },
   "common": {
     "save": "Lưu",

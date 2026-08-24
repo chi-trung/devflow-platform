@@ -314,7 +314,7 @@ export function EpicsPage() {
                           {epic.description}
                         </p>
                       )}
-                      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                         {dateLabel && (
                           <span className="inline-flex items-center gap-1">
                             {dateLabel}
@@ -327,13 +327,46 @@ export function EpicsPage() {
                           {epic.completedStoryPoints}/{epic.totalStoryPoints} {t("epic.storyPoints")}
                         </span>
                       </div>
-                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all duration-300"
-                          style={{
-                            width: `${Math.min(100, Math.max(0, epic.completionPercent))}%`,
-                          }}
-                        />
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-elevated">
+                          <div
+                            className="h-full rounded-full bg-primary transition-all duration-300"
+                            style={{
+                              width: `${Math.min(100, Math.max(0, epic.completionPercent))}%`,
+                            }}
+                          />
+                        </div>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold ${
+                          epic.completionPercent >= 100
+                            ? "bg-teal-400/10 text-teal-600 dark:text-teal-300"
+                            : "bg-primary/10 text-primary"
+                        }`}>
+                          {t("epic.completionBadge", { pct: Math.round(epic.completionPercent) })}
+                        </span>
+                        {epic.endDateUtc && (() => {
+                          const now = new Date();
+                          const end = new Date(epic.endDateUtc);
+                          const diffDays = Math.ceil((end.getTime() - now.getTime()) / 86_400_000);
+                          if (diffDays < 0) {
+                            return (
+                              <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-destructive">
+                                {t("epic.overdue")}
+                              </span>
+                            );
+                          }
+                          if (diffDays <= 7) {
+                            return (
+                              <span className="shrink-0 rounded-full bg-amber-400/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-600 dark:text-amber-300">
+                                {t("epic.dueSoon")}
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="shrink-0 rounded-full bg-teal-400/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-teal-600 dark:text-teal-300">
+                              {t("epic.onTrack")}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
