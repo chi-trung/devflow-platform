@@ -32,7 +32,10 @@ public sealed class NotificationPreferencesController(
         return Ok(new NotificationPreferencesResponse(
             prefs.EmailOnAssignment,
             prefs.EmailOnMention,
-            prefs.EmailOnSprintStarted));
+            prefs.EmailOnSprintStarted,
+            prefs.InAppOnAssignment,
+            prefs.InAppOnMention,
+            prefs.InAppOnSprintStarted));
     }
 
     [HttpPut]
@@ -54,6 +57,9 @@ public sealed class NotificationPreferencesController(
         prefs.EmailOnAssignment = request.EmailOnAssignment;
         prefs.EmailOnMention = request.EmailOnMention;
         prefs.EmailOnSprintStarted = request.EmailOnSprintStarted;
+        prefs.InAppOnAssignment = request.InAppOnAssignment;
+        prefs.InAppOnMention = request.InAppOnMention;
+        prefs.InAppOnSprintStarted = request.InAppOnSprintStarted;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return NoContent();
@@ -62,10 +68,16 @@ public sealed class NotificationPreferencesController(
     public sealed record NotificationPreferencesResponse(
         bool EmailOnAssignment,
         bool EmailOnMention,
-        bool EmailOnSprintStarted);
+        bool EmailOnSprintStarted,
+        bool InAppOnAssignment,
+        bool InAppOnMention,
+        bool InAppOnSprintStarted);
 
     public sealed record UpdateNotificationPreferencesRequest(
         bool EmailOnAssignment,
         bool EmailOnMention,
-        bool EmailOnSprintStarted);
+        bool EmailOnSprintStarted,
+        bool InAppOnAssignment,
+        bool InAppOnMention,
+        bool InAppOnSprintStarted);
 }

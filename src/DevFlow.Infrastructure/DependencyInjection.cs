@@ -24,13 +24,16 @@ public static class DependencyInjection
         services.Configure<OAuthSettings>(configuration.GetSection(OAuthSettings.SectionName));
 
         services.AddSingleton<AuditableEntityInterceptor>();
+        services.AddSingleton<SoftDeleteInterceptor>();
 
         services.AddDbContext<DevFlowDbContext>((sp, options) =>
         {
             options
                 .UseNpgsql(configuration.GetConnectionString("Database"))
                 .UseSnakeCaseNamingConvention()
-                .AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
+                .AddInterceptors(
+                    sp.GetRequiredService<AuditableEntityInterceptor>(),
+                    sp.GetRequiredService<SoftDeleteInterceptor>());
         });
 
         services.AddScoped<IUserRepository, UserRepository>();

@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { X, Paperclip, Download, Trash2, BookmarkPlus } from "lucide-react";
-import { api, createTemplate, tokens } from "../../lib/api";
+import { X, Paperclip, Download, Trash2, BookmarkPlus, Eye } from "lucide-react";
+import { api, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { ErrorAlert } from "../ui/ErrorAlert";
 import { Avatar } from "../ui/Avatar";
@@ -66,6 +66,8 @@ export function TaskDetailPanel({
   const [attachments, setAttachments] = useState<TaskAttachmentResponse[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [watching, setWatching] = useState(false);
+  const [watchingLoading, setWatchingLoading] = useState(true);
   const { push } = useToast();
 
   useEffect(() => {
@@ -85,6 +87,24 @@ export function TaskDetailPanel({
     task.priority,
     task.assigneeId,
   ]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setWatchingLoading(true);
+    void isWatchingTask(workspaceId, projectId, task.id)
+      .then((result) => {
+        if (!cancelled) setWatching(result);
+      })
+      .catch(() => {
+        if (!cancelled) setWatching(false);
+      })
+      .finally(() => {
+        if (!cancelled) setWatchingLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId, projectId, task.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -301,6 +321,25 @@ export function TaskDetailPanel({
     }
   }
 
+  async function toggleWatch() {
+    setWatchingLoading(true);
+    try {
+      if (watching) {
+        await unwatchTask(workspaceId, projectId, task.id);
+        setWatching(false);
+        push(t("task.unwatched"));
+      } else {
+        await watchTask(workspaceId, projectId, task.id);
+        setWatching(true);
+        push(t("task.watched"));
+      }
+    } catch {
+      push(t("task.watchFailed"), "error");
+    } finally {
+      setWatchingLoading(false);
+    }
+  }
+
   async function changeSprint(sprintId: string | null) {
     setDetailError(null);
     const base = `/workspaces/${workspaceId}/projects/${projectId}/sprints`;
@@ -350,6 +389,20 @@ export function TaskDetailPanel({
             className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-primary"
           >
             <BookmarkPlus className="size-4" aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={() => void toggleWatch()}
+            disabled={watchingLoading}
+            aria-label={watching ? t("task.unwatchAria") : t("task.watchAria")}
+            title={watching ? t("task.unwatch") : t("task.watch")}
+            className={`rounded p-1 transition-colors duration-150 ${
+              watching
+                ? "text-primary hover:text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Eye className="size-4" aria-hidden />
           </button>
           <button
             type="button"

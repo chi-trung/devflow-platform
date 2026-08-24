@@ -3,6 +3,7 @@ using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Projects.Archive;
 using DevFlow.Application.Features.Projects.GetById;
 using DevFlow.Application.Features.Projects.List;
+using DevFlow.Application.Features.Projects.Restore;
 using DevFlow.Application.Features.Projects.Update;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
@@ -83,6 +84,30 @@ public class ProjectLifecycleHandlerTests
     {
         var handler = new ArchiveProjectCommandHandler(_projectRepository, _unitOfWork);
         var command = new ArchiveProjectCommand(_workspaceId, Guid.NewGuid());
+
+        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Restore_ShouldReturnArchivedProjectToActive()
+    {
+        _project.Archive();
+        Assert.Equal(ProjectStatus.Archived, _project.Status);
+
+        var handler = new RestoreProjectCommandHandler(_projectRepository, _unitOfWork);
+        var command = new RestoreProjectCommand(_workspaceId, _project.Id);
+
+        await handler.Handle(command, CancellationToken.None);
+
+        Assert.Equal(ProjectStatus.Active, _project.Status);
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Restore_ShouldThrowNotFound_WhenProjectIsMissing()
+    {
+        var handler = new RestoreProjectCommandHandler(_projectRepository, _unitOfWork);
+        var command = new RestoreProjectCommand(_workspaceId, Guid.NewGuid());
 
         await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, CancellationToken.None));
     }
