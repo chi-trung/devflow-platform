@@ -14,7 +14,9 @@ public sealed partial class CreateCommentCommandHandler(
     ICommentRepository commentRepository,
     IUserRepository userRepository,
     INotificationRepository notificationRepository,
+    INotificationPreferencesRepository preferencesRepository,
     IEmailService emailService,
+    IRealtimeNotificationService realtimeNotificationService,
     IUserContext userContext,
     IUnitOfWork unitOfWork) : IRequestHandler<CreateCommentCommand, CommentResponse>
 {
@@ -61,12 +63,30 @@ public sealed partial class CreateCommentCommandHandler(
 
             await notificationRepository.AddAsync(notification, cancellationToken);
 
-            // Send email notification (fire-and-forget)
-            if (!string.IsNullOrWhiteSpace(mentionedUser.Email))
+            // Push realtime notification to the mentioned user's group
+            await realtimeNotificationService.NotifyUserAsync(
+                mentionedUser.Id,
+                "Mention",
+                $"mentioned you in a comment on \"{task.Title}\"",
+                task.Id,
+                project.Id,
+                project.WorkspaceId,
+                cancellationToken);
+
+            // Send email notification only if the user has mentions enabled
+            var prefs = await preferencesRepository.GetByUserIdAsync(mentionedUser.Id, cancellationToken);
+            if (prefs?.EmailOnMention != false && !string.IsNullOrWhiteSpace(mentionedUser.Email))
             {
                 var author = await userRepository.GetByIdAsync(userContext.UserId, cancellationToken);
                 var authorName = author?.DisplayName ?? author?.Username ?? "Someone";
-                _ = emailService.SendMentionEmailAsync(mentionedUser.Email, task.Title, command.Content, authorName)
+                _ = emailService.SendMentionEmailAsync(
+                        mentionedUser.Email,
+                        task.Title,
+                        command.Content,
+                        authorName,
+                        project.WorkspaceId.ToString(),
+                        project.Id.ToString(),
+                        task.Id.ToString())
                     .ContinueWith(_ => Task.CompletedTask, TaskContinuationOptions.OnlyOnCanceled);
             }
         }

@@ -15,6 +15,8 @@ public class CommentHandlerTests
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
     private readonly ICommentRepository _commentRepository = Substitute.For<ICommentRepository>();
     private readonly INotificationRepository _notificationRepository = Substitute.For<INotificationRepository>();
+    private readonly INotificationPreferencesRepository _preferencesRepository = Substitute.For<INotificationPreferencesRepository>();
+    private readonly IRealtimeNotificationService _realtimeService = Substitute.For<IRealtimeNotificationService>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly IWorkspaceRepository _workspaceRepository = Substitute.For<IWorkspaceRepository>();
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
@@ -41,7 +43,7 @@ public class CommentHandlerTests
     {
         var handler = new CreateCommentCommandHandler(
             _projectRepository, _taskItemRepository, _commentRepository,
-            _userRepository, _notificationRepository, _emailService, _userContext, _unitOfWork);
+            _userRepository, _notificationRepository, _preferencesRepository, _emailService, _realtimeService, _userContext, _unitOfWork);
         var command = new CreateCommentCommand(_workspaceId, _project.Id, _task.Id, "Looks good to me!");
 
         var response = await handler.Handle(command, CancellationToken.None);

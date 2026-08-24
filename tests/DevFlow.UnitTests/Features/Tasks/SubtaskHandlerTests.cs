@@ -15,6 +15,9 @@ public class SubtaskHandlerTests
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
     private readonly IWorkspaceRepository _workspaceRepository = Substitute.For<IWorkspaceRepository>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
+    private readonly INotificationRepository _notificationRepository = Substitute.For<INotificationRepository>();
+    private readonly INotificationPreferencesRepository _preferencesRepository = Substitute.For<INotificationPreferencesRepository>();
+    private readonly IRealtimeNotificationService _realtimeService = Substitute.For<IRealtimeNotificationService>();
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
@@ -111,7 +114,10 @@ public class SubtaskHandlerTests
             _taskItemRepository,
             _workspaceRepository,
             _userRepository,
+            _notificationRepository,
+            _preferencesRepository,
             _emailService,
+            _realtimeService,
             _unitOfWork);
 
         var command = new UpdateTaskItemCommand(
@@ -143,7 +149,10 @@ public class SubtaskHandlerTests
             _taskItemRepository,
             _workspaceRepository,
             _userRepository,
+            _notificationRepository,
+            _preferencesRepository,
             _emailService,
+            _realtimeService,
             _unitOfWork);
 
         var command = new UpdateTaskItemCommand(
