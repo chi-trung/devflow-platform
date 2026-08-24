@@ -50,6 +50,8 @@ import { FilterBar } from "../components/board/FilterBar";
 import { GraphModal } from "../components/board/GraphModal";
 import { KeyboardHelpModal } from "../components/board/KeyboardHelpModal";
 import { ImportTasksModal } from "../components/board/ImportTasksModal";
+import { BoardPresence } from "../components/board/BoardPresence";
+import { usePresence } from "../hooks/usePresence";
 import type {
   ActivityResponse,
   LabelResponse,
@@ -215,6 +217,15 @@ export function BoardPage() {
 
   const myRole = members?.find((m) => m.userId === currentUser?.id)?.role;
   const canManageSprints = myRole === "Owner" || myRole === "Admin";
+
+  const { visibleUsers: presenceUsers, remainingCount: presenceRemaining, totalOnline: presenceTotal } =
+    usePresence(projectId, members ?? []);
+
+  useEffect(() => {
+    if (project?.name) {
+      document.title = `${project.name} — DevFlow`;
+    }
+  }, [project?.name]);
 
   const parsedSearch = parseSearchQuery(search);
   const operatorLabelId =
@@ -499,6 +510,14 @@ export function BoardPage() {
     };
     const offWake = onConnectionWake(ensureLive);
 
+    // Re-fetch activities when user returns to the tab.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        reloadActivities();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
     connection
       .start()
       .then(() => connection.invoke("JoinProject", projectId))
@@ -509,6 +528,7 @@ export function BoardPage() {
     return () => {
       offWake();
       window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
       void connection.stop();
     };
   }, [projectId, reload, reloadSprints, reloadActivities]);
@@ -672,6 +692,11 @@ export function BoardPage() {
             </p>
           </div>
             <div className="flex flex-wrap items-center gap-2">
+              <BoardPresence
+                users={presenceUsers}
+                remainingCount={presenceRemaining}
+                totalOnline={presenceTotal}
+              />
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/sprints`}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"

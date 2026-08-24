@@ -509,6 +509,48 @@ export function exportTasks(
   );
 }
 
+export interface ExportBackupResult {
+  TasksImported: number;
+  EpicsImported: number;
+  SprintsImported: number;
+  CommentsImported: number;
+  Errors: string[];
+}
+
+export function exportProjectBackup(
+  workspaceId: string,
+  projectId: string,
+  format: "json" | "excel",
+): Promise<Blob> {
+  return api<Blob>(
+    `/workspaces/${workspaceId}/projects/${projectId}/export/backup?format=${format}`,
+    {
+      headers: {
+        Accept:
+          format === "excel"
+            ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            : "application/json",
+      },
+    },
+  );
+}
+
+export async function importProjectBackup(
+  workspaceId: string,
+  projectId: string,
+  file: File,
+): Promise<ExportBackupResult> {
+  const text = await file.text();
+  return api<ExportBackupResult>(
+    `/workspaces/${workspaceId}/projects/${projectId}/import/backup`,
+    {
+      method: "POST",
+      body: text,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
+}
+
 export function getGitHubIntegration(
   workspaceId: string,
   projectId: string,
