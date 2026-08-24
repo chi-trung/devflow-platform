@@ -26,6 +26,30 @@ public sealed class ActivityLogRepository(DevFlowDbContext dbContext) : IActivit
         return logs;
     }
 
+    public async Task<IReadOnlyList<ActivityLog>> GetForProjectsAsync(
+        IEnumerable<Guid> projectIds,
+        int takePerProject,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = projectIds.ToList();
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        // SQL window function: row_number() partitioned by project, keeping the
+        // top takePerProject per project in a single query (no per-project N+1).
+        var ranked = dbContext.ActivityLogs
+            .AsNoTracking()
+            .Where(a => ids.Contains(a.ProjectId))
+            .GroupBy(a => a.ProjectId)
+            .SelectMany(g => g
+                .OrderByDescending(a => a.CreatedAtUtc)
+                .Take(takePerProject));
+
+        return await ranked.ToListAsync(cancellationToken);
+    }
+
     public async Task<ActivityLogPage> GetFilteredAsync(
         Guid projectId,
         Guid? actorUserId,

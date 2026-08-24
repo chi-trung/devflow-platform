@@ -9,6 +9,7 @@ public sealed class GetDashboardQueryHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
     IActivityLogRepository activityLogRepository,
+    IUserRepository userRepository,
     ICacheService cacheService) : IRequestHandler<GetDashboardQuery, DashboardResponse>
 {
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(60);
@@ -36,13 +37,8 @@ public sealed class GetDashboardQueryHandler(
     {
         var projectIds = projects.Select(p => p.Id).ToList();
 
-        // Aggregate tasks across all projects
-        var allTasks = new List<Domain.Entities.TaskItem>();
-        foreach (var projectId in projectIds)
-        {
-            var tasks = await taskItemRepository.GetForProjectAsync(projectId, null, cancellationToken);
-            allTasks.AddRange(tasks);
-        }
+        // Single batch query instead of a per-project loop (was N+1).
+        var allTasks = await taskItemRepository.GetForProjectsAsync(projectIds, null, cancellationToken);
 
         // Tasks by status
         var tasksByStatus = allTasks
@@ -54,21 +50,20 @@ public sealed class GetDashboardQueryHandler(
             .GroupBy(t => t.Priority.ToString())
             .ToDictionary(g => g.Key, g => g.Count());
 
-        // Recent activity (last 5 per project, then take top 5 overall)
-        var activities = new List<ActivityItem>();
-        foreach (var projectId in projectIds)
-        {
-            var projectActivities = await activityLogRepository.GetForProjectAsync(projectId, 5, cancellationToken);
-            activities.AddRange(projectActivities.Select(a => new ActivityItem(
-                "", // Will be resolved by frontend or we can batch resolve
-                a.Action,
-                a.Target,
-                a.CreatedAtUtc)));
-        }
+        // Recent activity (top 5 per project in one batch query, then top 5 overall)
+        var activities = await activityLogRepository.GetForProjectsAsync(projectIds, 5, cancellationToken);
+
+        var actorIds = activities.Select(a => a.ActorUserId).Distinct().ToList();
+        var names = await userRepository.GetDisplayNamesAsync(actorIds, cancellationToken);
 
         var recentActivity = activities
             .OrderByDescending(a => a.CreatedAtUtc)
             .Take(5)
+            .Select(a => new ActivityItem(
+                names.GetValueOrDefault(a.ActorUserId, "Someone"),
+                a.Action,
+                a.Target,
+                a.CreatedAtUtc))
             .ToList();
 
         // Upcoming deadlines (next 7 days)

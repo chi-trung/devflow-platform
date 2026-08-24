@@ -60,6 +60,31 @@ public sealed class TaskItemRepository(DevFlowDbContext dbContext) : ITaskItemRe
         return tasks;
     }
 
+    public async Task<IReadOnlyList<TaskItem>> GetForProjectsAsync(
+        IEnumerable<Guid> projectIds,
+        TaskItemStatus? status,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = projectIds.ToList();
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        var query = dbContext.TaskItems
+            .AsNoTracking()
+            .Where(task => ids.Contains(task.ProjectId));
+
+        if (status is not null)
+        {
+            query = query.Where(task => task.Status == status);
+        }
+
+        return await query
+            .OrderByDescending(task => task.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<int> GetCountForProjectAsync(
         Guid projectId,
         TaskItemStatus? status,

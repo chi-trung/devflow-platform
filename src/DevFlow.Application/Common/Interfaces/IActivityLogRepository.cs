@@ -11,6 +11,11 @@ public interface IActivityLogRepository
         int take,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<ActivityLog>> GetForProjectsAsync(
+        IEnumerable<Guid> projectIds,
+        int takePerProject,
+        CancellationToken cancellationToken = default);
+
     Task<ActivityLogPage> GetFilteredAsync(
         Guid projectId,
         Guid? actorUserId,
