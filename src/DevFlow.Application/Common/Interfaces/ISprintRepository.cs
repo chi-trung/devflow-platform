@@ -12,4 +12,6 @@ public interface ISprintRepository
     Task<IReadOnlyList<Sprint>> GetForProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
 
     Task<bool> HasActiveSprintAsync(Guid projectId, CancellationToken cancellationToken = default);
+
+    Task RemoveAsync(Sprint sprint, CancellationToken cancellationToken = default);
 }

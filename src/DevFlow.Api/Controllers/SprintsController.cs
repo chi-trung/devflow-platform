@@ -137,6 +137,23 @@ public sealed class SprintsController(ISender sender) : ControllerBase
         return Ok(velocity);
     }
 
+    [HttpDelete("{sprintId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(
+        Guid workspaceId,
+        Guid projectId,
+        Guid sprintId,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Sprints.Delete.DeleteSprintCommand(workspaceId, projectId, sprintId),
+            cancellationToken);
+
+        return NoContent();
+    }
+
     [HttpDelete("{sprintId:guid}/tasks/{taskId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]

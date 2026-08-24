@@ -28,6 +28,12 @@ public sealed class SprintRepository(DevFlowDbContext dbContext) : ISprintReposi
         return sprints;
     }
 
+    public Task RemoveAsync(Sprint sprint, CancellationToken cancellationToken = default)
+    {
+        dbContext.Sprints.Remove(sprint);
+        return Task.CompletedTask;
+    }
+
     public Task<bool> HasActiveSprintAsync(Guid projectId, CancellationToken cancellationToken = default)
     {
         return dbContext.Sprints.AnyAsync(
