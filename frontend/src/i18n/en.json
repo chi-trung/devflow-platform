@@ -635,7 +635,8 @@
     "tabEpics": "Epics",
     "tabLabels": "Labels",
     "tabUsers": "Members",
-    "tabComments": "Comments"
+    "tabComments": "Comments",
+    "loadMore": "Load {{count}} more"
   },
   "savedSearch": {
     "title": "Saved Searches",
@@ -937,6 +938,13 @@
     "deleteFailed": "Failed to delete workspace",
     "archivedNamed": "\"{{name}}\" archived",
     "archiveFailed": "Failed to archive project",
+    "restoredNamed": "\"{{name}}\" restored",
+    "restoreFailed": "Failed to restore project",
+    "restoring": "Restoring…",
+    "restore": "Restore",
+    "archivedProjects": "Archived projects",
+    "noArchivedProjects": "No archived projects",
+    "noArchivedProjectsDesc": "Archived projects will appear here.",
     "inviteInvalidEmail": "Enter a valid email address.",
     "inviteSentTo": "Invitation sent to {{email}}",
     "inviteFailed": "Failed to invite.",

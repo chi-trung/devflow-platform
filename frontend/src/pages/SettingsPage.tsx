@@ -190,9 +190,13 @@ export function SettingsPage() {
       emailOnMention: value,
       emailOnSprintStarted: value,
       emailOnStatusChanged: value,
+      inAppOnStatusChanged: value,
       emailOnCommentAdded: value,
+      inAppOnCommentAdded: value,
       emailOnRoleChanged: value,
+      inAppOnRoleChanged: value,
       emailOnRemovedFromWorkspace: value,
+      inAppOnRemovedFromWorkspace: value,
     };
     setPrefs(next);
     void persistPrefs(next).then((ok) => {

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, FolderKanban, Users, Trash2, X } from "lucide-react";
-import { api, pagedItems, removeWorkspaceMember, updateMemberRole } from "../lib/api";
+import { ArrowLeft, Plus, FolderKanban, Users, Trash2, X, RotateCcw } from "lucide-react";
+import { api, pagedItems, removeWorkspaceMember, updateMemberRole, restoreProject as restoreProjectApi } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ui/ToastProvider";
@@ -117,6 +117,16 @@ export function WorkspacePage() {
     [projects, stats],
   );
 
+  const activeProjects = useMemo(
+    () => withStats?.filter((p) => p.status === "Active") ?? null,
+    [withStats],
+  );
+
+  const archivedProjects = useMemo(
+    () => withStats?.filter((p) => p.status === "Archived") ?? null,
+    [withStats],
+  );
+
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [key, setKey] = useState("");
@@ -144,6 +154,7 @@ export function WorkspacePage() {
   const [pendingRemoveMember, setPendingRemoveMember] = useState<WorkspaceMemberResponse | null>(null);
   const [changingRoleMemberId, setChangingRoleMemberId] = useState<string | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+  const [restoringProjectId, setRestoringProjectId] = useState<string | null>(null);
 
   const currentUserId = currentUser?.id;
 
@@ -167,7 +178,23 @@ export function WorkspacePage() {
     }
   }
 
+  async function restoreProject(project: ProjectResponse) {
+    setRestoringProjectId(project.id);
+    try {
+      await restoreProjectApi(workspaceId, project.id);
+      push(t("workspace.restoredNamed", { name: project.name }));
+      reload();
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("workspace.restoreFailed"), "error");
+    } finally {
+      setRestoringProjectId(null);
+    }
+  }
+
   const canManageMembers =
+    workspace?.role === "Owner" || workspace?.role === "Admin";
+
+  const canManageProjects =
     workspace?.role === "Owner" || workspace?.role === "Admin";
 
   async function handleRemoveMember(member: WorkspaceMemberResponse) {
@@ -422,76 +449,130 @@ export function WorkspacePage() {
                 </Button>
               </div>
             ) : (
-              <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {withStats.map((project, index) => {
-                  const percent =
-                    project.total > 0
-                      ? Math.round((project.done / project.total) * 100)
-                      : 0;
-                  return (
-                    <li
-                      key={project.id}
-                      className="rise"
-                      style={{ animationDelay: `${index * 60}ms` }}
-                    >
-                      <Link
-                        to={`/workspaces/${workspaceId}/projects/${project.id}`}
-                        className="group relative flex h-full flex-col rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40"
-                      >
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setPendingDeleteProject(project);
-                          }}
-                          aria-label={t("workspace.archiveNamedAria", {
-                            name: project.name,
-                          })}
-                          className="absolute right-2 top-2 z-10 rounded p-1 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-destructive group-hover:opacity-100"
+              <>
+                {activeProjects && activeProjects.length > 0 && (
+                  <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {activeProjects.map((project, index) => {
+                      const percent =
+                        project.total > 0
+                          ? Math.round((project.done / project.total) * 100)
+                          : 0;
+                      return (
+                        <li
+                          key={project.id}
+                          className="rise"
+                          style={{ animationDelay: `${index * 60}ms` }}
                         >
-                          <Trash2 className="size-3.5" aria-hidden />
-                        </button>
-                        <div className="mb-3 flex items-center justify-between gap-2">
-                          <Badge tone="teal">{project.key}</Badge>
-                          <Badge
-                            tone={project.status === "Active" ? "teal" : "neutral"}
+                          <Link
+                            to={`/workspaces/${workspaceId}/projects/${project.id}`}
+                            className="group relative flex h-full flex-col rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40"
                           >
-                            {project.status}
-                          </Badge>
-                        </div>
-                        <h2 className="font-display font-semibold">
-                          {project.name}
-                        </h2>
-                        {project.description && (
-                          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                            {project.description}
-                          </p>
-                        )}
-                        <div className="mt-auto pt-4">
-                          <div className="mb-1.5 flex justify-between font-mono text-[11px] text-muted-foreground">
-                            <span>
-                              {t("workspace.progressDone", {
-                                done: project.done,
-                                total: project.total,
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setPendingDeleteProject(project);
+                              }}
+                              aria-label={t("workspace.archiveNamedAria", {
+                                name: project.name,
                               })}
-                            </span>
-                            <span>{percent}%</span>
-                          </div>
-                          <div className="h-1.5 overflow-hidden rounded-full bg-elevated">
-                            <div
-                              className="h-full rounded-full bg-primary transition-all duration-500"
-                              style={{ width: `${percent}%` }}
-                            />
-                          </div>
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+                              className="absolute right-2 top-2 z-10 rounded p-1 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-destructive group-hover:opacity-100"
+                            >
+                              <Trash2 className="size-3.5" aria-hidden />
+                            </button>
+                            <div className="mb-3 flex items-center justify-between gap-2">
+                              <Badge tone="teal">{project.key}</Badge>
+                              <Badge
+                                tone={project.status === "Active" ? "teal" : "neutral"}
+                              >
+                                {project.status}
+                              </Badge>
+                            </div>
+                            <h2 className="font-display font-semibold">
+                              {project.name}
+                            </h2>
+                            {project.description && (
+                              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                                {project.description}
+                              </p>
+                            )}
+                            <div className="mt-auto pt-4">
+                              <div className="mb-1.5 flex justify-between font-mono text-[11px] text-muted-foreground">
+                                <span>
+                                  {t("workspace.progressDone", {
+                                    done: project.done,
+                                    total: project.total,
+                                  })}
+                                </span>
+                                <span>{percent}%</span>
+                              </div>
+                              <div className="h-1.5 overflow-hidden rounded-full bg-elevated">
+                                <div
+                                  className="h-full rounded-full bg-primary transition-all duration-500"
+                                  style={{ width: `${percent}%` }}
+                                />
+                              </div>
+                            </div>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
 
+                {archivedProjects && archivedProjects.length > 0 && (
+                  <section className="mt-10">
+                    <h2 className="mb-4 font-display text-lg font-semibold tracking-tight">
+                      {t("workspace.archivedProjects")}
+                    </h2>
+                    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {archivedProjects.map((project, index) => {
+                        return (
+                          <li
+                            key={project.id}
+                            className="rise"
+                            style={{ animationDelay: `${index * 60}ms` }}
+                          >
+                            <div className="flex h-full flex-col rounded-xl border border-border bg-card p-5 opacity-75">
+                              <div className="mb-3 flex items-center justify-between gap-2">
+                                <Badge tone="neutral">{project.key}</Badge>
+                                <Badge tone="neutral">{project.status}</Badge>
+                              </div>
+                              <h2 className="font-display font-semibold">
+                                {project.name}
+                              </h2>
+                              {project.description && (
+                                <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                                  {project.description}
+                                </p>
+                              )}
+                              {canManageProjects && (
+                                <div className="mt-4">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => void restoreProject(project)}
+                                    disabled={restoringProjectId === project.id}
+                                    className="w-full"
+                                  >
+                                    <RotateCcw className="mr-1.5 size-3.5" aria-hidden />
+                                    {restoringProjectId === project.id
+                                      ? t("workspace.restoring")
+                                      : t("workspace.restore")}
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+                )}
+              </>
+            )}
+            
             <section className="mt-12">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <div>
