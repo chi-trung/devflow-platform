@@ -18,6 +18,7 @@ public class TaskItemHandlerTests
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly INotificationRepository _notificationRepository = Substitute.For<INotificationRepository>();
     private readonly INotificationPreferencesRepository _preferencesRepository = Substitute.For<INotificationPreferencesRepository>();
+    private readonly ITaskWatcherRepository _watcherRepository = Substitute.For<ITaskWatcherRepository>();
     private readonly IRealtimeNotificationService _realtimeService = Substitute.For<IRealtimeNotificationService>();
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
     private readonly IActivityLogRepository _activityLogRepository = Substitute.For<IActivityLogRepository>();
@@ -82,7 +83,7 @@ public class TaskItemHandlerTests
         _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>()).Returns(task);
 
         var handler = new UpdateTaskItemCommandHandler(
-            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _emailService, _realtimeService, _activityLogRepository, _userContext, _unitOfWork);
+            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _userContext, _unitOfWork);
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, task.Id, "Existing", null,
             TaskItemStatus.InProgress, TaskItemPriority.Low, Guid.NewGuid(), null);
@@ -101,7 +102,7 @@ public class TaskItemHandlerTests
         _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>()).Returns(task);
 
         var handler = new UpdateTaskItemCommandHandler(
-            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _emailService, _realtimeService, _activityLogRepository, _userContext, _unitOfWork);
+            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _userContext, _unitOfWork);
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, task.Id, "Updated title", "desc",
             TaskItemStatus.Done, TaskItemPriority.Critical, assigneeId, null);
@@ -128,7 +129,7 @@ public class TaskItemHandlerTests
         _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>()).Returns(task);
 
         var handler = new UpdateTaskItemCommandHandler(
-            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _emailService, _realtimeService, _activityLogRepository, _userContext, _unitOfWork);
+            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _userContext, _unitOfWork);
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, task.Id, "Existing", null,
             TaskItemStatus.InProgress, TaskItemPriority.Low, assigneeId, null);

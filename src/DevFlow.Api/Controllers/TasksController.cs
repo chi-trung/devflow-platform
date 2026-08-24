@@ -316,5 +316,53 @@ public sealed class TasksController(ISender sender) : ControllerBase
         return NoContent();
     }
 
+    [HttpPut("{taskId:guid}/watch")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Watch(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Tasks.Watch.WatchTaskCommand(workspaceId, projectId, taskId),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpDelete("{taskId:guid}/watch")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Unwatch(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Tasks.Watch.UnwatchTaskCommand(workspaceId, projectId, taskId),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpGet("{taskId:guid}/watch")]
+    [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> IsWatching(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new Application.Features.Tasks.Watch.IsWatchingTaskQuery(workspaceId, projectId, taskId),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
     public sealed record ReorderTasksRequest(IReadOnlyList<ReorderTaskItem> Tasks);
 }

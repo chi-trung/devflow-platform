@@ -15,6 +15,7 @@ public sealed partial class CreateCommentCommandHandler(
     IUserRepository userRepository,
     INotificationRepository notificationRepository,
     INotificationPreferencesRepository preferencesRepository,
+    ITaskWatcherRepository watcherRepository,
     IEmailService emailService,
     IRealtimeNotificationService realtimeNotificationService,
     IActivityLogRepository activityLog,
@@ -56,12 +57,15 @@ public sealed partial class CreateCommentCommandHandler(
 
         // Parse @mentions and create notifications
         var mentionedUsernames = ExtractMentions(command.Content);
+        var mentionedUserIds = new HashSet<Guid>();
 
         foreach (var username in mentionedUsernames)
         {
             var mentionedUser = await userRepository.GetByUsernameAsync(username, cancellationToken);
             if (mentionedUser is null || mentionedUser.Id == userContext.UserId)
                 continue;
+
+            mentionedUserIds.Add(mentionedUser.Id);
 
             // Create notification
             var notification = Notification.Create(
@@ -102,7 +106,32 @@ public sealed partial class CreateCommentCommandHandler(
             }
         }
 
-        if (mentionedUsernames.Count > 0)
+        // Notify watchers (excluding the actor and anyone already mentioned above)
+        var watchers = await watcherRepository.GetByTaskAsync(task.Id, cancellationToken);
+
+        foreach (var watcher in watchers.Where(w => w.UserId != userContext.UserId && !mentionedUserIds.Contains(w.UserId)))
+        {
+            var notification = Notification.Create(
+                watcher.UserId,
+                "TaskUpdate",
+                $"new comment on \"{task.Title}\"",
+                task.Id,
+                project.Id,
+                project.WorkspaceId);
+
+            await notificationRepository.AddAsync(notification, cancellationToken);
+
+            await realtimeNotificationService.NotifyUserAsync(
+                watcher.UserId,
+                "TaskUpdate",
+                $"new comment on \"{task.Title}\"",
+                task.Id,
+                project.Id,
+                project.WorkspaceId,
+                cancellationToken);
+        }
+
+        if (mentionedUsernames.Count > 0 || watchers.Count > 0)
         {
             await unitOfWork.SaveChangesAsync(cancellationToken);
         }
