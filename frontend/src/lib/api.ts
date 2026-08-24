@@ -78,14 +78,18 @@ export const tokens = {
 
 let refreshInFlight: Promise<boolean> | null = null;
 
-// ── Request deduplication & short-lived cache ──────────────────────
-// Prevents multiple components from firing the same GET request
-// simultaneously.  Responses are cached for 5 s so rapid re-mounts
-// (e.g. StrictMode double-render, or navigating back) don't hit the
-// network again.
+// ── Stale-while-revalidate cache ───────────────────────────────────
+// GET responses are cached and served instantly on re-visit (even past
+// TTL) while the network re-fetch happens in the background.  This keeps
+// the UI feeling instant on Render's cold tier where warm calls still
+// cost ~700 ms.
+//
+// TTL is the "fresh" window; after it the stale copy is still shown until
+// the background refresh lands.  A background revalidation in flight is
+// coalesced per key (SWR), so rapid re-mounts share one fetch.
 const inflight = new Map<string, Promise<unknown>>();
 const cache = new Map<string, { data: unknown; ts: number }>();
-const CACHE_TTL = 5_000; // 5 seconds
+const CACHE_TTL = 60_000; // 60 seconds "fresh" window
 
 function cacheKey(path: string, opts: RequestInit): string {
   const method = (opts.method ?? "GET").toUpperCase();
@@ -96,6 +100,37 @@ function cacheKey(path: string, opts: RequestInit): string {
 /** Drop all cached GET responses (call after mutations or auth changes). */
 export function invalidateApiCache(): void {
   cache.clear();
+}
+
+/**
+ * Serve a cached value immediately, or if stale re-fetch in the
+ * background and return the fresh copy when it lands.  Returns
+ * undefined when there is nothing cached yet.
+ */
+export async function apiStaleIfError<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T | undefined> {
+  const key = cacheKey(path, options);
+  const hit = cache.get(key);
+
+  // Cache hit within the fresh window → serve instantly.
+  if (hit && Date.now() - hit.ts < CACHE_TTL) {
+    return hit.data as T;
+  }
+
+  // Stale hit → serve stale now, refresh in background.
+  if (hit) {
+    void api<T>(path, options); // background revalidation (SWR)
+    return hit.data as T;
+  }
+
+  // Nothing cached → wait for the fetch.
+  try {
+    return await api<T>(path, options);
+  } catch {
+    return undefined;
+  }
 }
 
 async function requestRefresh(): Promise<boolean> {

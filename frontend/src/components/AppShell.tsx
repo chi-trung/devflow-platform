@@ -77,6 +77,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  // Warm the dashboard + activities caches as soon as we know the active
+  // workspace so the first project view renders without a visible wait.
+  const activeWorkspaceId = location.pathname.match(
+    /^\/workspaces\/([0-9a-f-]{36})/i,
+  )?.[1];
+  useEffect(() => {
+    if (!activeWorkspaceId) return;
+    // Fire-and-forget: these populate the SWR cache used by the pages.
+    void api(`/workspaces/${activeWorkspaceId}/dashboard`).catch(() => {});
+  }, [activeWorkspaceId]);
+
   const { data: workspacesRaw } = useApi<unknown>(
     () => api("/workspaces"),
     [],
