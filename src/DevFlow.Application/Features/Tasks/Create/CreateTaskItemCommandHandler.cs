@@ -9,6 +9,8 @@ namespace DevFlow.Application.Features.Tasks.Create;
 public sealed class CreateTaskItemCommandHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
+    IActivityLogRepository activityLog,
+    IUserContext userContext,
     IUnitOfWork unitOfWork) : IRequestHandler<CreateTaskItemCommand, TaskItemCreatedResponse>
 {
     public async Task<TaskItemCreatedResponse> Handle(
@@ -29,6 +31,16 @@ public sealed class CreateTaskItemCommandHandler(
             command.Priority);
 
         await taskItemRepository.AddAsync(task, cancellationToken);
+
+        var log = ActivityLog.Create(
+            command.WorkspaceId,
+            command.ProjectId,
+            task.Id,
+            userContext.UserId,
+            "created task",
+            task.Title);
+        await activityLog.AddAsync(log, cancellationToken);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new TaskItemCreatedResponse(task.Id);

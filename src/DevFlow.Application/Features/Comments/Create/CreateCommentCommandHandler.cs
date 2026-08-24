@@ -17,6 +17,7 @@ public sealed partial class CreateCommentCommandHandler(
     INotificationPreferencesRepository preferencesRepository,
     IEmailService emailService,
     IRealtimeNotificationService realtimeNotificationService,
+    IActivityLogRepository activityLog,
     IUserContext userContext,
     IUnitOfWork unitOfWork) : IRequestHandler<CreateCommentCommand, CommentResponse>
 {
@@ -41,6 +42,16 @@ public sealed partial class CreateCommentCommandHandler(
         var comment = Comment.Create(command.TaskId, userContext.UserId, command.Content);
 
         await commentRepository.AddAsync(comment, cancellationToken);
+
+        var log = ActivityLog.Create(
+            command.WorkspaceId,
+            command.ProjectId,
+            task.Id,
+            userContext.UserId,
+            "commented on task",
+            task.Title);
+        await activityLog.AddAsync(log, cancellationToken);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Parse @mentions and create notifications

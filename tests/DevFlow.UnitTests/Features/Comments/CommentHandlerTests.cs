@@ -20,6 +20,7 @@ public class CommentHandlerTests
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly IWorkspaceRepository _workspaceRepository = Substitute.For<IWorkspaceRepository>();
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
+    private readonly IActivityLogRepository _activityLogRepository = Substitute.For<IActivityLogRepository>();
     private readonly IUserContext _userContext = Substitute.For<IUserContext>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
@@ -43,13 +44,19 @@ public class CommentHandlerTests
     {
         var handler = new CreateCommentCommandHandler(
             _projectRepository, _taskItemRepository, _commentRepository,
-            _userRepository, _notificationRepository, _preferencesRepository, _emailService, _realtimeService, _userContext, _unitOfWork);
+            _userRepository, _notificationRepository, _preferencesRepository, _emailService, _realtimeService, _activityLogRepository, _userContext, _unitOfWork);
         var command = new CreateCommentCommand(_workspaceId, _project.Id, _task.Id, "Looks good to me!");
 
         var response = await handler.Handle(command, CancellationToken.None);
 
         Assert.Equal(_authorId, response.AuthorId);
         Assert.Equal("Looks good to me!", response.Content);
+        await _activityLogRepository.Received(1).AddAsync(
+            Arg.Is<ActivityLog>(log =>
+                log.Action == "commented on task" &&
+                log.TaskItemId == _task.Id &&
+                log.ActorUserId == _authorId),
+            Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

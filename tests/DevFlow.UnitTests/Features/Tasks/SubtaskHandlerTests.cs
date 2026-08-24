@@ -19,6 +19,8 @@ public class SubtaskHandlerTests
     private readonly INotificationPreferencesRepository _preferencesRepository = Substitute.For<INotificationPreferencesRepository>();
     private readonly IRealtimeNotificationService _realtimeService = Substitute.For<IRealtimeNotificationService>();
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
+    private readonly IActivityLogRepository _activityLogRepository = Substitute.For<IActivityLogRepository>();
+    private readonly IUserContext _userContext = Substitute.For<IUserContext>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
@@ -28,6 +30,7 @@ public class SubtaskHandlerTests
     {
         _project = Project.Create(_workspaceId, "DevFlow Core", "DEV", null);
         _projectRepository.GetByIdAsync(_project.Id, Arg.Any<CancellationToken>()).Returns(_project);
+        _userContext.UserId.Returns(Guid.NewGuid());
     }
 
     [Fact]
@@ -42,7 +45,7 @@ public class SubtaskHandlerTests
         _taskItemRepository.GetByIdAsync(parent.Id, Arg.Any<CancellationToken>()).Returns(parent);
 
         var handler = new CreateSubtaskCommandHandler(
-            _projectRepository, _taskItemRepository, _unitOfWork);
+            _projectRepository, _taskItemRepository, _activityLogRepository, _userContext, _unitOfWork);
         var command = new CreateSubtaskCommand(
             _workspaceId, _project.Id, parent.Id, "Write migration", null, TaskItemPriority.Medium);
 
@@ -68,7 +71,7 @@ public class SubtaskHandlerTests
         _taskItemRepository.GetByIdAsync(child.Id, Arg.Any<CancellationToken>()).Returns(child);
 
         var handler = new CreateSubtaskCommandHandler(
-            _projectRepository, _taskItemRepository, _unitOfWork);
+            _projectRepository, _taskItemRepository, _activityLogRepository, _userContext, _unitOfWork);
         var command = new CreateSubtaskCommand(
             _workspaceId, _project.Id, child.Id, "Grandchild", null, TaskItemPriority.Low);
 
@@ -86,7 +89,7 @@ public class SubtaskHandlerTests
         _taskItemRepository.GetByIdAsync(other.Id, Arg.Any<CancellationToken>()).Returns(other);
 
         var handler = new DetachSubtaskCommandHandler(
-            _projectRepository, _taskItemRepository, _unitOfWork);
+            _projectRepository, _taskItemRepository, _activityLogRepository, _userContext, _unitOfWork);
         var command = new DetachSubtaskCommand(_workspaceId, _project.Id, parent.Id, other.Id);
 
         await Assert.ThrowsAsync<ConflictException>(() => handler.Handle(command, CancellationToken.None));
@@ -118,6 +121,8 @@ public class SubtaskHandlerTests
             _preferencesRepository,
             _emailService,
             _realtimeService,
+            _activityLogRepository,
+            _userContext,
             _unitOfWork);
 
         var command = new UpdateTaskItemCommand(
@@ -153,6 +158,8 @@ public class SubtaskHandlerTests
             _preferencesRepository,
             _emailService,
             _realtimeService,
+            _activityLogRepository,
+            _userContext,
             _unitOfWork);
 
         var command = new UpdateTaskItemCommand(
