@@ -132,6 +132,31 @@ public sealed partial class CreateCommentCommandHandler(
                 cancellationToken);
         }
 
+        // Email the task assignee when a new comment is added (CommentAdded event)
+        if (command.AssigneeId is not null && command.AssigneeId != userContext.UserId && !mentionedUserIds.Contains(command.AssigneeId.Value))
+        {
+            var assignee = await userRepository.GetByIdAsync(command.AssigneeId.Value, cancellationToken);
+            if (assignee is not null)
+            {
+                var prefs = await preferencesRepository.GetByUserIdAsync(assignee.Id, cancellationToken);
+                if (prefs?.EmailOnCommentAdded != false && !string.IsNullOrWhiteSpace(assignee.Email))
+                {
+                    var author = await userRepository.GetByIdAsync(userContext.UserId, cancellationToken);
+                    var authorName = author?.DisplayName ?? author?.Username ?? "Someone";
+                    _ = emailService.SendCommentAddedEmailAsync(
+                            assignee.Email,
+                            task.Title,
+                            project.Name,
+                            command.Content,
+                            authorName,
+                            project.WorkspaceId.ToString(),
+                            project.Id.ToString(),
+                            task.Id.ToString())
+                        .ContinueWith(_ => Task.CompletedTask, TaskContinuationOptions.OnlyOnCanceled);
+                }
+            }
+        }
+
         if (mentionedUsernames.Count > 0 || watchers.Count > 0)
         {
             await unitOfWork.SaveChangesAsync(cancellationToken);

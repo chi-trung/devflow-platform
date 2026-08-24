@@ -53,6 +53,53 @@ public sealed class ResendEmailService(HttpClient httpClient, IConfiguration con
         """);
     }
 
+    public Task SendTaskStatusChangedEmailAsync(
+        string toEmail, string taskTitle, string projectName, string newStatus, string changedBy,
+        string workspaceId, string projectId, string taskId)
+    {
+        var taskUrl = $"{FrontendUrl}/workspaces/{workspaceId}/projects/{projectId}/board?selectedTaskId={taskId}";
+        return SendEmailAsync(toEmail, $"Task status changed — {taskTitle}", $"""
+            <h2>Task status changed</h2>
+            <p><strong>{changedBy}</strong> moved <strong>{taskTitle}</strong> to <strong>{newStatus}</strong> in project <strong>{projectName}</strong>.</p>
+            <p><a href="{taskUrl}">Open DevFlow →</a></p>
+        """);
+    }
+
+    public Task SendCommentAddedEmailAsync(
+        string toEmail, string taskTitle, string projectName, string comment, string commenterName,
+        string workspaceId, string projectId, string taskId)
+    {
+        var taskUrl = $"{FrontendUrl}/workspaces/{workspaceId}/projects/{projectId}/board?selectedTaskId={taskId}";
+        return SendEmailAsync(toEmail, $"New comment on {taskTitle}", $"""
+            <h2>New comment</h2>
+            <p><strong>{commenterName}</strong> commented on <strong>{taskTitle}</strong> in project <strong>{projectName}</strong>:</p>
+            <blockquote style="border-left:3px solid #14b8a6;padding-left:12px;color:#555;">{comment}</blockquote>
+            <p><a href="{taskUrl}">Open DevFlow →</a></p>
+        """);
+    }
+
+    public Task SendRoleChangedEmailAsync(
+        string toEmail, string workspaceName, string newRole, string changedBy, string workspaceId)
+    {
+        var workspaceUrl = $"{FrontendUrl}/workspaces/{workspaceId}";
+        return SendEmailAsync(toEmail, $"Your role changed in {workspaceName}", $"""
+            <h2>Role changed</h2>
+            <p><strong>{changedBy}</strong> changed your role in workspace <strong>{workspaceName}</strong> to <strong>{newRole}</strong>.</p>
+            <p><a href="{workspaceUrl}">Open DevFlow →</a></p>
+        """);
+    }
+
+    public Task SendRemovedFromWorkspaceEmailAsync(
+        string toEmail, string workspaceName, string removedBy, string workspaceId)
+    {
+        var workspaceUrl = $"{FrontendUrl}/workspaces/{workspaceId}";
+        return SendEmailAsync(toEmail, $"You were removed from {workspaceName}", $"""
+            <h2>Removed from workspace</h2>
+            <p><strong>{removedBy}</strong> removed you from workspace <strong>{workspaceName}</strong>.</p>
+            <p><a href="{workspaceUrl}">Open DevFlow →</a></p>
+        """);
+    }
+
     private async Task SendEmailAsync(string to, string subject, string htmlBody)
     {
         var payload = new
