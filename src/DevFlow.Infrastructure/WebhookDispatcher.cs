@@ -27,24 +27,23 @@ public sealed class WebhookDispatcher(
 
         foreach (var webhook in matching)
         {
-            try
+            var content = new StringContent(body, Encoding.UTF8, "application/json");
+
+            if (!string.IsNullOrEmpty(webhook.Secret))
             {
-                var content = new StringContent(body, Encoding.UTF8, "application/json");
-
-                if (!string.IsNullOrEmpty(webhook.Secret))
-                {
-                    var signature = ComputeHmac(body, webhook.Secret);
-                    content.Headers.Add("X-Webhook-Signature", signature);
-                }
-
-                content.Headers.Add("X-Webhook-Event", eventName);
-
-                await client.PostAsync(webhook.Url, content, cancellationToken);
+                var signature = ComputeHmac(body, webhook.Secret);
+                content.Headers.Add("X-Webhook-Signature", signature);
             }
-            catch
-            {
-                // Fire-and-forget — webhook failures shouldn't break the app
-            }
+
+            content.Headers.Add("X-Webhook-Event", eventName);
+
+            // Do NOT swallow delivery failures here — let exceptions propagate up to
+            // OutboxProcessor.ProcessMessageAsync, which applies exponential backoff
+            // retries and dead-letters the message once RetryCount hits MaxRetries.
+            // The previous `catch {}` caused every webhook to be marked processed
+            // even when the delivery failed, so the DLQ was never populated.
+            var response = await client.PostAsync(webhook.Url, content, cancellationToken);
+            response.EnsureSuccessStatusCode();
         }
     }
 

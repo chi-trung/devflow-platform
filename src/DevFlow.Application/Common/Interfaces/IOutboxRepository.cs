@@ -11,4 +11,15 @@ public interface IOutboxRepository
     Task MarkProcessedAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task IncrementRetryAsync(Guid id, string? error, CancellationToken cancellationToken = default);
+
+    /// <summary>Messages whose retries were exhausted (<see cref="OutboxMessage.HasFailedPermanently"/>).</summary>
+    Task<IReadOnlyList<OutboxMessage>> GetDeadLetteredAsync(int batchSize, CancellationToken cancellationToken = default);
+
+    Task<OutboxMessage?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resets retry state for a dead-lettered message so the next processor
+    /// cycle retries it. Returns false when the message is not dead-lettered.
+    /// </summary>
+    Task<bool> ReplayAsync(Guid id, CancellationToken cancellationToken = default);
 }
