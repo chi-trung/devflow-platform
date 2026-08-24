@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Bell, CheckCheck, ExternalLink, Trash2 } from "lucide-react";
@@ -23,6 +24,7 @@ export function NotificationsPanel({
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const { push } = useToast();
   const [filter, setFilter] = useState<NotificationFilter>("all");
   const [pendingCleanup, setPendingCleanup] = useState(false);
@@ -54,7 +56,11 @@ export function NotificationsPanel({
 
   useEffect(() => {
     function onPointerDown(event: PointerEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const inside =
+        containerRef.current?.contains(target) ||
+        dropdownRef.current?.contains(target);
+      if (!inside) {
         setOpen(false);
       }
     }
@@ -134,8 +140,10 @@ export function NotificationsPanel({
         )}
       </button>
 
-      {open && (
+      {open &&
+        createPortal(
         <div
+          ref={dropdownRef}
           style={getDropdownStyle()}
           className="w-80 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise"
           role="dialog"
@@ -240,7 +248,8 @@ export function NotificationsPanel({
               {t("notification.viewAll")}
             </button>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {pendingCleanup && (

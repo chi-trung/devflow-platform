@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, CircleUserRound, LogOut, Settings, UserRound } from "lucide-react";
@@ -14,12 +15,17 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
 
   useEffect(() => {
     function onPointerDown(event: PointerEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const inside =
+        containerRef.current?.contains(target) ||
+        dropdownRef.current?.contains(target);
+      if (!inside) {
         setOpen(false);
       }
     }
@@ -102,8 +108,10 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
         )}
       </button>
 
-      {open && (
+      {open &&
+        createPortal(
         <div
+          ref={dropdownRef}
           role="menu"
           style={getDropdownStyle()}
           className="w-56 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise"
@@ -128,7 +136,8 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
             <LogOut className="size-4" aria-hidden />
             {t("userMenu.logout")}
           </button>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
