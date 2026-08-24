@@ -124,6 +124,13 @@ export interface ActivityResponse {
   createdAtUtc: string;
 }
 
+export interface ActivityResponsePage {
+  items: ActivityResponse[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface TaskAttachmentResponse {
   id: string;
   taskItemId: string;
