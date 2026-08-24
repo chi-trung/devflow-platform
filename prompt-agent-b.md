@@ -1,151 +1,85 @@
-# 🚀 PROMPT CHO AGENT B — Sprint 21 (Realtime Notification Delivery + Email Enhancement)
+# 🚀 PROMPT CHO AGENT B — Sprint 22 (Sprint-Start Notifications + Outbox Wiring + Notification Cleanup)
 
-**Bạn là Agent B** trong đội DevFlow (ASP.NET Core 8 + React 19).
-Branch prefix: `feat/backend-sprint21-notifications`.
-**QUAN TRỌNG:** Chỉ sửa file trong `src/` (backend). KHÔNG đụng frontend, KHÔNG đụng file Agent A & C.
-
----
-
-## Context — Notification System Hiện Tại
-
-### Existing code (verified):
-- `src/DevFlow.Api/Hubs/NotificationHub.cs` — `INotificationBroadcaster` interface + `NotificationBroadcaster` implementation (SignalR via `IHubContext<NotificationHub>`). Groups: `user:{userId}`, `workspace:{workspaceId}`, `project:{projectId}`. **Đã register trong Program.cs** (`AddSingleton<INotificationBroadcaster, NotificationBroadcaster>`).
-- `src/DevFlow.Application/Features/Comments/Create/CreateCommentCommandHandler.cs` — tạo `Notification` entity + gọi `IEmailService` khi @mention. **KHÔNG gọi `INotificationBroadcaster`**.
-- `src/DevFlow.Application/Features/Tasks/Update/UpdateTaskItemCommandHandler.cs` — tạo notification khi task được assign. **KHÔNG gọi `INotificationBroadcaster`**.
-- `src/DevFlow.Domain/Entities/NotificationPreferences.cs` — `EmailOnAssignment`, `EmailOnMention`, `EmailOnSprintStarted` (all default true). **KHÔNG được handler nào check**.
-- `src/DevFlow.Infrastructure/Email/ResendEmailService.cs` — gọi Resend API. **Email HTML có link `<a href="#">` chết.**
-- `src/DevFlow.Api/Program.cs` — `ResendEmailService` được đăng ký nếu `RESEND_API_KEY` có, fallback `NoOpEmailService`.
-
-### Frontend contract (đã có sẵn, KHÔNG sửa):
-- Frontend `useNotifications` hook đã lắng nghe `connection.on("notification", handler)`.
-- Payload shape: `{ type: string | null, message: string | null, taskId: string | null, projectId: string | null, workspaceId: string | null }`.
+**Bạn là Agent B (backend specialist)** trong đội DevFlow (ASP.NET Core 8, Clean Architecture: Domain/Application/Infrastructure/Api).
+Branch prefix: `feat/backend-sprint22-notifications`.
+**QUAN TRỌNG:** KHÔNG đụng file Agent A (task create/update/delete handlers, subtask handlers, CreateCommentCommandHandler), Agent C (frontend), Agent D (Search/Reporting).
 
 ---
 
-## PHẦN 1 — Real-time Notification Push (B21.1)
-
-### 1.1 Tạo NotificationService (Application layer)
-- **File mới:** `src/DevFlow.Application/Common/Interfaces/INotificationBroadcaster.cs` — KHÔNG tạo mới (đã có ở `src/DevFlow.Api/Hubs/NotificationHub.cs`). Check lại: interface `INotificationBroadcaster` ở Api layer → Application layer không thể inject. **Cần refactor:**
-  - Move interface `INotificationBroadcaster` vào `src/DevFlow.Application/Common/Interfaces/` (xóa bản cũ ở Api layer).
-  - Update `NotificationBroadcaster` ở Api layer để implement interface từ Application.
-  - Hoặc tạo interface mới `IRealtimeNotificationService` ở Application layer:
-    ```csharp
-    // src/DevFlow.Application/Common/Interfaces/IRealtimeNotificationService.cs
-    public interface IRealtimeNotificationService
-    {
-        Task NotifyUserAsync(Guid userId, string type, string message, Guid? taskId, Guid? projectId, Guid? workspaceId);
-    }
-    ```
-  - Implement ở Infrastructure layer (hoặc Api layer) dùng `INotificationBroadcaster` / `IHubContext<NotificationHub>`.
-
-### 1.2 Implement + register
-- **File mới:** `src/DevFlow.Infrastructure/RealTime/SignalRNotificationService.cs`
-  ```csharp
-  public sealed class SignalRNotificationService(IHubContext<NotificationHub> hubContext) : IRealtimeNotificationService
-  {
-      public async Task NotifyUserAsync(Guid userId, string type, string message, Guid? taskId, Guid? projectId, Guid? workspaceId)
-      {
-          await hubContext.Clients.Group($"user:{userId}").SendAsync("notification", new
-          {
-              type,
-              data = new { message, taskId = taskId?.ToString(), projectId = projectId?.ToString(), workspaceId = workspaceId?.ToString() }
-          });
-      }
-  }
-  ```
-  - Register: `services.AddSingleton<IRealtimeNotificationService, SignalRNotificationService>();` trong `DependencyInjection.cs` (Infrastructure).
-
-### 1.3 Inject vào Comment handler
-- **File:** `src/DevFlow.Application/Features/Comments/Create/CreateCommentCommandHandler.cs`
-  - Inject `IRealtimeNotificationService`.
-  - Sau khi tạo notification (sau `await notificationRepository.AddAsync`), gọi:
-    ```csharp
-    await realtimeService.NotifyUserAsync(
-        mentionedUser.Id, "Mention",
-        $"mentioned you in a comment on \"{task.Title}\"",
-        task.Id, project.Id, project.WorkspaceId);
-    ```
-
-### 1.4 Inject vào Task assign handler
-- **File:** `src/DevFlow.Application/Features/Tasks/Update/UpdateTaskItemCommandHandler.cs`
-  - Đọc handler hiện tại — nếu đã tạo notification khi assign → inject `IRealtimeNotificationService` + gọi tương tự.
-  - Nếu chưa tạo notification → thêm: khi `AssigneeId` thay đổi, tạo Notification entity + broadcast.
+## BỐI CẢNH
+Sprint 21 đã thêm realtime notification push (IRealtimeNotificationService → SignalR) + prefs enforcement cho **mention** và **assignment**. Nhưng 3 gap vẫn còn:
+1. **Sprint start không gửi notification/email gì cả** — `StartSprintCommandHandler` im lặng dù `EmailOnSprintStarted` pref + `SendSprintStartedEmailAsync` đã tồn tại.
+2. **Outbox pattern được scaffold nhưng không ai dùng** — `OutboxRepository`, `OutboxDispatcher`, `OutboxProcessor` tồn tại nhưng không handler nào ghi `OutboxMessage`.
+3. **Notification không có cleanup** — notifications tích lũy mãi, không có cơ chế xóa cũ.
 
 ---
 
-## PHẦN 2 — Notification Preferences Enforcement (B21.2)
+## B22.1 — Sprint Start Notification
 
-### 2.1 Thêm INotificationPreferencesRepository
-- **Interface:** `src/DevFlow.Application/Common/Interfaces/INotificationPreferencesRepository.cs`
-  ```csharp
-  public interface INotificationPreferencesRepository
-  {
-      Task<NotificationPreferences?> GetByUserIdAsync(Guid userId, CancellationToken ct);
-  }
-  ```
-- **Implement:** `src/DevFlow.Infrastructure/Persistence/Repositories/NotificationPreferencesRepository.cs`
-  ```csharp
-  public sealed class NotificationPreferencesRepository(AppDbContext db) : INotificationPreferencesRepository
-  {
-      public Task<NotificationPreferences?> GetByUserIdAsync(Guid userId, CancellationToken ct)
-          => db.NotificationPreferences.FirstOrDefaultAsync(np => np.UserId == userId, ct);
-  }
-  ```
-- Register: `services.AddScoped<INotificationPreferencesRepository, NotificationPreferencesRepository>();` trong Infrastructure `DependencyInjection.cs`.
+### Handler cần sửa
+- **File:** `src/DevFlow.Application/Features/Sprints/Start/StartSprintCommandHandler.cs`
 
-### 2.2 Check prefs trong Comment handler
-- **File:** `src/DevFlow.Application/Features/Comments/Create/CreateCommentCommandHandler.cs`
-  - Inject `INotificationPreferencesRepository`.
-  - Trước khi gửi email (dòng 65-70), load prefs:
-    ```csharp
-    var prefs = await preferencesRepository.GetByUserIdAsync(mentionedUser.Id, cancellationToken);
-    if (prefs?.EmailOnMention == true && !string.IsNullOrWhiteSpace(mentionedUser.Email))
-    {
-        // send email (existing code)
-    }
-    ```
+### Yêu cầu
+1. Sau khi `sprint.Start(...)` + save, gửi notification tới **tất cả thành viên** project:
+   - **Realtime:** push qua `IRealtimeNotificationService.NotifyUserAsync(userId, "SprintStarted", $"Sprint {sprint.Name} has started", taskId: null, projectId, workspaceId, ct)`.
+   - **Persist:** tạo `Notification.Create(userId, "SprintStarted", $"Sprint {sprint.Name} has started", null, project.Id, project.WorkspaceId)` và lưu qua `INotificationRepository`.
+   - **Email:** nếu `prefs?.EmailOnSprintStarted != false` và user có email → gọi `IEmailService.SendSprintStartedEmailAsync(email, sprint.Name, project.Name, workspaceId, projectId, sprintId)`.
+2. **Ai là "tất cả thành viên"?** — lấy list members từ `IWorkspaceMemberRepository` hoặc repository tương đương (xem `ListWorkspaceMembersQueryHandler` để biết cách). Bỏ qua actor (người start sprint).
+3. **Prefs:** dùng `INotificationPreferencesRepository.GetByUserIdAsync(userId)` — có sẵn từ Sprint 21.
+4. Email fire-and-forget: dùng `.ContinueWith(_ => Task.CompletedTask, TaskContinuationOptions.OnlyOnCanceled)` pattern như handler khác.
 
-### 2.3 Check prefs trong Task assign handler
-- **File:** `src/DevFlow.Application/Features/Tasks/Update/UpdateTaskItemCommandHandler.cs`
-  - Tương tự: load prefs của assignee, chỉ gửi email nếu `EmailOnAssignment == true`.
+### Tests
+- **File mới/update:** `tests/DevFlow.UnitTests/Features/Sprints/StartSprintNotificationTests.cs`
+  - Test: start sprint → notification được persist cho mỗi member.
+  - Test: start sprint → email được gửi khi prefs cho phép.
+  - Test: start sprint → email bị skip khi `EmailOnSprintStarted == false`.
 
 ---
 
-## PHẦN 3 — Email Links Thật (B21.3)
+## B22.2 — Outbox Wiring (webhook + email events)
 
-### 3.1 Frontend URL config
-- **File:** `src/DevFlow.Infrastructure/Email/ResendEmailService.cs`
-  - Thêm config `FRONTEND_URL` (hoặc lấy từ `IConfiguration`).
-  - Sửa các `<a href="#">` thành URL thật:
-    - Task assigned: `${frontendUrl}/workspaces/{workspaceId}/projects/{projectId}/board?selectedTaskId={taskId}`
-    - Mention: tương tự
-    - Sprint started: `${frontendUrl}/workspaces/{workspaceId}/projects/{projectId}/sprints/{sprintId}`
-  - Cần truyền workspaceId/projectId/sprintId vào các method `IEmailService` (hiện tại chỉ có `toEmail, taskTitle, projectName, assignedBy`). **Thêm tham số**:
-    ```csharp
-    Task SendTaskAssignedEmailAsync(string toEmail, string taskTitle, string projectName, string assignedBy, string workspaceId, string projectId, string taskId);
-    ```
-  - Update call sites trong `CreateCommentCommandHandler` và `UpdateTaskItemCommandHandler` để truyền IDs.
+### Bối cảnh
+`OutboxProcessor`/`OutboxDispatcher`/`OutboxRepository` đã có nhưng **chưa được dùng**. Xem `src/DevFlow.Infrastructure/Outbox/` để hiểu cơ chế. OutboxMessage entity: `src/DevFlow.Domain/Entities/OutboxMessage.cs`.
+
+### Yêu cầu
+1. Chọn **1-2 event quan trọng** để ghi OutboxMessage (đừng over-engineer toàn bộ):
+   - **Webhook delivery:** khi có webhook event được trigger (xem Webhooks feature — `src/DevFlow.Api/Controllers/WebhooksController.cs` và feature hiện tại), ghi OutboxMessage để processor gửi webhook một cách reliable.
+   - **Hoặc Email:** ghi OutboxMessage cho email notifications thay vì fire-and-forget.
+2. Pattern: trong handler, tạo `new OutboxMessage(...)` → `IOutboxRepository.AddAsync(...)` → save cùng transaction.
+3. **QUAN TRỌNG:** kiểm tra xem `OutboxDispatcher`/`OutboxProcessor` có được DI-register và chạy background không. Nếu processor chưa được đăng ký chạy định kỳ, thêm nó (scheduled/background service) — hoặc document rõ nếu quá phức tạp.
+4. Nếu scope quá lớn, ưu tiên: **chỉ webhook delivery**.
+
+### Tests
+- Test: webhook trigger → OutboxMessage được tạo.
+- Test: processor xử lý OutboxMessage đúng.
+
+---
+
+## B22.3 — Notification Cleanup
+
+### Yêu cầu
+1. **Backend:** thêm endpoint `DELETE /api/v1/notifications` (hoặc `POST /api/v1/notifications/cleanup`) để xóa tất cả notifications đã đọc hoặc cũ hơn N ngày (mặc định 90).
+2. **Repository:** thêm method vào `INotificationRepository` (vd `DeleteOlderThanAsync(Guid userId, DateTimeOffset cutoff)` hoặc `DeleteReadAsync`).
+3. **Cân nhắc:** nếu có background job infrastructure sẵn, thêm cleanup định kỳ. Nếu không, chỉ cần endpoint cho frontend gọi.
+
+### Tests
+- Test: cleanup xóa notification đã đọc/cũ.
+- Test: notification mới/chưa đọc giữ nguyên.
 
 ---
 
 ## 🧪 QUALITY GATES (bắt buộc)
-1. `dotnet build` 0 warning 0 error.
-2. `dotnet test` (chạy từ gốc) phải xanh.
-3. **Thêm unit test** cho: notification broadcast gọi đúng user, prefs check skip email khi disabled.
-4. Commit: `feat: realtime notification push + prefs enforcement + email links (Sprint 21)`
-5. Tạo PR:
+1. Backend: `dotnet build` 0 warning, `dotnet test` xanh (thêm ít nhất 3 tests mới).
+2. Commit: `feat: sprint-start notifications + outbox wiring + notification cleanup (B22.1-3)`
+3. Tạo PR:
    ```bash
    git checkout main && git pull
-   git checkout -b feat/backend-sprint21-notifications
+   git checkout -b feat/backend-sprint22-notifications
    git add .
-   git commit -m "feat: realtime notification push + prefs enforcement + email links (B21.1-3)"
-   git push origin feat/backend-sprint21-notifications
-   gh pr create --base main --head feat/backend-sprint21-notifications --title "feat: Sprint 21 realtime notification delivery + email enhancements (Agent B)" --body "SignalR push on @mention/assign, notification prefs check, real email links via FRONTEND_URL config."
+   git commit -m "feat: sprint-start notifications + outbox wiring + notification cleanup (B22.1-3)"
+   git push origin feat/backend-sprint22-notifications
+   gh pr create --base main --head feat/backend-sprint22-notifications --title "feat: Sprint 22 sprint-start notifications, outbox wiring, cleanup (Agent B)" --body "B22.1: sprint-start notification push + email. B22.2: outbox wiring for webhook/email. B22.3: notification cleanup endpoint."
    ```
-6. **KHÔNG đụng** file: `frontend/**`, `src/DevFlow.Api/Controllers/MyTasksController.cs`, `src/DevFlow.Application/Features/Tasks/MyTasks/**`, `src/DevFlow.Application/Features/Export/**`, `src/DevFlow.Api/Controllers/ExportController.cs`.
+4. **KHÔNG đụng** file Agent A (CreateTaskItemCommandHandler, UpdateTaskItemCommandHandler, DeleteTaskItemCommandHandler, subtask handlers, CreateCommentCommandHandler), Agent C (frontend), Agent D (Search, Reporting).
 
-> ⚠️ Nếu move interface `INotificationBroadcaster` từ Api→Application, update `Program.cs` import. Đảm bảo `NotificationBroadcaster` (Api layer) implement interface từ Application sau khi move.
-
-> ⚠️ `IRealtimeNotificationService` ở Application layer, `SignalRNotificationService` ở Infrastructure layer. Cần `using Microsoft.AspNetCore.SignalR` trong Infrastructure — thêm package reference `Microsoft.AspNetCore.SignalR.Core` vào `DevFlow.Infrastructure.csproj` nếu thiếu.
-
-> Nếu gặp rate limit (429): commit phần đã xong ngay, đừng bỏ lửng file.
+> ⚠️ Nếu gặp rate limit (429): commit phần đã xong ngay, đừng bỏ lửng file.

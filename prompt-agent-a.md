@@ -1,138 +1,64 @@
-# 🚀 PROMPT CHO AGENT A — Sprint 21 (My Tasks Page — Cross-Project Assigned Tasks)
+# 🚀 PROMPT CHO AGENT A — Sprint 22 (Activity Log Coverage + Team Lead)
 
 **Bạn là Agent A (team lead)** trong đội DevFlow (ASP.NET Core 8 + React 19).
-Branch prefix: `feat/sprint21-my-tasks`.
-**QUAN TRỌNG:** KHÔNG đụng file Agent B (NotificationService, NotificationBroadcaster, NotificationPreferences, EmailService, CommentHandlers, TaskHandlers) và Agent C (DashboardPage, ReportsPage, chart components, ExportController, ExportHandlers).
+Branch prefix: `feat/sprint22-activity-log`.
+**QUAN TRỌNG:** KHÔNG đụng file Agent B (SprintStart/Outbox/NotificationCleanup), Agent C (EpicProgress/DependencyGraph/NotificationUI), Agent D (Search/TeamReport).
 
 ---
 
-## PHẦN 1 — Backend: My Tasks API (A21.1)
+## PHẦN 1 — Backend: Activity Log Coverage (A22.1)
 
-### 1.1 Query + Handler
-- **File mới:** `src/DevFlow.Application/Features/Tasks/MyTasks/GetMyTasksQuery.cs`
-  ```csharp
-  [RequireWorkspaceRole(WorkspaceRole.Member)]
-  public sealed record GetMyTasksQuery(Guid WorkspaceId, Guid UserId) : IRequest<IReadOnlyList<MyTaskItem>>, IWorkspaceRequest;
+### 1.1 Hiểu pattern hoạt động log hiện tại
+- **Tham khảo:** `src/DevFlow.Application/Features/Tasks/Dependencies/DependencyHandlers.cs` — xem cách nó tạo `ActivityLog`.
+- **Entity:** `src/DevFlow.Domain/Entities/ActivityLog.cs` — xem constructor và các property.
+- **Repository:** `src/DevFlow.Application/Common/Interfaces/IActivityLogRepository.cs` (hoặc tương đương) — xem method `AddAsync`.
+- **Lưu ý:** tìm cách handler hiện tại lưu ActivityLog. Nếu dùng `IUnitOfWork.SaveChangesAsync`, thêm vào cùng transaction.
 
-  public sealed record MyTaskItem(
-      Guid Id, Guid ProjectId, string ProjectName, string ProjectKey,
-      string Title, string Status, string Priority,
-      DateTimeOffset? DueDateUtc, DateTimeOffset? CompletedAtUtc,
-      Guid? SprintId, string? SprintName);
-  ```
-- **File mới:** `src/DevFlow.Application/Features/Tasks/MyTasks/GetMyTasksQueryHandler.cs`
-  - Inject `IUserContext`, `IProjectRepository`, `ITaskItemRepository`, `ISprintRepository`.
-  - Load tất cả projects trong workspace → foreach project lấy tasks với `AssigneeId == userId`.
-  - Nếu task có `SprintId`, load sprint name từ `ISprintRepository`.
-  - Gom tất cả vào list, sort theo `CreatedAtUtc` DESC (hoặc DueDateUtc ASC).
-  - Trả về `IReadOnlyList<MyTaskItem>`.
+### 1.2 Handler cần thêm ActivityLog
+Thêm `ActivityLog` vào các handler sau (theo pattern DependencyHandlers):
 
-### 1.2 Controller endpoint
-- **File mới:** `src/DevFlow.Api/Controllers/MyTasksController.cs`
-  ```csharp
-  [Route("api/v1/workspaces/{workspaceId:guid}/my-tasks")]
-  [ApiController]
-  [Authorize]
-  public sealed class MyTasksController(ISender sender) : ControllerBase
-  {
-      [HttpGet]
-      [ProducesResponseType(typeof(IReadOnlyList<MyTaskItem>), StatusCodes.Status200OK)]
-      public async Task<IActionResult> GetMyTasks(Guid workspaceId)
-      {
-          var userId = User.GetUserId(); // dùng extension method có sẵn
-          var result = await sender.Send(new GetMyTasksQuery(workspaceId, userId));
-          return Ok(result);
-      }
-  }
-  ```
-  - Route: `GET /api/v1/workspaces/{workspaceId}/my-tasks`
-  - Dùng `User.GetUserId()` extension method từ `DevFlow.Api.Extensions` (kiểm tra xem extension có sẵn không — nếu không, lấy từ claim `ClaimTypes.NameIdentifier`).
+1. **`src/DevFlow.Application/Features/Tasks/Create/CreateTaskItemCommandHandler.cs`**
+   - Event: task được tạo. Message: `"created task \"{title}\""`.
 
-### 1.3 Tests
-- **File mới:** `tests/DevFlow.UnitTests/Features/Tasks/MyTasksHandlerTests.cs`
-  - Test: trả về tasks assignee đúng user.
-  - Test: bỏ qua tasks của user khác.
-  - Test: empty list khi không có task nào.
-  - Dùng NSubstitute mock theo pattern `ListTaskItemsQueryHandlerTests.cs` (thường dùng InMemory hoặc mock repository).
+2. **`src/DevFlow.Application/Features/Tasks/Update/UpdateTaskItemCommandHandler.cs`**
+   - Event: task được cập nhật (chỉ log khi có thay đổi đáng kể: status, assignee, title, priority). Message: `"updated task \"{title}\""` (hoặc chi tiết hơn: `"moved task to {status}"`).
 
----
+3. **`src/DevFlow.Application/Features/Tasks/Delete/DeleteTaskItemCommandHandler.cs`**
+   - Event: task bị xóa. Message: `"deleted task \"{title}\""`.
 
-## PHẦN 2 — Frontend: My Tasks Page (A21.2)
+4. **`src/DevFlow.Application/Features/Tasks/Subtasks/*`** (các handler subtask)
+   - Event: subtask được tạo/hoàn thành. Message: `"added subtask \"{title}\""` / `"completed subtask \"{title}\""`.
 
-### 2.1 API helper
-- **File:** `frontend/src/lib/api.ts` — thêm hàm:
-  ```typescript
-  export interface MyTaskItem {
-    id: string;
-    projectId: string;
-    projectName: string;
-    projectKey: string;
-    title: string;
-    status: string;
-    priority: string;
-    dueDateUtc: string | null;
-    completedAtUtc: string | null;
-    sprintId: string | null;
-    sprintName: string | null;
-  }
+5. **`src/DevFlow.Application/Features/Comments/Create/CreateCommentCommandHandler.cs`**
+   - Event: comment được thêm. Message: `"commented on \"{taskTitle}\""`.
 
-  export function getMyTasks(workspaceId: string): Promise<MyTaskItem[]> {
-    return api<MyTaskItem[]>(`/workspaces/${workspaceId}/my-tasks`);
-  }
-  ```
-  CHỈ append vào cuối file, không sửa hàm có sẵn.
+### 1.3 Chuẩn chung
+- **Entity reference:** cần có `WorkspaceId`, `ProjectId`, `TaskItemId` (nếu có), `ActorUserId` (= `IUserContext.UserId`), `Message`.
+- Inject `IActivityLogRepository` (hoặc repository phù hợp) vào constructor handler.
+- Gọi `AddAsync` rồi để `IUnitOfWork.SaveChangesAsync` persist (KHÔNG gọi SaveChanges riêng).
+- **KHÔNG thay đổi hành vi business logic hiện tại** — chỉ thêm logging.
 
-### 2.2 My Tasks Page
-- **File mới:** `frontend/src/pages/MyTasksPage.tsx`
-  - Dùng layout `AppShell` như các page khác.
-  - Gọi `getMyTasks(workspaceId)` với `useApi`.
-  - Hiển thị danh sách task dạng table hoặc card list:
-    - Mỗi task: `[projectKey] Title` — Status badge, Priority dot, Due date, Sprint name.
-    - Click → navigate tới `BoardPage` với task filter (dùng `?selectedTaskId=` param).
-    - Empty state: "No tasks assigned to you" với i18n key.
-  - Skeleton loading, error state (pattern từ `SprintPlanningPage.tsx`).
-
-### 2.3 Navigation
-- **File:** `frontend/src/components/AppShell.tsx` — thêm nav item "My Tasks" (sau "Dashboard" / "Board"):
-  - Icon: `UserCheck` hoặc `ListTodo` từ lucide-react.
-  - Route: `/workspaces/:workspaceId/projects/my-tasks` (hoặc `/workspaces/:workspaceId/my-tasks`).
-  - i18n keys: `nav.myTasks` (en: "My Tasks", vi: "Việc của tôi").
-  - Import icon + thêm vào navItems array.
-
-### 2.4 Router
-- **File:** `frontend/src/App.tsx` — thêm route:
-  ```tsx
-  <Route path="workspaces/:workspaceId/my-tasks" element={<MyTasksPage />} />
-  ```
-  (hoặc trong nested route structure phù hợp).
-
-### 2.5 i18n
-- **File:** `frontend/src/i18n/en.json` + `frontend/src/i18n/vi.json`
-  - `nav.myTasks`: "My Tasks" / "Việc của tôi"
-  - `myTasks.title`: "My Tasks" / "Việc của tôi"
-  - `myTasks.empty`: "No tasks assigned to you." / "Bạn chưa được giao task nào."
-  - `myTasks.loading`: "Loading your tasks…" / "Đang tải việc của bạn…"
-  - `myTasks.error`: "Could not load your tasks." / "Không thể tải danh sách việc."
-  - `myTasks.dueDate`: "Due: {{date}}"
-  - `myTasks.sprint`: "Sprint: {{name}}"
+### 1.4 Tests
+- **File mới:** `tests/DevFlow.UnitTests/Features/Tasks/ActivityLogTests.cs` (hoặc thêm vào test hiện có).
+  - Test: task create → ActivityLog được thêm.
+  - Test: task delete → ActivityLog được thêm.
+  - Test: comment create → ActivityLog được thêm.
+  - Dùng NSubstitute mock `IActivityLogRepository`.
 
 ---
 
 ## 🧪 QUALITY GATES (bắt buộc)
-1. Backend: `dotnet build` 0 warning, `dotnet test` xanh (thêm ít nhất 3 tests cho handler).
-2. Frontend: `npm run build` xanh.
-3. Commit: `feat: cross-project My Tasks page (A21.1-2)`
-4. Tạo PR:
+1. Backend: `dotnet build` 0 warning, `dotnet test` xanh (thêm ít nhất 3 tests).
+2. Commit: `feat: activity log coverage for tasks/comments/subtasks (A22.1)`
+3. Tạo PR:
    ```bash
    git checkout main && git pull
-   git checkout -b feat/sprint21-my-tasks
+   git checkout -b feat/sprint22-activity-log
    git add .
-   git commit -m "feat: cross-project My Tasks page (A21.1-2)"
-   git push origin feat/sprint21-my-tasks
-   gh pr create --base main --head feat/sprint21-my-tasks --title "feat: Sprint 21 My Tasks cross-project view (Agent A)" --body "My Tasks page: GET /workspaces/{wsId}/my-tasks endpoint + frontend page showing assigned tasks across all projects."
+   git commit -m "feat: activity log coverage for tasks/comments/subtasks (A22.1)"
+   git push origin feat/sprint22-activity-log
+   gh pr create --base main --head feat/sprint22-activity-log --title "feat: Sprint 22 Activity Log coverage (Agent A)" --body "Adds ActivityLog entries to task create/update/delete, subtask, and comment handlers."
    ```
-5. **KHÔNG đụng** file Agent B (NotificationService, NotificationBroadcaster, NotificationPreferences, EmailService, CommentHandlers, TaskHandlers) và Agent C (DashboardPage, ReportsPage, chart components, ExportController, ExportHandlers, api.ts type helpers cho chart).
+4. **KHÔNG đụng** file Agent B (StartSprintCommandHandler, Outbox, NotificationService), Agent C (EpicPage, dependency graph components, NotificationsPanel), Agent D (Search, TeamReport).
 
-> ⚠️ Nếu `User.GetUserId()` extension không tồn tại — tự tạo helper method trong `MyTasksController` lấy từ `ClaimTypes.NameIdentifier`.
-
-> Nếu gặp rate limit (429): commit phần đã xong ngay, đừng bỏ lửng file.
+> ⚠️ Nếu gặp rate limit (429): commit phần đã xong ngay, đừng bỏ lửng file.

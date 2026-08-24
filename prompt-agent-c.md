@@ -1,105 +1,86 @@
-# 🚀 PROMPT CHO AGENT C — Sprint 21 (Dashboard Charts + Export Enhancement)
+# 🚀 PROMPT CHO AGENT C — Sprint 22 (Epic Progress UI + Dependency Graph Viz + Notification UX)
 
-**Bạn là Agent C** trong đội DevFlow (React 19 + TypeScript + Vite + Tailwind v4).
-Branch prefix: `feat/frontend-sprint21-dashboard`.
-**QUAN TRỌNG:** Chỉ sửa file trong `frontend/src/`. KHÔNG đụng backend, KHÔNG đụng file Agent A & B.
-
----
-
-## Context — Dashboard Hiện Tại
-
-Verified in code: `DashboardPage.tsx` hiện có:
-- `StatsCards` (total tasks, in progress, completed, overdue)
-- `CumulativeFlow` (stacked bar snapshot)
-- `TaskDistribution` (pie chart)
-- `RecentActivity` list
-- **KHÔNG có** cycle/lead time chart (chỉ có ở `ReportsPage` dưới dạng `CycleLeadTimeChart`)
-
-Export hiện tại: `ExportProjectTasksQuery` — chỉ export tasks của 1 project. Không có cross-project export.
+**Bạn là Agent C (frontend specialist)** trong đội DevFlow (React 19 + TypeScript + Vite + Tailwind v4 + i18next).
+Branch prefix: `feat/frontend-sprint22-ui`.
+**QUAN TRỌNG:** KHÔNG đụng file Agent A (backend task/comment handlers), Agent B (backend notifications/outbox), Agent D (Search, TeamReport). Chỉ làm frontend.
 
 ---
 
-## PHẦN 1 — Dashboard Cycle/Lead Time Trend (F21.1)
-
-### 1.1 Tạo component DashboardCycleLeadChart
-- **File mới:** `frontend/src/components/dashboard/DashboardCycleLeadChart.tsx`
-  - Không cần SVG chart phức tạp — hiển thị **4 stat tiles** lớn (P50/P90 cycle/lead time) nhưng có **mini sparkline** (xu hướng).
-  - Gọi `GET /api/v1/workspaces/{wsId}/projects/{projId}/reporting/cycle-lead-time` (đã có sẵn từ Sprint 20, Agent B).
-  - Dùng `useApi` pattern:
-    ```typescript
-    const { data } = useApi<CycleLeadTimeResponse>(...);
-    ```
-  - Nếu `data` null/error → render placeholder "Analytics data not available yet" (dùng i18n key `dashboard.analyticsUnavailable` đã có).
-  - Layout: grid 2x2 với 4 tiles:
-    ```
-    ┌──────────────┬──────────────┐
-    │ Cycle P50    │ Cycle P90    │
-    │ 2.4d         │ 5.1d         │
-    ├──────────────┼──────────────┤
-    │ Lead P50     │ Lead P90     │
-    │ 4.2d         │ 8.7d         │
-    └──────────────┴──────────────┘
-    ```
-  - Mỗi tile: rounded border, label text-muted-foreground, value font-mono text-lg font-semibold.
-  - Reuse CSS variables pattern từ `DashboardPage.tsx` hiện tại.
-
-### 1.2 Wire vào DashboardPage
-- **File:** `frontend/src/pages/DashboardPage.tsx`
-  - Thêm `DashboardCycleLeadChart` bên dưới `CumulativeFlow` (hoặc cạnh `TaskDistribution`).
-  - Import component + render:
-    ```tsx
-    <DashboardCycleLeadChart workspaceId={workspaceId} projectId={projectId} />
-    ```
-  - Cần `workspaceId` và `projectId` — kiểm tra DashboardPage xem đã có 2 biến này chưa (thường có từ `useParams` hoặc state). Nếu DashboardPage là workspace-level (không có projectId), dùng project đầu tiên từ `dashboard.data` hoặc cho phép user chọn project.
-
-### 1.3 i18n
-- **File:** `frontend/src/i18n/en.json` + `frontend/src/i18n/vi.json`
-  - Key `dashboard.cycleTime` và `dashboard.leadTime` đã có từ Sprint 20.
-  - Thêm (nếu thiếu): `dashboard.cycleTimeLabel`, `dashboard.leadTimeLabel`.
+## BỐI CẢNH
+Frontend đã có các page hoàn chỉnh (Board, Dashboard, Epics, Reports, Notifications, Templates...). Các gap cần xử lý trong Sprint 22:
+1. **EpicsPage** chỉ hiển thị danh sách epic — thiếu progress bar, completion %, timeline visualization.
+2. **Dependency graph** (GraphModal) hiển thị dạng danh sách — không phải DAG visualization.
+3. **NotificationsPanel/NotificationsPage** thiếu "mark all read" và cleanup/archive.
 
 ---
 
-## PHẦN 2 — Export Enhancement (F21.2) — Optional, nếu đơn giản
+## C22.1 — Epic Progress Visualization
 
-### 2.1 Export button cải tiến
-- **File:** `frontend/src/pages/ReportsPage.tsx`
-  - Export hiện tại: `exportTasks(workspaceId, projectId, format)` → CSV/JSON.
-  - Thêm **filter scope** cho export: "All tasks" vs "Current view" (nếu có filter active).
-  - Hoặc đơn giản: thêm export button cho **velocity chart** (export chart data as CSV).
+### File chính
+- `frontend/src/pages/EpicsPage.tsx`
+- `frontend/src/components/epic/` (xem có component nào sẵn không)
+- Backend epic endpoint: kiểm tra `EpicsController` trả về gì (có `taskCount`/`completedCount`/`progress` không).
 
-### 2.2 Export CSV từ chart data
-- **File:** `frontend/src/components/reporting/CycleLeadTimeChart.tsx` (hoặc component mới `ExportChartButton.tsx`)
-  - Thêm nút export CSV bên cạnh chart title.
-  - Khi click: generate CSV từ `data.tasks` (taskId, title, cycleTimeDays, leadTimeDays) + trigger download.
-  - Dùng `Blob` + `URL.createObjectURL` pattern (giống ReportsPage.tsx `handleExport`).
+### Yêu cầu
+1. Mỗi epic trong danh sách hiển thị:
+   - **Progress bar** (completion % = done tasks / total tasks).
+   - **Completion badge** (vd "3/8 tasks" hoặc "38%").
+   - **Deadline indicator** nếu epic có due date (sắp hết hạn → warning color).
+2. Nếu backend **không trả về** task counts, xem `EpicResponse` — nếu thiếu, thêm field (backend change cho phép vì Agent A không đụng epic). Ưu tiên dùng field sẵn có trước, chỉ thêm backend nếu thực sự cần.
+3. Styling theo design system hiện tại (xem `BoardPage.tsx` hoặc `DashboardPage.tsx` cho pattern badge/progress).
+
+### i18n
+- en: `epic.progress` ("Progress"), `epic.tasksDone` ("{{done}}/{{total}} tasks"), `epic.dueSoon` ("Due soon").
+- vi: `epic.progress` ("Tiến độ"), `epic.tasksDone` ("{{done}}/{{total}} tasks"), `epic.dueSoon` ("Sắp hết hạn").
 
 ---
 
-## PHẦN 3 — Dashboard select project (F21.3) — Nếu DashboardPage workspace-level
+## C22.2 — Dependency Graph DAG Visualization
 
-### 3.1 Nếu DashboardPage hiện tại không có project selector
-- **File:** `frontend/src/pages/DashboardPage.tsx`
-  - DashboardPage hiện tại có thể là workspace-level (không biết projectId).
-  - Thêm dropdown chọn project (dùng `useApi` lấy `projects` từ workspace).
-  - Khi chọn project, pass projectId xuống `DashboardCycleLeadChart` và `CumulativeFlow` (nếu cần project-scoped data).
-  - Mặc định chọn project đầu tiên.
+### File chính
+- `frontend/src/components/board/GraphModal.tsx` (hiện tại hiển thị list)
+
+### Yêu cầu
+1. Hiển thị dependency dạng **DAG (directed acyclic graph)** thay vì list thuần:
+   - Node = task (title + status color).
+   - Edge = blocker → blocked (mũi tên).
+   - **Lưu ý:** backend `GET .../dependencies/graph` trả `ProjectDependencyGraphResponse` — kiểm tra shape. Nếu nó trả đủ nodes+edges, dùng ngay.
+2. Nếu không có thư viện graph sẵn (react-flow/svg), **dùng SVG tự vẽ** đơn giản (không thêm dependency nặng):
+   - Layout theo level (BFS từ root) → vẽ node hình chữ nhật + mũi tên SVG.
+   - Scrollable container nếu graph lớn.
+   - Click node → mở task detail.
+3. Giữ nguyên chức năng hiện có (tạo/remove dependency).
+
+---
+
+## C22.3 — Notification UX: Mark All Read + Cleanup
+
+### File chính
+- `frontend/src/components/notifications/NotificationsPanel.tsx`
+- `frontend/src/pages/NotificationsPage.tsx`
+- `frontend/src/hooks/useNotifications.ts` (xem có sẵn mark-read logic không)
+- Backend: `NotificationsController` — kiểm tra endpoint mark-read đã có chưa.
+
+### Yêu cầu
+1. **Mark all read:** nút "Mark all read" trong NotificationsPanel + NotificationsPage. Gọi endpoint `POST .../notifications/read-all` (tạo backend nếu chưa có — Agent B KHÔNG làm phần này).
+2. **Clear/cleanup:** nút "Clear read" hoặc "Clear all" gọi cleanup endpoint (`POST /notifications/cleanup` — Agent B sẽ tạo). Nếu backend chưa có, gọi và bắt lỗi gracefully.
+3. **Empty state:** khi đã đọc hết → hiển thị "All caught up!" state (icon + text).
+4. **Filter tabs** (nếu chưa có): All / Unread / Mentions / Assignments.
 
 ---
 
 ## 🧪 QUALITY GATES (bắt buộc)
-1. `npm run build` trong `frontend/` phải xanh (TypeScript strict).
-2. Commit: `feat: dashboard cycle/lead time chart + export enhancement (Sprint 21)`
+1. Frontend: `npm run build` xanh.
+2. Commit: `feat: epic progress + dependency graph viz + notification UX (C22.1-3)`
 3. Tạo PR:
    ```bash
    git checkout main && git pull
-   git checkout -b feat/frontend-sprint21-dashboard
+   git checkout -b feat/frontend-sprint22-ui
    git add .
-   git commit -m "feat: dashboard cycle/lead time chart + export enhancement (F21.1-2)"
-   git push origin feat/frontend-sprint21-dashboard
-   gh pr create --base main --head feat/frontend-sprint21-dashboard --title "feat: Sprint 21 dashboard cycle/lead time + export (Agent C)" --body "Dashboard cycle/lead time P50/P90 tiles, CSV export enhancement for chart data."
+   git commit -m "feat: epic progress + dependency graph viz + notification UX (C22.1-3)"
+   git push origin feat/frontend-sprint22-ui
+   gh pr create --base main --head feat/frontend-sprint22-ui --title "feat: Sprint 22 epic progress, dependency graph, notification UX (Agent C)" --body "C22.1: epic progress bar. C22.2: DAG dependency visualization. C22.3: mark-all-read + cleanup UI."
    ```
-4. **KHÔNG đụng** file: `src/**`, `frontend/src/pages/MyTasksPage.tsx`, `frontend/src/components/AppShell.tsx` (nếu Agent A đang sửa navigation), `frontend/src/lib/api.ts` (nếu có conflict, chỉ append hàm mới).
+4. **KHÔNG đụng** file Agent A (backend task/comment handlers), Agent B (backend notifications/outbox), Agent D (Search, TeamReport).
 
-> ⚠️ DashboardPage có thể không có `projectId` — nếu workspace-level, cần thêm project selector. Xem `useParams()` để biết route params.
-
-> Nếu gặp rate limit (429): commit phần đã xong ngay, đừng bỏ lửng file.
+> ⚠️ Nếu backend endpoint cho read-all/cleanup chưa tồn tại, hãy tạo nó trong cùng PR (bạn có quyền làm backend cho UI feature của mình) — nhưng KHÔNG đụng code Agent B.
