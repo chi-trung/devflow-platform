@@ -8,8 +8,30 @@ on:
 
 jobs:
   build-and-test:
-    name: Build & Test
+    name: Backend Build & Test
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: devflow
+          POSTGRES_PASSWORD: devflow_test
+          POSTGRES_DB: devflow_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U devflow"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: devflow_test
+      POSTGRES_USER: devflow
+      POSTGRES_PASSWORD: devflow_test
 
     steps:
       - name: Checkout
@@ -26,11 +48,16 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --verbosity minimal
 
-      - name: Test
-        run: dotnet test --no-build --verbosity normal
+      - name: Unit Tests
+        run: dotnet test --no-build --verbosity normal --filter "DevFlow.UnitTests"
+
+      - name: Integration Tests (real Postgres)
+        env:
+          DATABASE_URL: Host=localhost;Port=5432;Database=devflow_test;Username=devflow;Password=devflow_test
+        run: dotnet test --no-build --verbosity normal --filter "DevFlow.IntegrationTests"
 
   frontend:
-    name: Frontend Build
+    name: Frontend Build & Test
     runs-on: ubuntu-latest
 
     steps:
@@ -48,6 +75,14 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Type check
+        working-directory: frontend
+        run: npx tsc --noEmit
+
       - name: Build
         working-directory: frontend
         run: npm run build
+
+      - name: Tests
+        working-directory: frontend
+        run: npm run test
