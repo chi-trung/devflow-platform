@@ -104,6 +104,8 @@
     "childTaskCreated": "Đã tạo task con",
     "commentsLoading": "Đang tải bình luận…",
     "addChildTaskAria": "Thêm một task con",
+    "adminOnly": "Chỉ quản trị viên",
+    "adminOnlyHint": "Hành động này yêu cầu quyền Quản trị viên.",
     "bulkMoveToStatus": "Chuyển hàng loạt sang trạng thái",
     "bulkAssignMember": "Gán thành viên hàng loạt",
     "deleteTasksConfirm_one": "Xóa {{count}} task?",

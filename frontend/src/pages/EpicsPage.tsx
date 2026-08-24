@@ -8,12 +8,15 @@ import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EpicRoadmap } from "../components/epic/EpicRoadmap";
 import {
+  api,
   createEpic,
   deleteEpic,
   getEpics,
   updateEpic,
 } from "../lib/api";
-import type { EpicResponse, CreateEpicRequest, UpdateEpicRequest } from "../types/api";
+import { useApi } from "../hooks/useApi";
+import { useAuth } from "../auth/AuthContext";
+import type { EpicResponse, CreateEpicRequest, UpdateEpicRequest, WorkspaceMemberResponse } from "../types/api";
 
 type ViewMode = "list" | "roadmap";
 
@@ -28,6 +31,15 @@ export function EpicsPage() {
   const [pendingDelete, setPendingDelete] = useState<EpicResponse | null>(null);
   const [saving, setSaving] = useState(false);
   const [view, setView] = useState<ViewMode>("list");
+
+  const { currentUser } = useAuth();
+  const { data: members = [] } = useApi<WorkspaceMemberResponse[]>(
+    () => api(`/workspaces/${workspaceId}/members`),
+    [workspaceId],
+  );
+
+  const myRole = (members ?? []).find((m) => m.userId === currentUser?.id)?.role;
+  const isAdmin = myRole === "Owner" || myRole === "Admin";
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -379,15 +391,17 @@ export function EpicsPage() {
                       >
                         <Pencil className="size-4" aria-hidden />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setPendingDelete(epic)}
-                        className="rounded p-1.5 text-muted-foreground transition-colors duration-150 hover:text-destructive"
-                        title={t("epic.delete")}
-                        aria-label={t("epic.delete")}
-                      >
-                        <Trash2 className="size-4" aria-hidden />
-                      </button>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => setPendingDelete(epic)}
+                          className="rounded p-1.5 text-muted-foreground transition-colors duration-150 hover:text-destructive"
+                          title={t("epic.delete")}
+                          aria-label={t("epic.delete")}
+                        >
+                          <Trash2 className="size-4" aria-hidden />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </li>

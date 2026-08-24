@@ -17,6 +17,7 @@ interface ExportImportModalProps {
   workspaceId: string;
   projectId: string;
   onClose: () => void;
+  isAdmin?: boolean;
 }
 
 type Tab = "export" | "import";
@@ -27,6 +28,7 @@ export function ExportImportModal({
   workspaceId,
   projectId,
   onClose,
+  isAdmin = false,
 }: ExportImportModalProps) {
   const { t } = useTranslation();
   const { push } = useToast();
@@ -136,30 +138,36 @@ export function ExportImportModal({
         </div>
 
         {/* Tabs */}
-        <div className="mb-5 flex gap-1 rounded-lg bg-card p-1">
-          <button
-            onClick={() => setTab("export")}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-              tab === "export"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Download className="mr-1.5 inline size-4" />
-            {t("importExport.export")}
-          </button>
-          <button
-            onClick={() => setTab("import")}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-              tab === "import"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Upload className="mr-1.5 inline size-4" />
-            {t("importExport.import")}
-          </button>
-        </div>
+        {isAdmin ? (
+          <div className="mb-5 flex gap-1 rounded-lg bg-card p-1">
+            <button
+              onClick={() => setTab("export")}
+              className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                tab === "export"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Download className="mr-1.5 inline size-4" />
+              {t("importExport.export")}
+            </button>
+            <button
+              onClick={() => setTab("import")}
+              className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                tab === "import"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Upload className="mr-1.5 inline size-4" />
+              {t("importExport.import")}
+            </button>
+          </div>
+        ) : (
+          <div className="mb-5 rounded-lg border border-dashed border-border bg-card/50 p-4 text-center text-sm text-muted-foreground">
+            {t("board.adminOnlyHint")}
+          </div>
+        )}
 
         {/* Export tab */}
         {tab === "export" && (

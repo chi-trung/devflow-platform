@@ -11,6 +11,7 @@ interface ImportTasksModalProps {
   projectId: string;
   onClose: () => void;
   onImported: () => void;
+  isAdmin?: boolean;
 }
 
 export function ImportTasksModal({
@@ -18,6 +19,7 @@ export function ImportTasksModal({
   projectId,
   onClose,
   onImported,
+  isAdmin = false,
 }: ImportTasksModalProps) {
   const { t } = useTranslation();
   const [file, setFile] = useState<File | null>(null);
@@ -91,7 +93,11 @@ export function ImportTasksModal({
           </button>
         </div>
 
-        {result ? (
+        {!isAdmin ? (
+          <div className="rounded-lg border border-dashed border-border bg-card/50 p-4 text-center text-sm text-muted-foreground">
+            {t("board.adminOnlyHint")}
+          </div>
+        ) : result ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm">
               {t("import.importedCount", { count: result.imported })}
