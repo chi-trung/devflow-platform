@@ -2,14 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Bell, CheckCheck, ExternalLink, Trash2 } from "lucide-react";
+import { Bell, CheckCheck, ExternalLink, Settings, Trash2 } from "lucide-react";
 import { useNotifications } from "../../hooks/useNotifications";
 import type { IncomingNotification } from "../../lib/realtime";
 import { deleteAllReadNotifications } from "../../lib/api";
 import { useToast } from "../ui/ToastProvider";
 import { NotificationItem } from "./NotificationItem";
+import { Dialog } from "../ui/Dialog";
 
-type NotificationFilter = "all" | "unread" | "read";
+type NotificationFilter = "all" | "unread" | "read" | "mentions";
 
 interface NotificationsPanelProps {
   workspaceId?: string | null;
@@ -48,6 +49,7 @@ export function NotificationsPanel({
   const filtered = useMemo(() => {
     if (filter === "unread") return notifications.filter((n) => !n.isRead);
     if (filter === "read") return notifications.filter((n) => n.isRead);
+    if (filter === "mentions") return notifications.filter((n) => n.type?.toLowerCase() === "mention");
     return notifications;
   }, [notifications, filter]);
 
@@ -172,11 +174,23 @@ export function NotificationsPanel({
                 <Trash2 className="size-3.5" aria-hidden />
                 {t("notification.cleanup")}
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  navigate("/settings#notifications");
+                }}
+                className="inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground transition-colors duration-150 hover:text-foreground"
+                title={t("notification.settings")}
+                aria-label={t("notification.settings")}
+              >
+                <Settings className="size-3.5" aria-hidden />
+              </button>
             </div>
           </div>
 
           <div className="flex items-center gap-1 border-b border-border px-3 py-1.5">
-            {(["all", "unread", "read"] as NotificationFilter[]).map((tab) => (
+            {(["all", "unread", "read", "mentions"] as NotificationFilter[]).map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -187,7 +201,7 @@ export function NotificationsPanel({
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {tab === "all" ? t("notificationPage.filterAll") : tab === "unread" ? t("notificationPage.filterUnread") : t("notificationPage.filterRead")}
+                {tab === "all" ? t("notificationPage.filterAll") : tab === "unread" ? t("notificationPage.filterUnread") : tab === "read" ? t("notificationPage.filterRead") : t("notificationPage.filterMentions")}
               </button>
             ))}
           </div>
@@ -217,7 +231,9 @@ export function NotificationsPanel({
                     ? t("notificationPage.emptyUnread")
                     : filter === "read"
                       ? t("notificationPage.emptyRead")
-                      : t("notification.noNotifications")}
+                      : filter === "mentions"
+                        ? t("notificationPage.emptyMentions")
+                        : t("notification.noNotifications")}
                 </p>
               </div>
             ) : (
@@ -253,15 +269,12 @@ export function NotificationsPanel({
       )}
 
       {pendingCleanup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl">
-            <h3 className="font-display font-semibold">
-              {t("notification.cleanupTitle")}
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("notification.cleanupMessage")}
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
+        <Dialog
+          open
+          onClose={() => setPendingCleanup(false)}
+          title={t("notification.cleanupTitle")}
+          footer={
+            <>
               <button
                 type="button"
                 onClick={() => setPendingCleanup(false)}
@@ -276,9 +289,11 @@ export function NotificationsPanel({
               >
                 {t("notification.cleanupConfirm")}
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <p className="text-sm text-muted-foreground">{t("notification.cleanupMessage")}</p>
+        </Dialog>
       )}
     </div>
   );

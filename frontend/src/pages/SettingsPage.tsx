@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   BellRing,
@@ -95,7 +95,16 @@ export function SettingsPage() {
     null,
   );
   const [prefsLoading, setPrefsLoading] = useState(true);
+  const location = useLocation();
   const [confirmSignOut, setConfirmSignOut] = useState(false);
+
+  // Scroll to notification prefs section when navigating from /settings#notifications
+  useEffect(() => {
+    if (location.hash === "#notifications") {
+      const el = document.getElementById("notifications");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [location.hash]);
 
   useEffect(() => {
     let cancelled = false;
@@ -299,6 +308,7 @@ export function SettingsPage() {
         <PATSection />
 
         <section
+          id="notifications"
           aria-label={t("settings.notifications")}
           className="rounded-xl border border-border bg-surface p-5"
         >

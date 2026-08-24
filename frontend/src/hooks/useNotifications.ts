@@ -19,6 +19,7 @@ const MAX_ITEMS = 20;
 
 export interface AppNotification {
   id: string;
+  type: string;
   message: string;
   actorName: string | null;
   createdAtUtc: string;
@@ -40,6 +41,7 @@ function kindFromText(text: string): AppNotification["kind"] {
 function fromApi(n: NotificationResponse): AppNotification {
   return {
     id: n.id,
+    type: n.type,
     message: n.message,
     actorName: n.actorName ?? null,
     createdAtUtc: n.createdAtUtc,
