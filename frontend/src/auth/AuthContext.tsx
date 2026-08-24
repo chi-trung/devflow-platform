@@ -13,7 +13,7 @@ import {
   refreshSession,
   tokens,
 } from "../lib/api";
-import { decodeJwt } from "../lib/jwt";
+import { decodeJwt, isTokenExpired } from "../lib/jwt";
 import type { LoginResponse, RegisterResponse } from "../types/api";
 
 type AuthStatus = "loading" | "authenticated" | "anonymous";
@@ -52,6 +52,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!tokens.refresh) {
       setStatus("anonymous");
       return;
+    }
+
+    // If the access token is still valid, render the app immediately
+    // (optimistic) while the session refresh runs in the background.
+    // The API interceptor handles any 401 via the refresh flow anyway,
+    // so there's no risk of showing stale data.
+    const access = tokens.access;
+    const isAccessValid = access && !isTokenExpired(access);
+    if (isAccessValid) {
+      setStatus("authenticated");
     }
 
     refreshSession().then((ok) => {
