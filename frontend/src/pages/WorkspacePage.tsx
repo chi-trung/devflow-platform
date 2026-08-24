@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, FolderKanban, Users, Trash2, X, RotateCcw } from "lucide-react";
-import { api, pagedItems, removeWorkspaceMember, updateMemberRole, restoreProject as restoreProjectApi } from "../lib/api";
+import { ArrowLeft, Plus, FolderKanban, Users, Trash2, X, RotateCcw, Pencil } from "lucide-react";
+import { api, pagedItems, removeWorkspaceMember, updateMemberRole, restoreProject as restoreProjectApi, updateProject } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ui/ToastProvider";
 import { AppShell } from "../components/AppShell";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Button } from "../components/ui/Button";
+import { Dialog } from "../components/ui/Dialog";
 import { Field } from "../components/ui/Field";
 import { Input } from "../components/ui/Input";
 import { Badge } from "../components/ui/Badge";
@@ -155,6 +156,11 @@ export function WorkspacePage() {
   const [changingRoleMemberId, setChangingRoleMemberId] = useState<string | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
   const [restoringProjectId, setRestoringProjectId] = useState<string | null>(null);
+  const [editingProject, setEditingProject] = useState<ProjectResponse | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const currentUserId = currentUser?.id;
 
@@ -188,6 +194,32 @@ export function WorkspacePage() {
       push(err instanceof Error ? err.message : t("workspace.restoreFailed"), "error");
     } finally {
       setRestoringProjectId(null);
+    }
+  }
+
+  function openEditProject(project: ProjectResponse) {
+    setEditingProject(project);
+    setEditName(project.name);
+    setEditDescription(project.description ?? "");
+    setEditError(null);
+  }
+
+  async function saveEditProject() {
+    if (!editingProject) return;
+    setEditSubmitting(true);
+    setEditError(null);
+    try {
+      await updateProject(workspaceId, editingProject.id, {
+        name: editName.trim(),
+        description: editDescription.trim() || null,
+      });
+      push(t("workspace.updatedNamed", { name: editName.trim() }));
+      setEditingProject(null);
+      reload();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : t("workspace.editFailed"));
+    } finally {
+      setEditSubmitting(false);
     }
   }
 
@@ -467,20 +499,38 @@ export function WorkspacePage() {
                             to={`/workspaces/${workspaceId}/projects/${project.id}`}
                             className="group relative flex h-full flex-col rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40"
                           >
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setPendingDeleteProject(project);
-                              }}
-                              aria-label={t("workspace.archiveNamedAria", {
-                                name: project.name,
-                              })}
-                              className="absolute right-2 top-2 z-10 rounded p-1 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-destructive group-hover:opacity-100"
-                            >
-                              <Trash2 className="size-3.5" aria-hidden />
-                            </button>
+                            {canManageProjects && (
+                              <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    openEditProject(project);
+                                  }}
+                                  aria-label={t("workspace.editNamedAria", {
+                                    name: project.name,
+                                  })}
+                                  className="rounded p-1 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-primary group-hover:opacity-100"
+                                >
+                                  <Pencil className="size-3.5" aria-hidden />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setPendingDeleteProject(project);
+                                  }}
+                                  aria-label={t("workspace.archiveNamedAria", {
+                                    name: project.name,
+                                  })}
+                                  className="rounded p-1 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-destructive group-hover:opacity-100"
+                                >
+                                  <Trash2 className="size-3.5" aria-hidden />
+                                </button>
+                              </div>
+                            )}
                             <div className="mb-3 flex items-center justify-between gap-2">
                               <Badge tone="teal">{project.key}</Badge>
                               <Badge
@@ -737,6 +787,47 @@ export function WorkspacePage() {
           onConfirm={() => void confirmRemoveMember()}
           onCancel={() => setPendingRemoveMember(null)}
         />
+      )}
+
+      {editingProject && (
+        <Dialog
+          open
+          onClose={() => setEditingProject(null)}
+          title={t("workspace.editProject")}
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setEditingProject(null)}>
+                {t("common.cancel")}
+              </Button>
+              <Button onClick={() => void saveEditProject()} disabled={editSubmitting}>
+                {editSubmitting ? t("workspace.saving") : t("workspace.save")}
+              </Button>
+            </>
+          }
+        >
+          {editError && (
+            <div className="mb-3">
+              <ErrorAlert message={editError} />
+            </div>
+          )}
+          <Field label={t("workspace.projectName")} htmlFor="edit-proj-name">
+            <Input
+              id="edit-proj-name"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              autoFocus
+            />
+          </Field>
+          <div className="mt-3">
+            <Field label={t("workspace.projectDescription")} htmlFor="edit-proj-desc">
+              <Input
+                id="edit-proj-desc"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+              />
+            </Field>
+          </div>
+        </Dialog>
       )}
     </AppShell>
   );
