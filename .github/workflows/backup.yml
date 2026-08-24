@@ -57,7 +57,7 @@ jobs:
             ./scripts/backup-db.sh
 
       - name: Upload backup artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: db-backup-${{ github.run_id }}
           path: /tmp/devflow-backups/backup-*.dump
