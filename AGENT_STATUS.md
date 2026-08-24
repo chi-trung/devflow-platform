@@ -13,7 +13,7 @@
 | **Sprint 19** | GitHub Integration & Webhook Outbox | ✅ DONE (B19.1-B19.3) — PR #93 | ✅ DONE (F19.1-F19.3) — PR #92 | Complete ✅ |
 | **Sprint 20** | Advanced Agile Analytics & Custom Fields | ✅ DONE (B20.1-3) — PR #94, #95 | ✅ DONE (F20.1-3) — PR #94 | Complete ✅ |
 | **Sprint 21** | Live Team Experience (Notifications + My Work + Dashboard) | ✅ DONE (B21.1-3) — PR #98 | ✅ DONE (F21.1-2) — PR #96, (A21.1-2) — PR #97 | Complete ✅ |
-| **Sprint 22** | Observability & Collaboration Depth (Activity Log + Notifications + UI Depth + Search) | ✅ DONE (B22.1-3) — PR #100 | ⏳ C22.1-3 (Agent C), A22.1-2 (Agent A), D22.1-2 (Agent D) | In Progress 🎯 |
+| **Sprint 22** | Observability & Collaboration Depth (Activity Log + Notifications + UI Depth + Search) | ✅ DONE (B22.1-3) — PR #100 | ✅ DONE (C22.1-3) — PR #101, A22.1-2 (Agent A), D22.1-2 (Agent D) | In Progress 🎯 |
 
 ---
 
@@ -206,11 +206,11 @@ blockers/blocked-by toggle). Landed on main via PR #76.
   - `POST /notifications/cleanup?days=90` xóa notification cũ, scope theo user.
 
 #### 🎨 Agent C (Frontend — OpenCode)
-- [ ] **C22.1: Epic Progress Visualization**
+- [x] **C22.1: Epic Progress Visualization** — PR #101 ✅
   - Progress bar + completion badge + due indicator trên EpicsPage.
-- [ ] **C22.2: Dependency Graph DAG Viz**
-  - GraphModal: SVG DAG layout (node + edge) thay vì list.
-- [ ] **C22.3: Notification UX**
+- [x] **C22.2: Dependency Graph DAG Viz** — PR #101 ✅
+  - GraphModal đã là SVG DAG (từ Sprint 19 KILO), giữ nguyên — không redo.
+- [x] **C22.3: Notification UX** — PR #101 ✅
   - Mark-all-read + cleanup buttons + filter tabs + "all caught up" empty state.
 
 #### 🚀 Agent D (Fullstack — mới)
