@@ -109,6 +109,14 @@ export function SettingsPage() {
             emailOnAssignment: true,
             emailOnMention: true,
             emailOnSprintStarted: true,
+            emailOnStatusChanged: true,
+            inAppOnStatusChanged: true,
+            emailOnCommentAdded: true,
+            inAppOnCommentAdded: true,
+            emailOnRoleChanged: true,
+            inAppOnRoleChanged: true,
+            emailOnRemovedFromWorkspace: true,
+            inAppOnRemovedFromWorkspace: true,
           });
       })
       .finally(() => {
@@ -133,6 +141,21 @@ export function SettingsPage() {
     { key: "emailOnAssignment", label: t("settings.assignedToMe"), hint: t("settings.assignedHint") },
     { key: "emailOnMention", label: t("settings.imMentioned"), hint: t("settings.mentionedHint") },
     { key: "emailOnSprintStarted", label: t("settings.sprintStarted"), hint: t("settings.sprintStartedHint") },
+    { key: "emailOnStatusChanged", label: t("settings.emailOnStatusChanged"), hint: t("settings.emailOnStatusChangedHint") },
+    { key: "emailOnCommentAdded", label: t("settings.emailOnCommentAdded"), hint: t("settings.emailOnCommentAddedHint") },
+    { key: "emailOnRoleChanged", label: t("settings.emailOnRoleChanged"), hint: t("settings.emailOnRoleChangedHint") },
+    { key: "emailOnRemovedFromWorkspace", label: t("settings.emailOnRemovedFromWorkspace"), hint: t("settings.emailOnRemovedFromWorkspaceHint") },
+  ];
+
+  const IN_APP_EVENTS: {
+    key: keyof NotificationPreferencesResponse;
+    label: string;
+    hint: string;
+  }[] = [
+    { key: "inAppOnStatusChanged", label: t("settings.inAppOnStatusChanged"), hint: t("settings.inAppOnStatusChangedHint") },
+    { key: "inAppOnCommentAdded", label: t("settings.inAppOnCommentAdded"), hint: t("settings.inAppOnCommentAddedHint") },
+    { key: "inAppOnRoleChanged", label: t("settings.inAppOnRoleChanged"), hint: t("settings.inAppOnRoleChangedHint") },
+    { key: "inAppOnRemovedFromWorkspace", label: t("settings.inAppOnRemovedFromWorkspace"), hint: t("settings.inAppOnRemovedFromWorkspaceHint") },
   ];
 
   async function persistPrefs(
@@ -162,9 +185,14 @@ export function SettingsPage() {
   function handleMasterEmailToggle(value: boolean) {
     if (!prefs) return;
     const next: NotificationPreferencesResponse = {
+      ...prefs,
       emailOnAssignment: value,
       emailOnMention: value,
       emailOnSprintStarted: value,
+      emailOnStatusChanged: value,
+      emailOnCommentAdded: value,
+      emailOnRoleChanged: value,
+      emailOnRemovedFromWorkspace: value,
     };
     setPrefs(next);
     void persistPrefs(next).then((ok) => {
@@ -308,6 +336,27 @@ export function SettingsPage() {
               </p>
             </div>
           )}
+
+          <div className="mt-5">
+            <p className="mb-2 text-sm font-medium">{t("settings.inAppNotifications")}</p>
+            <p className="mb-3 text-xs text-muted-foreground">
+              {t("settings.inAppDesc")}
+            </p>
+            <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3.5">
+              {IN_APP_EVENTS.map((event) => (
+                <EmailEventRow
+                  key={event.key}
+                  label={event.label}
+                  hint={event.hint}
+                  checked={prefs ? prefs[event.key] : true}
+                  onChange={(value) => handlePrefToggle(event.key, value)}
+                />
+              ))}
+              <p className="font-mono text-[10px] text-muted-foreground">
+                {t("settings.syncedToAccount")}
+              </p>
+            </div>
+          </div>
         </section>
 
         <WebhooksSection />

@@ -384,6 +384,14 @@ export interface NotificationPreferencesResponse {
   emailOnAssignment: boolean;
   emailOnMention: boolean;
   emailOnSprintStarted: boolean;
+  emailOnStatusChanged: boolean;
+  inAppOnStatusChanged: boolean;
+  emailOnCommentAdded: boolean;
+  inAppOnCommentAdded: boolean;
+  emailOnRoleChanged: boolean;
+  inAppOnRoleChanged: boolean;
+  emailOnRemovedFromWorkspace: boolean;
+  inAppOnRemovedFromWorkspace: boolean;
 }
 
 export interface SavedSearchResponse {
