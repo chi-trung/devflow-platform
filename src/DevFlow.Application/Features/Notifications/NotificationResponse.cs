@@ -11,7 +11,9 @@ public sealed record NotificationResponse(
     DateTimeOffset? ReadAtUtc,
     Guid? TaskItemId,
     Guid? ProjectId,
-    Guid? WorkspaceId);
+    Guid? WorkspaceId,
+    Guid? ActorUserId,
+    string? ActorName);
 
 public sealed record GetNotificationsQuery(
     int Page,
@@ -21,6 +23,10 @@ public sealed record GetNotificationsQuery(
 public sealed record GetUnreadCountQuery(Guid UserId) : IRequest<int>;
 
 public sealed record MarkNotificationReadCommand(
+    Guid UserId,
+    Guid NotificationId) : IRequest;
+
+public sealed record MarkNotificationUnreadCommand(
     Guid UserId,
     Guid NotificationId) : IRequest;
 

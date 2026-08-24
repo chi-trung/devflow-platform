@@ -626,6 +626,7 @@
   "notification": {
     "notifications": "Thông báo",
     "markAllRead": "Đánh dấu đã đọc",
+    "viewAll": "Xem tất cả",
     "noNotifications": "Chưa có thông báo",
     "newNotification": "Bạn có thông báo mới",
     "unreadSuffix": "({{count}} chưa đọc)",

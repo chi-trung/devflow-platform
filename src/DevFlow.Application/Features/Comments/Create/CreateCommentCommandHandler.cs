@@ -70,7 +70,8 @@ public sealed partial class CreateCommentCommandHandler(
                 $"mentioned you in a comment on \"{task.Title}\"",
                 task.Id,
                 project.Id,
-                project.WorkspaceId);
+                project.WorkspaceId,
+                userContext.UserId);
 
             await notificationRepository.AddAsync(notification, cancellationToken);
 

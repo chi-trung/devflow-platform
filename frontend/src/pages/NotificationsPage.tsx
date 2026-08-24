@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Bell, CheckCheck, Eye, EyeOff, Trash2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -15,6 +15,7 @@ import {
   getNotifications,
   markAllNotificationsRead,
   markNotificationRead,
+  markNotificationUnread,
 } from "../lib/api";
 import { useNotifications } from "../hooks/useNotifications";
 import { NotificationItem } from "../components/notifications/NotificationItem";
@@ -49,7 +50,7 @@ function fromApi(n: NotificationResponse): NotificationRow {
   return {
     id: n.id,
     message: n.message,
-    actorName: null,
+    actorName: n.actorName ?? null,
     createdAtUtc: n.createdAtUtc,
     kind: kindFromText(n.type || n.message),
     taskId: n.taskItemId ?? null,
@@ -62,6 +63,7 @@ function fromApi(n: NotificationResponse): NotificationRow {
 
 export function NotificationsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -132,15 +134,22 @@ export function NotificationsPage() {
     }
   }
 
-  async function handleMarkUnread(_id: string) {
-    // backend does not expose unmark yet; keep as no-op
+  async function handleMarkUnread(id: string) {
+    try {
+      await markNotificationUnread(id);
+      setNotifications((current) =>
+        current.map((n) => (n.id === id ? { ...n, isRead: false } : n)),
+      );
+    } catch {
+      // ignore
+    }
   }
 
   async function handleMarkAllRead() {
     try {
       await markAllNotificationsRead();
       setNotifications((current) =>
-        current.map((n) => (n.isRead ? { ...n, isRead: true } : n)),
+        current.map((n) => ({ ...n, isRead: true })),
       );
     } catch {
       // ignore
@@ -275,7 +284,12 @@ export function NotificationsPage() {
                       <NotificationItem
                         notification={n}
                         unread={!n.isRead}
-                        onClick={() => {}}
+                        onClick={() => {
+                          if (n.workspaceId && n.projectId) {
+                            const base = `/workspaces/${n.workspaceId}/projects/${n.projectId}`;
+                            navigate(n.taskItemId ? `${base}?task=${n.taskItemId}` : base);
+                          }
+                        }}
                       />
                     </div>
                     <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">

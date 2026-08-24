@@ -153,6 +153,8 @@ export interface NotificationResponse {
   taskItemId: string | null;
   projectId: string | null;
   workspaceId: string | null;
+  actorUserId: string | null;
+  actorName: string | null;
 }
 
 export interface PagedResult<T> {

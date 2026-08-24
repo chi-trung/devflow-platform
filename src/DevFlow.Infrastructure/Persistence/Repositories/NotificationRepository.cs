@@ -46,6 +46,15 @@ public sealed class NotificationRepository(DevFlowDbContext dbContext) : INotifi
         }
     }
 
+    public async Task MarkAsUnreadAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var notification = await dbContext.Notifications.FindAsync([id], cancellationToken);
+        if (notification is not null)
+        {
+            notification.MarkAsUnread();
+        }
+    }
+
     public async Task MarkAllAsReadAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var unread = await dbContext.Notifications

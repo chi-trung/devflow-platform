@@ -8,7 +8,8 @@ namespace DevFlow.Application.Features.Notifications;
 
 public sealed class GetNotificationsHandler(
     INotificationRepository notificationRepository,
-    IUserContext userContext) : IRequestHandler<GetNotificationsQuery, PagedResult<NotificationResponse>>
+    IUserContext userContext,
+    IUserRepository userRepository) : IRequestHandler<GetNotificationsQuery, PagedResult<NotificationResponse>>
 {
     public async Task<PagedResult<NotificationResponse>> Handle(
         GetNotificationsQuery query,
@@ -33,6 +34,21 @@ public sealed class GetNotificationsHandler(
             .OrderByDescending(n => n.CreatedAtUtc)
             .Skip(skip)
             .Take(pageSize)
+            .ToList();
+
+        // Resolve actor display names in batch
+        var actorIds = items
+            .Select(n => n.ActorUserId)
+            .Where(id => id.HasValue)
+            .Distinct()
+            .Select(id => id!.Value)
+            .ToList();
+
+        var names = actorIds.Count > 0
+            ? await userRepository.GetDisplayNamesAsync(actorIds, cancellationToken)
+            : new Dictionary<Guid, string>();
+
+        var result = items
             .Select(n => new NotificationResponse(
                 n.Id,
                 n.Type,
@@ -41,10 +57,12 @@ public sealed class GetNotificationsHandler(
                 n.ReadAtUtc,
                 n.TaskItemId,
                 n.ProjectId,
-                n.WorkspaceId))
+                n.WorkspaceId,
+                n.ActorUserId,
+                n.ActorUserId.HasValue ? names.GetValueOrDefault(n.ActorUserId.Value, "Someone") : null))
             .ToList();
 
-        return new PagedResult<NotificationResponse>(items, totalCount, page, pageSize);
+        return new PagedResult<NotificationResponse>(result, totalCount, page, pageSize);
     }
 }
 
@@ -76,6 +94,29 @@ public sealed class MarkNotificationReadHandler(
         }
 
         await notificationRepository.MarkAsReadAsync(command.NotificationId, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+}
+
+public sealed class MarkNotificationUnreadHandler(
+    INotificationRepository notificationRepository,
+    IUnitOfWork unitOfWork) : IRequestHandler<MarkNotificationUnreadCommand>
+{
+    public async Task Handle(MarkNotificationUnreadCommand command, CancellationToken cancellationToken)
+    {
+        var notification = await notificationRepository.GetByIdAsync(command.NotificationId, cancellationToken);
+
+        if (notification is null)
+        {
+            throw new NotFoundException(nameof(Notification), command.NotificationId);
+        }
+
+        if (notification.UserId != command.UserId)
+        {
+            throw new ForbiddenAccessException();
+        }
+
+        await notificationRepository.MarkAsUnreadAsync(command.NotificationId, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

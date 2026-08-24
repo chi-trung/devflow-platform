@@ -54,7 +54,8 @@ public sealed class NotificationBehavior<TRequest, TResponse> : IPipelineBehavio
                     notificationEvent.FormatMessage(actorName),
                     notificationEvent.TaskItemId,
                     notificationEvent.ProjectId,
-                    notificationEvent.WorkspaceId);
+                    notificationEvent.WorkspaceId,
+                    actor?.Id);
 
                 await notificationRepository.AddAsync(notification, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
