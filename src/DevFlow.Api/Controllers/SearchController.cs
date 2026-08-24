@@ -20,11 +20,13 @@ public sealed class SearchController(ISender sender) : ControllerBase
         [FromQuery] Guid? labelId,
         [FromQuery] DateTime? dueBefore,
         [FromQuery] DateTime? dueAfter,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
         var result = await sender.Send(
             new Application.Features.Search.SearchQuery(
-                workspaceId, q ?? string.Empty, status, priority, assigneeId, labelId, dueBefore, dueAfter),
+                workspaceId, q ?? string.Empty, status, priority, assigneeId, labelId, dueBefore, dueAfter, page, pageSize),
             cancellationToken);
 
         return Ok(result);
