@@ -29,13 +29,20 @@ public sealed record TeamMemberStats(
     string UserName,
     int TasksAssigned,
     int TasksCompleted,
-    int TotalMinutesLogged);
+    int TotalMinutesLogged,
+    int InProgressCount,
+    double? AvgCycleTimeDays);
+
+public sealed record TeamReportTrends(
+    int CompletedDelta,
+    double? CycleTimeDelta);
 
 public sealed record TeamReportResponse(
     List<TeamMemberStats> Members,
     int TotalTasks,
     int TotalCompleted,
-    int TotalMinutesLogged);
+    int TotalMinutesLogged,
+    TeamReportTrends Trends);
 
 public sealed record TaskCycleLeadTime(
     Guid TaskId,

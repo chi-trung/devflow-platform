@@ -405,7 +405,11 @@
     "leadTimeLabel": "Lead time",
     "avgCompletedPoints": "avg {{pct}} pts",
     "velocityTrendAria": "Velocity trend across {{count}} sprints",
-    "cycleLeadTimeAria": "Cycle and lead time across {{count}} tasks"
+    "cycleLeadTimeAria": "Cycle and lead time across {{count}} tasks",
+    "member": "Member",
+    "inProgress": "In Progress",
+    "avgCycleTime": "Avg Cycle",
+    "vsPrevSprint": "vs prev sprint"
   },
   "template": {
     "title": "Templates",
@@ -570,7 +574,7 @@
   },
   "search": {
     "title": "Search",
-    "description": "Search tasks and projects across the workspace.",
+    "description": "Search tasks, projects, and more across the workspace.",
     "placeholder": "Search by keyword…",
     "allStatuses": "All statuses",
     "allPriorities": "All priorities",
@@ -578,11 +582,17 @@
     "searching": "Searching…",
     "loadFailed": "Failed to load search results.",
     "emptyTitle": "Search the workspace",
-    "emptyDescription": "Use the form above to find tasks and projects.",
+    "emptyDescription": "Use the form above to find tasks, projects, epics, labels, users, and comments.",
     "tasksTitle": "Tasks ({{count}})",
     "projectsTitle": "Projects ({{count}})",
     "noResults": "No results found",
-    "noResultsDescription": "Try adjusting your search or filters."
+    "noResultsDescription": "Try adjusting your search or filters.",
+    "tabTasks": "Tasks",
+    "tabProjects": "Projects",
+    "tabEpics": "Epics",
+    "tabLabels": "Labels",
+    "tabUsers": "Members",
+    "tabComments": "Comments"
   },
   "savedSearch": {
     "title": "Saved Searches",

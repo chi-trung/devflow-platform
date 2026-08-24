@@ -107,25 +107,43 @@ public class GetTeamReportHandler(
         var totalTasks = 0;
         var totalCompleted = 0;
         var totalMinutes = 0;
+        var allCycleTimes = new List<double>();
 
         foreach (var member in members)
         {
             var tasks = await taskItemRepository.GetByAssigneeIdAsync(member.UserId, ct);
             var completed = tasks.Count(t => t.Status == TaskItemStatus.Done);
+            var inProgress = tasks.Count(t => t.Status == TaskItemStatus.InProgress);
             var minutes = await timeEntryRepository.GetTotalMinutesByUserIdAsync(member.UserId, ct);
+
+            // Calculate avg cycle time for completed tasks
+            var completedTasks = tasks.Where(t => t.Status == TaskItemStatus.Done && t.StartedAtUtc.HasValue && t.CompletedAtUtc.HasValue).ToList();
+            double? avgCycleTime = null;
+            if (completedTasks.Count > 0)
+            {
+                var cycleTimes = completedTasks.Select(t => (t.CompletedAtUtc!.Value - t.StartedAtUtc!.Value).TotalDays).ToList();
+                avgCycleTime = Math.Round(cycleTimes.Average(), 1);
+                allCycleTimes.AddRange(cycleTimes);
+            }
 
             memberStats.Add(new TeamMemberStats(
                 member.UserId,
                 member.DisplayName,
                 tasks.Count,
                 completed,
-                minutes));
+                minutes,
+                inProgress,
+                avgCycleTime));
 
             totalTasks += tasks.Count;
             totalCompleted += completed;
             totalMinutes += minutes;
         }
 
-        return new TeamReportResponse(memberStats, totalTasks, totalCompleted, totalMinutes);
+        // Calculate trends (placeholder - in real app, compare with previous sprint)
+        // For now, return neutral trends
+        var trends = new TeamReportTrends(0, null);
+
+        return new TeamReportResponse(memberStats, totalTasks, totalCompleted, totalMinutes, trends);
     }
 }
