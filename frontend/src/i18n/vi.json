@@ -617,7 +617,8 @@
     "tabEpics": "Epics",
     "tabLabels": "Nhãn",
     "tabUsers": "Thành viên",
-    "tabComments": "Bình luận"
+    "tabComments": "Bình luận",
+    "loadMore": "Tải thêm {{count}}"
   },
   "savedSearch": {
     "title": "Saved Searches",
@@ -919,6 +920,13 @@
     "deleteFailed": "Không thể xóa không gian làm việc",
     "archivedNamed": "Đã lưu trữ \"{{name}}\"",
     "archiveFailed": "Không thể lưu trữ dự án",
+    "restoredNamed": "Đã khôi phục \"{{name}}\"",
+    "restoreFailed": "Không thể khôi phục dự án",
+    "restoring": "Đang khôi phục…",
+    "restore": "Khôi phục",
+    "archivedProjects": "Dự án đã lưu trữ",
+    "noArchivedProjects": "Không có dự án đã lưu trữ",
+    "noArchivedProjectsDesc": "Dự án đã lưu trữ sẽ xuất hiện ở đây.",
     "inviteInvalidEmail": "Vui lòng nhập địa chỉ email hợp lệ.",
     "inviteSentTo": "Đã gửi lời mời tới {{email}}",
     "inviteFailed": "Gửi lời mời thất bại.",

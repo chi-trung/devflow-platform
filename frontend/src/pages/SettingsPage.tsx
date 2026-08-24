@@ -109,6 +109,14 @@ export function SettingsPage() {
             emailOnAssignment: true,
             emailOnMention: true,
             emailOnSprintStarted: true,
+            emailOnStatusChanged: true,
+            inAppOnStatusChanged: true,
+            emailOnCommentAdded: true,
+            inAppOnCommentAdded: true,
+            emailOnRoleChanged: true,
+            inAppOnRoleChanged: true,
+            emailOnRemovedFromWorkspace: true,
+            inAppOnRemovedFromWorkspace: true,
           });
       })
       .finally(() => {
@@ -165,6 +173,14 @@ export function SettingsPage() {
       emailOnAssignment: value,
       emailOnMention: value,
       emailOnSprintStarted: value,
+      emailOnStatusChanged: value,
+      inAppOnStatusChanged: value,
+      emailOnCommentAdded: value,
+      inAppOnCommentAdded: value,
+      emailOnRoleChanged: value,
+      inAppOnRoleChanged: value,
+      emailOnRemovedFromWorkspace: value,
+      inAppOnRemovedFromWorkspace: value,
     };
     setPrefs(next);
     void persistPrefs(next).then((ok) => {

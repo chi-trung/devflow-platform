@@ -414,16 +414,29 @@ export function searchWorkspace(
   workspaceId: string,
   query: string,
   filters: SearchFilters = {},
+  page = 1,
+  pageSize = 20,
 ): Promise<SearchResponse> {
   const params = new URLSearchParams();
   if (query) params.set("q", query);
   for (const [key, value] of Object.entries(filters)) {
     if (value) params.set(key, value);
   }
+  params.set("page", String(page));
+  params.set("pageSize", String(pageSize));
   const qs = params.toString();
   return api<SearchResponse>(
     `/workspaces/${workspaceId}/search${qs ? `?${qs}` : ""}`,
   );
+}
+
+export async function restoreProject(
+  workspaceId: string,
+  projectId: string,
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}/projects/${projectId}/restore`, {
+    method: "POST",
+  });
 }
 
 export async function importTasks(

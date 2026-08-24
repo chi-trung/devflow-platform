@@ -213,6 +213,18 @@ export interface SearchCommentResult {
   projectKey: string;
 }
 
+/** Pagination metadata for every search result group. */
+export interface SearchPagination {
+  page: number;
+  pageSize: number;
+  totalTasks: number;
+  totalProjects: number;
+  totalEpics: number;
+  totalLabels: number;
+  totalUsers: number;
+  totalComments: number;
+}
+
 export interface SearchResponse {
   tasks: SearchTaskResult[];
   projects: SearchProjectResult[];
@@ -220,6 +232,7 @@ export interface SearchResponse {
   labels: SearchLabelResult[];
   users: SearchUserResult[];
   comments: SearchCommentResult[];
+  pagination: SearchPagination;
 }
 
 export interface ImportResultResponse {
@@ -384,6 +397,14 @@ export interface NotificationPreferencesResponse {
   emailOnAssignment: boolean;
   emailOnMention: boolean;
   emailOnSprintStarted: boolean;
+  emailOnStatusChanged: boolean;
+  inAppOnStatusChanged: boolean;
+  emailOnCommentAdded: boolean;
+  inAppOnCommentAdded: boolean;
+  emailOnRoleChanged: boolean;
+  inAppOnRoleChanged: boolean;
+  emailOnRemovedFromWorkspace: boolean;
+  inAppOnRemovedFromWorkspace: boolean;
 }
 
 export interface SavedSearchResponse {

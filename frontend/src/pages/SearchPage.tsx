@@ -31,17 +31,18 @@ export function SearchPage() {
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("tasks");
+  const [searchPage, setSearchPage] = useState(1);
 
-  async function handleSearch(event: FormEvent) {
-    event.preventDefault();
+  async function runSearch(page = 1) {
     setLoading(true);
     setError(null);
     setSearched(true);
+    setSearchPage(page);
     try {
       const data = await searchWorkspace(workspaceId, query.trim(), {
         status: status || undefined,
         priority: priority || undefined,
-      });
+      }, page, 20);
       setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("search.loadFailed"));
@@ -50,13 +51,22 @@ export function SearchPage() {
     }
   }
 
+  async function handleSearch(event: FormEvent) {
+    event.preventDefault();
+    runSearch(1);
+  }
+
+  function handleLoadMore() {
+    runSearch(searchPage + 1);
+  }
+
   const tabCounts: Record<TabKey, number> = {
-    tasks: result?.tasks.length ?? 0,
-    projects: result?.projects.length ?? 0,
-    epics: result?.epics.length ?? 0,
-    labels: result?.labels.length ?? 0,
-    users: result?.users.length ?? 0,
-    comments: result?.comments.length ?? 0,
+    tasks: result?.pagination.totalTasks ?? 0,
+    projects: result?.pagination.totalProjects ?? 0,
+    epics: result?.pagination.totalEpics ?? 0,
+    labels: result?.pagination.totalLabels ?? 0,
+    users: result?.pagination.totalUsers ?? 0,
+    comments: result?.pagination.totalComments ?? 0,
   };
 
   const visibleTabs = TABS.filter((tab) => tabCounts[tab.key] > 0);
@@ -223,6 +233,19 @@ export function SearchPage() {
                 ))}
               </ul>
             )}
+
+            {result && (() => {
+              const total = result.pagination[`total${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof typeof result.pagination] as number | undefined;
+              const remaining = (total ?? 0) - result[activeTab].length;
+              if (remaining <= 0) return null;
+              return (
+                <div className="flex justify-center">
+                  <Button variant="outline" onClick={handleLoadMore} disabled={loading}>
+                    {t("search.loadMore", { count: remaining })}
+                  </Button>
+                </div>
+              );
+            })()}
 
             {visibleTabs.length === 0 && (
               <div className="rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
