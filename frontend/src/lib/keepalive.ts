@@ -39,12 +39,23 @@ export function subscribeApiWarmth(
 async function probe(): Promise<void> {
   if (probing || document.hidden) return;
   probing = true;
+  // Give a blocked/hung probe a hard deadline so `probing` can never
+  // wedge the keepalive loop (Render cold starts are ~1–3 s).
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5_000);
   try {
-    const response = await fetch(`${API_BASE}/health`, { cache: "no-store" });
+    const response = await fetch(`${API_BASE}/health`, {
+      cache: "no-store",
+      signal: controller.signal,
+    });
     setWarmth(response.ok ? "warm" : "waking");
   } catch {
-    setWarmth(navigator.onLine ? "waking" : "offline");
+    // ERR_BLOCKED_BY_CLIENT (ad-blocker/browser extension), network error,
+    // or our timeout. Only downgrade the dot when the device is truly
+    // offline — a client-side block means the API is still fine.
+    if (!navigator.onLine) setWarmth("offline");
   } finally {
+    clearTimeout(timeout);
     probing = false;
   }
 }
