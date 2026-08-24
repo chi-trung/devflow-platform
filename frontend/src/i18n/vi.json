@@ -90,6 +90,7 @@
     "taskCreated": "Đã tạo task",
     "taskDeleted": "Đã xóa task",
     "deleteFailed": "Xóa task thất bại.",
+    "createFailed": "Không tạo được task.",
     "activityLog": "Xem nhật ký hoạt động dự án",
     "dependencyGraph": "Biểu đồ phụ thuộc",
     "keyboardShortcuts": "Phím tắt",
