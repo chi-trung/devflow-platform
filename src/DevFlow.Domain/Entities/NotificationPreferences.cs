@@ -10,6 +10,9 @@ public class NotificationPreferences : BaseEntity
     public bool EmailOnAssignment { get; set; } = true;
     public bool EmailOnMention { get; set; } = true;
     public bool EmailOnSprintStarted { get; set; } = true;
+    public bool InAppOnAssignment { get; set; } = true;
+    public bool InAppOnMention { get; set; } = true;
+    public bool InAppOnSprintStarted { get; set; } = true;
 
     public static NotificationPreferences Create(Guid userId)
     {
