@@ -21,6 +21,7 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        services.Configure<OAuthSettings>(configuration.GetSection(OAuthSettings.SectionName));
 
         services.AddSingleton<AuditableEntityInterceptor>();
 
@@ -53,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<IWebhookRepository, WebhookRepository>();
         services.AddScoped<INotificationPreferencesRepository, NotificationPreferencesRepository>();
         services.AddScoped<IPersonalAccessTokenRepository, PersonalAccessTokenRepository>();
+        services.AddScoped<ISocialLoginRepository, SocialLoginRepository>();
         services.AddScoped<IWebhookDispatcher, WebhookDispatcher>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
         services.AddScoped<IOutboxDispatcher, OutboxDispatcher>();
@@ -69,6 +71,8 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ITokenProvider, JwtTokenProvider>();
+        services.AddScoped<IExternalIdentityProvider, GoogleIdentityProvider>();
+        services.AddHttpClient("OAuth");
 
         var redisConnection = configuration.GetConnectionString("Redis");
         if (!string.IsNullOrWhiteSpace(redisConnection))

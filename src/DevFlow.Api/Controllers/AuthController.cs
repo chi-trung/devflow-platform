@@ -1,14 +1,18 @@
 using DevFlow.Api.Contracts.Auth;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Auth.Login;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace DevFlow.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/auth")]
-public sealed class AuthController(ISender sender, IUserContext userContext) : ControllerBase
+public sealed class AuthController(
+    ISender sender,
+    IUserContext userContext) : ControllerBase
 {
     [HttpPost("register")]
     [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status201Created)]
@@ -126,5 +130,36 @@ public sealed class AuthController(ISender sender, IUserContext userContext) : C
             cancellationToken);
 
         return NoContent();
+    }
+
+    [HttpPost("oauth/exchange")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ExchangeOAuth(
+        OAuthExchangeRequest request,
+        CancellationToken cancellationToken)
+    {
+        var response = await sender.Send(
+            new Application.Features.Auth.OAuth.OAuthExchangeCommand(
+                request.Provider,
+                request.Code,
+                request.CodeVerifier),
+            cancellationToken);
+
+        return Ok(response);
+    }
+
+    [HttpGet("oauth/config")]
+    [ProducesResponseType(typeof(OAuthConfigResponse), StatusCodes.Status200OK)]
+    public IActionResult GetOAuthConfig(IOptions<DevFlow.Infrastructure.Authentication.OAuthSettings> options)
+    {
+        var settings = options.Value;
+        var enabled = !string.IsNullOrWhiteSpace(settings.GoogleClientId)
+            && !string.IsNullOrWhiteSpace(settings.GoogleClientSecret);
+
+        return Ok(new OAuthConfigResponse(
+            enabled,
+            settings.GoogleClientId,
+            settings.GoogleRedirectUri));
     }
 }
