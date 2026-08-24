@@ -14,7 +14,9 @@ public sealed class OutboxRepository(DevFlowDbContext context) : IOutboxReposito
     public async Task<IReadOnlyList<OutboxMessage>> GetUnprocessedAsync(int batchSize, CancellationToken cancellationToken = default)
     {
         return await context.OutboxMessages
-            .Where(m => m.ProcessedAtUtc == null)
+            .Where(m => m.ProcessedAtUtc == null &&
+                        m.FailedPermanentlyAt == null &&
+                        m.RetryCount < OutboxMessage.MaxRetries)
             .OrderBy(m => m.OccurredAtUtc)
             .Take(batchSize)
             .ToListAsync(cancellationToken);

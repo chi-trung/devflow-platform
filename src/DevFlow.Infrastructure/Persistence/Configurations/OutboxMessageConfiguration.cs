@@ -30,6 +30,8 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
         builder.Property(m => m.Error)
             .HasMaxLength(1024);
 
-        builder.HasIndex(m => new { m.ProcessedAtUtc, m.OccurredAtUtc });
+        builder.Property(m => m.FailedPermanentlyAt);
+
+        builder.HasIndex(m => new { m.ProcessedAtUtc, m.FailedPermanentlyAt, m.OccurredAtUtc });
     }
 }
