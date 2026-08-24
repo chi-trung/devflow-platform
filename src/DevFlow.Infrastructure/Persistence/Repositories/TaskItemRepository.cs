@@ -85,6 +85,15 @@ public sealed class TaskItemRepository(DevFlowDbContext dbContext) : ITaskItemRe
             .ToListAsync(cancellationToken);
     }
 
+    // Tracked on purpose: callers mutate the sprint assignment (SprintId = null)
+    // and rely on change tracking persisting it with the unit of work.
+    public async Task<IReadOnlyList<TaskItem>> GetForSprintAsync(Guid sprintId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.TaskItems
+            .Where(task => task.SprintId == sprintId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<int> GetCountForProjectAsync(
         Guid projectId,
         TaskItemStatus? status,

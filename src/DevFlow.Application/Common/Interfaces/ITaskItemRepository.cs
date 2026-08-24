@@ -19,6 +19,10 @@ public interface ITaskItemRepository
         TaskItemStatus? status,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<TaskItem>> GetForSprintAsync(
+        Guid sprintId,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<TaskItem>> GetForProjectPagedAsync(
         Guid projectId,
         TaskItemStatus? status,
