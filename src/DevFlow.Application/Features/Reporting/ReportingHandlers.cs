@@ -91,7 +91,9 @@ public class GetVelocityHandler(
 // Team Report
 [RequireWorkspaceRole(WorkspaceRole.Member)]
 public sealed record GetTeamReportQuery(
-    Guid WorkspaceId) : IRequest<TeamReportResponse>, IWorkspaceRequest;
+    Guid WorkspaceId,
+    DateTimeOffset? StartDateUtc = null,
+    DateTimeOffset? EndDateUtc = null) : IRequest<TeamReportResponse>, IWorkspaceRequest;
 
 public class GetTeamReportHandler(
     IWorkspaceRepository workspaceRepository,
@@ -140,10 +142,68 @@ public class GetTeamReportHandler(
             totalMinutes += minutes;
         }
 
-        // Calculate trends (placeholder - in real app, compare with previous sprint)
-        // For now, return neutral trends
-        var trends = new TeamReportTrends(0, null);
+        // Trends: compare the requested period against the preceding window of
+        // the same length, if a date range was provided. Otherwise neutral.
+        var trends = request.StartDateUtc.HasValue && request.EndDateUtc.HasValue
+            ? await ComputeTrendsAsync(request, members, ct)
+            : new TeamReportTrends(0, null);
 
         return new TeamReportResponse(memberStats, totalTasks, totalCompleted, totalMinutes, trends);
+    }
+
+    private async Task<TeamReportTrends> ComputeTrendsAsync(
+        GetTeamReportQuery request,
+        IReadOnlyList<(Guid UserId, string Email, string Username, string DisplayName, Domain.Enums.WorkspaceRole Role)> members,
+        CancellationToken ct)
+    {
+        var start = request.StartDateUtc!.Value;
+        var end = request.EndDateUtc!.Value;
+        var windowLength = end - start;
+        var prevStart = start - windowLength;
+
+        var currentCompleted = 0;
+        var previousCompleted = 0;
+        var currentCycle = new List<double>();
+        var previousCycle = new List<double>();
+
+        foreach (var member in members)
+        {
+            var tasks = await taskItemRepository.GetByAssigneeIdAsync(member.UserId, ct);
+
+            foreach (var task in tasks.Where(t => t.Status == TaskItemStatus.Done && t.CompletedAtUtc.HasValue))
+            {
+                var completedAt = task.CompletedAtUtc!.Value;
+                if (completedAt >= start && completedAt < end)
+                {
+                    currentCompleted++;
+                    if (task.StartedAtUtc.HasValue)
+                    {
+                        currentCycle.Add((completedAt - task.StartedAtUtc.Value).TotalDays);
+                    }
+                }
+                else if (completedAt >= prevStart && completedAt < start)
+                {
+                    previousCompleted++;
+                    if (task.StartedAtUtc.HasValue)
+                    {
+                        previousCycle.Add((completedAt - task.StartedAtUtc.Value).TotalDays);
+                    }
+                }
+            }
+        }
+
+        var completedDelta = currentCompleted - previousCompleted;
+
+        double? cycleDelta = null;
+        if (currentCycle.Count > 0 && previousCycle.Count > 0)
+        {
+            cycleDelta = Math.Round(currentCycle.Average() - previousCycle.Average(), 1);
+        }
+        else if (currentCycle.Count > 0)
+        {
+            cycleDelta = Math.Round(currentCycle.Average(), 1);
+        }
+
+        return new TeamReportTrends(completedDelta, cycleDelta);
     }
 }

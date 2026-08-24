@@ -14,6 +14,7 @@ public interface ISearchRepository
         Guid workspaceId,
         string keyword,
         TaskItemSearchFilters filters,
+        TaskItemSearchSort? sort,
         int skip,
         int take,
         CancellationToken cancellationToken = default);
@@ -37,6 +38,13 @@ public interface ISearchRepository
         CancellationToken cancellationToken = default);
 
     Task<PagedSearchItems<CommentSearchRow>> SearchCommentsAsync(
+        Guid workspaceId,
+        string keyword,
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default);
+
+    Task<PagedSearchItems<CustomFieldSearchRow>> SearchCustomFieldsAsync(
         Guid workspaceId,
         string keyword,
         int skip,

@@ -12,6 +12,7 @@ public sealed class SearchRepository(DevFlowDbContext dbContext) : ISearchReposi
         Guid workspaceId,
         string keyword,
         TaskItemSearchFilters filters,
+        TaskItemSearchSort? sort,
         int skip,
         int take,
         CancellationToken cancellationToken = default)
@@ -22,7 +23,7 @@ public sealed class SearchRepository(DevFlowDbContext dbContext) : ISearchReposi
                 dbContext.Projects.Where(p => p.WorkspaceId == workspaceId),
                 task => task.ProjectId,
                 project => project.Id,
-                (task, project) => new { Task = task, ProjectKey = project.Key });
+                (task, project) => new TaskRow(task, project.Key));
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
@@ -63,8 +64,11 @@ public sealed class SearchRepository(DevFlowDbContext dbContext) : ISearchReposi
 
         var total = await baseQuery.CountAsync(cancellationToken);
 
-        var page = await baseQuery
-            .OrderByDescending(x => x.Task.CreatedAtUtc)
+        IQueryable<TaskRow> ordered = sort is not null
+            ? ApplyTaskSort(baseQuery, sort)
+            : baseQuery.OrderByDescending(x => x.Task.CreatedAtUtc);
+
+        var page = await ordered
             .Skip(skip)
             .Take(take)
             .Select(x => new TaskItemSearchRow(
@@ -77,6 +81,31 @@ public sealed class SearchRepository(DevFlowDbContext dbContext) : ISearchReposi
 
         return new PagedSearchItems<TaskItemSearchRow>(page, total);
     }
+
+    private static IOrderedQueryable<TaskRow> ApplyTaskSort(IQueryable<TaskRow> query, TaskItemSearchSort sort)
+    {
+        return sort.Key switch
+        {
+            "title" => sort.Descending
+                ? query.OrderByDescending(x => x.Task.Title)
+                : query.OrderBy(x => x.Task.Title),
+            "status" => sort.Descending
+                ? query.OrderByDescending(x => x.Task.Status)
+                : query.OrderBy(x => x.Task.Status),
+            "priority" => sort.Descending
+                ? query.OrderByDescending(x => x.Task.Priority)
+                : query.OrderBy(x => x.Task.Priority),
+            "dueDate" => sort.Descending
+                ? query.OrderByDescending(x => x.Task.DueDateUtc)
+                : query.OrderBy(x => x.Task.DueDateUtc),
+            "updatedAt" => sort.Descending
+                ? query.OrderByDescending(x => x.Task.UpdatedAtUtc)
+                : query.OrderBy(x => x.Task.UpdatedAtUtc),
+            _ => query.OrderByDescending(x => x.Task.CreatedAtUtc),
+        };
+    }
+
+    private sealed record TaskRow(TaskItem Task, string ProjectKey);
 
     public async Task<IReadOnlyList<ProjectSearchRow>> SearchProjectsAsync(
         Guid workspaceId,
@@ -201,5 +230,53 @@ public sealed class SearchRepository(DevFlowDbContext dbContext) : ISearchReposi
             .ToListAsync(cancellationToken);
 
         return new PagedSearchItems<CommentSearchRow>(page, total);
+    }
+
+    public async Task<PagedSearchItems<CustomFieldSearchRow>> SearchCustomFieldsAsync(
+        Guid workspaceId,
+        string keyword,
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Set<TaskCustomFieldValue>()
+            .AsNoTracking()
+            .Join(
+                dbContext.TaskItems,
+                cfv => cfv.TaskId,
+                task => task.Id,
+                (cfv, task) => new { cfv, task })
+            .Join(
+                dbContext.Projects.Where(p => p.WorkspaceId == workspaceId),
+                x => x.task.ProjectId,
+                project => project.Id,
+                (x, project) => new { x.cfv, x.task, ProjectKey = project.Key })
+            .Join(
+                dbContext.Set<CustomField>(),
+                x => x.cfv.FieldId,
+                field => field.Id,
+                (x, field) => new { x.cfv, x.task, x.ProjectKey, FieldName = field.Name });
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            query = query.Where(x => EF.Functions.ILike(x.cfv.Value!, $"%{keyword}%"));
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var page = await query
+            .OrderBy(x => x.task.Title)
+            .Skip(skip)
+            .Take(take)
+            .Select(x => new CustomFieldSearchRow(
+                x.task.Id,
+                x.task.Title,
+                x.task.ProjectId,
+                x.ProjectKey,
+                x.FieldName,
+                x.cfv.Value))
+            .ToListAsync(cancellationToken);
+
+        return new PagedSearchItems<CustomFieldSearchRow>(page, total);
     }
 }
