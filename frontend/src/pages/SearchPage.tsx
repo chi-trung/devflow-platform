@@ -1,13 +1,15 @@
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Search, FileText, FolderOpen, Layers, Tag, Users, MessageSquare } from "lucide-react";
+import { ArrowLeft, Search, FileText, FolderOpen, Layers, Tag, Users, MessageSquare, ChevronUp, ChevronDown } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Skeleton } from "../components/ui/Skeleton";
-import { searchWorkspace } from "../lib/api";
-import type { SearchResponse } from "../types/api";
+import { searchWorkspace, getSavedSearches, api } from "../lib/api";
+import { useApi } from "../hooks/useApi";
+import type { SearchResponse, WorkspaceMemberResponse, ProjectResponse, SavedSearchResponse, LabelResponse } from "../types/api";
+import { EmptyState } from "../components/ui/EmptyState";
 
 type TabKey = "tasks" | "projects" | "epics" | "labels" | "users" | "comments";
 
@@ -20,18 +22,70 @@ const TABS: { key: TabKey; icon: typeof FileText; i18nKey: string }[] = [
   { key: "comments", icon: MessageSquare, i18nKey: "search.tabComments" },
 ];
 
+const SORT_OPTIONS = [
+  { value: "", labelKey: "search.sortRelevance" },
+  { value: "createdAt", labelKey: "search.sortCreatedAt" },
+  { value: "updatedAt", labelKey: "search.sortUpdatedAt" },
+  { value: "title", labelKey: "search.sortTitle" },
+  { value: "status", labelKey: "search.sortStatus" },
+  { value: "priority", labelKey: "search.sortPriority" },
+  { value: "dueDate", labelKey: "search.sortDueDate" },
+];
+
 export function SearchPage() {
   const { t } = useTranslation();
   const { workspaceId = "" } = useParams();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
+  const [assigneeId, setAssigneeId] = useState("");
+  const [labelId, setLabelId] = useState("");
+  const [dueBefore, setDueBefore] = useState("");
+  const [dueAfter, setDueAfter] = useState("");
+  const [sortBy, setSortBy] = useState("");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [savedSearchId, setSavedSearchId] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("tasks");
   const [searchPage, setSearchPage] = useState(1);
+
+  const { data: membersRaw } = useApi<WorkspaceMemberResponse[]>(
+    () => api(`/workspaces/${workspaceId}/members`),
+    [workspaceId],
+  );
+  const members = membersRaw ?? [];
+
+  const { data: projectsRaw } = useApi<ProjectResponse[]>(
+    () => api(`/workspaces/${workspaceId}/projects`),
+    [workspaceId],
+  );
+  const projects = projectsRaw ?? [];
+
+  const selectedProjectId = projects[0]?.id ?? "";
+
+  const { data: labelsRaw, reload: reloadLabels } = useApi<LabelResponse[]>(
+    () =>
+      api(
+        `/workspaces/${workspaceId}/projects/${selectedProjectId}/labels`,
+      ),
+    [workspaceId, selectedProjectId],
+  );
+  const labels = labelsRaw ?? [];
+
+  useEffect(() => {
+    if (selectedProjectId) {
+      reloadLabels();
+    }
+  }, [selectedProjectId, reloadLabels]);
+
+  const { data: savedSearchesRaw } = useApi<SavedSearchResponse[]>(
+    () => getSavedSearches(),
+    [],
+  );
+  const savedSearches = savedSearchesRaw ?? [];
 
   async function runSearch(page = 1) {
     setLoading(true);
@@ -42,6 +96,12 @@ export function SearchPage() {
       const data = await searchWorkspace(workspaceId, query.trim(), {
         status: status || undefined,
         priority: priority || undefined,
+        assigneeId: assigneeId || undefined,
+        labelId: labelId || undefined,
+        dueBefore: dueBefore || undefined,
+        dueAfter: dueAfter || undefined,
+        sortBy: sortBy || undefined,
+        sortDir: sortDir || undefined,
       }, page, 20);
       setResult(data);
     } catch (err) {
@@ -51,13 +111,39 @@ export function SearchPage() {
     }
   }
 
+  function applySavedSearch(searchId: string) {
+    const saved = savedSearches.find((s) => s.id === searchId);
+    if (!saved) return;
+    setSavedSearchId(searchId);
+    setQuery(saved.query);
+    try {
+      const filters = JSON.parse(saved.filtersJson ?? "{}") as Record<string, string>;
+      setStatus(filters.status ?? "");
+      setPriority(filters.priority ?? "");
+      setAssigneeId(filters.assigneeId ?? "");
+      setLabelId(filters.labelId ?? "");
+      setDueBefore(filters.dueBefore ?? "");
+      setDueAfter(filters.dueAfter ?? "");
+      setSortBy(filters.sortBy ?? "");
+      setSortDir((filters.sortDir === "asc" ? "asc" : "desc"));
+    } catch {
+      // ignore malformed saved search
+    }
+    runSearch(1);
+  }
+
   async function handleSearch(event: FormEvent) {
     event.preventDefault();
+    setSavedSearchId("");
     runSearch(1);
   }
 
   function handleLoadMore() {
     runSearch(searchPage + 1);
+  }
+
+  function toggleSortDir() {
+    setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
   }
 
   const tabCounts: Record<TabKey, number> = {
@@ -134,11 +220,111 @@ export function SearchPage() {
               <option value="High">High</option>
               <option value="Critical">Critical</option>
             </select>
+            <select
+              value={assigneeId}
+              onChange={(e) => setAssigneeId(e.target.value)}
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            >
+              <option value="">{t("search.allAssignees")}</option>
+              {members.map((member) => (
+                <option key={member.userId} value={member.userId}>
+                  {member.displayName || member.username}
+                </option>
+              ))}
+            </select>
+            <select
+              value={labelId}
+              onChange={(e) => setLabelId(e.target.value)}
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            >
+              <option value="">{t("search.allLabels")}</option>
+              {labels.map((label) => (
+                <option key={label.id} value={label.id}>
+                  {label.name}
+                </option>
+              ))}
+            </select>
+            <Input
+              type="date"
+              value={dueBefore}
+              onChange={(e) => setDueBefore(e.target.value)}
+              placeholder={t("search.dueBefore")}
+            />
+            <Input
+              type="date"
+              value={dueAfter}
+              onChange={(e) => setDueAfter(e.target.value)}
+              placeholder={t("search.dueAfter")}
+            />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {t(option.labelKey)}
+                </option>
+              ))}
+            </select>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={toggleSortDir}
+                className="shrink-0"
+              >
+                {sortDir === "asc" ? (
+                  <ChevronUp className="size-4" aria-hidden />
+                ) : (
+                  <ChevronDown className="size-4" aria-hidden />
+                )}
+              </Button>
+              <select
+                value={savedSearchId}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  if (id) applySavedSearch(id);
+                }}
+                className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
+              >
+                <option value="">{t("search.applySavedSearch")}</option>
+                {savedSearches.map((saved) => (
+                  <option key={saved.id} value={saved.id}>
+                    {saved.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <Button type="submit" disabled={loading}>
-            <Search className="size-4" aria-hidden />
-            {loading ? t("search.searching") : t("search.search")}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button type="submit" disabled={loading}>
+              <Search className="size-4" aria-hidden />
+              {loading ? t("search.searching") : t("search.search")}
+            </Button>
+            {(status || priority || assigneeId || labelId || dueBefore || dueAfter || sortBy) && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setQuery("");
+                  setStatus("");
+                  setPriority("");
+                  setAssigneeId("");
+                  setLabelId("");
+                  setDueBefore("");
+                  setDueAfter("");
+                  setSortBy("");
+                  setSortDir("desc");
+                  setSavedSearchId("");
+                  setResult(null);
+                  setSearched(false);
+                }}
+              >
+                {t("search.clearFilters")}
+              </Button>
+            )}
+          </div>
         </form>
 
         {loading ? (
@@ -147,15 +333,11 @@ export function SearchPage() {
             <Skeleton className="h-24 w-full" />
           </div>
         ) : !searched ? (
-          <div className="rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
-            <Search className="mx-auto size-8 text-muted-foreground" aria-hidden />
-            <p className="mt-2 font-display text-lg font-semibold">
-              {t("search.emptyTitle")}
-            </p>
-            <p className="max-w-sm mx-auto mt-1 text-sm text-muted-foreground">
-              {t("search.emptyDescription")}
-            </p>
-          </div>
+          <EmptyState
+            icon={<Search className="mx-auto size-8 text-muted-foreground" aria-hidden />}
+            title={t("search.emptyTitle")}
+            description={t("search.emptyDescription")}
+          />
         ) : result === null ? (
           <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
             {error || t("search.loadFailed")}
@@ -248,14 +430,11 @@ export function SearchPage() {
             })()}
 
             {visibleTabs.length === 0 && (
-              <div className="rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
-                <p className="font-display text-lg font-semibold">
-                  {t("search.noResults")}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {t("search.noResultsDescription")}
-                </p>
-              </div>
+              <EmptyState
+                icon={<Search className="size-8 text-muted-foreground" aria-hidden />}
+                title={t("search.noResults")}
+                description={t("search.noResultsDescription")}
+              />
             )}
           </div>
         )}

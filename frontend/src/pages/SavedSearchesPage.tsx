@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Skeleton } from "../components/ui/Skeleton";
+import { EmptyState } from "../components/ui/EmptyState";
 import {
   createSavedSearch,
   deleteSavedSearch,
@@ -201,23 +202,19 @@ export function SavedSearchesPage() {
             ))}
           </div>
         ) : searches.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
-            <p className="font-display text-lg font-semibold">
-              {t("savedSearch.emptyTitle")}
-            </p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              {t("savedSearch.emptyDescription")}
-            </p>
-            {!creating && (
-              <Button
-                className="mt-2"
-                onClick={() => setCreating(true)}
-              >
-                <Plus className="size-4" aria-hidden />
-                {t("savedSearch.create")}
-              </Button>
-            )}
-          </div>
+          <EmptyState
+            icon={<Search className="size-8 text-muted-foreground" aria-hidden />}
+            title={t("savedSearch.emptyTitle")}
+            description={t("savedSearch.emptyDescription")}
+            action={
+              !creating && (
+                <Button className="mt-2" onClick={() => setCreating(true)}>
+                  <Plus className="size-4" aria-hidden />
+                  {t("savedSearch.create")}
+                </Button>
+              )
+            }
+          />
         ) : (
           <ul className="flex flex-col gap-3">
             {searches.map((search) => (

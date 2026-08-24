@@ -408,6 +408,8 @@ export interface SearchFilters {
   labelId?: string;
   dueBefore?: string;
   dueAfter?: string;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
 }
 
 export function searchWorkspace(
@@ -436,6 +438,17 @@ export async function restoreProject(
 ): Promise<void> {
   await api(`/workspaces/${workspaceId}/projects/${projectId}/restore`, {
     method: "POST",
+  });
+}
+
+export async function updateProject(
+  workspaceId: string,
+  projectId: string,
+  data: { name: string; description?: string | null },
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}/projects/${projectId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
   });
 }
 

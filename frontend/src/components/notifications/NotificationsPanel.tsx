@@ -8,6 +8,7 @@ import type { IncomingNotification } from "../../lib/realtime";
 import { deleteAllReadNotifications } from "../../lib/api";
 import { useToast } from "../ui/ToastProvider";
 import { NotificationItem } from "./NotificationItem";
+import { Dialog } from "../ui/Dialog";
 
 type NotificationFilter = "all" | "unread" | "read" | "mentions";
 
@@ -268,15 +269,12 @@ export function NotificationsPanel({
       )}
 
       {pendingCleanup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl">
-            <h3 className="font-display font-semibold">
-              {t("notification.cleanupTitle")}
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("notification.cleanupMessage")}
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
+        <Dialog
+          open
+          onClose={() => setPendingCleanup(false)}
+          title={t("notification.cleanupTitle")}
+          footer={
+            <>
               <button
                 type="button"
                 onClick={() => setPendingCleanup(false)}
@@ -291,9 +289,11 @@ export function NotificationsPanel({
               >
                 {t("notification.cleanupConfirm")}
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <p className="text-sm text-muted-foreground">{t("notification.cleanupMessage")}</p>
+        </Dialog>
       )}
     </div>
   );
