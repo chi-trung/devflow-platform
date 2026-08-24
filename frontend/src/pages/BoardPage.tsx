@@ -585,13 +585,50 @@ export function BoardPage() {
     priority: TaskItemResponse["priority"];
     dueDateUtc: string | null;
   }) {
-    await api<{ id: string }>(
-      `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
-      { method: "POST", body: JSON.stringify(input) },
-    );
+    // Optimistic insert: render the new card immediately at the bottom of the
+    // Backlog column (the server default) while the POST is in flight, then
+    // reconcile with the real row when the response lands.
+    const optimisticId = `opt-${Date.now().toString(36)}`;
+    const optimistic: TaskItemResponse = {
+      id: optimisticId,
+      projectId,
+      title: input.title,
+      description: input.description,
+      status: "Backlog",
+      priority: input.priority,
+      assigneeId: null,
+      sprintId: null,
+      dueDateUtc: input.dueDateUtc,
+      completedAtUtc: null,
+      position: tasks.length,
+    };
+    setTasks((prev) => [...prev, optimistic]);
     setCreating(false);
-    reload();
-    push(t("board.taskCreated"));
+
+    try {
+      const created = await api<{ id: string }>(
+        `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
+        { method: "POST", body: JSON.stringify(input) },
+      );
+      // Reconcile: swap the optimistic row for the server row (reload also
+      // fires, but this removes the temp id immediately for any live edits).
+      if (created?.id) {
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === optimisticId ? { ...t, id: created.id } : t,
+          ),
+        );
+      }
+      reload();
+      push(t("board.taskCreated"));
+    } catch (err) {
+      // Roll back the optimistic row on failure.
+      setTasks((prev) => prev.filter((t) => t.id !== optimisticId));
+      const message =
+        err instanceof Error ? err.message : t("board.createFailed");
+      setBoardError(message);
+      push(message, "error");
+    }
   }
 
   async function deleteTask(task: TaskItemResponse) {
