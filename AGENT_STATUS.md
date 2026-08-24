@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 In Progress 🚧**
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅**
 
 ---
 
@@ -19,7 +19,7 @@
 | **Sprint 25** | Guardrails & Collaboration Depth (RBAC + Presence + Watchers + Activity) | ✅ DONE (A25.1) RBAC hardening — PR #109; (B25.1-2) presence broadcast + task watchers — PR #110, #111 | ✅ DONE (C25.1-2) presence fix + role-aware UI — PR #112; (D25.1-2) activity transparency — PR #110 | Complete ✅ |
 | **Sprint 26** | Performance & Data Integrity Hardening (Dashboard perf + Outbox DLQ + Soft-delete + Watchers UI + FE tests + CI safety) | ✅ Agent A: A26.1 Dashboard rewrite, A26.2 Outbox DLQ, A26.3 Sprint delete, A26.4 review/merge; Agent B: B26.1 unified notification prefs, B26.2 soft-delete + restore | ✅ Agent C: C26.1 task watcher UI, C26.2 dashboard actor names + empty states; Agent D: D26.1 Vitest + FE tests, D26.2 CI safety | Complete ✅ |
 | **Sprint 27** | Search & Event Coverage (DB-level search + pagination + Email 4 events + Restore UI + Prefs UI + DB backup) | ✅ Agent A: A27.1 global search rewrite — PR #121, A27.2 review/merge; Agent B: B27.1 email templates+toggles, B27.2 unit tests — PR #122 | ✅ Agent C: C27.1 paginated search UI, C27.2 archived-project list + Restore UI — PR #123; Agent D: D27.1 prefs settings UI, D27.2 DB backup automation — PR #120 | Complete ✅ |
-| **Sprint 28** | Webhook Reliability & Project Mgmt UX (DLQ fix + admin retry + test coverage + reporting/search polish + project settings UI + analytics tiles + notification mentions) | 🚧 Agent A: A28.1 webhook DLQ fix + admin retry endpoint; A28.2 review/merge; Agent B: B28.1 tests Bulk/Export/Import/Users, B28.2 reporting trends + search sort/custom-field | 🚧 Agent C: C28.1 project settings UI + Dialog/EmptyState, C28.2 search filter parity + sort; Agent D: D28.1 workspace analytics tiles, D28.2 mention filter + settings link + vi.json | In Progress 🚧 |
+| **Sprint 28** | Webhook Reliability & Project Mgmt UX (DLQ fix + admin retry + test coverage + reporting/search polish + project settings UI + analytics tiles + notification mentions) | ✅ Agent A: A28.1 webhook DLQ fix + admin retry endpoint — PR #124; A28.2 review/merge — PRs #125, #127, #128, #129, #130; Agent B: B28.1 tests Bulk/Export/Import/Users, B28.2 reporting trends + search sort/custom-field — PR #125 | ✅ Agent C: C28.1 project settings UI + Dialog/EmptyState, C28.2 search filter parity + sort — PR #129; Agent D: D28.1 workspace analytics tiles, D28.2 mention filter + settings link + vi.json — PR #127 | Complete ✅ |
 
 ---
 
@@ -354,28 +354,30 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 - [x] **D27.1: Notification-preferences settings UI** — 4 toggle groups mới (StatusChanged/CommentAdded/RoleChanged/RemovedFromWorkspace) trên `SettingsPage.tsx`. *(PR #120)*
 - [x] **D27.2: DB backup automation** — `scripts/backup-db.sh` + `.github/workflows/backup.yml` (daily pg_dump) + `docs/sprint27/runbook-backup.md`. *(PR #120)*
 
-### 🚀 Sprint 28 — Webhook Reliability & Project Mgmt UX 🚧 In Progress
+### 🚀 Sprint 28 — Webhook Reliability & Project Mgmt UX ✅ Complete
 
 **Goal:** Bịt P0 — webhook delivery failures bị `catch {}` nuốt nên DLQ không bao giờ được populate; thêm admin retry endpoint. Đồng thời phủ test 4 feature folders trống, hiện thực hóa reporting trends, thêm search sort + custom-field search, UI project settings, component library (Dialog/EmptyState), workspace analytics tiles, mention filter + vi.json.
+
+> **PRs:** #124 (A28.1), #125 (B), #127 (D), #128 (A28.2 UX: optimistic auth + activity feed pagination), #129 (C), #130 (A28.2 UX fixes: keepalive /health robustness + task comments cold-start retry).
 
 > **Plan:** `docs/sprint28/plan.md` — 8 tasks / 4 agents.
 > **Prompts:** `docs/sprint28/prompts/prompt-{B,C,D}.md`.
 
 #### 🚀 Agent A (Team Lead — Backend Webhook DLQ)
-- [ ] **A28.1: Webhook DLQ fix + admin retry endpoint** — bỏ `catch {}` trong `WebhookDispatcher.DispatchAsync` để lỗi propagate lên OutboxProcessor (retry 10× → dead-letter); thêm `GetDeadLetteredAsync`/`ResetRetryAsync` cho `IOutboxRepository`; `GET /admin/outbox/dead-letter` + `POST /admin/outbox/{id}/replay`.
-- [ ] **A28.2: Review & merge B/C/D PRs** — chạy `dotnet test`/`npm run build` + i18n parity; update AGENT_STATUS.md.
+- [x] **A28.1: Webhook DLQ fix + admin retry endpoint** — bỏ `catch {}` trong `WebhookDispatcher.DispatchAsync` để lỗi propagate lên OutboxProcessor (retry 10× → dead-letter); thêm `GetDeadLetteredAsync`/`ResetRetryAsync` cho `IOutboxRepository`; `GET /admin/outbox/dead-letter` + `POST /admin/outbox/{id}/replay`. *(PR #124 merged)*
+- [x] **A28.2: Review & merge B/C/D PRs** — chạy `dotnet test`/`npm run build` + i18n parity; update AGENT_STATUS.md. *(PRs #124, #125, #127, #128, #129, #130 all merged; bonus UX fixes: optimistic auth load + ActivityFeed pagination #128, keepalive /health robustness + task comments cold-start retry #130)*
 
 #### 🤖 Agent B (Backend — Tests + Reporting/Search)
-- [ ] **B28.1: Unit tests cho 4 feature folders** — `BulkOperations`, `Export`, `Import`, `Users` (≥2 tests/folder, NSubstitute).
-- [ ] **B28.2: Reporting trends + search sort + custom-field search** — `TeamReportTrends` real deltas; `sortBy`/`sortDir` (whitelist SQL-safe keys); `SearchCustomFieldsAsync` (ILike).
+- [x] **B28.1: Unit tests cho 4 feature folders** — `BulkOperations`, `Export`, `Import`, `Users` (≥2 tests/folder, NSubstitute). *(PR #125 merged)*
+- [x] **B28.2: Reporting trends + search sort + custom-field search** — `TeamReportTrends` real deltas; `sortBy`/`sortDir` (whitelist SQL-safe keys); `SearchCustomFieldsAsync` (ILike). *(PR #125 merged)*
 
 #### 🎨 Agent C (Frontend — Project Settings + Search UX)
-- [ ] **C28.1: Project edit UI + Dialog/EmptyState** — `components/ui/Dialog.tsx` + `EmptyState.tsx`, migrate ConfirmDialog + 1 modal, `updateProject` PATCH, Edit button (Admin-gated).
-- [ ] **C28.2: Search filter parity + sort** — assignee/label/due filters, sort controls, apply-saved-search dropdown.
+- [x] **C28.1: Project edit UI + Dialog/EmptyState** — `components/ui/Dialog.tsx` + `EmptyState.tsx`, migrate ConfirmDialog + 1 modal, `updateProject` PATCH, Edit button (Admin-gated). *(PR #129 merged)*
+- [x] **C28.2: Search filter parity + sort** — assignee/label/due filters, sort controls, apply-saved-search dropdown. *(PR #129 merged)*
 
 #### 🚀 Agent D (Frontend — Analytics + Notifications + i18n)
-- [ ] **D28.1: Workspace-level analytics tiles** — wire `getTeamReport` vào Dashboard (completed delta, per-member load, minutes), sprint health card, "View reports" link.
-- [ ] **D28.2: Mention filter + settings link + vi.json** — "Mentions" tab (client-side `type.toLowerCase() === "mention"`), `/settings#notifications` deep-link, translate `savedSearch`/`commandPalette` vi.json values.
+- [x] **D28.1: Workspace-level analytics tiles** — wire `getTeamReport` vào Dashboard (completed delta, per-member load, minutes), sprint health card, "View reports" link. *(PR #127 merged)*
+- [x] **D28.2: Mention filter + settings link + vi.json** — "Mentions" tab (client-side `type.toLowerCase() === "mention"`), `/settings#notifications` deep-link, translate `savedSearch`/`commandPalette` vi.json values. *(PR #127 merged)*
 
 ---
 
@@ -393,5 +395,5 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-*DevFlow Architecture Team — Updated 2026-08-24 (Sprint 28 In Progress 🚧)*
+*DevFlow Architecture Team — Updated 2026-08-24 (Sprint 28 Complete ✅)*
 
