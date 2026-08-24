@@ -3,7 +3,7 @@ using DevFlow.Domain.Enums;
 
 namespace DevFlow.Domain.Entities;
 
-public class Project : BaseEntity, IAuditableEntity
+public class Project : BaseEntity, IAuditableEntity, ISoftDeletable
 {
     private Project()
     {
@@ -30,6 +30,8 @@ public class Project : BaseEntity, IAuditableEntity
     public DateTimeOffset CreatedAtUtc { get; set; }
 
     public DateTimeOffset? UpdatedAtUtc { get; set; }
+
+    public DateTimeOffset? DeletedAtUtc { get; set; }
 
     public static Project Create(Guid workspaceId, string name, string key, string? description)
     {
@@ -65,5 +67,10 @@ public class Project : BaseEntity, IAuditableEntity
     public void Archive()
     {
         Status = ProjectStatus.Archived;
+    }
+
+    public void Restore()
+    {
+        Status = ProjectStatus.Active;
     }
 }
