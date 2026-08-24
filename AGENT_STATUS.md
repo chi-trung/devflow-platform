@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | **Sprint 22 In Progress 🎯**
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | **Sprint 22 Complete ✅**
 
 ---
 
@@ -13,7 +13,7 @@
 | **Sprint 19** | GitHub Integration & Webhook Outbox | ✅ DONE (B19.1-B19.3) — PR #93 | ✅ DONE (F19.1-F19.3) — PR #92 | Complete ✅ |
 | **Sprint 20** | Advanced Agile Analytics & Custom Fields | ✅ DONE (B20.1-3) — PR #94, #95 | ✅ DONE (F20.1-3) — PR #94 | Complete ✅ |
 | **Sprint 21** | Live Team Experience (Notifications + My Work + Dashboard) | ✅ DONE (B21.1-3) — PR #98 | ✅ DONE (F21.1-2) — PR #96, (A21.1-2) — PR #97 | Complete ✅ |
-| **Sprint 22** | Observability & Collaboration Depth (Activity Log + Notifications + UI Depth + Search) | ✅ DONE (B22.1-3) — PR #100 | ✅ DONE (C22.1-3) — PR #101, A22.1-2 (Agent A), D22.1-2 (Agent D) | In Progress 🎯 |
+| **Sprint 22** | Observability & Collaboration Depth (Activity Log + Notifications + UI Depth + Search) | ✅ DONE (B22.1-3) — PR #100 | ✅ DONE (C22.1-3) — PR #101, A22.1-2 (Agent A), D22.1-2 (Agent D) — PR #102 | Complete ✅ |
 
 ---
 
@@ -214,16 +214,16 @@ blockers/blocked-by toggle). Landed on main via PR #76.
   - Mark-all-read + cleanup buttons + filter tabs + "all caught up" empty state.
 
 #### 🚀 Agent D (Fullstack — mới)
-- [ ] **D22.1: Search Enhancement**
+- [x] **D22.1: Search Enhancement** — PR #102 ✅
   - Backend: search comments, epics, labels, users. Frontend: tabbed results + command palette.
-- [ ] **D22.2: Team Report Depth**
+- [x] **D22.2: Team Report Depth** — PR #102 ✅
   - Backend: per-member breakdown + trend indicators. Frontend: member table + trend chips.
 
 #### 🚀 Agent A (Team Lead)
 - [x] **A22.1: Activity Log Coverage** — PR #99 ✅
   - Thêm ActivityLog vào task create/update/delete, subtask, comment handlers.
   - Test: 3+ unit tests (153/153 green).
-- [ ] **A22.2: Review & merge B/C/D PRs**
+- [x] **A22.2: Review & merge B/C/D PRs** — #100 (B), #101 (C), #102 (D) ✅
 
 
 
