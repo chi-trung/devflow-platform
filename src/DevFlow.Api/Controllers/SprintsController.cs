@@ -43,6 +43,26 @@ public sealed class SprintsController(ISender sender) : ControllerBase
         return Ok(sprints);
     }
 
+    [HttpPut("{sprintId:guid}")]
+    [ProducesResponseType(typeof(Application.Features.Sprints.SprintResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Update(
+        Guid workspaceId,
+        Guid projectId,
+        Guid sprintId,
+        UpdateSprintRequest request,
+        CancellationToken cancellationToken)
+    {
+        var sprint = await sender.Send(
+            new Application.Features.Sprints.Update.UpdateSprintCommand(
+                workspaceId, projectId, sprintId, request.Name, request.Goal),
+            cancellationToken);
+
+        return Ok(sprint);
+    }
+
     [HttpPost("{sprintId:guid}/start")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]

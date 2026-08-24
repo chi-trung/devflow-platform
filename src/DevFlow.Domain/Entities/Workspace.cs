@@ -45,6 +45,17 @@ public class Workspace : BaseEntity, IAuditableEntity
         return new Workspace(name.Trim(), slug.Trim().ToLowerInvariant(), description?.Trim());
     }
 
+    public void UpdateDetails(string name, string? description)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Name is required.", nameof(name));
+        }
+
+        Name = name.Trim();
+        Description = description?.Trim();
+    }
+
     public WorkspaceMember AddMember(Guid userId, WorkspaceRole role)
     {
         if (_members.Any(member => member.UserId == userId))

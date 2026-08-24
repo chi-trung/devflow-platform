@@ -59,6 +59,20 @@ public sealed class WorkspacesController(ISender sender) : ControllerBase
         return Ok(workspace);
     }
 
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(Application.Features.Workspaces.List.WorkspaceResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Update(Guid id, UpdateWorkspaceRequest request, CancellationToken cancellationToken)
+    {
+        var workspace = await sender.Send(
+            new Application.Features.Workspaces.Update.UpdateWorkspaceCommand(id, request.Name, request.Description),
+            cancellationToken);
+
+        return Ok(workspace);
+    }
+
     [HttpGet("{id:guid}/members")]
     [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Workspaces.ListMembers.WorkspaceMemberResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
