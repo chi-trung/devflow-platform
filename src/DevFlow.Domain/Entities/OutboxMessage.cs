@@ -46,4 +46,54 @@ public class OutboxMessage : BaseEntity
             FailedPermanentlyAt = DateTimeOffset.UtcNow;
         }
     }
+
+    /// <summary>
+    /// Resets retry state so a dead-lettered message is picked up again by the
+    /// processor on the next cycle (used by the admin replay endpoint).
+    /// </summary>
+    public void ResetRetry()
+    {
+        RetryCount = 0;
+        Error = null;
+        FailedPermanentlyAt = null;
+    }
+
+    /// <summary>
+    /// Extracts the workspace the message belongs to from its payload.
+    /// Webhook payloads carry a top-level <c>workspaceId</c> (serialized camelCase).
+    /// Returns null for messages without one (e.g. future non-webhook types).
+    /// </summary>
+    public static Guid? ResolveWorkspaceId(string type, string payload)
+    {
+        if (!type.StartsWith("webhook.", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(payload);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("workspaceId", out var workspaceId) && workspaceId.TryGetGuid(out var id))
+            {
+                return id;
+            }
+
+            // Fallback: case-insensitive lookup in case the payload was serialized
+            // with a different casing convention.
+            foreach (var property in root.EnumerateObject())
+            {
+                if (string.Equals(property.Name, "workspaceId", StringComparison.OrdinalIgnoreCase)
+                    && property.Value.TryGetGuid(out var fallback))
+                {
+                    return fallback;
+                }
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            // Corrupt payload — caller treats it as un-scoped.
+        }
+
+        return null;
+    }
 }
