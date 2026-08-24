@@ -80,6 +80,25 @@ public class NotificationHandlerTests
     }
 
     [Fact]
+    public async Task Cleanup_ShouldDeleteNotificationsOlderThanCutoff()
+    {
+        _notificationRepository
+            .DeleteOlderThanAsync(_userId, Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        var handler = new CleanupNotificationsCommandHandler(_notificationRepository, _userContext, _unitOfWork);
+        var command = new CleanupNotificationsCommand(90);
+
+        var deleted = await handler.Handle(command, CancellationToken.None);
+
+        await _notificationRepository.Received(1).DeleteOlderThanAsync(
+            _userId,
+            Arg.Is<DateTimeOffset>(cutoff => cutoff < DateTimeOffset.UtcNow.AddDays(-89)),
+            Arg.Any<CancellationToken>());
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task GetNotifications_ShouldReturnPagedResults()
     {
         var notifications = new List<Notification>

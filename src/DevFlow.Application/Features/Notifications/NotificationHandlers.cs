@@ -126,3 +126,17 @@ public sealed class DeleteAllReadNotificationsCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
+
+public sealed class CleanupNotificationsCommandHandler(
+    INotificationRepository notificationRepository,
+    IUserContext userContext,
+    IUnitOfWork unitOfWork) : IRequestHandler<CleanupNotificationsCommand, int>
+{
+    public async Task<int> Handle(CleanupNotificationsCommand command, CancellationToken cancellationToken)
+    {
+        var cutoff = DateTimeOffset.UtcNow.AddDays(-command.Days);
+        await notificationRepository.DeleteOlderThanAsync(userContext.UserId, cutoff, cancellationToken);
+        var affected = await unitOfWork.SaveChangesAsync(cancellationToken);
+        return affected;
+    }
+}

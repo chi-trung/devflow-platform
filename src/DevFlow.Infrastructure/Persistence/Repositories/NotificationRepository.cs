@@ -73,4 +73,14 @@ public sealed class NotificationRepository(DevFlowDbContext dbContext) : INotifi
         dbContext.Notifications.RemoveRange(read);
         await Task.CompletedTask;
     }
+
+    public async Task DeleteOlderThanAsync(Guid userId, DateTimeOffset cutoff, CancellationToken cancellationToken = default)
+    {
+        var old = await dbContext.Notifications
+            .Where(n => n.UserId == userId && n.CreatedAtUtc < cutoff)
+            .ToListAsync(cancellationToken);
+
+        dbContext.Notifications.RemoveRange(old);
+        await Task.CompletedTask;
+    }
 }
