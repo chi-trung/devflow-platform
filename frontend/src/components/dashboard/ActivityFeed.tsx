@@ -50,7 +50,7 @@ export function ActivityFeed({ items, workspaceId }: ActivityFeedProps) {
                   <Icon className="size-3.5" aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1 leading-snug">
-                  <span className="font-medium">{item.actorName}</span>{" "}
+                  <span className="font-medium">{item.actorName || t("dashboard.someone")}</span>{" "}
                   <span className="text-muted-foreground">
                     {item.action}
                     {target}

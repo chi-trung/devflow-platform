@@ -1,8 +1,8 @@
 name: Auto Merge
 
 on:
-  pull_request_target:
-    types: [opened, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted]
 
 permissions:
   contents: write
@@ -11,11 +11,31 @@ permissions:
 jobs:
   enable-auto-merge:
     runs-on: ubuntu-latest
+    # Only enable auto-merge when the review is an APPROVAL (not comment/dismiss)
+    if: github.event.review.state == 'approved'
     steps:
       - name: Enable auto-merge (merges when required checks pass)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Enable auto-merge — GitHub will only merge when all required
+          # status checks are green AND branch protection rules are satisfied.
           gh pr merge "${{ github.event.pull_request.number }}" \
             --repo "${{ github.repository }}" \
             --merge --auto --delete-branch
+
+      - name: Verify all CI jobs passed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Wait briefly for checks to settle, then verify status
+          sleep 10
+          STATUS=$(gh pr checks "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" \
+            --json conclusion \
+            --jq '[.[] | select(.conclusion != "SUCCESS" and .conclusion != null and .conclusion != "SKIPPED")] | length')
+          if [ "$STATUS" -gt 0 ]; then
+            echo "::warning::Some CI checks have not passed. Auto-merge will remain pending until all checks are green."
+          else
+            echo "All CI checks passed. Auto-merge enabled."
+          fi

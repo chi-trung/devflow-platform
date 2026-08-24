@@ -1092,6 +1092,36 @@ export async function reorderTasks(
   });
 }
 
+export async function watchTask(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/watch`, {
+    method: "PUT",
+  });
+}
+
+export async function unwatchTask(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/watch`, {
+    method: "DELETE",
+  });
+}
+
+export async function isWatchingTask(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+): Promise<boolean> {
+  return api<boolean>(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/watch`,
+  );
+}
+
 export function getSavedSearches(): Promise<SavedSearchResponse[]> {
   return api<SavedSearchResponse[]>("/users/me/saved-searches");
 }

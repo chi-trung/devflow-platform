@@ -11,11 +11,22 @@ namespace DevFlow.IntegrationTests;
 public sealed class DevFlowWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly PostgreSqlContainer? dbContainer;
+    private readonly string? externalConnectionString;
 
     public static bool IsDockerAvailable { get; private set; } = true;
 
     public DevFlowWebApplicationFactory()
     {
+        // Prefer an externally-provided connection string (CI service container)
+        externalConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+
+        if (!string.IsNullOrWhiteSpace(externalConnectionString))
+        {
+            // CI provides real Postgres — no need for Testcontainers
+            IsDockerAvailable = true;
+            return;
+        }
+
         try
         {
             dbContainer = new PostgreSqlBuilder()
@@ -31,7 +42,7 @@ public sealed class DevFlowWebApplicationFactory : WebApplicationFactory<Program
 
     public override async ValueTask DisposeAsync()
     {
-        if (IsDockerAvailable && dbContainer is not null)
+        if (dbContainer is not null)
         {
             try
             {
@@ -60,9 +71,13 @@ public sealed class DevFlowWebApplicationFactory : WebApplicationFactory<Program
                 ["RateLimiting:Enabled"] = "false"
             };
 
-            if (IsDockerAvailable && dbContainer is not null)
+            // Resolve the connection string: env var > Testcontainers > null (InMemory fallback)
+            var connectionString = externalConnectionString
+                ?? (IsDockerAvailable && dbContainer is not null ? dbContainer.GetConnectionString() : null);
+
+            if (connectionString is not null)
             {
-                settings["ConnectionStrings:Database"] = dbContainer.GetConnectionString();
+                settings["ConnectionStrings:Database"] = connectionString;
             }
 
             config.AddInMemoryCollection(settings);
@@ -70,7 +85,7 @@ public sealed class DevFlowWebApplicationFactory : WebApplicationFactory<Program
 
         builder.ConfigureServices(services =>
         {
-            if (!IsDockerAvailable)
+            if (externalConnectionString is null && !IsDockerAvailable)
             {
                 var descriptor = services.SingleOrDefault(
                     d => d.ServiceType == typeof(DbContextOptions<DevFlowDbContext>));

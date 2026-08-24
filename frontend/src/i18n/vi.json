@@ -43,6 +43,10 @@
     "tasks": "tasks",
     "recentActivity": "Hoạt động gần đây",
     "noActivity": "Chưa có hoạt động nào trong workspace này.",
+    "upcomingDeadlines": "Hạn sắp tới",
+    "noDeadlines": "Không có hạn sắp tới",
+    "noDeadlinesDesc": "Bạn đã cập nhật hết — không có task nào sắp đến hạn.",
+    "someone": "Ai đó",
     "noWorkspaces": "Chưa có workspace nào",
     "noWorkspacesDesc": "Workspace chứa đội nhóm, dự án và bảng. Tạo workspace đầu tiên để bắt đầu.",
     "newWorkspace": "Tạo workspace mới",
@@ -198,7 +202,14 @@
     "taskUpdated": "Đã cập nhật task",
     "movedTo": "Đã chuyển sang {{column}}",
     "urgent": "Gấp",
-    "blockedByDependencies": "Bị chặn bởi phụ thuộc"
+    "blockedByDependencies": "Bị chặn bởi phụ thuộc",
+    "watch": "Theo dõi",
+    "unwatch": "Bỏ theo dõi",
+    "watchAria": "Theo dõi task này",
+    "unwatchAria": "Bỏ theo dõi task này",
+    "watched": "Đang theo dõi task này",
+    "unwatched": "Đã bỏ theo dõi",
+    "watchFailed": "Không thể cập nhật trạng thái theo dõi"
   },
   "filter": {
     "filters": "Bộ lọc",

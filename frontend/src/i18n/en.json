@@ -68,7 +68,11 @@
     "analyticsUnavailable": "Cycle/lead time analytics not available yet",
     "project": "Project",
     "cycleLeadTitle": "Cycle / Lead Time",
-    "exportCsv": "Export CSV"
+    "exportCsv": "Export CSV",
+    "upcomingDeadlines": "Upcoming deadlines",
+    "noDeadlines": "No upcoming deadlines",
+    "noDeadlinesDesc": "You're all caught up — no tasks due soon.",
+    "someone": "Someone"
   },
   "board": {
     "backlog": "Backlog",
@@ -198,7 +202,14 @@
     "taskUpdated": "Task updated",
     "movedTo": "Moved to {{column}}",
     "urgent": "Urgent",
-    "blockedByDependencies": "Blocked by dependencies"
+    "blockedByDependencies": "Blocked by dependencies",
+    "watch": "Watch",
+    "unwatch": "Unwatch",
+    "watchAria": "Watch this task",
+    "unwatchAria": "Stop watching this task",
+    "watched": "Now watching this task",
+    "unwatched": "Stopped watching this task",
+    "watchFailed": "Couldn't update watch status"
   },
   "filter": {
     "filters": "Filters",

@@ -56,7 +56,7 @@ export interface UseNotificationsOptions {
 }
 
 export function useNotifications(
-  workspaceId?: string | null,
+  _workspaceId?: string | null,
   enabled = true,
   options?: UseNotificationsOptions,
 ): {

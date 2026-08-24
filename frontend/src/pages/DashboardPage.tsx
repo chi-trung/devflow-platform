@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { Plus, ArrowUpRight, Boxes } from "lucide-react";
+import { Plus, ArrowUpRight, Boxes, CalendarRange } from "lucide-react";
 import { api, pagedItems } from "../lib/api";
 import { loadDashboard, type DashboardResult } from "../lib/dashboard";
 import { useApi } from "../hooks/useApi";
@@ -252,6 +252,36 @@ export function DashboardPage() {
                     workspaceId={selectedWsId}
                   />
                 </div>
+                {dashboard.data.upcomingDeadlines.length > 0 ? (
+                  <section aria-label={t("dashboard.upcomingDeadlines")} className="mt-4 rounded-xl border border-border bg-card p-5">
+                    <h2 className="mb-3 inline-flex items-center gap-1.5 font-display font-semibold">
+                      <CalendarRange className="size-4 text-primary" aria-hidden />
+                      {t("dashboard.upcomingDeadlines")}
+                    </h2>
+                    <ul className="space-y-1">
+                      {dashboard.data.upcomingDeadlines.map((deadline) => (
+                        <li key={deadline.id} className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors duration-150 hover:bg-elevated">
+                          <span className="min-w-0 flex-1 truncate">{deadline.title}</span>
+                          <span className="rounded-md bg-elevated px-2 py-0.5 font-mono text-xs text-muted-foreground">
+                            {deadline.projectKey}
+                          </span>
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {new Date(deadline.dueDateUtc).toLocaleDateString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ) : (
+                  <div className="mt-4 rounded-xl border border-border bg-card p-8 text-center">
+                    <CalendarRange className="mx-auto size-8 text-muted-foreground" aria-hidden />
+                    <p className="mt-2 font-display font-semibold">{t("dashboard.noDeadlines")}</p>
+                    <p className="text-sm text-muted-foreground">{t("dashboard.noDeadlinesDesc")}</p>
+                  </div>
+                )}
               </>
             ) : null}
           </section>
