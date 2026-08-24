@@ -12,10 +12,28 @@ public sealed record GetCycleLeadTimeQuery(
     Guid ProjectId) : IRequest<CycleLeadTimeResponse>, IWorkspaceRequest;
 
 public sealed class GetCycleLeadTimeHandler(
-    ITaskItemRepository taskItemRepository)
+    ITaskItemRepository taskItemRepository,
+    ICacheService cacheService)
     : IRequestHandler<GetCycleLeadTimeQuery, CycleLeadTimeResponse>
 {
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
+
     public async Task<CycleLeadTimeResponse> Handle(
+        GetCycleLeadTimeQuery request,
+        CancellationToken ct)
+    {
+        var cacheKey = $"cycle-lead-time:{request.ProjectId}";
+        var tag = $"project:{request.ProjectId}";
+
+        return await cacheService.GetOrSetAsync(
+            cacheKey,
+            ct2 => ComputeAsync(request, ct2),
+            CacheTtl,
+            [tag],
+            ct);
+    }
+
+    private async Task<CycleLeadTimeResponse> ComputeAsync(
         GetCycleLeadTimeQuery request,
         CancellationToken ct)
     {

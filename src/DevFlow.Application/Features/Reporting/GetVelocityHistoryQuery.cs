@@ -13,10 +13,28 @@ public sealed record GetVelocityHistoryQuery(
 
 public sealed class GetVelocityHistoryHandler(
     ISprintRepository sprintRepository,
-    ITaskItemRepository taskItemRepository)
+    ITaskItemRepository taskItemRepository,
+    ICacheService cacheService)
     : IRequestHandler<GetVelocityHistoryQuery, VelocityHistoryResponse>
 {
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
+
     public async Task<VelocityHistoryResponse> Handle(
+        GetVelocityHistoryQuery request,
+        CancellationToken ct)
+    {
+        var cacheKey = $"velocity-history:{request.ProjectId}";
+        var tag = $"project:{request.ProjectId}";
+
+        return await cacheService.GetOrSetAsync(
+            cacheKey,
+            ct2 => ComputeAsync(request, ct2),
+            CacheTtl,
+            [tag],
+            ct);
+    }
+
+    private async Task<VelocityHistoryResponse> ComputeAsync(
         GetVelocityHistoryQuery request,
         CancellationToken ct)
     {

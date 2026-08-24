@@ -10,9 +10,18 @@ public class VelocityHistoryHandlerTests
 {
     private readonly ISprintRepository _sprintRepository = Substitute.For<ISprintRepository>();
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
+    private readonly ICacheService _cacheService = Substitute.For<ICacheService>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
     private readonly Guid _projectId = Guid.NewGuid();
+
+    public VelocityHistoryHandlerTests()
+    {
+        _cacheService.GetOrSetAsync<VelocityHistoryResponse>(
+                Arg.Any<string>(), Arg.Any<Func<CancellationToken, Task<VelocityHistoryResponse>>>(),
+                Arg.Any<TimeSpan?>(), Arg.Any<IEnumerable<string>?>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo => callInfo.ArgAt<Func<CancellationToken, Task<VelocityHistoryResponse>>>(1)(CancellationToken.None));
+    }
 
     [Fact]
     public async Task VelocityHistory_ShouldAggregateStoryPointsPerSprint()
@@ -45,7 +54,7 @@ public class VelocityHistoryHandlerTests
         _taskItemRepository.GetForProjectAsync(_projectId, (TaskItemStatus?)null, Arg.Any<CancellationToken>())
             .Returns(new[] { done1, open1, done2, backlog });
 
-        var handler = new GetVelocityHistoryHandler(_sprintRepository, _taskItemRepository);
+        var handler = new GetVelocityHistoryHandler(_sprintRepository, _taskItemRepository, _cacheService);
         var result = await handler.Handle(
             new GetVelocityHistoryQuery(_workspaceId, _projectId),
             CancellationToken.None);
@@ -77,7 +86,7 @@ public class VelocityHistoryHandlerTests
         _taskItemRepository.GetForProjectAsync(_projectId, (TaskItemStatus?)null, Arg.Any<CancellationToken>())
             .Returns(Array.Empty<TaskItem>());
 
-        var handler = new GetVelocityHistoryHandler(_sprintRepository, _taskItemRepository);
+        var handler = new GetVelocityHistoryHandler(_sprintRepository, _taskItemRepository, _cacheService);
         var result = await handler.Handle(
             new GetVelocityHistoryQuery(_workspaceId, _projectId),
             CancellationToken.None);

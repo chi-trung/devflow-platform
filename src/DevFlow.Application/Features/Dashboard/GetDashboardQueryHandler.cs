@@ -1,4 +1,5 @@
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
 using MediatR;
 
@@ -7,11 +8,32 @@ namespace DevFlow.Application.Features.Dashboard;
 public sealed class GetDashboardQueryHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
-    IActivityLogRepository activityLogRepository) : IRequestHandler<GetDashboardQuery, DashboardResponse>
+    IActivityLogRepository activityLogRepository,
+    ICacheService cacheService) : IRequestHandler<GetDashboardQuery, DashboardResponse>
 {
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(60);
+
     public async Task<DashboardResponse> Handle(GetDashboardQuery query, CancellationToken cancellationToken)
     {
+        var cacheKey = $"dashboard:{query.WorkspaceId}";
+
+        // Tag with each project so any project mutation invalidates the dashboard.
         var projects = await projectRepository.GetForWorkspaceAsync(query.WorkspaceId, cancellationToken);
+        var tags = projects.Select(p => $"project:{p.Id}").ToArray();
+
+        return await cacheService.GetOrSetAsync(
+            cacheKey,
+            ct => LoadDashboardAsync(query, projects, cancellationToken),
+            CacheTtl,
+            tags,
+            cancellationToken);
+    }
+
+    private async Task<DashboardResponse> LoadDashboardAsync(
+        GetDashboardQuery query,
+        IReadOnlyList<Project> projects,
+        CancellationToken cancellationToken)
+    {
         var projectIds = projects.Select(p => p.Id).ToList();
 
         // Aggregate tasks across all projects

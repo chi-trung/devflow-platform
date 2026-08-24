@@ -20,6 +20,24 @@ public sealed class RedisCacheService(IConnectionMultiplexer connectionMultiplex
         return JsonSerializer.Deserialize<T>(value!);
     }
 
+    public async Task<T> GetOrSetAsync<T>(
+        string key,
+        Func<CancellationToken, Task<T>> factory,
+        TimeSpan? ttl = null,
+        IEnumerable<string>? tags = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cached = await GetAsync<T>(key, cancellationToken);
+        if (cached is not null)
+        {
+            return cached;
+        }
+
+        var value = await factory(cancellationToken);
+        await SetAsync(key, value, tags, ttl, cancellationToken);
+        return value;
+    }
+
     public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
     {
         var serialized = JsonSerializer.Serialize(value);
