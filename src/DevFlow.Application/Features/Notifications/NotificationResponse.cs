@@ -29,3 +29,5 @@ public sealed record MarkAllNotificationsReadCommand(Guid UserId) : IRequest;
 public sealed record DeleteNotificationCommand(Guid NotificationId) : IRequest;
 
 public sealed record DeleteAllReadNotificationsCommand : IRequest;
+
+public sealed record CleanupNotificationsCommand(int Days = 90) : IRequest<int>;

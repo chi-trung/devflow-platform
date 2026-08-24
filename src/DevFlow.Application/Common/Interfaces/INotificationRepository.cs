@@ -22,4 +22,6 @@ public interface INotificationRepository
     Task DeleteAsync(Notification notification, CancellationToken cancellationToken = default);
 
     Task DeleteAllReadForUserAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task DeleteOlderThanAsync(Guid userId, DateTimeOffset cutoff, CancellationToken cancellationToken = default);
 }

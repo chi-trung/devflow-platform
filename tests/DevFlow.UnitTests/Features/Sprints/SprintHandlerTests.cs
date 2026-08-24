@@ -16,6 +16,12 @@ public class SprintHandlerTests
     private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly ISprintRepository _sprintRepository = Substitute.For<ISprintRepository>();
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
+    private readonly IWorkspaceRepository _workspaceRepository = Substitute.For<IWorkspaceRepository>();
+    private readonly INotificationRepository _notificationRepository = Substitute.For<INotificationRepository>();
+    private readonly INotificationPreferencesRepository _preferencesRepository = Substitute.For<INotificationPreferencesRepository>();
+    private readonly IRealtimeNotificationService _realtimeService = Substitute.For<IRealtimeNotificationService>();
+    private readonly DevFlow.Application.Features.Email.IEmailService _emailService = Substitute.For<DevFlow.Application.Features.Email.IEmailService>();
+    private readonly IOutboxDispatcher _outboxDispatcher = Substitute.For<IOutboxDispatcher>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
@@ -46,7 +52,10 @@ public class SprintHandlerTests
         _sprintRepository.GetByIdAsync(sprint.Id, Arg.Any<CancellationToken>()).Returns(sprint);
         _sprintRepository.HasActiveSprintAsync(_project.Id, Arg.Any<CancellationToken>()).Returns(true);
 
-        var handler = new StartSprintCommandHandler(_projectRepository, _sprintRepository, _unitOfWork);
+        var handler = new StartSprintCommandHandler(
+            _projectRepository, _sprintRepository, _workspaceRepository,
+            _notificationRepository, _preferencesRepository, _realtimeService,
+            _emailService, _outboxDispatcher, _unitOfWork);
         var command = new StartSprintCommand(
             _workspaceId, _project.Id, sprint.Id,
             DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(14));
@@ -61,7 +70,10 @@ public class SprintHandlerTests
         _sprintRepository.GetByIdAsync(sprint.Id, Arg.Any<CancellationToken>()).Returns(sprint);
         _sprintRepository.HasActiveSprintAsync(_project.Id, Arg.Any<CancellationToken>()).Returns(false);
 
-        var handler = new StartSprintCommandHandler(_projectRepository, _sprintRepository, _unitOfWork);
+        var handler = new StartSprintCommandHandler(
+            _projectRepository, _sprintRepository, _workspaceRepository,
+            _notificationRepository, _preferencesRepository, _realtimeService,
+            _emailService, _outboxDispatcher, _unitOfWork);
         var command = new StartSprintCommand(
             _workspaceId, _project.Id, sprint.Id,
             DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(-1));

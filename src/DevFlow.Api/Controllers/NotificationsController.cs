@@ -84,4 +84,17 @@ public sealed class NotificationsController(ISender sender, IUserContext userCon
 
         return NoContent();
     }
+
+    [HttpPost("cleanup")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Cleanup(
+        [FromQuery] int days = 90,
+        CancellationToken cancellationToken = default)
+    {
+        var deleted = await sender.Send(
+            new CleanupNotificationsCommand(Math.Clamp(days, 1, 3650)),
+            cancellationToken);
+
+        return Ok(new { deleted });
+    }
 }
