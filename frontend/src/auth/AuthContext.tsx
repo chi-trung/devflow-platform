@@ -37,6 +37,7 @@ interface AuthContextValue {
   }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<boolean>;
+  setSessionFromTokens: (accessToken: string, refreshToken: string) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -110,6 +111,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return ok;
   }, []);
 
+  const setSessionFromTokens = useCallback(
+    (accessToken: string, refreshToken: string) => {
+      tokens.save(accessToken, refreshToken);
+      invalidateApiCache();
+      setStatus("authenticated");
+      setClaimsTick((tick) => tick + 1);
+    },
+    [],
+  );
+
   const currentUser = useMemo<CurrentUser | null>(() => {
     if (status !== "authenticated") return null;
     const access = tokens.access;
@@ -124,8 +135,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [status, claimsTick]);
 
   const value = useMemo(
-    () => ({ status, currentUser, login, register, logout, refreshUser }),
-    [status, currentUser, login, register, logout, refreshUser],
+    () => ({ status, currentUser, login, register, logout, refreshUser, setSessionFromTokens }),
+    [status, currentUser, login, register, logout, refreshUser, setSessionFromTokens],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
