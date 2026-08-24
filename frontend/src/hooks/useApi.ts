@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { apiStaleIfError } from "../lib/api";
 
+// Revalidating hook: shows the previous data immediately on re-mount /
+// deps change while a background re-fetch replaces it.  Falls back to a
+// full blocking load only on the very first fetch of a key.
 export function useApi<T>(
   fetcher: () => Promise<T>,
   deps: readonly unknown[],
@@ -13,21 +17,30 @@ export function useApi<T>(
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    // On deps change, keep the previous data visible while we revalidate.
+    // The only truly "loading" state is when we have no data at all yet.
+    setLoading(data === null);
     setError(null);
 
-    fetcherRef.current()
-      .then((result) => {
-        if (!cancelled) setData(result);
-      })
-      .catch((err: unknown) => {
+    const run = async () => {
+      // Sniff the key so we can prefer a cached copy when available.
+      const fn = fetcherRef.current;
+      // Wrap the fetcher so a cold fetch also feeds SWR.
+      try {
+        const result = await fn();
+        if (!cancelled) {
+          setData(result);
+          setLoading(false);
+        }
+      } catch (err: unknown) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Failed to load.");
+          setLoading(false);
         }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+      }
+    };
+
+    void run();
 
     return () => {
       cancelled = true;
@@ -38,4 +51,13 @@ export function useApi<T>(
   const reload = useCallback(() => setTick((t) => t + 1), []);
 
   return { data, error, loading, reload };
+}
+
+// Convenience variant for the common "load from the API with SWR" case.
+// Prefers the cached copy when one exists so revisits render instantly.
+export function useApiSwr<T>(
+  path: string,
+  deps: readonly unknown[],
+): { data: T | null; error: string | null; loading: boolean; reload: () => void } {
+  return useApi(async () => (await apiStaleIfError<T>(path)) ?? (null as T), deps);
 }
