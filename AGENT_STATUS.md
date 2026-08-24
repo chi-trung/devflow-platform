@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | **Sprint 21 In Progress 🎯**
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | **Sprint 21 Complete ✅**
 
 ---
 
@@ -12,7 +12,7 @@
 | **Sprint 18** | Epics, Subtasks & Task Hierarchy | ✅ DONE (B18.1-B18.3) — PR #77 | ✅ DONE (F18.1-F18.3) — PR #89-91 | Complete |
 | **Sprint 19** | GitHub Integration & Webhook Outbox | ✅ DONE (B19.1-B19.3) — PR #93 | ✅ DONE (F19.1-F19.3) — PR #92 | Complete ✅ |
 | **Sprint 20** | Advanced Agile Analytics & Custom Fields | ✅ DONE (B20.1-3) — PR #94, #95 | ✅ DONE (F20.1-3) — PR #94 | Complete ✅ |
-| **Sprint 21** | Live Team Experience (Notifications + My Work + Dashboard) | ⏳ B21.1-3 (Agent B) | ✅ F21.1-2 (Agent C) — PR #96, ✅ A21.1 (Agent A) — PR #97 | In Progress 🎯 |
+| **Sprint 21** | Live Team Experience (Notifications + My Work + Dashboard) | ✅ DONE (B21.1-3) — PR #98 | ✅ DONE (F21.1-2) — PR #96, (A21.1-2) — PR #97 | Complete ✅ |
 
 ---
 
@@ -154,30 +154,30 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-### 📈 Sprint 21 — Live Team Experience (Realtime Notifications + My Work + Dashboard)
+### 📈 Sprint 21 — Live Team Experience (Realtime Notifications + My Work + Dashboard) ✅ Complete
 
 **Goal:** Turn DevFlow into a live collaborative workspace — real-time notification push, cross-project personal task view, and richer dashboard analytics.
 
-> **Gaps verified in code:** `NotificationBroadcaster` registered in DI but never called (dead code). `CreateCommentCommandHandler` creates notifications but never pushes via SignalR. No email preference check before sending. Email links are dead `<a href="#">`. No "My Tasks" cross-project page. Dashboard lacks cycle/lead time tiles.
+> **Gaps verified in code:** All 5 gaps closed. `NotificationBroadcaster` dead code removed. `CreateCommentCommandHandler` now pushes realtime via SignalR. Email preference check enforced before sending. Email links are real deep links with `FRONTEND_URL`. "My Tasks" cross-project page shipped. Dashboard cycle/lead time tiles added.
 
 #### 🤖 Agent: Codebuff (Backend) — Agent B
-- [ ] **B21.1: Real-time Notification Push via SignalR**
-  - `IRealtimeNotificationService` → `SignalRNotificationService` (Infrastructure layer, dùng `IHubContext<NotificationHub>`).
+- [x] **B21.1: Real-time Notification Push via SignalR** ✅ (PR #98, merged)
+  - `IRealtimeNotificationService` → `SignalRNotificationService` (Api layer, dùng `IHubContext<NotificationHub>`).
   - Inject vào `CreateCommentCommandHandler` (gọi `NotifyUserAsync` sau khi tạo Notification entity).
-  - Inject vào `UpdateTaskItemCommandHandler` (broadcast khi task được assign).
-  - Frontend `useNotifications` hook đã lắng nghe `connection.on("notification")` — chỉ cần backend push đúng shape.
-- [ ] **B21.2: Notification Preferences Enforcement**
+  - Inject vào `UpdateTaskItemCommandHandler` (broadcast khi task được assign + persist Notification entity).
+  - Frontend `useNotifications` hook đã lắng nghe `connection.on("notification")` — backend push đúng shape.
+- [x] **B21.2: Notification Preferences Enforcement** ✅
   - `INotificationPreferencesRepository` + implement.
   - Check `EmailOnMention`/`EmailOnAssignment` trước khi gọi email service.
-- [ ] **B21.3: Real Email Links**
+- [x] **B21.3: Real Email Links** ✅
   - `ResendEmailService` — thay `<a href="#">` bằng URL thật từ `FRONTEND_URL` config.
   - Thêm workspaceId/projectId/taskId vào param email methods.
 
 #### 🎨 Agent: OpenCode (Frontend) — Agent C
-- [ ] **F21.1: Dashboard Cycle/Lead Time Tiles**
+- [x] **F21.1: Dashboard Cycle/Lead Time Tiles** ✅ (PR #96, merged)
   - `DashboardCycleLeadChart.tsx` — 4 stat tiles (P50/P90 cycle/lead) gọi `GET .../reporting/cycle-lead-time`.
-  - DashboardPage workspace-level → cần project selector (hoặc dùng project đầu tiên).
-- [ ] **F21.2: Export Enhancement (CSV chart data)**
+  - DashboardPage workspace-level → project selector (dùng project đầu tiên).
+- [x] **F21.2: Export Enhancement (CSV chart data)** ✅
   - Export CSV button cho chart data (CycleLeadTimeChart).
 
 #### 🚀 Agent A (Team Lead)
@@ -186,7 +186,7 @@ blockers/blocked-by toggle). Landed on main via PR #76.
   - `MyTasksPage.tsx` — card/table list, click → navigate to board.
   - `AppShell.tsx` — nav item "My Tasks".
   - Test: 3+ unit tests (6 written, 152/152 green).
-- [ ] **A21.2: Review & merge B/C PRs**
+- [x] **A21.2: Review & merge B/C PRs** ✅ (PR #96, #97, #98 all merged)
 
 
 
