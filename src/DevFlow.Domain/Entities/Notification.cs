@@ -14,7 +14,8 @@ public class Notification : BaseEntity, IAuditableEntity
         string message,
         Guid? taskItemId,
         Guid? projectId,
-        Guid? workspaceId)
+        Guid? workspaceId,
+        Guid? actorUserId)
     {
         UserId = userId;
         Type = type;
@@ -22,6 +23,7 @@ public class Notification : BaseEntity, IAuditableEntity
         TaskItemId = taskItemId;
         ProjectId = projectId;
         WorkspaceId = workspaceId;
+        ActorUserId = actorUserId;
     }
 
     public Guid UserId { get; private set; }
@@ -35,6 +37,12 @@ public class Notification : BaseEntity, IAuditableEntity
     public Guid? ProjectId { get; private set; }
 
     public Guid? WorkspaceId { get; private set; }
+
+    /// <summary>
+    /// The user who triggered this notification (the actor). Null for system
+    /// events (e.g. sprint started). Stored so the UI can render "who did what".
+    /// </summary>
+    public Guid? ActorUserId { get; private set; }
 
     public DateTimeOffset? ReadAtUtc { get; private set; }
 
@@ -50,7 +58,8 @@ public class Notification : BaseEntity, IAuditableEntity
         string message,
         Guid? taskItemId = null,
         Guid? projectId = null,
-        Guid? workspaceId = null)
+        Guid? workspaceId = null,
+        Guid? actorUserId = null)
     {
         if (string.IsNullOrWhiteSpace(type))
         {
@@ -62,11 +71,16 @@ public class Notification : BaseEntity, IAuditableEntity
             throw new ArgumentException("Message is required.", nameof(message));
         }
 
-        return new Notification(userId, type, message, taskItemId, projectId, workspaceId);
+        return new Notification(userId, type, message, taskItemId, projectId, workspaceId, actorUserId);
     }
 
     public void MarkAsRead()
     {
         ReadAtUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void MarkAsUnread()
+    {
+        ReadAtUtc = null;
     }
 }

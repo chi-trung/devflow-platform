@@ -107,7 +107,8 @@ public sealed class UpdateTaskItemCommandHandler(
                     $"assigned you to \"{command.Title}\"",
                     task.Id,
                     project.Id,
-                    project.WorkspaceId);
+                    project.WorkspaceId,
+                    userContext.UserId);
 
                 await notificationRepository.AddAsync(notification, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);

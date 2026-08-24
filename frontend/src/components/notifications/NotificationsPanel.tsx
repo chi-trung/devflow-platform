@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Bell, CheckCheck, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell, CheckCheck, ExternalLink, Trash2 } from "lucide-react";
 import { useNotifications } from "../../hooks/useNotifications";
 import type { IncomingNotification } from "../../lib/realtime";
-import { deleteNotification } from "../../lib/api";
+import { deleteAllReadNotifications } from "../../lib/api";
 import { useToast } from "../ui/ToastProvider";
 import { NotificationItem } from "./NotificationItem";
 
@@ -19,6 +20,7 @@ export function NotificationsPanel({
   direction = "down",
 }: NotificationsPanelProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { push } = useToast();
@@ -36,19 +38,18 @@ export function NotificationsPanel({
     notifications,
     unreadCount,
     loading,
-    readIds,
     refresh,
     markRead,
     markAllRead,
   } = useNotifications(workspaceId, true, { onIncoming: handleIncoming });
 
   const filtered = useMemo(() => {
-    if (filter === "unread") return notifications.filter((n) => !readIds.has(n.id));
-    if (filter === "read") return notifications.filter((n) => readIds.has(n.id));
+    if (filter === "unread") return notifications.filter((n) => !n.isRead);
+    if (filter === "read") return notifications.filter((n) => n.isRead);
     return notifications;
-  }, [notifications, readIds, filter]);
+  }, [notifications, filter]);
 
-  const readCount = notifications.filter((n) => readIds.has(n.id)).length;
+  const readCount = notifications.filter((n) => n.isRead).length;
   const allRead = notifications.length > 0 && readCount === notifications.length;
 
   useEffect(() => {
@@ -77,9 +78,14 @@ export function NotificationsPanel({
     id: string;
     workspaceId: string | null;
     projectId: string | null;
+    taskId: string | null;
   }) {
     markRead(notification.id);
     setOpen(false);
+    if (notification.workspaceId && notification.projectId) {
+      const base = `/workspaces/${notification.workspaceId}/projects/${notification.projectId}`;
+      navigate(notification.taskId ? `${base}?task=${notification.taskId}` : base);
+    }
   }
 
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -98,17 +104,13 @@ export function NotificationsPanel({
 
   async function handleCleanup() {
     setPendingCleanup(false);
-    for (const n of notifications) {
-      if (readIds.has(n.id)) {
-        try {
-          await deleteNotification(n.id);
-        } catch {
-          // ignore
-        }
-      }
+    try {
+      await deleteAllReadNotifications();
+      refresh();
+      push(t("notification.cleanupConfirm"));
+    } catch {
+      // ignore
     }
-    refresh();
-    push(t("notification.cleanupConfirmed"));
   }
 
   return (
@@ -216,13 +218,27 @@ export function NotificationsPanel({
                   <li key={notification.id}>
                     <NotificationItem
                       notification={notification}
-                      unread={!readIds.has(notification.id)}
+                      unread={!notification.isRead}
                       onClick={() => handleItemClick(notification)}
                     />
                   </li>
                 ))}
               </ul>
             )}
+          </div>
+
+          <div className="border-t border-border px-3 py-2">
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                navigate("/notifications");
+              }}
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
+            >
+              <ExternalLink className="size-3.5" aria-hidden />
+              {t("notification.viewAll")}
+            </button>
           </div>
         </div>
       )}

@@ -3,6 +3,7 @@ using System;
 using DevFlow.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DevFlow.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(DevFlowDbContext))]
-    partial class DevFlowDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260824052137_AddNotificationActorUserId")]
+    partial class AddNotificationActorUserId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1090,38 +1093,6 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
                     b.ToTable("TaskTemplates", (string)null);
                 });
 
-            modelBuilder.Entity("DevFlow.Domain.Entities.TaskWatcher", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at_utc");
-
-                    b.Property<Guid>("TaskItemId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("task_item_id");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_task_watchers");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_task_watchers_user_id");
-
-                    b.HasIndex("TaskItemId", "UserId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_task_watchers_task_item_id_user_id");
-
-                    b.ToTable("task_watchers", (string)null);
-                });
-
             modelBuilder.Entity("DevFlow.Domain.Entities.TimeEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1567,23 +1538,6 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_task_templates_projects_project_id");
-                });
-
-            modelBuilder.Entity("DevFlow.Domain.Entities.TaskWatcher", b =>
-                {
-                    b.HasOne("DevFlow.Domain.Entities.TaskItem", null)
-                        .WithMany()
-                        .HasForeignKey("TaskItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_task_watchers_task_items_task_item_id");
-
-                    b.HasOne("DevFlow.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_task_watchers_users_user_id");
                 });
 
             modelBuilder.Entity("DevFlow.Domain.Entities.TimeEntry", b =>

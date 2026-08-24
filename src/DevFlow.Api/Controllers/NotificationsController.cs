@@ -50,6 +50,19 @@ public sealed class NotificationsController(ISender sender, IUserContext userCon
         return NoContent();
     }
 
+    [HttpPost("{id:guid}/unread")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> MarkAsUnread(Guid id, CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new MarkNotificationUnreadCommand(userContext.UserId, id),
+            cancellationToken);
+
+        return NoContent();
+    }
+
     [HttpPost("read-all")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken)

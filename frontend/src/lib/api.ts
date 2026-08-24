@@ -373,6 +373,10 @@ export async function markNotificationRead(id: string): Promise<void> {
   await api(`/notifications/${id}/read`, { method: "POST" });
 }
 
+export async function markNotificationUnread(id: string): Promise<void> {
+  await api(`/notifications/${id}/unread`, { method: "POST" });
+}
+
 export async function markAllNotificationsRead(): Promise<void> {
   await api("/notifications/read-all", { method: "POST" });
 }
