@@ -390,8 +390,8 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 > **Prompts:** `docs/sprint29/prompts/prompt-{B,C,D}.md`.
 
 #### 🚀 Agent A (Team Lead — Backend File Safety + Settings)
-- [ ] **A29.1: File upload size limit + type whitelist** — `[RequestSizeLimit(10 MB)]` + `[RequestFormLimits]` trên `UploadAttachment`; whitelist type (image/pdf/text/json/office); reject `.exe/.dll/.bat/.sh/.cmd/.ps1/.js/.vbs/.scr`; `Kestrel:MaxRequestBodySize`.
-- [ ] **A29.2: Workspace PUT + Sprint PUT + Template PUT** — `UpdateWorkspaceCommand` (name/desc), `UpdateSprintCommand` (name/goal), `UpdateTemplateCommand` (name/desc); Admin-gated; 2+ tests mỗi handler.
+- [x] **A29.1: File upload size limit + type whitelist** — `[RequestSizeLimit(10 MB)]` + `[RequestFormLimits]` trên `UploadAttachment`; whitelist type (image/pdf/text/json/office); reject `.exe/.dll/.bat/.sh/.cmd/.ps1/.js/.vbs/.scr`; `Kestrel:MaxRequestBodySize`. *(PR #133 merged)*
+- [x] **A29.2: Workspace PUT + Sprint PUT + Template PUT** — `UpdateWorkspaceCommand` (name/desc), `UpdateSprintCommand` (name/goal), `UpdateTemplateCommand` (name/desc); Admin-gated; 12 unit tests mới. *(PR #133 merged)*
 - [ ] **A29.3: Review & merge B/C/D PRs** — `dotnet test`/`npm run build` + i18n parity; update AGENT_STATUS.md.
 
 #### 🤖 Agent B (Backend — Attachments + Notifications Depth)
