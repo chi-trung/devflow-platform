@@ -13,7 +13,7 @@
 | **Sprint 19** | GitHub Integration & Webhook Outbox | ✅ DONE (B19.1-B19.3) — PR #93 | ✅ DONE (F19.1-F19.3) — PR #92 | Complete ✅ |
 | **Sprint 20** | Advanced Agile Analytics & Custom Fields | ✅ DONE (B20.1-3) — PR #94, #95 | ✅ DONE (F20.1-3) — PR #94 | Complete ✅ |
 | **Sprint 21** | Live Team Experience (Notifications + My Work + Dashboard) | ✅ DONE (B21.1-3) — PR #98 | ✅ DONE (F21.1-2) — PR #96, (A21.1-2) — PR #97 | Complete ✅ |
-| **Sprint 22** | Observability & Collaboration Depth (Activity Log + Notifications + UI Depth + Search) | ⏳ B22.1-3 (Agent B) | ⏳ C22.1-3 (Agent C), A22.1-2 (Agent A), D22.1-2 (Agent D) | In Progress 🎯 |
+| **Sprint 22** | Observability & Collaboration Depth (Activity Log + Notifications + UI Depth + Search) | ✅ DONE (B22.1-3) — PR #100 | ⏳ C22.1-3 (Agent C), A22.1-2 (Agent A), D22.1-2 (Agent D) | In Progress 🎯 |
 
 ---
 
@@ -198,12 +198,12 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 > **Gaps verified in code:** Task create/update/delete, comment, subtask handlers không ghi ActivityLog. `StartSprintCommandHandler` không gửi notification/email. Outbox pattern được scaffold nhưng không handler nào ghi OutboxMessage. Notification không có cleanup. EpicsPage thiếu progress. Dependency graph là list, không phải DAG. Search chỉ cover task title/desc + project. Team Report thiếu per-member breakdown.
 
 #### 🤖 Agent B (Backend — Codebuff)
-- [ ] **B22.1: Sprint Start Notification**
+- [x] **B22.1: Sprint Start Notification** — PR #100 ✅
   - `StartSprintCommandHandler` → persist Notification + realtime push + email cho mọi member (tôn trọng `EmailOnSprintStarted`).
-- [ ] **B22.2: Outbox Wiring**
-  - Ghi `OutboxMessage` cho webhook delivery (hoặc email). Đảm bảo processor chạy.
-- [ ] **B22.3: Notification Cleanup**
-  - Endpoint xóa notification đã đọc/cũ hơn N ngày.
+- [x] **B22.2: Outbox Wiring** — PR #100 ✅
+  - `EnqueueAsync("webhook.sprint.started")` → OutboxDispatcher persist; OutboxProcessor (BackgroundService) dispatch webhook.
+- [x] **B22.3: Notification Cleanup** — PR #100 ✅
+  - `POST /notifications/cleanup?days=90` xóa notification cũ, scope theo user.
 
 #### 🎨 Agent C (Frontend — OpenCode)
 - [ ] **C22.1: Epic Progress Visualization**
