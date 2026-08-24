@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | Sprint 27 In Progress 🔄
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 In Progress 🔄**
 
 ---
 
@@ -18,6 +18,7 @@
 | **Sprint 24** | Real Caching, Google OAuth, Live Presence, Import/Export | ✅ DONE (B24.1) real Redis cache wiring — PR #105; (A24.1) Google OAuth PKCE — PR #107 | ✅ DONE (C24.1-4) presence avatars + inline child task + skeleton + tab title — PR #108; (D24.1-2) import/export + search — PR #106 | Complete ✅ |
 | **Sprint 25** | Guardrails & Collaboration Depth (RBAC + Presence + Watchers + Activity) | ✅ DONE (A25.1) RBAC hardening — PR #109; (B25.1-2) presence broadcast + task watchers — PR #110, #111 | ✅ DONE (C25.1-2) presence fix + role-aware UI — PR #112; (D25.1-2) activity transparency — PR #110 | Complete ✅ |
 | **Sprint 26** | Performance & Data Integrity Hardening (Dashboard perf + Outbox DLQ + Soft-delete + Watchers UI + FE tests + CI safety) | ✅ Agent A: A26.1 Dashboard rewrite, A26.2 Outbox DLQ, A26.3 Sprint delete, A26.4 review/merge; Agent B: B26.1 unified notification prefs, B26.2 soft-delete + restore | ✅ Agent C: C26.1 task watcher UI, C26.2 dashboard actor names + empty states; Agent D: D26.1 Vitest + FE tests, D26.2 CI safety | Complete ✅ |
+| **Sprint 27** | Search & Event Coverage (DB-level search + pagination + Email 4 events + Restore UI + Prefs UI + DB backup) | 🔄 Agent A: A27.1 global search rewrite, A27.2 review/merge; Agent B: B27.1 email templates+toggles, B27.2 unit tests for untested features | 🔄 Agent C: C27.1 paginated search UI, C27.2 archived-project list + Restore UI; Agent D: D27.1 prefs settings UI, D27.2 DB backup automation | In Progress 🔄 |
 
 ---
 
@@ -329,6 +330,31 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 
 
+### 🚀 Sprint 27 — Search & Event Coverage 🔄
+
+**Goal:** Xử lý các gap bị defer từ Sprint 26 (global search rewrite, DB backup) + bịt lỗ hổng email/toggle cho 4 event type, thêm UI restore project, và phủ unit test cho 8 feature chưa có test.
+
+> **Plan:** `docs/sprint27/plan.md` — 8 tasks / 4 agents.
+> **Prompts:** `docs/sprint27/prompts/prompt-{B,C,D}.md`.
+
+#### 🚀 Agent A (Team Lead — Backend Search Rewrite)
+- [ ] **A27.1: Global search DB-level + pagination** — thay in-memory LINQ + N+1 (`SearchQueryHandler` loop project/task) bằng `EF.Functions.ILike` trên PostgreSQL + 1 query/entity type + pagination metadata.
+- [ ] **A27.2: Review & merge B/C/D PRs** — chạy `dotnet test`/`npm run build` + i18n parity; update AGENT_STATUS.md.
+
+#### 🤖 Agent B (Backend — Email Coverage + Test Gaps)
+- [ ] **B27.1: Email templates + toggles cho 4 event type** — `StatusChanged`, `CommentAdded`, `RoleChanged`, `RemovedFromWorkspace`: thêm 4 method `IEmailService` + 8 prefs booleans (`EmailOn*`/`InAppOn*`) + migration + wire vào `NotificationBehavior`/handlers.
+- [ ] **B27.2: Unit tests cho feature chưa test** — GitHub webhook HMAC + `TaskKeyParser`, Labels, Templates, Email (≥10 tests).
+
+#### 🎨 Agent C (Frontend — Search UI + Archive/Restore)
+- [ ] **C27.1: Paginated search UI** — consume pagination metadata từ A27.1 (`SearchResponse.total/page/pageSize`), result counts + load-more.
+- [ ] **C27.2: Archived-project list + Restore UI** — `restoreProject` API + status badge + Restore button (Admin-gated) trên project card; empty state.
+
+#### 🚀 Agent D (Frontend + Infra — Prefs UI + DB Backup)
+- [ ] **D27.1: Notification-preferences settings UI** — 4 toggle groups mới (StatusChanged/CommentAdded/RoleChanged/RemovedFromWorkspace) trên `SettingsPage.tsx`.
+- [ ] **D27.2: DB backup automation** — `scripts/backup-db.sh` + `.github/workflows/backup.yml` (daily pg_dump) + `docs/sprint27/runbook-backup.md`.
+
+---
+
 ## 🔒 Multi-Agent Coordination Guidelines
 
 1. **Branch Prefixes:**
@@ -343,5 +369,5 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-*DevFlow Architecture Team — Updated 2026-08-24 (Sprint 26 complete)*
+*DevFlow Architecture Team — Updated 2026-08-24 (Sprint 27 In Progress)*
 
