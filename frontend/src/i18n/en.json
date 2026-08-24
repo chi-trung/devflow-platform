@@ -72,7 +72,22 @@
     "upcomingDeadlines": "Upcoming deadlines",
     "noDeadlines": "No upcoming deadlines",
     "noDeadlinesDesc": "You're all caught up — no tasks due soon.",
-    "someone": "Someone"
+    "someone": "Someone",
+    "teamReport": "Team Report",
+    "teamReportLoadFailed": "Failed to load team report.",
+    "teamReportUnavailable": "Team report data is not available.",
+    "velocityDelta": "Velocity",
+    "tasksSuffix": "tasks",
+    "totalMembers": "Members",
+    "totalCompleted": "Completed",
+    "totalTime": "Time logged",
+    "member": "Member",
+    "time": "Time",
+    "viewReports": "View reports",
+    "sprintHealth": "Sprint Health",
+    "noActiveSprint": "No active sprint",
+    "noActiveSprintDesc": "Start a sprint to track burndown progress.",
+    "remaining": "remaining"
   },
   "board": {
     "backlog": "Backlog",
@@ -674,15 +689,18 @@
     "cleanup": "Clean up",
     "cleanupTitle": "Clean up read notifications?",
     "cleanupMessage": "This will permanently remove all notifications you have already read.",
-    "cleanupConfirm": "Clean up"
+    "cleanupConfirm": "Clean up",
+    "settings": "Notification settings"
   },
   "notificationPage": {
     "filterAll": "All",
     "filterUnread": "Unread",
     "filterRead": "Read",
+    "filterMentions": "Mentions",
     "emptyTitle": "No notifications",
     "emptyUnread": "You have no unread notifications.",
     "emptyRead": "You have no read notifications.",
+    "emptyMentions": "You have no mention notifications.",
     "deleteAllRead": "Delete all read",
     "bulkDeleteTitle": "Delete all read notifications?",
     "bulkDeleteMessage": "This will permanently remove all notifications you have already read. This action cannot be undone.",
