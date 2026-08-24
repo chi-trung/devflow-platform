@@ -44,7 +44,10 @@ async function probe(): Promise<void> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5_000);
   try {
-    const response = await fetch(`${API_BASE}/health`, {
+    // Use the dedicated keepalive probe /api/v1/ping (lightweight DB check,
+    // AllowAnonymous) rather than bare /health — built for this purpose in
+    // Sprint 17 and less likely to be caught by an ad-blocker blocklist.
+    const response = await fetch(`${API_BASE}/api/v1/ping`, {
       cache: "no-store",
       signal: controller.signal,
     });
