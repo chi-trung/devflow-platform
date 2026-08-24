@@ -23,7 +23,9 @@ export function DashboardCycleLeadChart({ workspaceId, projectId, className = ""
   function exportCsv() {
     if (!data?.tasks.length) return;
     const header = "Task ID,Title,Cycle Time (days),Lead Time (days)\n";
-    const rows = data.tasks.map((t) => `${t.taskId},"${t.title.replace(/"/g, '""')}",${t.cycleTimeDays.toFixed(1)},${t.leadTimeDays.toFixed(1)}`).join("\n");
+    const rows = data.tasks
+      .map((t) => `${t.taskId},"${t.title.replace(/"/g, '""')}",${formatMetric(t.cycleTimeDays)},${formatMetric(t.leadTimeDays)}`)
+      .join("\n");
     const csv = header + rows;
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -60,11 +62,16 @@ export function DashboardCycleLeadChart({ workspaceId, projectId, className = ""
     );
   }
 
+  // Metrics are nullable when no task has been completed yet — render a dash
+  // instead of crashing on .toFixed().
+  const formatMetric = (value: number | null): string =>
+    value === null || value === undefined || Number.isNaN(value) ? "—" : value.toFixed(1);
+
   const cards = [
     {
       key: "cycleP50",
       label: `${t("dashboard.cycleTime")} ${t("dashboard.p50")}`,
-      value: data.cycleTimeP50.toFixed(1),
+      value: formatMetric(data.cycleTimeP50),
       unit: t("dashboard.days"),
       chip: "bg-primary/10 text-primary",
       valueClass: "text-foreground",
@@ -72,7 +79,7 @@ export function DashboardCycleLeadChart({ workspaceId, projectId, className = ""
     {
       key: "cycleP90",
       label: `${t("dashboard.cycleTime")} ${t("dashboard.p90")}`,
-      value: data.cycleTimeP90.toFixed(1),
+      value: formatMetric(data.cycleTimeP90),
       unit: t("dashboard.days"),
       chip: "bg-primary/10 text-primary",
       valueClass: "text-foreground",
@@ -80,7 +87,7 @@ export function DashboardCycleLeadChart({ workspaceId, projectId, className = ""
     {
       key: "leadP50",
       label: `${t("dashboard.leadTime")} ${t("dashboard.p50")}`,
-      value: data.leadTimeP50.toFixed(1),
+      value: formatMetric(data.leadTimeP50),
       unit: t("dashboard.days"),
       chip: "bg-sky-400/10 text-sky-400",
       valueClass: "text-sky-400",
@@ -88,7 +95,7 @@ export function DashboardCycleLeadChart({ workspaceId, projectId, className = ""
     {
       key: "leadP90",
       label: `${t("dashboard.leadTime")} ${t("dashboard.p90")}`,
-      value: data.leadTimeP90.toFixed(1),
+      value: formatMetric(data.leadTimeP90),
       unit: t("dashboard.days"),
       chip: "bg-sky-400/10 text-sky-400",
       valueClass: "text-sky-400",
