@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | **Sprint 23 Complete ✅**
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | **Sprint 24 Complete ✅**
 
 ---
 
@@ -15,6 +15,7 @@
 | **Sprint 21** | Live Team Experience (Notifications + My Work + Dashboard) | ✅ DONE (B21.1-3) — PR #98 | ✅ DONE (F21.1-2) — PR #96, (A21.1-2) — PR #97 | Complete ✅ |
 | **Sprint 22** | Observability & Collaboration Depth (Activity Log + Notifications + UI Depth + Search) | ✅ DONE (B22.1-3) — PR #100 | ✅ DONE (C22.1-3) — PR #101, A22.1-2 (Agent A), D22.1-2 (Agent D) — PR #102 | Complete ✅ |
 | **Sprint 23** | Performance & UX Evolution (SWR cache + code-splitting + optimistic UX) | ✅ Backend verified already optimized | ✅ DONE (A23.1) SWR cache + prefetch + vendor chunks — PR #103; (A23.2) optimistic task create + preconnect — PR #104 | Complete ✅ |
+| **Sprint 24** | Real Caching, Google OAuth, Live Presence, Import/Export | ✅ DONE (B24.1) real Redis cache wiring — PR #105; (A24.1) Google OAuth PKCE — PR #107 | ✅ DONE (C24.1-4) presence avatars + inline child task + skeleton + tab title — PR #108; (D24.1-2) import/export + search — PR #106 | Complete ✅ |
 
 ---
 
@@ -228,6 +229,44 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 
 
+### 🚀 Sprint 24 — Real Caching, Google OAuth, Live Presence, Import/Export — 4 AGENTS ✅ Complete
+
+**Goal:** Hiện thực hóa cache thật (Sprint 17 chỉ scaffold), mở khoá đăng nhập social (Google OAuth giữ JWT), presence realtime trên board, và full import/export project.
+
+> **Gaps verified in code:** Redis cache Sprint 17 tuyên bố nhưng chưa handler nào dùng thật; chỉ có JWT password login; board chưa có presence; chưa có import/export.
+
+#### 🤖 Agent B (Backend — Cache)
+- [x] **B24.1: Real Redis Caching** — PR #105 ✅
+  - `RedisCacheService.GetOrSetAsync` + `NullCacheService` fallback (không crash khi thiếu Redis).
+  - `CacheInvalidationBehavior` pipeline — invalidate `project:{id}` tag sau mọi `IProjectEvent` command.
+  - Cache ListTaskItems (TTL 30s), Dashboard (TTL 60s, tagged all project ids), CycleLeadTime + VelocityHistory (TTL 30s).
+  - Rate limit `AuthenticatedPermitLimit` 400→800. Tests: 167/167 green.
+
+#### 🚀 Agent A (Team Lead — Google OAuth)
+- [x] **A24.1: Google OAuth (Authorization Code + PKCE)** — PR #107 ✅
+  - Backend: `SocialLogin` entity + `social_logins` table, `IExternalIdentityProvider` (Infrastructure HTTP), `OAuthExchangeCommandHandler` (Application, testable), `GET /auth/oauth/config` + `POST /auth/oauth/exchange`.
+  - Frontend: `lib/oauth.ts` (PKCE helpers), `GoogleSignInButton` (feature-flag off khi chưa config), `setSessionFromTokens` trong AuthContext.
+  - Giữ nguyên JWT — OAuth chỉ link tài khoản qua email verified. 4 unit tests mới.
+  - **Hotfix:** main bị broken khi PR #106 merge trước PR #108 (BoardPage import file chưa tồn tại) — merge PR #108 fix.
+
+#### 🎨 Agent C (Frontend — Presence & UX)
+- [x] **C24.1: Live Presence Avatars** — PR #108 ✅
+  - `usePresence` hook (SignalR project group `user-joined`/`user-left`) + `BoardPresence` component (5 avatars + +N).
+- [x] **C24.3: Inline Child Task Creation** — TaskCard inline form (POST subtasks).
+- [x] **C24.4: Comment Skeleton + Tab Title** — Skeleton loaders, `document.title` = project name.
+
+#### 🚀 Agent D (Fullstack — Import/Export)
+- [x] **D24.1: Full Project Import/Export** — PR #106 ✅
+  - Export: JSON + Excel (ClosedXML) — tasks, subtasks, epics, labels, custom fields.
+  - Import: JSON + Excel với round-trip backup; `ExportImportModal.tsx` UI.
+- [x] **D24.2: Search Enhancement** — backend search comments/epics/labels/users.
+
+#### 🚀 Agent A (Team Lead)
+- [x] **A24.2: Review & merge B/C/D PRs** — #105 (B), #106 (D), #107 (A), #108 (C) ✅
+- Tests: 175/175 unit tests green (tăng 167→175 nhờ OAuth + ImportExport).
+
+
+
 ## 🔒 Multi-Agent Coordination Guidelines
 
 1. **Branch Prefixes:**
@@ -242,5 +281,5 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-*DevFlow Architecture Team — Updated 2026-08-23*
+*DevFlow Architecture Team — Updated 2026-08-24*
 
