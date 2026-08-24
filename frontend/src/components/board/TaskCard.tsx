@@ -1,12 +1,12 @@
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
-import { Check, Clock, Link2, Hash, ListChecks } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { Check, Clock, Link2, Hash, ListChecks, Plus, X } from "lucide-react";
 import type { TaskItemResponse, WorkspaceMemberResponse } from "../../types/api";
 import { formatMinutes } from "../../lib/format";
 import { Avatar } from "../ui/Avatar";
 import { EstimationModal } from "../estimation/EstimationModal";
 import { useApi } from "../../hooks/useApi";
-import { getTaskFieldValues } from "../../lib/api";
+import { api, getTaskFieldValues } from "../../lib/api";
 
 const priorityDot: Record<TaskItemResponse["priority"], string> = {
   Critical: "bg-destructive",
@@ -54,6 +54,9 @@ export function TaskCard({
     task.status !== "Done" &&
     new Date(task.dueDateUtc).getTime() < Date.now();
   const [estimationOpen, setEstimationOpen] = useState(false);
+  const [showChildForm, setShowChildForm] = useState(false);
+  const [childTitle, setChildTitle] = useState("");
+  const [addingChild, setAddingChild] = useState(false);
 
   const { data: customFields = [] } = useApi(
     () => getTaskFieldValues(workspaceId, projectId, task.id),
@@ -62,6 +65,26 @@ export function TaskCard({
 
   async function handleEstimationSaved(storyPoints: number | null) {
     onEstimationSaved?.(task.id, storyPoints);
+  }
+
+  async function handleAddChild(event: FormEvent) {
+    event.preventDefault();
+    const title = childTitle.trim();
+    if (!title) return;
+    setAddingChild(true);
+    try {
+      await api(`/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/subtasks`, {
+        method: "POST",
+        body: JSON.stringify({ title, description: null, priority: "Medium" }),
+      });
+      setChildTitle("");
+      setShowChildForm(false);
+      onEstimationSaved?.(task.id, null);
+    } catch {
+      // keep form open on error
+    } finally {
+      setAddingChild(false);
+    }
   }
 
   return (
@@ -186,6 +209,52 @@ export function TaskCard({
               {field.fieldName}: {field.value}
             </span>
           ))}
+        {showChildForm ? (
+          <form
+            onSubmit={handleAddChild}
+            className="flex items-center gap-1"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <input
+              type="text"
+              value={childTitle}
+              onChange={(event) => setChildTitle(event.target.value)}
+              placeholder={t("board.childTaskPlaceholder")}
+              autoFocus
+              className="min-w-0 flex-1 rounded-md border border-border bg-surface px-1.5 py-1 text-xs placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={addingChild || !childTitle.trim()}
+              className="rounded-md border border-border px-1.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-40"
+            >
+              {addingChild ? t("board.addingChild") : <Plus className="size-3" aria-hidden />}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowChildForm(false);
+                setChildTitle("");
+              }}
+              className="rounded-md p-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3" aria-hidden />
+            </button>
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setShowChildForm(true);
+            }}
+            aria-label={t("board.addChildTaskAria")}
+            title={t("board.addChildTask")}
+            className="rounded p-0.5 text-muted-foreground opacity-0 transition-all duration-150 hover:text-primary focus-visible:opacity-100 group-hover:opacity-100"
+          >
+            <Plus className="size-3" aria-hidden />
+          </button>
+        )}
         {assignee && (
           <span
             className="ml-auto"
