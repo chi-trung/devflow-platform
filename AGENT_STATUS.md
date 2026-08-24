@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | **Sprint 24 Complete ✅**
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | **Sprint 25 In Progress 🔄**
 
 ---
 
@@ -16,6 +16,7 @@
 | **Sprint 22** | Observability & Collaboration Depth (Activity Log + Notifications + UI Depth + Search) | ✅ DONE (B22.1-3) — PR #100 | ✅ DONE (C22.1-3) — PR #101, A22.1-2 (Agent A), D22.1-2 (Agent D) — PR #102 | Complete ✅ |
 | **Sprint 23** | Performance & UX Evolution (SWR cache + code-splitting + optimistic UX) | ✅ Backend verified already optimized | ✅ DONE (A23.1) SWR cache + prefetch + vendor chunks — PR #103; (A23.2) optimistic task create + preconnect — PR #104 | Complete ✅ |
 | **Sprint 24** | Real Caching, Google OAuth, Live Presence, Import/Export | ✅ DONE (B24.1) real Redis cache wiring — PR #105; (A24.1) Google OAuth PKCE — PR #107 | ✅ DONE (C24.1-4) presence avatars + inline child task + skeleton + tab title — PR #108; (D24.1-2) import/export + search — PR #106 | Complete ✅ |
+| **Sprint 25** | Guardrails & Collaboration Depth (RBAC + Presence + Watchers + Activity) | 🔄 Agent A DONE: RBAC hardening — PR #109 (merged); Agent B PENDING: presence broadcast + task watchers | 🔄 Agent C PENDING: fix presence bug + role-aware UI; Agent D PENDING: activity transparency (filter, pagination) | In Progress 🔄 |
 
 ---
 
@@ -265,6 +266,33 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 - [x] **A24.2: Review & merge B/C/D PRs** — #105 (B), #106 (D), #107 (A), #108 (C) ✅
 - Tests: 175/175 unit tests green (tăng 167→175 nhờ OAuth + ImportExport).
 
+### 🛡️ Sprint 25 — Guardrails & Collaboration Depth (RBAC + Presence + Watchers + Activity) 🔄
+
+**Goal:** Hardening bảo mật (RBAC), sửa presence realtime, thêm task watchers, và biến activity log thành công cụ truy vết.
+
+> **Gaps verified in code:** Import/Export backup + DeleteEpic chỉ yêu cầu Member (lỗ hổng); `ProjectHub` không broadcast presence event (avata không hoạt động); `usePresence` đọc localStorage key không tồn tại; activity log không filter/không phân trang.
+
+#### 🚀 Agent A (Team Lead — RBAC Hardening)
+- [x] **A25.1: RBAC Security Audit & Hardening** — PR #109 ✅ (merged)
+  - Audit toàn bộ 47 `RequireWorkspaceRole` attributes → tìm 3 lỗ hổng under-privileged.
+  - `ImportProjectBackup` Member → **Admin** (ghi dữ liệu vào project).
+  - `ExportProjectBackup` Member → **Admin** (full data dump, exfiltration risk).
+  - `DeleteEpic` Member → **Admin** (đồng bộ với DeleteTask).
+  - 9 unit tests `RbacAuthorizationTests` — 184/184 green (tăng 175→184).
+- [x] **A25.2: Sprint 25 plan + prompts B/C/D** — `docs/sprint25/prompt-{B,C,D}.md`
+
+#### 🤖 Agent B (Backend — Presence + Watchers) 🔄
+- [ ] **B25.1: Presence broadcast** — ProjectHub broadcast `user-joined`/`user-left`.
+- [ ] **B25.2: Task Watchers** — entity + migration + repository + CQRS + notify watchers trên comment/status change.
+
+#### 🎨 Agent C (Frontend — Role UI + Presence Fix) 🔄
+- [ ] **C25.1: Fix `usePresence`** — đọc selfId từ AuthContext (bỏ localStorage không tồn tại).
+- [ ] **C25.2: Role-aware UI** — ẩn import/export backup/delete epic với Member (`isAdmin`).
+
+#### 🚀 Agent D (Fullstack — Activity Transparency) 🔄
+- [ ] **D25.1: Backend** — `ListActivitiesQuery` filter actor/task/action/date + phân trang.
+- [ ] **D25.2: Frontend** — ActivitiesPage filter bar + pagination.
+
 
 
 ## 🔒 Multi-Agent Coordination Guidelines
@@ -281,5 +309,5 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-*DevFlow Architecture Team — Updated 2026-08-24*
+*DevFlow Architecture Team — Updated 2026-08-24 (Sprint 25 in progress)*
 
