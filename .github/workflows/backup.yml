@@ -1,0 +1,65 @@
+name: Database Backup
+
+on:
+  schedule:
+    # Daily at 03:17 UTC
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      keep_count:
+        description: "Number of backups to keep"
+        required: false
+        default: "14"
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Dump Postgres
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: devflow
+          POSTGRES_PASSWORD: ${{ secrets.BACKUP_DB_PASSWORD || 'devflow_backup' }}
+          POSTGRES_DB: devflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U devflow"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGDATABASE: devflow
+      PGUSER: devflow
+      PGPASSWORD: ${{ secrets.BACKUP_DB_PASSWORD || 'devflow_backup' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install pg_dump
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Run backup
+        run: |
+          KEEP="${{ github.event.inputs.keep_count || '14' }}"
+          KEEP_COUNT="$KEEP" BACKUP_DIR="/tmp/devflow-backups" \
+            ./scripts/backup-db.sh
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: /tmp/devflow-backups/backup-*.dump
+          retention-days: 30
+          if-no-files-found: error
