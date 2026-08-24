@@ -47,7 +47,10 @@ export function GoogleSignInButton() {
         setSessionFromTokens(response.accessToken, response.refreshToken);
         const redirect = sessionStorage.getItem("devflow.oauthRedirect");
         sessionStorage.removeItem("devflow.oauthRedirect");
-        window.location.href = redirect || "/";
+        // Don't land back on the login/register pages after a successful sign-in.
+        const safeRedirect =
+          !redirect || redirect === "/login" || redirect === "/register" ? "/" : redirect;
+        window.location.href = safeRedirect;
       })
       .catch((err: unknown) => {
         if (!cancelled) {
