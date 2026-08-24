@@ -19,4 +19,15 @@ public sealed class ExportController(ISender sender) : ControllerBase
 
         return File(result.Data, result.ContentType, result.FileName);
     }
+
+    [HttpGet("backup")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ExportBackup(
+        Guid workspaceId, Guid projectId, [FromQuery] string format = "json", CancellationToken ct = default)
+    {
+        var result = await sender.Send(
+            new Application.Features.Export.ExportProjectBackupQuery(workspaceId, projectId, format), ct);
+
+        return File(result.Data, result.ContentType, result.FileName);
+    }
 }

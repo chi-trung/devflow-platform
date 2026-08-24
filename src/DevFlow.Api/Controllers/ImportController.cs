@@ -11,7 +11,8 @@ namespace DevFlow.Api.Controllers;
 [Route("api/v1/workspaces/{workspaceId:guid}/projects/{projectId:guid}/import")]
 public sealed class ImportController(
     ITaskItemRepository taskItemRepository,
-    IUnitOfWork unitOfWork) : ControllerBase
+    IUnitOfWork unitOfWork,
+    ISender sender) : ControllerBase
 {
     [HttpPost("tasks")]
     [Consumes("application/json", "text/csv")]
@@ -30,6 +31,35 @@ public sealed class ImportController(
         }
 
         return await ImportFromJson(projectId, cancellationToken);
+    }
+
+    [HttpPost("backup")]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(ImportBackupResultResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ImportBackup(
+        Guid workspaceId,
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        using var reader = new StreamReader(Request.Body);
+        var body = await reader.ReadToEndAsync(cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return BadRequest("No backup data provided.");
+        }
+
+        var result = await sender.Send(
+            new Application.Features.Import.ImportProjectBackupCommand(workspaceId, projectId, body),
+            cancellationToken);
+
+        return Ok(new ImportBackupResultResponse(
+            result.TasksImported,
+            result.EpicsImported,
+            result.SprintsImported,
+            result.CommentsImported,
+            result.Errors));
     }
 
     private async Task<IActionResult> ImportFromJson(Guid projectId, CancellationToken cancellationToken)
@@ -64,7 +94,7 @@ public sealed class ImportController(
         var body = await reader.ReadToEndAsync(cancellationToken);
 
         var lines = body.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length < 2) // header + at least 1 row
+        if (lines.Length < 2)
         {
             return BadRequest("CSV must have a header row and at least one data row.");
         }
@@ -144,7 +174,6 @@ public sealed class ImportController(
                 item.Description?.Trim(),
                 priority);
 
-            // Apply imported status if not default Backlog
             if (status != TaskItemStatus.Backlog)
             {
                 task.ChangeStatus(status);
@@ -173,5 +202,12 @@ public sealed class ImportController(
     public sealed record ImportResult(
         int Imported,
         int Skipped,
+        IReadOnlyList<string> Errors);
+
+    public sealed record ImportBackupResultResponse(
+        int TasksImported,
+        int EpicsImported,
+        int SprintsImported,
+        int CommentsImported,
         IReadOnlyList<string> Errors);
 }
