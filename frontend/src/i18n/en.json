@@ -21,7 +21,9 @@
     "customFields": "Custom Fields",
     "templates": "Templates",
     "webhooks": "Webhooks",
-    "github": "GitHub"
+    "github": "GitHub",
+    "personal": "Personal",
+    "myTasks": "My Tasks"
   },
   "dashboard": {
     "title": "Workspaces",
@@ -119,6 +121,13 @@
     "saveTemplateFailed": "Failed to save template.",
     "createTaskFailed": "Failed to create task.",
     "showMore": "Show {count} more"
+  },
+  "myTasks": {
+    "title": "My Tasks",
+    "subtitle": "Everything assigned to you across this workspace.",
+    "empty": "You have no assigned tasks yet.",
+    "dueDate": "Due: {{date}}",
+    "sprint": "Sprint: {{name}}"
   },
   "task": {
     "title": "Title",

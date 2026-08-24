@@ -1055,3 +1055,21 @@ export function getVelocityHistory(
     `/workspaces/${workspaceId}/projects/${projectId}/reporting/velocity-history`,
   );
 }
+
+export interface MyTaskItem {
+  id: string;
+  projectId: string;
+  projectName: string;
+  projectKey: string;
+  title: string;
+  status: string;
+  priority: string;
+  dueDateUtc: string | null;
+  completedAtUtc: string | null;
+  sprintId: string | null;
+  sprintName: string | null;
+}
+
+export function getMyTasks(workspaceId: string): Promise<MyTaskItem[]> {
+  return api<MyTaskItem[]>(`/workspaces/${workspaceId}/my-tasks`);
+}
