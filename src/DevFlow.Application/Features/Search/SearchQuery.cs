@@ -12,6 +12,7 @@ public sealed record SearchResult(
     IReadOnlyList<LabelResult> Labels,
     IReadOnlyList<UserResult> Users,
     IReadOnlyList<CommentResult> Comments,
+    IReadOnlyList<CustomFieldResult> CustomFields,
     SearchPagination Pagination);
 
 /// <summary>Pagination metadata for every result group.</summary>
@@ -23,7 +24,8 @@ public sealed record SearchPagination(
     int TotalEpics,
     int TotalLabels,
     int TotalUsers,
-    int TotalComments);
+    int TotalComments,
+    int TotalCustomFields = 0);
 
 public sealed record TaskItemResult(
     Guid Id,
@@ -60,6 +62,13 @@ public sealed record CommentResult(
     string TaskTitle,
     string ProjectKey);
 
+public sealed record CustomFieldResult(
+    Guid TaskId,
+    string TaskTitle,
+    string ProjectKey,
+    string FieldName,
+    string? Value);
+
 public sealed record SearchQuery(
     Guid WorkspaceId,
     string Keyword,
@@ -70,7 +79,20 @@ public sealed record SearchQuery(
     DateTime? DueBefore = null,
     DateTime? DueAfter = null,
     int Page = 1,
-    int PageSize = 10) : IRequest<SearchResult>, IWorkspaceRequest;
+    int PageSize = 10,
+    string? SortBy = null,
+    string? SortDir = null) : IRequest<SearchResult>, IWorkspaceRequest;
+
+/// <summary>Allowed task sort keys. Mapped to EF ordering by the repository.</summary>
+public static class SearchSort
+{
+    public static readonly string[] AllowedKeys = ["createdAt", "updatedAt", "title", "status", "priority", "dueDate"];
+}
+
+/// <summary>Task sort instruction passed to the repository (already validated).</summary>
+public sealed record TaskItemSearchSort(
+    string Key,
+    bool Descending);
 
 // ----- row shapes produced by ISearchRepository (Infrastructure queries) -----
 
@@ -107,6 +129,14 @@ public sealed record CommentSearchRow(
     string TaskTitle,
     Guid ProjectId,
     string ProjectKey);
+
+public sealed record CustomFieldSearchRow(
+    Guid TaskId,
+    string TaskTitle,
+    Guid ProjectId,
+    string ProjectKey,
+    string FieldName,
+    string? Value);
 
 /// <summary>Optional task filters parsed from the search query.</summary>
 public sealed record TaskItemSearchFilters(

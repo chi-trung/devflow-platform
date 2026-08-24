@@ -77,10 +77,12 @@ public sealed class WorkspaceReportingController(ISender sender) : ControllerBas
     [ProducesResponseType(typeof(Application.Features.Reporting.TeamReportResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTeamReport(
         Guid workspaceId,
+        [FromQuery] DateTimeOffset? startDate,
+        [FromQuery] DateTimeOffset? endDate,
         CancellationToken cancellationToken)
     {
         var result = await sender.Send(
-            new Application.Features.Reporting.GetTeamReportQuery(workspaceId),
+            new Application.Features.Reporting.GetTeamReportQuery(workspaceId, startDate, endDate),
             cancellationToken);
 
         return Ok(result);

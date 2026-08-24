@@ -14,7 +14,7 @@ public sealed class SearchQueryHandler(
 
         if (string.IsNullOrWhiteSpace(keyword))
         {
-            return new SearchResult([], [], [], [], [], [], new SearchPagination(
+            return new SearchResult([], [], [], [], [], [], [], new SearchPagination(
                 query.Page, query.PageSize, 0, 0, 0, 0, 0, 0));
         }
 
@@ -30,22 +30,24 @@ public sealed class SearchQueryHandler(
             query.DueBefore,
             query.DueAfter);
 
-        // One query per entity group (≤5), all issued against the workspace's
-        // project IDs so results never leak across workspaces.
-        var tasksTask = searchRepository.SearchTasksAsync(query.WorkspaceId, keyword, filters, skip, pageSize, cancellationToken);
+        var sort = ParseSort(query.SortBy, query.SortDir);
+
+        // One query per entity group, all against the workspace's project IDs.
+        var tasksTask = searchRepository.SearchTasksAsync(query.WorkspaceId, keyword, filters, sort, skip, pageSize, cancellationToken);
         var projectsTask = searchRepository.SearchProjectsAsync(query.WorkspaceId, keyword, pageSize, cancellationToken);
         var epicsTask = searchRepository.SearchEpicsAsync(query.WorkspaceId, keyword, pageSize, cancellationToken);
         var labelsTask = searchRepository.SearchLabelsAsync(query.WorkspaceId, keyword, pageSize, cancellationToken);
+        var customFieldsTask = searchRepository.SearchCustomFieldsAsync(query.WorkspaceId, keyword, skip, pageSize, cancellationToken);
 
-        await Task.WhenAll(tasksTask, projectsTask, epicsTask, labelsTask);
+        await Task.WhenAll(tasksTask, projectsTask, epicsTask, labelsTask, customFieldsTask);
 
         var tasks = tasksTask.Result;
         var projects = projectsTask.Result;
         var epics = epicsTask.Result;
         var labels = labelsTask.Result;
+        var customFields = customFieldsTask.Result;
 
-        // Users (workspace members) + comments (content keyword) stay on the
-        // workspace-level repositories since they aren't project-scoped.
+        // Users + comments stay on workspace-level repos.
         var membersTask = workspaceRepository.GetMembersAsync(query.WorkspaceId, cancellationToken);
         var commentsTask = searchRepository.SearchCommentsAsync(query.WorkspaceId, keyword, skip, pageSize, cancellationToken);
 
@@ -65,6 +67,7 @@ public sealed class SearchQueryHandler(
             .Select(m => new UserResult(m.UserId, m.DisplayName, m.Username))
             .ToList();
         var commentResults = comments.Items.Select(c => new CommentResult(c.Id, c.Content, c.TaskItemId, c.TaskTitle, c.ProjectKey)).ToList();
+        var customFieldResults = customFields.Items.Select(cf => new CustomFieldResult(cf.TaskId, cf.TaskTitle, cf.ProjectKey, cf.FieldName, cf.Value)).ToList();
 
         var totalUsers = members.Count(m =>
             m.DisplayName.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
@@ -78,9 +81,10 @@ public sealed class SearchQueryHandler(
             epicResults.Count,
             labelResults.Count,
             totalUsers,
-            comments.Total);
+            comments.Total,
+            customFields.Total);
 
-        return new SearchResult(taskResults, projectResults, epicResults, labelResults, userResults, commentResults, pagination);
+        return new SearchResult(taskResults, projectResults, epicResults, labelResults, userResults, commentResults, customFieldResults, pagination);
     }
 
     private static TaskItemStatus? ParseStatus(string? status)
@@ -88,4 +92,13 @@ public sealed class SearchQueryHandler(
 
     private static TaskItemPriority? ParsePriority(string? priority)
         => Enum.TryParse<TaskItemPriority>(priority, true, out var p) ? p : null;
+
+    private static TaskItemSearchSort? ParseSort(string? sortBy, string? sortDir)
+    {
+        if (string.IsNullOrWhiteSpace(sortBy)) return null;
+        if (!SearchSort.AllowedKeys.Contains(sortBy, StringComparer.OrdinalIgnoreCase)) return null;
+        var desc = sortDir?.Equals("desc", StringComparison.OrdinalIgnoreCase) == true
+            || (sortBy != "title" && string.IsNullOrWhiteSpace(sortDir));
+        return new TaskItemSearchSort(sortBy.ToLowerInvariant(), desc);
+    }
 }
