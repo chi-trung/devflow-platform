@@ -440,11 +440,11 @@ export interface PatCreatedResponse {
 }
 
 export interface CycleLeadTimeResponse {
-  cycleTimeP50: number;
-  cycleTimeP90: number;
-  leadTimeP50: number;
-  leadTimeP90: number;
-  tasks: Array<{ taskId: string; title: string; cycleTimeDays: number; leadTimeDays: number }>;
+  cycleTimeP50: number | null;
+  cycleTimeP90: number | null;
+  leadTimeP50: number | null;
+  leadTimeP90: number | null;
+  tasks: Array<{ taskId: string; title: string; cycleTimeDays: number | null; leadTimeDays: number | null }>;
 }
 
 export interface VelocityHistoryResponse {

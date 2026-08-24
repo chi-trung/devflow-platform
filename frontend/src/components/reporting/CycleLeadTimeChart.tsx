@@ -14,6 +14,9 @@ interface CycleLeadTimeChartProps {
   className?: string;
 }
 
+const formatMetric = (value: number | null): string =>
+  value === null || value === undefined || Number.isNaN(value) ? "—" : value.toFixed(1);
+
 export function CycleLeadTimeChart({ data, className = "" }: CycleLeadTimeChartProps) {
   const { t } = useTranslation();
 
@@ -27,7 +30,13 @@ export function CycleLeadTimeChart({ data, className = "" }: CycleLeadTimeChartP
     );
   }
 
-  const maxDays = Math.max(1, ...data.tasks.map((t) => Math.max(t.cycleTimeDays, t.leadTimeDays)));
+  // Per-task cycle/lead values are nullable when a task has no completed/started
+  // timestamps; fall back to 0 so the scatter still renders.
+  const taskDays = (t: { cycleTimeDays: number | null; leadTimeDays: number | null }) => [
+    t.cycleTimeDays ?? 0,
+    t.leadTimeDays ?? 0,
+  ];
+  const maxDays = Math.max(1, ...data.tasks.flatMap((t) => taskDays(t)));
   const plotW = W - PAD_L - PAD_R;
   const plotH = H - PAD_T - PAD_B;
   const slot = plotW / data.tasks.length;
@@ -48,10 +57,10 @@ export function CycleLeadTimeChart({ data, className = "" }: CycleLeadTimeChartP
           {t("reports.cycleLeadTime")}
         </h3>
         <div className="ml-auto flex flex-wrap items-center gap-3 font-mono text-[11px] text-muted-foreground">
-          <span>{t("reports.cycleTimeP50")}: {data.cycleTimeP50.toFixed(1)} {t("reports.days")}</span>
-          <span>{t("reports.cycleTimeP90")}: {data.cycleTimeP90.toFixed(1)} {t("reports.days")}</span>
-          <span>{t("reports.leadTimeP50")}: {data.leadTimeP50.toFixed(1)} {t("reports.days")}</span>
-          <span>{t("reports.leadTimeP90")}: {data.leadTimeP90.toFixed(1)} {t("reports.days")}</span>
+          <span>{t("reports.cycleTimeP50")}: {formatMetric(data.cycleTimeP50)} {t("reports.days")}</span>
+          <span>{t("reports.cycleTimeP90")}: {formatMetric(data.cycleTimeP90)} {t("reports.days")}</span>
+          <span>{t("reports.leadTimeP50")}: {formatMetric(data.leadTimeP50)} {t("reports.days")}</span>
+          <span>{t("reports.leadTimeP90")}: {formatMetric(data.leadTimeP90)} {t("reports.days")}</span>
         </div>
       </div>
 
@@ -79,13 +88,14 @@ export function CycleLeadTimeChart({ data, className = "" }: CycleLeadTimeChartP
 
         {data.tasks.map((task, i) => {
           const cx = PAD_L + slot * i + slot / 2;
+          const [cycleDays, leadDays] = taskDays(task);
           return (
             <g key={task.taskId}>
-              <circle cx={cx} cy={y(task.cycleTimeDays)} r={dotR} fill="var(--color-primary)" opacity="0.9">
-                <title>{`${task.title} — cycle ${task.cycleTimeDays.toFixed(1)}d`}</title>
+              <circle cx={cx} cy={y(cycleDays)} r={dotR} fill="var(--color-primary)" opacity="0.9">
+                <title>{`${task.title} — cycle ${formatMetric(task.cycleTimeDays)}d`}</title>
               </circle>
-              <circle cx={cx} cy={y(task.leadTimeDays)} r={dotR} fill="var(--color-muted-foreground)" opacity="0.8">
-                <title>{`${task.title} — lead ${task.leadTimeDays.toFixed(1)}d`}</title>
+              <circle cx={cx} cy={y(leadDays)} r={dotR} fill="var(--color-muted-foreground)" opacity="0.8">
+                <title>{`${task.title} — lead ${formatMetric(task.leadTimeDays)}d`}</title>
               </circle>
               {i % Math.max(1, Math.floor(data.tasks.length / 8)) === 0 && (
                 <text
