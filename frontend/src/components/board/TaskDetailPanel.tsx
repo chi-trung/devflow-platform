@@ -5,6 +5,7 @@ import { api, createTemplate, tokens } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { ErrorAlert } from "../ui/ErrorAlert";
 import { Avatar } from "../ui/Avatar";
+import { Skeleton } from "../ui/Skeleton";
 import { useToast } from "../ui/ToastProvider";
 import type {
   CommentResponse,
@@ -587,9 +588,11 @@ export function TaskDetailPanel({
 
             <div className="flex flex-col gap-2">
               {commentsLoading ? (
-                <p className="text-sm text-muted-foreground">
-                  {t("task.loading")}
-                </p>
+                <div className="space-y-2">
+                  {[0, 1, 2].map((i) => (
+                    <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                  ))}
+                </div>
               ) : comments.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   {t("task.noComments")}
