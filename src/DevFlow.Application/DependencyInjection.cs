@@ -18,6 +18,7 @@ public static class DependencyInjection
             options.AddOpenBehavior(typeof(ActivityBehavior<,>));
             options.AddOpenBehavior(typeof(NotificationBehavior<,>));
             options.AddOpenBehavior(typeof(RealtimeBehavior<,>));
+            options.AddOpenBehavior(typeof(CacheInvalidationBehavior<,>));
         });
 
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
