@@ -24,6 +24,8 @@ public class ProjectLifecycleHandlerTests
         _project = Project.Create(_workspaceId, "DevFlow Core", "DEV", "Core platform");
         _projectRepository.GetByIdAsync(_project.Id, Arg.Any<CancellationToken>())
             .Returns(_project);
+        _projectRepository.GetByIdIncludingDeletedAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(_project);
     }
 
     [Fact]
@@ -76,6 +78,7 @@ public class ProjectLifecycleHandlerTests
         await handler.Handle(command, CancellationToken.None);
 
         Assert.Equal(ProjectStatus.Archived, _project.Status);
+        Assert.NotNull(_project.DeletedAtUtc);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -93,6 +96,7 @@ public class ProjectLifecycleHandlerTests
     {
         _project.Archive();
         Assert.Equal(ProjectStatus.Archived, _project.Status);
+        Assert.NotNull(_project.DeletedAtUtc);
 
         var handler = new RestoreProjectCommandHandler(_projectRepository, _unitOfWork);
         var command = new RestoreProjectCommand(_workspaceId, _project.Id);
@@ -100,6 +104,7 @@ public class ProjectLifecycleHandlerTests
         await handler.Handle(command, CancellationToken.None);
 
         Assert.Equal(ProjectStatus.Active, _project.Status);
+        Assert.Null(_project.DeletedAtUtc);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

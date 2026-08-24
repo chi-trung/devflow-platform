@@ -18,6 +18,13 @@ public sealed class ProjectRepository(DevFlowDbContext dbContext) : IProjectRepo
         return dbContext.Projects.FirstOrDefaultAsync(project => project.Id == id, cancellationToken);
     }
 
+    public Task<Project?> GetByIdIncludingDeletedAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Projects
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(project => project.Id == id, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Project>> GetForWorkspaceAsync(Guid workspaceId, CancellationToken cancellationToken = default)
     {
         var projects = await dbContext.Projects

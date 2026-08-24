@@ -15,7 +15,7 @@ public sealed class RestoreProjectCommandHandler(
 {
     public async Task Handle(RestoreProjectCommand command, CancellationToken cancellationToken)
     {
-        var project = await projectRepository.GetByIdAsync(command.ProjectId, cancellationToken);
+        var project = await projectRepository.GetByIdIncludingDeletedAsync(command.ProjectId, cancellationToken);
 
         if (project is null || project.WorkspaceId != command.WorkspaceId)
         {

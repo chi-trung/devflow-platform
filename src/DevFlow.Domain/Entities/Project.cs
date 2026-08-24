@@ -67,10 +67,12 @@ public class Project : BaseEntity, IAuditableEntity, ISoftDeletable
     public void Archive()
     {
         Status = ProjectStatus.Archived;
+        DeletedAtUtc = DateTimeOffset.UtcNow;
     }
 
     public void Restore()
     {
         Status = ProjectStatus.Active;
+        DeletedAtUtc = null;
     }
 }
