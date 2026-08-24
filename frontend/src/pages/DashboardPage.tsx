@@ -247,7 +247,7 @@ export function DashboardPage() {
                   />
                 )}
                 <CumulativeFlow data={dashboard.data} className="mb-4" />
-                <div className="grid gap-4 lg:grid-cols-2">
+                <div className="grid items-start gap-4 lg:grid-cols-2">
                   <TaskDistribution data={dashboard.data} />
                   <ActivityFeed
                     items={dashboard.data.recentActivity}

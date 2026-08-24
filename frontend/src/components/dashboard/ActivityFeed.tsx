@@ -11,7 +11,7 @@ import { timeAgo } from "../notifications/NotificationItem";
 import { Pagination } from "../ui/Pagination";
 import type { DashboardActivityItem } from "../../types/api";
 
-const ITEMS_PER_PAGE = 4;
+const ITEMS_PER_PAGE = 5;
 
 function kindIcon(action: string) {
   const t = action.toLowerCase();
@@ -45,7 +45,7 @@ export function ActivityFeed({ items, workspaceId }: ActivityFeedProps) {
   return (
     <section
       aria-label={t("dashboard.recentActivity")}
-      className="flex min-h-[22rem] flex-col rounded-xl border border-border bg-card p-5"
+      className="flex flex-col rounded-xl border border-border bg-card p-5"
     >
       <h2 className="mb-4 inline-flex items-center gap-1.5 font-display font-semibold">
         <Activity className="size-4 text-primary" aria-hidden />
