@@ -19,7 +19,11 @@ import {
   removeTaskFromSprint,
   startSprint,
 } from "../lib/api";
-import { createProjectConnection } from "../lib/realtime";
+import {
+  createProjectConnection,
+  startProjectConnection,
+  stopProjectConnection,
+} from "../lib/realtime";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
 import { useToast } from "../components/ui/ToastProvider";
@@ -130,14 +134,11 @@ export function SprintPlanningPage() {
     };
 
     connection.on("project-event", scheduleReload);
-    connection
-      .start()
-      .then(() => connection.invoke("JoinProject", projectId))
-      .catch(() => {});
+    void startProjectConnection(connection, projectId);
 
     return () => {
       window.clearTimeout(timer);
-      void connection.stop();
+      void stopProjectConnection(connection);
     };
   }, [projectId, reload, reloadSprints]);
 
