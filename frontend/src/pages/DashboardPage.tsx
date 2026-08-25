@@ -13,6 +13,7 @@ import { Badge } from "../components/ui/Badge";
 import { Avatar } from "../components/ui/Avatar";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
+import { EmptyState } from "../components/ui/EmptyState";
 import { StatsCards } from "../components/dashboard/StatsCards";
 import { CumulativeFlow } from "../components/dashboard/CumulativeFlow";
 import { TaskDistribution } from "../components/dashboard/TaskDistribution";
@@ -307,20 +308,18 @@ export function DashboardPage() {
         ) : error ? (
           <ErrorAlert message={error} />
         ) : !workspaces || workspaces.length === 0 ? (
-          <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-card/50 px-8 py-16 text-center rise">
-            <span className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Boxes className="size-6" aria-hidden />
-            </span>
-            <p className="font-display text-lg font-semibold">
-              {t("dashboard.noWorkspaces")}
-            </p>
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              {t("dashboard.noWorkspacesDesc")}
-            </p>
-            <Button className="mt-5" onClick={() => setCreating(true)}>
-              <Plus className="size-4" aria-hidden />
-              {t("dashboard.newWorkspace")}
-            </Button>
+          <div className="rise">
+            <EmptyState
+              icon={<Boxes className="size-8 text-primary" aria-hidden />}
+              title={t("dashboard.noWorkspaces")}
+              description={t("dashboard.noWorkspacesDesc")}
+              action={
+                <Button className="mt-3" onClick={() => setCreating(true)}>
+                  <Plus className="size-4" aria-hidden />
+                  {t("dashboard.newWorkspace")}
+                </Button>
+              }
+            />
           </div>
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

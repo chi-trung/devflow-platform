@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { TrendingDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { EmptyState } from "../ui/EmptyState";
 import type { TaskItemResponse } from "../../types/api";
 
 const DAY_MS = 86_400_000;
@@ -56,20 +57,22 @@ export function BurndownChart({
 
   if (!startDateUtc || !endDateUtc || totalDays < 1) {
     return (
-      <div
-        className={`flex items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-sm text-muted-foreground ${className}`}
-      >
-        {t("sprint.burndownAddDates")}
+      <div className={className}>
+        <EmptyState
+          icon={<TrendingDown className="size-8 text-muted-foreground" aria-hidden />}
+          title={t("sprint.burndownAddDates")}
+        />
       </div>
     );
   }
 
   if (total === 0) {
     return (
-      <div
-        className={`flex items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-sm text-muted-foreground ${className}`}
-      >
-        {t("sprint.burndownNoTasks")}
+      <div className={className}>
+        <EmptyState
+          icon={<TrendingDown className="size-8 text-muted-foreground" aria-hidden />}
+          title={t("sprint.burndownNoTasks")}
+        />
       </div>
     );
   }

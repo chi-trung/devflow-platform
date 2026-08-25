@@ -1,17 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Plus, Pencil, Trash2, GripVertical, List, Flag } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, GripVertical, List, Flag, Link2, X } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
+import { Badge } from "../components/ui/Badge";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Skeleton } from "../components/ui/Skeleton";
+import { EmptyState } from "../components/ui/EmptyState";
+import { useToast } from "../components/ui/ToastProvider";
 import { EpicRoadmap } from "../components/epic/EpicRoadmap";
 import {
   api,
+  addEpicDependency,
   createEpic,
   deleteEpic,
+  getEpicDependencies,
   getEpics,
+  removeEpicDependency,
   updateEpic,
 } from "../lib/api";
 import { useApi } from "../hooks/useApi";
@@ -22,6 +28,7 @@ type ViewMode = "list" | "roadmap";
 
 export function EpicsPage() {
   const { t } = useTranslation();
+  const { push } = useToast();
   const { workspaceId = "", projectId = "" } = useParams();
   const [epics, setEpics] = useState<EpicResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +38,15 @@ export function EpicsPage() {
   const [pendingDelete, setPendingDelete] = useState<EpicResponse | null>(null);
   const [saving, setSaving] = useState(false);
   const [view, setView] = useState<ViewMode>("list");
+
+  // Epic dependency state: selected epic under inspection + picker
+  const [dependencyEpicId, setDependencyEpicId] = useState<string | null>(null);
+  const [blockedByIds, setBlockedByIds] = useState<string[]>([]);
+  const [depsLoading, setDepsLoading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pendingBlockerId, setPendingBlockerId] = useState("");
+  const [addingBlocker, setAddingBlocker] = useState(false);
+  const [removingBlockerId, setRemovingBlockerId] = useState<string | null>(null);
 
   const { currentUser } = useAuth();
   const { data: members = [] } = useApi<WorkspaceMemberResponse[]>(
@@ -62,6 +78,66 @@ export function EpicsPage() {
   useEffect(() => {
     loadEpics();
   }, [loadEpics]);
+
+  // Load the selected epic's dependencies (blockers) from the backend.
+  useEffect(() => {
+    if (!dependencyEpicId) return;
+    let cancelled = false;
+    setDepsLoading(true);
+    setPickerOpen(false);
+    setPendingBlockerId("");
+    getEpicDependencies(workspaceId, projectId, dependencyEpicId)
+      .then((deps) => {
+        if (!cancelled) setBlockedByIds(deps.map((d) => d.blockedByEpicId));
+      })
+      .catch(() => {
+        if (!cancelled) setBlockedByIds([]);
+      })
+      .finally(() => {
+        if (!cancelled) setDepsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId, projectId, dependencyEpicId]);
+
+  async function handleAddBlocker() {
+    if (!dependencyEpicId || !pendingBlockerId) return;
+    setAddingBlocker(true);
+    try {
+      await addEpicDependency(workspaceId, projectId, dependencyEpicId, pendingBlockerId);
+      setBlockedByIds((current) =>
+        current.includes(pendingBlockerId) ? current : [...current, pendingBlockerId],
+      );
+      setPickerOpen(false);
+      setPendingBlockerId("");
+      push(t("epic.blockerAdded"));
+    } catch {
+      push(t("epic.blockerAddFailed"), "error");
+    } finally {
+      setAddingBlocker(false);
+    }
+  }
+
+  async function handleRemoveBlocker(blockedByEpicId: string) {
+    if (!dependencyEpicId) return;
+    setRemovingBlockerId(blockedByEpicId);
+    try {
+      await removeEpicDependency(workspaceId, projectId, dependencyEpicId, blockedByEpicId);
+      setBlockedByIds((current) => current.filter((id) => id !== blockedByEpicId));
+      push(t("epic.blockerRemoved"));
+    } catch {
+      push(t("epic.blockerRemoveFailed"), "error");
+    } finally {
+      setRemovingBlockerId(null);
+    }
+  }
+
+  const blockedByEpics = epics.filter((epic) => blockedByIds.includes(epic.id));
+  const blockerCandidates = epics.filter(
+    (epic) =>
+      epic.id !== dependencyEpicId && !blockedByIds.includes(epic.id),
+  );
 
   function resetForm() {
     setName("");
@@ -276,23 +352,19 @@ export function EpicsPage() {
             ))}
           </div>
         ) : epics.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
-            <p className="font-display text-lg font-semibold">
-              {t("epic.emptyTitle")}
-            </p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              {t("epic.emptyDescription")}
-            </p>
-            {!creating && (
-              <Button
-                className="mt-2"
-                onClick={() => setCreating(true)}
-              >
-                <Plus className="size-4" aria-hidden />
-                {t("epic.create")}
-              </Button>
-            )}
-          </div>
+          <EmptyState
+            icon={<Flag className="size-8 text-muted-foreground" aria-hidden />}
+            title={t("epic.emptyTitle")}
+            description={t("epic.emptyDescription")}
+            action={
+              !creating && (
+                <Button className="mt-2" onClick={() => setCreating(true)}>
+                  <Plus className="size-4" aria-hidden />
+                  {t("epic.create")}
+                </Button>
+              )
+            }
+          />
         ) : view === "roadmap" ? (
           <EpicRoadmap epics={epics} onSelect={handleEdit} />
         ) : (
@@ -327,6 +399,12 @@ export function EpicsPage() {
                         </p>
                       )}
                       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                        {(epic.blockedByEpicIds?.length ?? 0) > 0 && (
+                          <Badge tone="red">
+                            <Link2 className="size-3" aria-hidden />
+                            {t("epic.blockedBadge")}
+                          </Badge>
+                        )}
                         {dateLabel && (
                           <span className="inline-flex items-center gap-1">
                             {dateLabel}
@@ -384,6 +462,19 @@ export function EpicsPage() {
                     <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
                       <button
                         type="button"
+                        onClick={() => setDependencyEpicId((current) => current === epic.id ? null : epic.id)}
+                        className={`rounded p-1.5 transition-colors duration-150 ${
+                          dependencyEpicId === epic.id
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                        title={t("epic.blockedBy")}
+                        aria-label={t("epic.blockedBy")}
+                      >
+                        <Link2 className="size-4" aria-hidden />
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => handleEdit(epic)}
                         className="rounded p-1.5 text-muted-foreground transition-colors duration-150 hover:text-foreground"
                         title={t("epic.edit")}
@@ -404,6 +495,102 @@ export function EpicsPage() {
                       )}
                     </div>
                   </div>
+
+                  {dependencyEpicId === epic.id && (
+                    <div className="mt-3 border-t border-border pt-3">
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <h4 className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                          <Link2 className="size-3.5" aria-hidden />
+                          {t("epic.blockedBy")}
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => setDependencyEpicId(null)}
+                          className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-foreground"
+                          title={t("common.cancel")}
+                          aria-label={t("common.cancel")}
+                        >
+                          <X className="size-4" aria-hidden />
+                        </button>
+                      </div>
+
+                      {depsLoading ? (
+                        <Skeleton className="h-12 w-full" />
+                      ) : blockedByEpics.length === 0 ? (
+                        <p className="rounded-lg border border-dashed border-border bg-card/40 px-3 py-2.5 text-sm text-muted-foreground">
+                          {t("epic.noBlockers")}
+                        </p>
+                      ) : (
+                        <ul className="flex flex-col gap-1.5">
+                          {blockedByEpics.map((blocker) => (
+                            <li
+                              key={blocker.id}
+                              className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2"
+                            >
+                              <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                                {blocker.name}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => void handleRemoveBlocker(blocker.id)}
+                                disabled={removingBlockerId === blocker.id}
+                                className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-destructive disabled:opacity-50"
+                                title={t("epic.removeBlocker")}
+                                aria-label={t("epic.removeBlocker")}
+                              >
+                                <X className="size-4" aria-hidden />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {isAdmin && !pickerOpen && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={() => setPickerOpen(true)}
+                        >
+                          <Plus className="size-3.5" aria-hidden />
+                          {t("epic.addBlocker")}
+                        </Button>
+                      )}
+
+                      {isAdmin && pickerOpen && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <select
+                            value={pendingBlockerId}
+                            onChange={(event) => setPendingBlockerId(event.target.value)}
+                            aria-label={t("epic.addBlocker")}
+                            className="min-w-0 flex-1 cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                          >
+                            <option value="">{t("epic.addBlockerPlaceholder")}</option>
+                            {blockerCandidates.map((candidate) => (
+                              <option key={candidate.id} value={candidate.id}>
+                                {candidate.name}
+                              </option>
+                            ))}
+                          </select>
+                          <Button
+                            size="sm"
+                            disabled={addingBlocker || !pendingBlockerId}
+                            onClick={() => void handleAddBlocker()}
+                          >
+                            {addingBlocker ? t("common.saving") : t("common.create")}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setPickerOpen(false)}
+                            disabled={addingBlocker}
+                          >
+                            {t("common.cancel")}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </li>
               );
             })}

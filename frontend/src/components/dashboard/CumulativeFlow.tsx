@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Layers } from "lucide-react";
+import { EmptyState } from "../ui/EmptyState";
 import type { DashboardData } from "../../types/api";
 
 interface CumulativeFlowProps {
@@ -24,10 +25,11 @@ export function CumulativeFlow({ data, className = "" }: CumulativeFlowProps) {
 
   if (total === 0) {
     return (
-      <div
-        className={`flex items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-sm text-muted-foreground ${className}`}
-      >
-        {t("dashboard.noTasksYet")}
+      <div className={className}>
+        <EmptyState
+          icon={<Layers className="size-8 text-muted-foreground" aria-hidden />}
+          title={t("dashboard.noTasksYet")}
+        />
       </div>
     );
   }

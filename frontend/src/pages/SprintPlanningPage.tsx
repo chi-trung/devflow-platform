@@ -26,6 +26,7 @@ import { useToast } from "../components/ui/ToastProvider";
 import { AppShell } from "../components/AppShell";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Button } from "../components/ui/Button";
+import { EmptyState } from "../components/ui/EmptyState";
 import { Badge } from "../components/ui/Badge";
 import { Input } from "../components/ui/Input";
 import { Skeleton } from "../components/ui/Skeleton";
@@ -299,24 +300,20 @@ export function SprintPlanningPage() {
         ) : (
           <>
             {!active && planned.length === 0 && (
-              <div
-                className={`rise mb-4 flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/40 px-8 py-14 text-center ${completed.length > 0 ? "hidden" : ""}`}
-              >
-                <span className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <CalendarRange className="size-6" aria-hidden />
-                </span>
-                <p className="font-display text-lg font-semibold">
-                  {t("sprint.noSprintsYet")}
-                </p>
-                <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                  {t("sprint.noSprintsDesc")}
-                </p>
-                {canManage && (
-                  <Button className="mt-5" onClick={() => setModalOpen(true)}>
-                    <Plus className="size-4" aria-hidden />
-                    {t("sprint.newSprint")}
-                  </Button>
-                )}
+              <div className={`rise mb-4 ${completed.length > 0 ? "hidden" : ""}`}>
+                <EmptyState
+                  icon={<CalendarRange className="size-8 text-primary" aria-hidden />}
+                  title={t("sprint.noSprintsYet")}
+                  description={t("sprint.noSprintsDesc")}
+                  action={
+                    canManage && (
+                      <Button className="mt-3" onClick={() => setModalOpen(true)}>
+                        <Plus className="size-4" aria-hidden />
+                        {t("sprint.newSprint")}
+                      </Button>
+                    )
+                  }
+                />
               </div>
             )}
 
@@ -534,21 +531,22 @@ export function SprintPlanningPage() {
             )}
 
             {tasks.length === 0 && allSprints.length > 0 && (
-              <div className="mt-6 flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/40 px-8 py-10 text-center">
-                <SquareKanban
-                  className="mb-3 size-6 text-muted-foreground"
-                  aria-hidden
+              <div className="mt-6">
+                <EmptyState
+                  icon={<SquareKanban className="size-8 text-muted-foreground" aria-hidden />}
+                  description={
+                    <>
+                      {t("sprint.noTasksYetBefore")}{" "}
+                      <Link
+                        to={`/workspaces/${workspaceId}/projects/${projectId}`}
+                        className="font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        {t("sprint.boardLink")}
+                      </Link>{" "}
+                      {t("sprint.noTasksYetAfter")}
+                    </>
+                  }
                 />
-                <p className="text-sm text-muted-foreground">
-                  {t("sprint.noTasksYetBefore")}{" "}
-                  <Link
-                    to={`/workspaces/${workspaceId}/projects/${projectId}`}
-                    className="font-medium text-primary underline-offset-2 hover:underline"
-                  >
-                    {t("sprint.boardLink")}
-                  </Link>{" "}
-                  {t("sprint.noTasksYetAfter")}
-                </p>
               </div>
             )}
           </>

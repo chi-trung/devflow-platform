@@ -8,6 +8,7 @@ import type {
   CycleLeadTimeResponse,
   DashboardData,
   EpicCreatedResponse,
+  EpicDependencyResponse,
   EpicResponse,
   FieldErrors,
   GitHubIntegrationResponse,
@@ -815,6 +816,43 @@ export async function deleteEpic(
 ): Promise<void> {
   await api(
     `/workspaces/${workspaceId}/projects/${projectId}/epics/${epicId}`,
+    { method: "DELETE" },
+  );
+}
+
+export function getEpicDependencies(
+  workspaceId: string,
+  projectId: string,
+  epicId: string,
+): Promise<EpicDependencyResponse[]> {
+  return api<EpicDependencyResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/epics/${epicId}/dependencies`,
+  );
+}
+
+export async function addEpicDependency(
+  workspaceId: string,
+  projectId: string,
+  epicId: string,
+  blockedByEpicId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/epics/${epicId}/dependencies`,
+    {
+      method: "POST",
+      body: JSON.stringify({ blockedByEpicId }),
+    },
+  );
+}
+
+export async function removeEpicDependency(
+  workspaceId: string,
+  projectId: string,
+  epicId: string,
+  blockedByEpicId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/epics/${epicId}/dependencies/${blockedByEpicId}`,
     { method: "DELETE" },
   );
 }

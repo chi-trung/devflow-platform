@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Timer, Flame } from "lucide-react";
 import { api } from "../../lib/api";
 import { Skeleton } from "../ui/Skeleton";
+import { EmptyState } from "../ui/EmptyState";
 import type { SprintResponse, BurndownResponse } from "../../types/api";
 
 interface SprintHealthCardProps {
@@ -46,10 +47,12 @@ export function SprintHealthCard({ workspaceId, projectId, className = "" }: Spr
 
   if (!sprint) {
     return (
-      <div className={`flex items-center justify-center rounded-xl border border-dashed border-border bg-card/50 px-6 py-8 text-center ${className}`}>
-        <Timer className="mx-auto size-6 text-muted-foreground/40" aria-hidden />
-        <p className="mt-2 text-sm font-medium text-muted-foreground">{t("dashboard.noActiveSprint")}</p>
-        <p className="text-xs text-muted-foreground/70">{t("dashboard.noActiveSprintDesc")}</p>
+      <div className={className}>
+        <EmptyState
+          icon={<Timer className="size-8 text-muted-foreground/40" aria-hidden />}
+          title={t("dashboard.noActiveSprint")}
+          description={t("dashboard.noActiveSprintDesc")}
+        />
       </div>
     );
   }
