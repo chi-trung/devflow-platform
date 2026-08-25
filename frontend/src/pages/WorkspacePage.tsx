@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, FolderKanban, Users, Trash2, X, RotateCcw, Pencil } from "lucide-react";
-import { api, pagedItems, removeWorkspaceMember, updateMemberRole, restoreProject as restoreProjectApi, updateProject } from "../lib/api";
+import { api, pagedItems, removeWorkspaceMember, updateMemberRole, restoreProject as restoreProjectApi, updateProject, updateWorkspace } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ui/ToastProvider";
@@ -162,6 +162,12 @@ export function WorkspacePage() {
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
+  const [editingWorkspace, setEditingWorkspace] = useState(false);
+  const [wsEditName, setWsEditName] = useState("");
+  const [wsEditDesc, setWsEditDesc] = useState("");
+  const [wsEditSubmitting, setWsEditSubmitting] = useState(false);
+  const [wsEditError, setWsEditError] = useState<string | null>(null);
+
   const currentUserId = currentUser?.id;
 
   async function deleteWorkspace() {
@@ -228,6 +234,32 @@ export function WorkspacePage() {
 
   const canManageProjects =
     workspace?.role === "Owner" || workspace?.role === "Admin";
+
+  function openEditWorkspace() {
+    if (!workspace) return;
+    setEditingWorkspace(true);
+    setWsEditName(workspace.name);
+    setWsEditDesc(workspace.description ?? "");
+    setWsEditError(null);
+  }
+
+  async function saveEditWorkspace() {
+    setWsEditSubmitting(true);
+    setWsEditError(null);
+    try {
+      await updateWorkspace(workspaceId, {
+        name: wsEditName.trim(),
+        description: wsEditDesc.trim() || null,
+      });
+      push(t("workspace.updatedNamed", { name: wsEditName.trim() }));
+      setEditingWorkspace(false);
+      reload();
+    } catch (err) {
+      setWsEditError(err instanceof Error ? err.message : t("workspace.editFailed"));
+    } finally {
+      setWsEditSubmitting(false);
+    }
+  }
 
   async function handleRemoveMember(member: WorkspaceMemberResponse) {
     if (member.userId === currentUserId) {
@@ -382,6 +414,16 @@ export function WorkspacePage() {
                   <Badge tone={workspace.role === "Member" ? "neutral" : "teal"}>
                     {workspace.role}
                   </Badge>
+                  {canManageProjects && (
+                    <button
+                      type="button"
+                      onClick={openEditWorkspace}
+                      aria-label={t("workspace.editNamedAria", { name: workspace.name })}
+                      className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-primary"
+                    >
+                      <Pencil className="size-4" aria-hidden />
+                    </button>
+                  )}
                 </div>
                 <p className="mt-1 font-mono text-xs text-muted-foreground">
                   /{workspace.slug}
@@ -824,6 +866,47 @@ export function WorkspacePage() {
                 id="edit-proj-desc"
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
+              />
+            </Field>
+          </div>
+        </Dialog>
+      )}
+
+      {editingWorkspace && (
+        <Dialog
+          open
+          onClose={() => setEditingWorkspace(false)}
+          title={t("workspace.editWorkspaceTitle")}
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setEditingWorkspace(false)}>
+                {t("common.cancel")}
+              </Button>
+              <Button onClick={() => void saveEditWorkspace()} disabled={wsEditSubmitting}>
+                {wsEditSubmitting ? t("workspace.saving") : t("workspace.save")}
+              </Button>
+            </>
+          }
+        >
+          {wsEditError && (
+            <div className="mb-3">
+              <ErrorAlert message={wsEditError} />
+            </div>
+          )}
+          <Field label={t("workspace.wsNameLabel")} htmlFor="edit-ws-name">
+            <Input
+              id="edit-ws-name"
+              value={wsEditName}
+              onChange={(e) => setWsEditName(e.target.value)}
+              autoFocus
+            />
+          </Field>
+          <div className="mt-3">
+            <Field label={t("workspace.wsDescriptionLabel")} htmlFor="edit-ws-desc">
+              <Input
+                id="edit-ws-desc"
+                value={wsEditDesc}
+                onChange={(e) => setWsEditDesc(e.target.value)}
               />
             </Field>
           </div>

@@ -1,11 +1,13 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { CalendarRange, Plus, Play, Flag, Gauge } from "lucide-react";
-import { api, getVelocity } from "../../lib/api";
+import { CalendarRange, Plus, Play, Flag, Gauge, Pencil } from "lucide-react";
+import { api, getVelocity, updateSprint } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { Input } from "../ui/Input";
 import { ErrorAlert } from "../ui/ErrorAlert";
+import { Dialog } from "../ui/Dialog";
+import { Field } from "../ui/Field";
 import type { SprintResponse, SprintVelocity } from "../../types/api";
 
 interface SprintBarProps {
@@ -46,6 +48,12 @@ export function SprintBar({
   const [busy, setBusy] = useState(false);
   const [velocity, setVelocity] = useState<SprintVelocity | null>(null);
 
+  const [editingSprint, setEditingSprint] = useState<SprintResponse | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editGoal, setEditGoal] = useState("");
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!filter || filter === "all" || filter === "none") {
       setVelocity(null);
@@ -69,6 +77,31 @@ export function SprintBar({
   const base = `/workspaces/${workspaceId}/projects/${projectId}/sprints`;
   const active = sprints.find((s) => s.status === "Active");
   const planned = sprints.filter((s) => s.status === "Planned");
+
+  function openEditSprint(sprint: SprintResponse) {
+    setEditingSprint(sprint);
+    setEditName(sprint.name);
+    setEditGoal(sprint.goal ?? "");
+    setEditError(null);
+  }
+
+  async function saveEditSprint() {
+    if (!editingSprint) return;
+    setEditSubmitting(true);
+    setEditError(null);
+    try {
+      await updateSprint(workspaceId, projectId, editingSprint.id, {
+        name: editName.trim(),
+        goal: editGoal.trim() || null,
+      });
+      setEditingSprint(null);
+      onChanged();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : t("sprint.editFailed"));
+    } finally {
+      setEditSubmitting(false);
+    }
+  }
 
   async function handleCreate(event: FormEvent) {
     event.preventDefault();
@@ -161,6 +194,16 @@ export function SprintBar({
             <>
               <Badge tone="teal">{t("sprint.active")}</Badge>
               <span className="text-sm font-medium">{active.name}</span>
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={() => openEditSprint(active)}
+                  aria-label={t("sprint.editNamedAria", { name: active.name })}
+                  className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-primary"
+                >
+                  <Pencil className="size-3.5" aria-hidden />
+                </button>
+              )}
               <span className="font-mono text-[11px] text-muted-foreground">
                 {fmt(active.startDateUtc)} – {fmt(active.endDateUtc)}
               </span>
@@ -195,7 +238,7 @@ export function SprintBar({
                     onClick={() => setStartingId(sprint.id)}
                   >
                     <Play className="size-3.5" aria-hidden />
-                    {t("sprint.start")} “{sprint.name}”
+                    {t("sprint.start")} "{sprint.name}"
                   </Button>
                 )
               ) : (
@@ -219,6 +262,48 @@ export function SprintBar({
       </div>
 
       {error && <ErrorAlert message={error} />}
+
+      {editingSprint && (
+        <Dialog
+          open
+          onClose={() => setEditingSprint(null)}
+          title={t("sprint.editTitle")}
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setEditingSprint(null)}>
+                {t("common.cancel")}
+              </Button>
+              <Button onClick={() => void saveEditSprint()} disabled={editSubmitting}>
+                {editSubmitting ? t("sprint.saving") : t("sprint.editSave")}
+              </Button>
+            </>
+          }
+        >
+          {editError && (
+            <div className="mb-3">
+              <ErrorAlert message={editError} />
+            </div>
+          )}
+          <Field label={t("sprint.nameLabel")} htmlFor="edit-sprint-name">
+            <Input
+              id="edit-sprint-name"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              autoFocus
+            />
+          </Field>
+          <div className="mt-3">
+            <Field label={t("sprint.goal")} htmlFor="edit-sprint-goal">
+              <Input
+                id="edit-sprint-goal"
+                value={editGoal}
+                onChange={(e) => setEditGoal(e.target.value)}
+                placeholder={t("sprint.goalPlaceholderLong")}
+              />
+            </Field>
+          </div>
+        </Dialog>
+      )}
 
       {creating && (
         <form onSubmit={handleCreate} className="flex flex-col gap-3 rise" noValidate>
