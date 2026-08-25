@@ -23,6 +23,13 @@ export interface WorkspaceMemberResponse {
   role: string;
 }
 
+export interface ProjectMemberResponse {
+  userId: string;
+  username: string;
+  displayName: string;
+  role: string;
+}
+
 export interface ProjectResponse {
   id: string;
   name: string;

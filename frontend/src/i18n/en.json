@@ -1211,6 +1211,27 @@
     "purgeSuccess": "Dead-letter queue purged",
     "purgeFailed": "Failed to purge dead-letter queue"
   },
+  "projectMember": {
+    "title": "Project members",
+    "description": "Manage who has access to this project.",
+    "empty": "No members yet",
+    "addTitle": "Add project member",
+    "addLabel": "Member",
+    "addPlaceholder": "Search workspace members…",
+    "addSuccess": "Member added to project",
+    "addFailed": "Failed to add member",
+    "removeTitle": "Remove member?",
+    "removeConfirm": "Are you sure you want to remove {{name}} from this project?",
+    "removeSuccess": "{{name}} has been removed from the project",
+    "removeFailed": "Failed to remove member",
+    "removeAria": "Remove {{name}} from project",
+    "loadFailed": "Failed to load members",
+    "roleLabel": "Role",
+    "manager": "Manager",
+    "member": "Member",
+    "cannotRemoveSelf": "You cannot remove yourself from the project",
+    "mustBeWorkspaceMember": "User must be a workspace member"
+  },
   "subtask": {
     "subtasks": "Subtasks",
     "progress": "{{done}}/{{total}} done",

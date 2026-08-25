@@ -25,6 +25,7 @@ import type {
   SearchResponse,
   SprintResponse,
   ProjectDependencyGraphResponse,
+  ProjectMemberResponse,
   TaskDependencyResponse,
   TaskItemResponse,
   TaskAttachmentResponse,
@@ -1309,6 +1310,80 @@ export async function updateMemberRole(
     method: "PATCH",
     body: JSON.stringify({ role }),
   });
+}
+
+export function getProjectMembers(
+  workspaceId: string,
+  projectId: string,
+): Promise<ProjectMemberResponse[]> {
+  return api<ProjectMemberResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/members`,
+  );
+}
+
+export function addProjectMember(
+  workspaceId: string,
+  projectId: string,
+  userId: string,
+  role: "Member" | "Manager",
+): Promise<ProjectMemberResponse> {
+  return api<ProjectMemberResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/members`,
+    {
+      method: "POST",
+      body: JSON.stringify({ userId, role }),
+    },
+  );
+}
+
+export async function updateProjectMemberRole(
+  workspaceId: string,
+  projectId: string,
+  userId: string,
+  role: "Member" | "Manager",
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/members/${userId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    },
+  );
+}
+
+export async function removeProjectMember(
+  workspaceId: string,
+  projectId: string,
+  userId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/members/${userId}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+
+export async function replayAllDeadLetterMessages(
+  workspaceId: string,
+): Promise<{ requeued: number }> {
+  return api<{ requeued: number }>(
+    `/workspaces/${workspaceId}/outbox/dead-letter/replay-all`,
+    {
+      method: "POST",
+    },
+  );
+}
+
+export async function purgeDeadLetterMessages(
+  workspaceId: string,
+): Promise<{ deleted: number }> {
+  return api<{ deleted: number }>(
+    `/workspaces/${workspaceId}/outbox/dead-letter`,
+    {
+      method: "DELETE",
+    },
+  );
 }
 
 export function getCycleLeadTime(
