@@ -42,13 +42,17 @@ public sealed class GetTaskWatchersQueryHandler(
         }
 
         var userIds = watchers.Select(w => w.UserId).ToArray();
-        var names = await userRepository.GetDisplayNamesAsync(userIds, cancellationToken);
+        var users = await userRepository.GetByIdsAsync(userIds, cancellationToken);
 
         return watchers
-            .Select(w => new TaskWatcherResponse(
-                w.UserId,
-                names.GetValueOrDefault(w.UserId, "user"),
-                names.GetValueOrDefault(w.UserId, "User")))
+            .Select(w =>
+            {
+                var user = users.GetValueOrDefault(w.UserId);
+                return new TaskWatcherResponse(
+                    w.UserId,
+                    user?.Username ?? "unknown",
+                    user?.DisplayName ?? "Unknown");
+            })
             .ToList();
     }
 }

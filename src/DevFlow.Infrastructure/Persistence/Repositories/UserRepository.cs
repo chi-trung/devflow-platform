@@ -46,6 +46,20 @@ public sealed class UserRepository(DevFlowDbContext dbContext) : IUserRepository
         return names;
     }
 
+    public async Task<IReadOnlyDictionary<Guid, User>> GetByIdsAsync(
+        IEnumerable<Guid> userIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = userIds.ToList();
+
+        var users = await dbContext.Users
+            .AsNoTracking()
+            .Where(user => ids.Contains(user.Id))
+            .ToListAsync(cancellationToken);
+
+        return users.ToDictionary(user => user.Id);
+    }
+
     public Task<bool> ExistsByUsernameExceptIdAsync(string username, Guid userId, CancellationToken cancellationToken = default)
     {
         return dbContext.Users.AnyAsync(user => user.Username == username && user.Id != userId, cancellationToken);

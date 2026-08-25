@@ -30,18 +30,18 @@ public class GetTaskWatchersQueryHandlerTests
         new(_taskItemRepository, _watcherRepository, _userRepository);
 
     [Fact]
-    public async Task ShouldReturnWatchers_WithDisplayNames()
+    public async Task ShouldReturnWatchers_WithUsernamesAndDisplayNames()
     {
         var watcher1 = Guid.NewGuid();
         var watcher2 = Guid.NewGuid();
 
         _watcherRepository.GetByTaskAsync(_task.Id, Arg.Any<CancellationToken>())
             .Returns(new[] { TaskWatcher.Create(_task.Id, watcher1), TaskWatcher.Create(_task.Id, watcher2) });
-        _userRepository.GetDisplayNamesAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
-            .Returns(new Dictionary<Guid, string>
+        _userRepository.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, User>
             {
-                [watcher1] = "Alice",
-                [watcher2] = "Bob",
+                [watcher1] = User.Create("alice@devflow.dev", "alice", "hash", "Alice"),
+                [watcher2] = User.Create("bob@devflow.dev", "bob", "hash", "Bob"),
             });
 
         var handler = CreateHandler();
@@ -50,8 +50,31 @@ public class GetTaskWatchersQueryHandlerTests
             CancellationToken.None);
 
         Assert.Equal(2, result.Count);
-        Assert.Contains(result, w => w.UserId == watcher1 && w.DisplayName == "Alice");
-        Assert.Contains(result, w => w.UserId == watcher2 && w.DisplayName == "Bob");
+        Assert.Contains(result, w => w.UserId == watcher1 && w.Username == "alice" && w.DisplayName == "Alice");
+        Assert.Contains(result, w => w.UserId == watcher2 && w.Username == "bob" && w.DisplayName == "Bob");
+    }
+
+    [Fact]
+    public async Task ShouldReturnUnknownFallback_WhenUserDeleted()
+    {
+        var watcher1 = Guid.NewGuid();
+        var orphan = Guid.NewGuid();
+
+        _watcherRepository.GetByTaskAsync(_task.Id, Arg.Any<CancellationToken>())
+            .Returns(new[] { TaskWatcher.Create(_task.Id, watcher1), TaskWatcher.Create(_task.Id, orphan) });
+        _userRepository.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, User>
+            {
+                [watcher1] = User.Create("alice@devflow.dev", "alice", "hash", "Alice"),
+            });
+
+        var handler = CreateHandler();
+        var result = await handler.Handle(
+            new GetTaskWatchersQuery(_workspaceId, _projectId, _task.Id),
+            CancellationToken.None);
+
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, w => w.UserId == orphan && w.Username == "unknown" && w.DisplayName == "Unknown");
     }
 
     [Fact]
