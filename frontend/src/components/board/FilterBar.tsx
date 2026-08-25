@@ -10,7 +10,7 @@ import {
 import type { LabelResponse, WorkspaceMemberResponse } from "../../types/api";
 
 const inputClass =
-  "max-w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none";
+  "w-full max-w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none sm:w-auto";
 
 interface FilterBarProps {
   projectId: string;
@@ -102,7 +102,7 @@ export function FilterBar({
   return (
     <section
       aria-label={t("filter.filters")}
-      className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-border bg-surface px-3 py-2"
+      className="mb-3 flex flex-col gap-2 rounded-xl border border-border bg-surface px-3 py-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-2"
     >
       <span className="flex items-center gap-1.5 font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         <Filter className="size-3.5" aria-hidden />
@@ -155,7 +155,7 @@ export function FilterBar({
         </select>
       )}
 
-      <span className="flex flex-wrap items-center gap-x-1.5 gap-y-2">
+      <span className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1.5 sm:gap-y-2">
         <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
           {t("filter.dueFrom")}
           <input
@@ -193,66 +193,68 @@ export function FilterBar({
         {t("filter.blocked")}
       </button>
 
-      <div className="flex w-full flex-wrap items-center gap-1.5 pt-1 sm:w-auto sm:pt-0 sm:ml-auto">
-        {(presetNames.length > 0 || activePreset) && (
-          <select
-            aria-label={t("filter.loadPreset")}
-            value=""
-            onChange={(event) => {
-              if (event.target.value) applyPreset(event.target.value);
-            }}
-            className={`${inputClass} max-w-40`}
-          >
-            <option value="">{t("filter.presets")}</option>
-            {presetNames.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        )}
-        {activePreset && (
-          <>
-            <span className="max-w-32 truncate rounded-md bg-elevated px-2 py-1 font-mono text-[11px] text-muted-foreground">
-              {activePreset}
-            </span>
-            <button
-              type="button"
-              onClick={() => handleDelete(activePreset)}
-              aria-label={t("filter.deletePresetAria", { name: activePreset })}
-              className="rounded p-1 text-muted-foreground hover:text-destructive"
-            >
-              <X className="size-3.5" aria-hidden />
-            </button>
-          </>
-        )}
-        {!isDefault && (
-          <span className="flex items-center gap-1">
-            <input
-              value={presetName}
-              onChange={(event) => setPresetName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  handleSave();
-                }
+      {(presetNames.length > 0 || activePreset || !isDefault) && (
+        <div className="flex w-full flex-wrap items-center gap-1.5 border-t border-border/60 pt-2 sm:w-auto sm:ml-auto sm:border-t-0 sm:pt-0">
+          {(presetNames.length > 0 || activePreset) && (
+            <select
+              aria-label={t("filter.loadPreset")}
+              value=""
+              onChange={(event) => {
+                if (event.target.value) applyPreset(event.target.value);
               }}
-              placeholder={t("filter.saveAs")}
-              aria-label={t("filter.presetName")}
-              maxLength={30}
-              className={`${inputClass} w-28`}
-            />
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!presetName.trim()}
-              className="rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-medium text-foreground transition-colors duration-150 hover:border-primary disabled:opacity-40"
+              className={`${inputClass} max-w-40`}
             >
-              {t("filter.save")}
-            </button>
-          </span>
-        )}
-      </div>
+              <option value="">{t("filter.presets")}</option>
+              {presetNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          )}
+          {activePreset && (
+            <>
+              <span className="max-w-32 truncate rounded-md bg-elevated px-2 py-1 font-mono text-[11px] text-muted-foreground">
+                {activePreset}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleDelete(activePreset)}
+                aria-label={t("filter.deletePresetAria", { name: activePreset })}
+                className="rounded p-1 text-muted-foreground hover:text-destructive"
+              >
+                <X className="size-3.5" aria-hidden />
+              </button>
+            </>
+          )}
+          {!isDefault && (
+            <span className="flex w-full items-center gap-1 sm:w-auto">
+              <input
+                value={presetName}
+                onChange={(event) => setPresetName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleSave();
+                  }
+                }}
+                placeholder={t("filter.saveAs")}
+                aria-label={t("filter.presetName")}
+                maxLength={30}
+                className={`${inputClass} w-full sm:w-28`}
+              />
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={!presetName.trim()}
+                className="shrink-0 rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-medium text-foreground transition-colors duration-150 hover:border-primary disabled:opacity-40"
+              >
+                {t("filter.save")}
+              </button>
+            </span>
+          )}
+        </div>
+      )}
 
       {chips.length > 0 && (
         <div className="flex w-full flex-wrap items-center gap-1.5 pt-0.5">

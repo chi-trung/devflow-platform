@@ -168,16 +168,16 @@ export function SprintBar({
 
   return (
     <div className="mb-5 flex flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-3">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <CalendarRange className="size-4 shrink-0 text-primary" aria-hidden />
-
-        <label className="flex min-w-0 items-center gap-2 text-sm">
-          <span className="sr-only">{t("sprint.filterSrOnly")}</span>
-          <select
-            value={filter}
-            onChange={(event) => onFilterChange(event.target.value)}
-            className="max-w-56 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
-          >
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-2">
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          <CalendarRange className="size-4 shrink-0 text-primary" aria-hidden />
+          <label className="flex min-w-0 flex-1 items-center gap-2 text-sm">
+            <span className="sr-only">{t("sprint.filterSrOnly")}</span>
+            <select
+              value={filter}
+              onChange={(event) => onFilterChange(event.target.value)}
+              className="w-full min-w-0 max-w-56 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            >
             <option value="all">{t("sprint.allTasks")}</option>
             <option value="none">{t("sprint.noSprintFilter")}</option>
             {sprints.map((sprint) => (
@@ -186,8 +186,9 @@ export function SprintBar({
                 {sprint.status !== "Completed" ? "" : t("sprint.doneSuffix")}
               </option>
             ))}
-          </select>
-        </label>
+            </select>
+          </label>
+        </span>
 
         <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-1.5 sm:w-auto sm:ml-auto">
           {active && (
