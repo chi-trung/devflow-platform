@@ -16,7 +16,10 @@ public sealed class DashboardController(DevFlowDbContext dbContext) : Controller
         Guid workspaceId,
         CancellationToken cancellationToken)
     {
-        // Get all projects in the workspace
+        // Get all active projects in the workspace. Archived (soft-deleted)
+        // projects are excluded by the global query filter — matching what
+        // the frontend's project list and deriveDashboard fallback see, so
+        // the API and fallback paths always agree.
         var projects = await dbContext.Projects
             .AsNoTracking()
             .Where(p => p.WorkspaceId == workspaceId)
@@ -32,6 +35,7 @@ public sealed class DashboardController(DevFlowDbContext dbContext) : Controller
             .Where(t => projectIds.Contains(t.ProjectId))
             .Select(t => new
             {
+                t.Id,
                 t.Status,
                 t.Priority,
                 t.DueDateUtc,
@@ -79,7 +83,9 @@ public sealed class DashboardController(DevFlowDbContext dbContext) : Controller
             };
         }).Where(p => p.totalTasks > 0).ToList();
 
-        // Upcoming deadlines with project info
+        // Upcoming deadlines with project info. Includes the task id (used
+        // as the React key on the dashboard) and the status string, matching
+        // the DashboardDeadlineTask contract the frontend expects.
         var upcomingDeadlines = tasks
             .Where(t =>
                 t.DueDateUtc.HasValue &&
@@ -90,31 +96,39 @@ public sealed class DashboardController(DevFlowDbContext dbContext) : Controller
             .Take(5)
             .Select(t => new
             {
+                id = t.Id,
                 title = t.Title,
                 projectId = t.ProjectId,
                 projectKey = projectMap.ContainsKey(t.ProjectId) ? projectMap[t.ProjectId].Key : "",
                 projectName = projectMap.ContainsKey(t.ProjectId) ? projectMap[t.ProjectId].Name : "",
                 dueDateUtc = t.DueDateUtc,
                 priority = t.Priority.ToString(),
+                status = t.Status.ToString(),
             })
             .ToList();
 
         var result = new
         {
             totalTasks = tasks.Count,
-            tasksByStatus = new
+            // The JSON serializer camel-cases anonymous-object property names,
+            // which would turn "Backlog" into "backlog" and silently zero out
+            // every chart the frontend reads (data.tasksByStatus["Backlog"] ?? 0).
+            // Dictionary keys are left untouched by the naming policy, so use
+            // explicit dictionaries with PascalCase enum keys to match the
+            // DashboardData contract (and the CQRS handler's output).
+            tasksByStatus = new Dictionary<string, int>
             {
-                Backlog = tasks.Count(t => t.Status == TaskItemStatus.Backlog),
-                InProgress = tasks.Count(t => t.Status == TaskItemStatus.InProgress),
-                InReview = tasks.Count(t => t.Status == TaskItemStatus.InReview),
-                Done = tasks.Count(t => t.Status == TaskItemStatus.Done),
+                [nameof(TaskItemStatus.Backlog)] = tasks.Count(t => t.Status == TaskItemStatus.Backlog),
+                [nameof(TaskItemStatus.InProgress)] = tasks.Count(t => t.Status == TaskItemStatus.InProgress),
+                [nameof(TaskItemStatus.InReview)] = tasks.Count(t => t.Status == TaskItemStatus.InReview),
+                [nameof(TaskItemStatus.Done)] = tasks.Count(t => t.Status == TaskItemStatus.Done),
             },
-            tasksByPriority = new
+            tasksByPriority = new Dictionary<string, int>
             {
-                Low = tasks.Count(t => t.Priority == TaskItemPriority.Low),
-                Medium = tasks.Count(t => t.Priority == TaskItemPriority.Medium),
-                High = tasks.Count(t => t.Priority == TaskItemPriority.High),
-                Critical = tasks.Count(t => t.Priority == TaskItemPriority.Critical),
+                [nameof(TaskItemPriority.Low)] = tasks.Count(t => t.Priority == TaskItemPriority.Low),
+                [nameof(TaskItemPriority.Medium)] = tasks.Count(t => t.Priority == TaskItemPriority.Medium),
+                [nameof(TaskItemPriority.High)] = tasks.Count(t => t.Priority == TaskItemPriority.High),
+                [nameof(TaskItemPriority.Critical)] = tasks.Count(t => t.Priority == TaskItemPriority.Critical),
             },
             overdueCount = tasks.Count(t =>
                 t.DueDateUtc.HasValue &&
