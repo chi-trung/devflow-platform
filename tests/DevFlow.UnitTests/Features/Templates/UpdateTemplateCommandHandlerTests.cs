@@ -83,4 +83,42 @@ public class UpdateTemplateCommandHandlerTests
 
         await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, CancellationToken.None));
     }
+
+    [Fact]
+    public async Task Handle_ShouldThrowNotFound_WhenTemplateBelongsToDifferentProject()
+    {
+        var otherProject = Project.Create(_workspaceId, "Other", "OTH", null);
+        _projectRepository.GetByIdAsync(otherProject.Id, Arg.Any<CancellationToken>()).Returns(otherProject);
+
+        var template = TaskTemplate.Create(Guid.NewGuid(), "Template from elsewhere", "Tpl", null, TaskItemPriority.Medium, null);
+        _templateRepository.GetByIdAsync(template.Id, Arg.Any<CancellationToken>()).Returns(template);
+
+        var handler = CreateHandler();
+
+        var command = new UpdateTemplateCommand(_workspaceId, otherProject.Id, template.Id, "Renamed", null);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, CancellationToken.None));
+
+        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldThrowNotFound_WhenTemplateProjectIdDiffersFromRequested()
+    {
+        // Template belongs to a different project in the same workspace
+        var projectA = Project.Create(_workspaceId, "Project A", "PA", null);
+        var projectB = Project.Create(_workspaceId, "Project B", "PB", null);
+        _projectRepository.GetByIdAsync(projectB.Id, Arg.Any<CancellationToken>()).Returns(projectB);
+
+        var template = TaskTemplate.Create(projectA.Id, "Template of A", "TplA", null, TaskItemPriority.High, 30);
+        _templateRepository.GetByIdAsync(template.Id, Arg.Any<CancellationToken>()).Returns(template);
+
+        var handler = CreateHandler();
+
+        var command = new UpdateTemplateCommand(_workspaceId, projectB.Id, template.Id, "Renamed", null);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, CancellationToken.None));
+
+        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
 }
