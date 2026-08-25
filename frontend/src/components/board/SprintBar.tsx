@@ -176,7 +176,7 @@ export function SprintBar({
             <select
               value={filter}
               onChange={(event) => onFilterChange(event.target.value)}
-              className="w-full min-w-0 max-w-56 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+              className="w-full min-w-0 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none sm:max-w-56"
             >
             <option value="all">{t("sprint.allTasks")}</option>
             <option value="none">{t("sprint.noSprintFilter")}</option>
