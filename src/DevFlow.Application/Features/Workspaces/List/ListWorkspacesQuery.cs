@@ -8,7 +8,8 @@ public sealed record WorkspaceResponse(
     string Name,
     string Slug,
     string? Description,
-    string Role);
+    string Role,
+    string? Emoji = null);
 
 public sealed record ListWorkspacesQuery(
     int Page = 1,

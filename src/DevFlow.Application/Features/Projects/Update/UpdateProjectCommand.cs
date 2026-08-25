@@ -9,4 +9,6 @@ public sealed record UpdateProjectCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     string Name,
-    string? Description) : IRequest, IWorkspaceRequest;
+    string? Description,
+    string? Emoji = null,
+    string? CoverColor = null) : IRequest, IWorkspaceRequest;

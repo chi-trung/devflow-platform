@@ -14,4 +14,13 @@ public sealed record TaskItemResponse(
     int? StoryPoints,
     DateTimeOffset? DueDateUtc,
     DateTimeOffset? CompletedAtUtc,
-    int Position);
+    int Position,
+    AttachmentSummary? AttachmentSummary = null);
+
+/// <summary>
+/// Lightweight summary of a task's attachments for card thumbnails — ids only;
+/// the frontend fetches bytes via the attachment download endpoint.
+/// </summary>
+public sealed record AttachmentSummary(int Count, IReadOnlyList<AttachmentPreview> Previews);
+
+public sealed record AttachmentPreview(Guid Id, string ContentType);

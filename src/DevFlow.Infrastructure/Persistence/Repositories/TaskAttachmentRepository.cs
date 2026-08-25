@@ -48,6 +48,30 @@ public sealed class TaskAttachmentRepository(DevFlowDbContext dbContext) : ITask
         return (items, totalCount);
     }
 
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<TaskAttachment>>> GetByTaskIdsAsync(
+        IEnumerable<Guid> taskItemIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = taskItemIds.Distinct().ToArray();
+
+        if (ids.Length == 0)
+        {
+            return new Dictionary<Guid, IReadOnlyList<TaskAttachment>>();
+        }
+
+        var attachments = await dbContext.TaskAttachments
+            .AsNoTracking()
+            .Where(attachment => ids.Contains(attachment.TaskItemId))
+            .OrderByDescending(attachment => attachment.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+
+        return attachments
+            .GroupBy(attachment => attachment.TaskItemId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<TaskAttachment>)group.ToList());
+    }
+
     public async Task<int> DeleteAttachmentsForTaskAsync(Guid taskItemId, CancellationToken cancellationToken = default)
     {
         var attachments = await dbContext.TaskAttachments

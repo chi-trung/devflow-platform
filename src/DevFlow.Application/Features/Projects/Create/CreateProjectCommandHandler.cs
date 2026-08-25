@@ -19,7 +19,7 @@ public sealed class CreateProjectCommandHandler(
             throw new ConflictException($"Key \"{key}\" is already used by another project in this workspace.");
         }
 
-        var project = Project.Create(command.WorkspaceId, command.Name, key, command.Description);
+        var project = Project.Create(command.WorkspaceId, command.Name, key, command.Description, command.Emoji, command.CoverColor);
 
         await projectRepository.AddAsync(project, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);

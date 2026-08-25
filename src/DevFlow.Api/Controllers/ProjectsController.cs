@@ -24,7 +24,9 @@ public sealed class ProjectsController(ISender sender) : ControllerBase
             workspaceId,
             request.Name,
             request.Key,
-            request.Description);
+            request.Description,
+            request.Emoji,
+            request.CoverColor);
 
         var projectId = await sender.Send(command, cancellationToken);
 
@@ -79,7 +81,9 @@ public sealed class ProjectsController(ISender sender) : ControllerBase
             workspaceId,
             projectId,
             request.Name,
-            request.Description);
+            request.Description,
+            request.Emoji,
+            request.CoverColor);
 
         await sender.Send(command, cancellationToken);
 
