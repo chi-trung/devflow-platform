@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { X, Paperclip, Download, Trash2, BookmarkPlus, Eye, RefreshCw } from "lucide-react";
 import { api, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask, uploadTaskAttachment, getTaskWatchers } from "../../lib/api";
+import { AttachmentRowThumb } from "./AttachmentThumbnails";
 import { Button } from "../ui/Button";
 import { ErrorAlert } from "../ui/ErrorAlert";
 import { Avatar } from "../ui/Avatar";
@@ -777,6 +778,13 @@ export function TaskDetailPanel({
                     className="group flex items-center justify-between rounded-lg border border-border/60 bg-card p-2 text-xs"
                   >
                     <div className="flex items-center gap-2 min-w-0">
+                      <AttachmentRowThumb
+                        workspaceId={workspaceId}
+                        projectId={projectId}
+                        taskId={task.id}
+                        attachmentId={att.id}
+                        contentType={att.contentType}
+                      />
                       <Paperclip className="size-3.5 text-muted-foreground shrink-0" />
                       <span className="truncate font-medium text-foreground">
                         {att.fileName}

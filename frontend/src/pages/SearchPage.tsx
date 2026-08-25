@@ -10,6 +10,7 @@ import { searchWorkspace, getSavedSearches, api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import type { SearchResponse, WorkspaceMemberResponse, ProjectResponse, SavedSearchResponse, LabelResponse } from "../types/api";
 import { EmptyState } from "../components/ui/EmptyState";
+import { EmptySearchIllustration } from "../components/illustrations/EmptyStateIllustrations";
 
 type TabKey = "tasks" | "projects" | "epics" | "labels" | "users" | "comments";
 
@@ -335,6 +336,7 @@ export function SearchPage() {
         ) : !searched ? (
           <EmptyState
             icon={<Search className="mx-auto size-8 text-muted-foreground" aria-hidden />}
+            illustration={<EmptySearchIllustration className="size-24" />}
             title={t("search.emptyTitle")}
             description={t("search.emptyDescription")}
           />
@@ -432,6 +434,7 @@ export function SearchPage() {
             {visibleTabs.length === 0 && (
               <EmptyState
                 icon={<Search className="size-8 text-muted-foreground" aria-hidden />}
+                illustration={<EmptySearchIllustration className="size-24" />}
                 title={t("search.noResults")}
                 description={t("search.noResultsDescription")}
               />

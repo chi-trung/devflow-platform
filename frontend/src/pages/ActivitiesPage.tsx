@@ -5,6 +5,7 @@ import { Link, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
+import { EmptyChartIllustration } from "../components/illustrations/EmptyStateIllustrations";
 import { getActivities, type GetActivitiesFilters } from "../lib/api";
 import type { ActivityResponse, ActivityResponsePage, WorkspaceMemberResponse } from "../types/api";
 import { api } from "../lib/api";
@@ -275,6 +276,7 @@ export function ActivitiesPage() {
         ) : activities.length === 0 ? (
           <EmptyState
             icon={<Activity className="size-8 text-muted-foreground" aria-hidden />}
+            illustration={<EmptyChartIllustration className="size-24" />}
             title={t("activity.emptyTitle")}
             description={t("activity.emptyDescription")}
           />

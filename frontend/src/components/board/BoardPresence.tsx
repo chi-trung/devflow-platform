@@ -22,6 +22,7 @@ export function BoardPresence({ users, remainingCount, totalOnline }: BoardPrese
               name={user.displayName || user.username}
               id={user.userId}
               size="sm"
+              online
             />
           </span>
         ))}

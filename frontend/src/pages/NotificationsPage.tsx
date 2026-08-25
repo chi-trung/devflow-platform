@@ -8,6 +8,8 @@ import { Button } from "../components/ui/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Pagination } from "../components/ui/Pagination";
 import { Skeleton } from "../components/ui/Skeleton";
+import { EmptyState } from "../components/ui/EmptyState";
+import { EmptyNotificationsIllustration } from "../components/illustrations/EmptyStateIllustrations";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import {
   deleteAllReadNotifications,
@@ -265,19 +267,18 @@ export function NotificationsPage() {
             ))}
           </div>
         ) : notifications.length === 0 ? (
-          <div className="flex flex-col items-center gap-1.5 px-6 py-10 text-center">
-            <Bell className="size-5 text-muted-foreground/60" aria-hidden />
-            <p className="text-sm text-muted-foreground">
-              {t("notificationPage.emptyTitle")}
-            </p>
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              {filter === "unread"
+          <EmptyState
+            icon={<Bell className="size-8 text-muted-foreground/60" aria-hidden />}
+            illustration={<EmptyNotificationsIllustration className="size-24" />}
+            title={t("notificationPage.emptyTitle")}
+            description={
+              filter === "unread"
                 ? t("notificationPage.emptyUnread")
                 : filter === "read"
                   ? t("notificationPage.emptyRead")
-                  : t("notification.noNotifications")}
-            </p>
-          </div>
+                  : t("notification.noNotifications")
+            }
+          />
         ) : (
           <>
             <ul className="flex flex-1 flex-col divide-y divide-border/60 overflow-y-auto rounded-xl border border-border bg-card">

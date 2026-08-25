@@ -121,7 +121,7 @@ export function DashboardCycleLeadChart({ workspaceId, projectId, className = ""
         {cards.map(({ key, label, value, unit, chip, valueClass }) => (
           <div
             key={key}
-            className="rounded-xl border border-border bg-card p-4 transition-colors duration-200 hover:border-border-strong"
+            className="hover-lift rounded-xl border border-border bg-card p-4 hover:border-border-strong"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-medium text-muted-foreground">

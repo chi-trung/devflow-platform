@@ -34,6 +34,7 @@ interface Command {
   keywords: string;
   run: () => void;
   onDelete?: () => void;
+  emoji?: string | null;
 }
 
 interface SavedFilters {
@@ -212,6 +213,7 @@ export function CommandPalette({
         group: t("nav.workspaces"),
         keywords: `${workspace.slug} ${workspace.description ?? ""}`,
         run: () => navigate(`/workspaces/${workspace.id}`),
+        emoji: workspace.emoji,
       });
     }
 
@@ -223,6 +225,7 @@ export function CommandPalette({
           group: t("nav.projects"),
           keywords: project.description ?? "",
           run: () => navigate(`/workspaces/${workspaceId}/projects/${project.id}`),
+          emoji: project.emoji,
         });
       }
     }
@@ -583,6 +586,14 @@ export function CommandPalette({
                       : "text-muted-foreground"
                   }`}
                 >
+                  {command.emoji && (
+                    <span
+                      aria-hidden
+                      className="mr-2 flex size-5 shrink-0 items-center justify-center rounded text-sm leading-none"
+                    >
+                      {command.emoji}
+                    </span>
+                  )}
                   <span className="min-w-0 flex-1 truncate">{command.label}</span>
                   {command.onDelete && (
                     <span

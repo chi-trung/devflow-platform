@@ -449,7 +449,12 @@ export async function restoreProject(
 export async function updateProject(
   workspaceId: string,
   projectId: string,
-  data: { name: string; description?: string | null },
+  data: {
+    name: string;
+    description?: string | null;
+    emoji?: string | null;
+    coverColor?: string | null;
+  },
 ): Promise<void> {
   await api(`/workspaces/${workspaceId}/projects/${projectId}`, {
     method: "PATCH",
@@ -1030,6 +1035,34 @@ export async function uploadTaskAttachment(
 }
 
 /**
+ * Fetch an attachment's bytes (authenticated) and return a blob object URL.
+ * The caller MUST revoke the URL with URL.revokeObjectURL when done.
+ * Returns null on fetch failure.
+ */
+export async function getAttachmentObjectUrl(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+  attachmentId: string,
+): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `/api/v1/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/attachments/${attachmentId}/download`,
+      {
+        headers: tokens.access
+          ? { Authorization: `Bearer ${tokens.access}` }
+          : undefined,
+      },
+    );
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Loads the whole project dependency graph in a single request (nodes + edges +
  * server-computed cyclic node ids), replacing the old per-task N+1 waterfall.
  */
@@ -1424,7 +1457,11 @@ export function getMyTasks(workspaceId: string): Promise<MyTaskItem[]> {
 
 export async function updateWorkspace(
   workspaceId: string,
-  input: { name: string; description?: string | null },
+  input: {
+    name: string;
+    description?: string | null;
+    emoji?: string | null;
+  },
 ): Promise<void> {
   await api(`/workspaces/${workspaceId}`, {
     method: "PUT",

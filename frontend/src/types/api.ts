@@ -13,6 +13,8 @@ export interface WorkspaceResponse {
   slug: string;
   description: string | null;
   role: string;
+  /** Optional single emoji used as the workspace logo. */
+  emoji?: string | null;
 }
 
 export interface WorkspaceMemberResponse {
@@ -36,6 +38,10 @@ export interface ProjectResponse {
   key: string;
   description: string | null;
   status: string;
+  /** Optional single emoji used as the project logo. */
+  emoji?: string | null;
+  /** Optional palette key the frontend maps to a cover gradient. */
+  coverColor?: string | null;
 }
 
 export interface SprintResponse {
@@ -68,6 +74,11 @@ export interface TaskItemResponse {
   storyPoints?: number | null;
   /** Number of completed child subtasks, when the backend includes it. */
   subtaskCount?: number;
+  /** Attachment summary for card thumbnails (B32.2). */
+  attachmentSummary?: {
+    count: number;
+    previews: Array<{ id: string; contentType: string }>;
+  };
 }
 
 export interface TaskDependencyResponse {

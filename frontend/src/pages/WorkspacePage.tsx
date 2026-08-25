@@ -3,6 +3,9 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, FolderKanban, Users, Trash2, X, RotateCcw, Pencil } from "lucide-react";
 import { api, pagedItems, removeWorkspaceMember, updateMemberRole, restoreProject as restoreProjectApi, updateProject, updateWorkspace } from "../lib/api";
+import { EmojiTile, coverGradient } from "../components/ui/EmojiCover";
+import { EmojiPicker, CoverColorPicker } from "../components/ui/EmojiPickers";
+import { EmptyBoardIllustration } from "../components/illustrations/EmptyStateIllustrations";
 import { useApi } from "../hooks/useApi";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ui/ToastProvider";
@@ -133,6 +136,8 @@ export function WorkspacePage() {
   const [name, setName] = useState("");
   const [key, setKey] = useState("");
   const [description, setDescription] = useState("");
+  const [emoji, setEmoji] = useState<string | null>(null);
+  const [coverColor, setCoverColor] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -160,12 +165,15 @@ export function WorkspacePage() {
   const [editingProject, setEditingProject] = useState<ProjectResponse | null>(null);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editEmoji, setEditEmoji] = useState<string | null>(null);
+  const [editCoverColor, setEditCoverColor] = useState<string | null>(null);
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
   const [editingWorkspace, setEditingWorkspace] = useState(false);
   const [wsEditName, setWsEditName] = useState("");
   const [wsEditDesc, setWsEditDesc] = useState("");
+  const [wsEditEmoji, setWsEditEmoji] = useState<string | null>(null);
   const [wsEditSubmitting, setWsEditSubmitting] = useState(false);
   const [wsEditError, setWsEditError] = useState<string | null>(null);
 
@@ -208,6 +216,8 @@ export function WorkspacePage() {
     setEditingProject(project);
     setEditName(project.name);
     setEditDescription(project.description ?? "");
+    setEditEmoji(project.emoji ?? null);
+    setEditCoverColor(project.coverColor ?? null);
     setEditError(null);
   }
 
@@ -219,6 +229,8 @@ export function WorkspacePage() {
       await updateProject(workspaceId, editingProject.id, {
         name: editName.trim(),
         description: editDescription.trim() || null,
+        emoji: editEmoji,
+        coverColor: editCoverColor,
       });
       push(t("workspace.updatedNamed", { name: editName.trim() }));
       setEditingProject(null);
@@ -241,6 +253,7 @@ export function WorkspacePage() {
     setEditingWorkspace(true);
     setWsEditName(workspace.name);
     setWsEditDesc(workspace.description ?? "");
+    setWsEditEmoji(workspace.emoji ?? null);
     setWsEditError(null);
   }
 
@@ -251,6 +264,7 @@ export function WorkspacePage() {
       await updateWorkspace(workspaceId, {
         name: wsEditName.trim(),
         description: wsEditDesc.trim() || null,
+        emoji: wsEditEmoji,
       });
       push(t("workspace.updatedNamed", { name: wsEditName.trim() }));
       setEditingWorkspace(false);
@@ -375,11 +389,15 @@ export function WorkspacePage() {
           name: name.trim(),
           key: autoKey,
           description: description.trim() || null,
+          emoji,
+          coverColor,
         }),
       });
       setName("");
       setKey("");
       setDescription("");
+      setEmoji(null);
+      setCoverColor(null);
       setCreating(false);
       reload();
     } catch (err) {
@@ -409,6 +427,7 @@ export function WorkspacePage() {
             <div className="mb-8 flex items-end justify-between gap-4">
               <div>
                 <div className="flex items-center gap-3">
+                  <EmojiTile emoji={workspace.emoji} size="lg" />
                   <h1 className="font-display text-3xl font-semibold tracking-tight">
                     {workspace.name}
                   </h1>
@@ -486,6 +505,13 @@ export function WorkspacePage() {
                     onChange={(event) => setDescription(event.target.value)}
                   />
                 </Field>
+                <div className="flex flex-wrap items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{t("emojiPicker.label")}</span>
+                    <EmojiPicker value={emoji} onChange={setEmoji} />
+                  </div>
+                  <CoverColorPicker value={coverColor} onChange={setCoverColor} />
+                </div>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={submitting}>
                     {submitting
@@ -511,6 +537,7 @@ export function WorkspacePage() {
               <div className="rise">
                 <EmptyState
                   icon={<FolderKanban className="size-8 text-primary" aria-hidden />}
+                  illustration={<EmptyBoardIllustration className="size-24" />}
                   title={t("workspace.noProjectsYet")}
                   description={t("workspace.noProjectsDesc")}
                   action={
@@ -538,8 +565,14 @@ export function WorkspacePage() {
                         >
                           <Link
                             to={`/workspaces/${workspaceId}/projects/${project.id}`}
-                            className="group relative flex h-full flex-col rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40"
+                            className="group hover-lift relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card p-5 hover:border-primary/40"
                           >
+                            {coverGradient(project.coverColor) && (
+                              <div
+                                aria-hidden
+                                className={`pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-br ${coverGradient(project.coverColor)}`}
+                              />
+                            )}
                             {canManageProjects && (
                               <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
                                 <button
@@ -580,9 +613,12 @@ export function WorkspacePage() {
                                 {project.status}
                               </Badge>
                             </div>
-                            <h2 className="font-display font-semibold">
-                              {project.name}
-                            </h2>
+                            <div className="mt-2 flex items-center gap-2">
+                              <EmojiTile emoji={project.emoji} size="md" />
+                              <h2 className="font-display font-semibold">
+                                {project.name}
+                              </h2>
+                            </div>
                             {project.description && (
                               <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                                 {project.description}
@@ -868,6 +904,13 @@ export function WorkspacePage() {
               />
             </Field>
           </div>
+          <div className="mt-3 flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t("emojiPicker.label")}</span>
+              <EmojiPicker value={editEmoji} onChange={setEditEmoji} />
+            </div>
+            <CoverColorPicker value={editCoverColor} onChange={setEditCoverColor} />
+          </div>
         </Dialog>
       )}
 
@@ -908,6 +951,10 @@ export function WorkspacePage() {
                 onChange={(e) => setWsEditDesc(e.target.value)}
               />
             </Field>
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{t("emojiPicker.label")}</span>
+            <EmojiPicker value={wsEditEmoji} onChange={setWsEditEmoji} />
           </div>
         </Dialog>
       )}

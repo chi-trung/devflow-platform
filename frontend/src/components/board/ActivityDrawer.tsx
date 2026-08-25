@@ -21,7 +21,7 @@ export function ActivityDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-background/60 backdrop-blur-xs">
-      <div className="flex w-full max-w-md flex-col bg-surface border-l border-border shadow-2xl animate-in slide-in-from-right duration-200">
+      <div className="flex w-full max-w-md animate-slide-in flex-col bg-surface border-l border-border shadow-2xl">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div className="flex items-center gap-2">
             <History className="size-5 text-primary" aria-hidden />
