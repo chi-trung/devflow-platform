@@ -89,15 +89,17 @@ export function DashboardPage() {
 
   useEffect(() => {
     if (!selectedWsId) return;
+    // Clear the previous workspace's project selection immediately so the
+    // SprintHealthCard / stats don't fire requests for a project that belongs
+    // to the old workspace (would 404 in the console while projects load).
+    setSelectedProjectId("");
     let cancelled = false;
     void api<unknown>(`/workspaces/${selectedWsId}/projects`)
       .then((raw) => {
         if (!cancelled) {
           const list = pagedItems<ProjectResponse>(raw);
           setProjects(list);
-          setSelectedProjectId((current) =>
-            list.length > 0 && list.some((p) => p.id === current) ? current : list[0]?.id ?? "",
-          );
+          setSelectedProjectId(list[0]?.id ?? "");
         }
       })
       .catch(() => {

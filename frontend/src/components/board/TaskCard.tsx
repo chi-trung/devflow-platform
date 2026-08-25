@@ -1,12 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { useState, type FormEvent } from "react";
 import { Check, Clock, Link2, Hash, ListChecks, Plus, X } from "lucide-react";
-import type { TaskItemResponse, WorkspaceMemberResponse } from "../../types/api";
+import type { TaskItemResponse, WorkspaceMemberResponse, CustomFieldValueResponse } from "../../types/api";
 import { formatMinutes } from "../../lib/format";
 import { Avatar } from "../ui/Avatar";
 import { EstimationModal } from "../estimation/EstimationModal";
-import { useApi } from "../../hooks/useApi";
-import { api, getTaskFieldValues } from "../../lib/api";
+import { api } from "../../lib/api";
 import { useAttachmentPreviews, ThumbnailStrip } from "./AttachmentThumbnails";
 
 const priorityDot: Record<TaskItemResponse["priority"], string> = {
@@ -26,6 +25,8 @@ const priorityLabelKey: Record<TaskItemResponse["priority"], string> = {
 interface TaskCardProps {
   task: TaskItemResponse;
   members: WorkspaceMemberResponse[];
+  /** Pre-fetched custom-field values for this task (from the project-wide batch). */
+  customFieldValues?: CustomFieldValueResponse[];
   onDelete: (task: TaskItemResponse) => void;
   onSelect: (taskId: string) => void;
   selectionMode?: boolean;
@@ -39,6 +40,7 @@ interface TaskCardProps {
 export function TaskCard({
   task,
   members,
+  customFieldValues,
   onDelete,
   onSelect,
   selectionMode = false,
@@ -66,10 +68,7 @@ export function TaskCard({
     previews: task.attachmentSummary?.previews,
   });
 
-  const { data: customFields = [] } = useApi(
-    () => getTaskFieldValues(workspaceId, projectId, task.id),
-    [workspaceId, projectId, task.id],
-  );
+  const customFields = customFieldValues ?? [];
 
   async function handleEstimationSaved(storyPoints: number | null) {
     onEstimationSaved?.(task.id, storyPoints);
