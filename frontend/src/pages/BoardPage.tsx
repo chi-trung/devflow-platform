@@ -731,96 +731,111 @@ export function BoardPage() {
               {t("board.dragHint")}
             </p>
           </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <BoardPresence
-                users={presenceUsers}
-                remainingCount={presenceRemaining}
-                totalOnline={presenceTotal}
-              />
+            <div className="flex w-full min-w-0 flex-col gap-2">
+            {/* Presence + project sub-nav share one line. On mobile the nav
+                scrolls horizontally (no wrapping) so the row never jumbles;
+                on desktop it fits and behaves like before. */}
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="shrink-0">
+                <BoardPresence
+                  users={presenceUsers}
+                  remainingCount={presenceRemaining}
+                  totalOnline={presenceTotal}
+                />
+              </div>
+              <nav
+                aria-label={t("board.projectNav")}
+                className="no-scrollbar -mx-1 flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto px-1 py-0.5"
+              >
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/sprints`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <CalendarRange className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("nav.sprints")}</span>
               </Link>
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/reports`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <BarChart3 className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("nav.reports")}</span>
               </Link>
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/epics`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <List className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("epic.title")}</span>
               </Link>
               <Link
                 to="/saved-searches"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <Bookmark className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("savedSearch.title")}</span>
               </Link>
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/labels`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <Tag className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("label.title")}</span>
               </Link>
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/fields`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <Settings2 className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("customField.title")}</span>
               </Link>
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/settings`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <Users className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("projectMember.title")}</span>
               </Link>
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/templates`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <FileText className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("template.title")}</span>
               </Link>
               <Link
                 to={`/workspaces/${workspaceId}/webhooks`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <Webhook className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("webhook.title")}</span>
               </Link>
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/github`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <Github className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("github.title")}</span>
               </Link>
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/activities`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <Activity className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("activity.title")}</span>
               </Link>
               <Link
                 to={`/workspaces/${workspaceId}/search`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
               >
                 <Search className="size-4" aria-hidden />
                 <span className="hidden xs:inline sm:inline">{t("search.title")}</span>
               </Link>
+            </nav>
+            </div>
+            {/* Actions row — search + log + graph + help + create. Wraps
+                naturally, separate from the nav links so mobile stays tidy. */}
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 onClick={() => setActivityOpen(true)}
@@ -896,6 +911,7 @@ export function BoardPage() {
                 <span className="hidden xs:inline sm:inline">{t("board.newTask")}</span>
               </Button>
             )}
+            </div>
           </div>
         </div>
 

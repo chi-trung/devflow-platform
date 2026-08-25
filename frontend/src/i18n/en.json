@@ -106,6 +106,7 @@
     "dropHere": "Drop tasks here",
     "dragHint": "Drag cards between columns — changes save instantly.",
     "projects": "Projects",
+    "projectNav": "Project navigation",
     "bulkActionFailed": "Bulk action failed.",
     "blockedMoveDetail": "\"{{title}}\" is blocked — resolve its blockers first.",
     "moveFailed": "Failed to move task.",

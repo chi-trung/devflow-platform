@@ -161,3 +161,13 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Thin, invisible horizontal scroll row — used for the board header nav links
+   on mobile so they stay on one line without a visible scrollbar. */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
