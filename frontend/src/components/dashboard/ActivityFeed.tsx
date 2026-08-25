@@ -53,12 +53,12 @@ export function ActivityFeed({ items, workspaceId }: ActivityFeedProps) {
       </h2>
 
       {items.length === 0 ? (
-        <p className="flex flex-1 items-center justify-center py-8 text-center text-sm text-muted-foreground">
+        <p className="flex min-h-[15rem] flex-1 items-center justify-center py-8 text-center text-sm text-muted-foreground">
           {t("dashboard.noActivity")}
         </p>
       ) : (
         <>
-          <ul className="flex-1 space-y-1">
+          <ul className="min-h-[15rem] flex-1 space-y-1">
             {pageItems.map((item) => {
               const Icon = kindIcon(item.action);
               const target = item.target ? ` "${item.target}"` : "";
@@ -67,7 +67,10 @@ export function ActivityFeed({ items, workspaceId }: ActivityFeedProps) {
                   <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-elevated text-muted-foreground">
                     <Icon className="size-3.5" aria-hidden />
                   </span>
-                  <span className="min-w-0 flex-1 leading-snug">
+                  <span
+                    className="min-w-0 flex-1 truncate leading-snug"
+                    title={`${item.actorName || t("dashboard.someone")} ${item.action}${target}`}
+                  >
                     <span className="font-medium">{item.actorName || t("dashboard.someone")}</span>{" "}
                     <span className="text-muted-foreground">
                       {item.action}
