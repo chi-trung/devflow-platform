@@ -394,10 +394,10 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 - [x] **A29.2: Workspace PUT + Sprint PUT + Template PUT** — `UpdateWorkspaceCommand` (name/desc), `UpdateSprintCommand` (name/goal), `UpdateTemplateCommand` (name/desc); Admin-gated; 12 unit tests mới. *(PR #133 merged)*
 - [ ] **A29.3: Review & merge B/C/D PRs** — `dotnet test`/`npm run build` + i18n parity; update AGENT_STATUS.md.
 
-#### 🤖 Agent B (Backend — Attachments + Notifications Depth)
-- [ ] **B29.1: Attachment pagination + cache headers** — `GetForTaskAsync(skip, take)` + total; `Last-Modified`/`Cache-Control` + `Content-Disposition` (inline image/pdf, attachment khác).
-- [ ] **B29.2: Notification batch-delete + unread-count** — `POST /notifications/batch-delete`; `GET /notifications/unread-count?workspaceId=` hiệu quả.
-- [ ] **B29.3: Tests mới** — ≥8 tests (attachment pagination, batch-delete, Update handlers).
+#### 🤖 Agent B (Backend — Attachments + Notifications Depth) ✅
+- [x] **B29.1: Attachment pagination + cache headers** — `GetForTaskPagedAsync(skip/take)` + total; `Last-Modified`/`Cache-Control` + `Content-Disposition` (inline image/pdf, attachment khác). *(PR #142 merged)*
+- [x] **B29.2: Notification batch-delete + unread-count** — `POST /notifications/batch-delete`; `GET /notifications/unread-count?workspaceId=` hiệu quả. *(PR #142 merged)*
+- [x] **B29.3: Tests mới** — 10 tests (attachment pagination, batch-delete, Update handlers); 301/301 unit tests green. *(PR #142 merged)*
 
 #### 🎨 Agent C (Frontend — Bulk Ops + Attachment UX)
 - [ ] **C29.1: Bulk operations UI** — checkbox select-all per column header (indeterminate), floating batch action bar (count + status/assignee/delete/clear), keyboard Ctrl+A/Esc.
