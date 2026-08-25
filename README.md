@@ -117,8 +117,13 @@ npm run dev                   # http://localhost:3000, proxies /api to :5217
 - [x] Saved Searches
 - [x] My Tasks (cross-project)
 
-### Next up — Sprint 30
-- [ ] Watcher list UI (who is watching a task)
-- [ ] Webhook DLQ admin UI (inspect + replay)
-- [ ] Integration test expansion (project → sprint → task flow)
-- [ ] EmptyState component adoption in top pages
+### Sprint 30
+- [x] Watcher list UI (who is watching a task) — backend `GET /tasks/{id}/watchers` + frontend panel
+- [x] Webhook DLQ admin UI (inspect + replay) — Admin-gated on Webhooks page
+- [x] Integration test expansion (project → sprint → task flow) — shared DB collection fixture
+- [x] EmptyState component adoption in top pages (Activities, Board, CustomFields, GitHub, MyTasks)
+
+### Next up — Sprint 31
+- EmptyState adoption in remaining 21 files
+- Project-level member management / RBAC
+- Component library catalog / design sync
