@@ -26,6 +26,7 @@ import type {
   ProjectDependencyGraphResponse,
   TaskDependencyResponse,
   TaskItemResponse,
+  TaskAttachmentResponse,
   TeamReportResponse,
   TemplateResponse,
   TimeEntryResponse,
@@ -939,6 +940,54 @@ export async function removeTaskDependency(
   );
 }
 
+export async function uploadTaskAttachment(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+  file: File,
+  onProgress?: (progress: number) => void,
+): Promise<TaskAttachmentResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(
+      "POST",
+      `/api/v1/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/attachments`,
+    );
+
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable && onProgress) {
+        onProgress(event.loaded / event.total);
+      }
+    });
+
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const created = JSON.parse(xhr.responseText) as TaskAttachmentResponse;
+          resolve(created);
+        } catch {
+          reject(new Error("Invalid response"));
+        }
+      } else {
+        reject(new Error(`Upload failed: ${xhr.status}`));
+      }
+    });
+
+    xhr.addEventListener("error", () => reject(new Error("Upload failed")));
+    xhr.addEventListener("abort", () => reject(new Error("Upload aborted")));
+
+    const token = (window as unknown as { tokens?: { access: string } }).tokens?.access;
+    if (token) {
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    }
+
+    xhr.send(formData);
+  });
+}
+
 /**
  * Loads the whole project dependency graph in a single request (nodes + edges +
  * server-computed cyclic node ids), replacing the old per-task N+1 waterfall.
@@ -1227,4 +1276,38 @@ export interface MyTaskItem {
 
 export function getMyTasks(workspaceId: string): Promise<MyTaskItem[]> {
   return api<MyTaskItem[]>(`/workspaces/${workspaceId}/my-tasks`);
+}
+
+export async function updateWorkspace(
+  workspaceId: string,
+  input: { name: string; description?: string | null },
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateSprint(
+  workspaceId: string,
+  projectId: string,
+  sprintId: string,
+  input: { name: string; goal?: string | null },
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/sprints/${sprintId}`,
+    { method: "PUT", body: JSON.stringify(input) },
+  );
+}
+
+export async function updateTemplate(
+  workspaceId: string,
+  projectId: string,
+  templateId: string,
+  input: { name: string; description?: string | null },
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/templates/${templateId}`,
+    { method: "PUT", body: JSON.stringify(input) },
+  );
 }

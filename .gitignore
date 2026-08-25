@@ -68,3 +68,5 @@ pgdata/
 # AI assistant local tooling
 .opencode/skills/
 .aider*
+.kilo/
+frontend/_apply.cjs

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Circle, CircleDot, Eye, CheckCircle2 } from "lucide-react";
+import { Circle, CircleDot, Eye, CheckCircle2, Check } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { TaskItemResponse, WorkspaceMemberResponse } from "../../types/api";
 import { TaskCard } from "./TaskCard";
@@ -24,6 +24,7 @@ interface ColumnProps {
   selectionMode?: boolean;
   selectedIds?: ReadonlySet<string>;
   onToggleSelect?: (taskId: string) => void;
+  onSelectAllInColumn?: (select: boolean) => void;
   workspaceId: string;
   projectId: string;
   onEstimationSaved?: (taskId: string, storyPoints: number | null) => void;
@@ -50,6 +51,7 @@ export function Column({
   selectionMode = false,
   selectedIds,
   onToggleSelect,
+  onSelectAllInColumn,
   workspaceId,
   projectId,
   onEstimationSaved,
@@ -131,6 +133,33 @@ export function Column({
       className="group/column flex min-h-72 w-full flex-1 flex-col gap-2 rounded-xl border border-border bg-surface p-3 transition-colors duration-200 data-[drag-over=true]:border-primary/50 data-[drag-over=true]:bg-primary/5"
     >
       <header className="flex items-center gap-2 px-1 pb-1">
+        {(selectionMode || selectedIds) && onSelectAllInColumn && (
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={
+              tasks.length === 0
+                ? false
+                : tasks.every((t) => selectedIds?.has(t.id))
+                ? true
+                : false
+            }
+            aria-label={t("board.selectAllColumn", { title })}
+            onClick={() => {
+              const allSelected = tasks.every((t) => selectedIds?.has(t.id));
+              onSelectAllInColumn(!allSelected);
+            }}
+            className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border transition-colors duration-150 ${
+              tasks.length > 0 && tasks.every((t) => selectedIds?.has(t.id))
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border-strong bg-surface hover:border-primary"
+            }`}
+          >
+            {tasks.length > 0 && tasks.every((t) => selectedIds?.has(t.id)) && (
+              <Check className="size-3" strokeWidth={3} aria-hidden />
+            )}
+          </button>
+        )}
         <Icon className={`size-4 ${meta.accent}`} aria-hidden />
         <h2 className="font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {title}
