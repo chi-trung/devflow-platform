@@ -11,6 +11,13 @@ const HUB_OPTIONS = {
 
 const RECONNECT_DELAYS = [0, 2_000, 5_000, 10_000, 30_000, 60_000];
 
+// `connection.stop()` racing an in-flight `.start()` (or an automatic
+// reconnect) makes @microsoft/signalr throw "Failed to start the
+// HttpConnection before stop() was called." — benign, but it spams the
+// console on every server restart. The fix: track each connection's in-flight
+// start, never start twice, and await any pending start before stopping.
+const starting = new WeakMap<signalR.HubConnection, Promise<void>>();
+
 export function createProjectConnection(
   projectId?: string,
 ): signalR.HubConnection {
@@ -28,6 +35,69 @@ export function createProjectConnection(
   });
 
   return connection;
+}
+
+/**
+ * Start a hub connection exactly once, guarding against re-entry and against
+ * `stop()` racing an in-flight start (the @microsoft/signalr
+ * "Failed to start the HttpConnection before stop() was called" error).
+ */
+export async function startHubConnection(
+  connection: signalR.HubConnection,
+): Promise<void> {
+  if (connection.state === signalR.HubConnectionState.Connected) return;
+
+  let pending = starting.get(connection);
+  if (pending) {
+    await pending;
+    return;
+  }
+
+  pending = (async () => {
+    try {
+      await connection.start();
+    } catch {
+      // connection-level fallback: callers keep working without realtime
+    } finally {
+      starting.delete(connection);
+    }
+  })();
+  starting.set(connection, pending);
+  await pending;
+}
+
+/**
+ * Start a project hub connection and join the project group. Safe against
+ * re-entry: a start already in flight is awaited, not duplicated.
+ */
+export async function startProjectConnection(
+  connection: signalR.HubConnection,
+  projectId: string,
+): Promise<void> {
+  await startHubConnection(connection);
+  if (connection.state === signalR.HubConnectionState.Connected && projectId) {
+    await connection.invoke("JoinProject", projectId).catch(() => {});
+  }
+}
+
+/**
+ * Stop a hub connection without racing an in-flight start. Safe to call
+ * from an unmount/cleanup even if a start is still pending.
+ */
+export async function stopProjectConnection(
+  connection: signalR.HubConnection,
+): Promise<void> {
+  const pending = starting.get(connection);
+  if (pending) {
+    try {
+      await pending;
+    } catch {}
+  }
+  if (connection.state !== signalR.HubConnectionState.Disconnected) {
+    try {
+      await connection.stop();
+    } catch {}
+  }
 }
 
 // ── Online/wake guards ──────────────────────────────────────────────
@@ -79,7 +149,6 @@ export function getNotificationConnection(): signalR.HubConnection {
 
 let notificationSubscribers = 0;
 let stopTimer: number | null = null;
-let startingPromise: Promise<void> | null = null;
 
 export async function startNotificationStream(): Promise<void> {
   notificationSubscribers++;
@@ -89,21 +158,10 @@ export async function startNotificationStream(): Promise<void> {
   }
 
   const connection = getNotificationConnection();
-  if (connection.state === signalR.HubConnectionState.Connected) return;
-  if (startingPromise) {
-    return startingPromise;
-  }
-
-  if (connection.state === signalR.HubConnectionState.Disconnected) {
-    startingPromise = connection
-      .start()
-      .catch(() => {
-        // the polling fallback in useNotifications keeps the UI working without realtime
-      })
-      .finally(() => {
-        startingPromise = null;
-      });
-    return startingPromise;
+  if (connection.state !== signalR.HubConnectionState.Connected) {
+    await startHubConnection(connection).catch(() => {
+      // the polling fallback in useNotifications keeps the UI working without realtime
+    });
   }
 }
 
@@ -115,18 +173,8 @@ export function stopNotificationStream(): void {
   stopTimer = window.setTimeout(async () => {
     stopTimer = null;
     if (notificationSubscribers > 0) return;
-    if (startingPromise) {
-      try {
-        await startingPromise;
-      } catch {}
-    }
-    if (
-      notificationConnection &&
-      notificationConnection.state !== signalR.HubConnectionState.Disconnected
-    ) {
-      try {
-        await notificationConnection.stop();
-      } catch {}
+    if (notificationConnection) {
+      await stopProjectConnection(notificationConnection).catch(() => {});
     }
   }, 1000);
 }
@@ -138,7 +186,7 @@ export function resetNotificationStream(): void {
     stopTimer = null;
   }
   if (notificationConnection) {
-    void notificationConnection.stop().catch(() => {});
+    void stopProjectConnection(notificationConnection);
     notificationConnection = null;
   }
 }

@@ -32,7 +32,12 @@ import {
   pagedItems,
   reorderTasks,
 } from "../lib/api";
-import { createProjectConnection, onConnectionWake } from "../lib/realtime";
+import {
+  createProjectConnection,
+  onConnectionWake,
+  startProjectConnection,
+  stopProjectConnection,
+} from "../lib/realtime";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
 import { useToast } from "../components/ui/ToastProvider";
@@ -530,12 +535,7 @@ export function BoardPage() {
         connection.state === "Disconnected" &&
         navigator.onLine
       ) {
-        connection
-          .start()
-          .then(() => connection.invoke("JoinProject", projectId))
-          .catch(() => {
-            /* board still works without realtime */
-          });
+        void startProjectConnection(connection, projectId);
       }
     };
     const offWake = onConnectionWake(ensureLive);
@@ -548,18 +548,13 @@ export function BoardPage() {
     };
     document.addEventListener("visibilitychange", onVisible);
 
-    connection
-      .start()
-      .then(() => connection.invoke("JoinProject", projectId))
-      .catch(() => {
-        /* board still works without realtime */
-      });
+    void startProjectConnection(connection, projectId);
 
     return () => {
       offWake();
       window.clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisible);
-      void connection.stop();
+      void stopProjectConnection(connection);
     };
   }, [projectId, reload, reloadSprints, reloadActivities]);
 

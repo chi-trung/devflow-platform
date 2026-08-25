@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { createProjectConnection } from "../lib/realtime";
+import {
+  createProjectConnection,
+  startProjectConnection,
+  stopProjectConnection,
+} from "../lib/realtime";
 import type { WorkspaceMemberResponse } from "../types/api";
 
 export interface PresenceUser {
@@ -57,22 +61,14 @@ export function usePresence(
     connection.on("user-joined", handleUserJoined);
     connection.on("user-left", handleUserLeft);
 
-    connection
-      .start()
-      .then(() => {
-        if (selfId) {
-          setCurrentUserPresence(selfId);
-          connection.invoke("JoinProject", projectId).catch(() => {});
-        }
-      })
-      .catch(() => {
-        // board still works without realtime
-      });
+    void startProjectConnection(connection, projectId).then(() => {
+      if (selfId) setCurrentUserPresence(selfId);
+    });
 
     return () => {
       connection.off("user-joined", handleUserJoined);
       connection.off("user-left", handleUserLeft);
-      void connection.stop();
+      void stopProjectConnection(connection);
     };
   }, [projectId, currentUserId]);
 
