@@ -67,11 +67,13 @@ public sealed class GetNotificationsHandler(
 }
 
 public sealed class GetUnreadCountHandler(
-    INotificationRepository notificationRepository) : IRequestHandler<GetUnreadCountQuery, int>
+    INotificationRepository notificationRepository) : IRequestHandler<GetUnreadCountQuery, UnreadCountResponse>
 {
-    public async Task<int> Handle(GetUnreadCountQuery query, CancellationToken cancellationToken)
+    public async Task<UnreadCountResponse> Handle(GetUnreadCountQuery query, CancellationToken cancellationToken)
     {
-        return await notificationRepository.GetUnreadCountAsync(query.UserId, cancellationToken);
+        var count = await notificationRepository.GetUnreadCountAsync(query.UserId, query.WorkspaceId, cancellationToken);
+        var lastUnreadAt = await notificationRepository.GetLastUnreadAtAsync(query.UserId, query.WorkspaceId, cancellationToken);
+        return new UnreadCountResponse(count, lastUnreadAt);
     }
 }
 

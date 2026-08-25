@@ -24,11 +24,45 @@ public sealed class NotificationRepository(DevFlowDbContext dbContext) : INotifi
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<int> GetUnreadCountAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<int> GetUnreadCountAsync(Guid userId, Guid? workspaceId = null, CancellationToken cancellationToken = default)
     {
-        return await dbContext.Notifications
+        var query = dbContext.Notifications
             .AsNoTracking()
-            .CountAsync(n => n.UserId == userId && n.ReadAtUtc == null, cancellationToken);
+            .Where(n => n.UserId == userId && n.ReadAtUtc == null);
+
+        if (workspaceId.HasValue)
+        {
+            query = query.Where(n => n.WorkspaceId == workspaceId);
+        }
+
+        return await query.CountAsync(cancellationToken);
+    }
+
+    public async Task<DateTimeOffset?> GetLastUnreadAtAsync(Guid userId, Guid? workspaceId, CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Notifications
+            .AsNoTracking()
+            .Where(n => n.UserId == userId && n.ReadAtUtc == null);
+
+        if (workspaceId.HasValue)
+        {
+            query = query.Where(n => n.WorkspaceId == workspaceId);
+        }
+
+        return await query
+            .OrderByDescending(n => n.CreatedAtUtc)
+            .Select(n => (DateTimeOffset?)n.CreatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<int> BatchDeleteAsync(Guid userId, IReadOnlyList<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var toDelete = await dbContext.Notifications
+            .Where(n => n.UserId == userId && ids.Contains(n.Id))
+            .ToListAsync(cancellationToken);
+
+        dbContext.Notifications.RemoveRange(toDelete);
+        return toDelete.Count;
     }
 
     public async Task<Notification?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

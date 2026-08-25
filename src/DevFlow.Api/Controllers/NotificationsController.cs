@@ -28,14 +28,30 @@ public sealed class NotificationsController(ISender sender, IUserContext userCon
     }
 
     [HttpGet("unread-count")]
-    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetUnreadCount(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(UnreadCountResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUnreadCount(
+        [FromQuery] Guid? workspaceId,
+        CancellationToken cancellationToken)
     {
-        var count = await sender.Send(
-            new GetUnreadCountQuery(userContext.UserId),
+        var result = await sender.Send(
+            new GetUnreadCountQuery(userContext.UserId, workspaceId),
             cancellationToken);
 
-        return Ok(count);
+        return Ok(result);
+    }
+
+    [HttpPost("batch-delete")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> BatchDelete(
+        [FromBody] BatchDeleteNotificationsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var deleted = await sender.Send(
+            new BatchDeleteNotificationsCommand(request.Ids),
+            cancellationToken);
+
+        return Ok(new { deleted });
     }
 
     [HttpPost("{id:guid}/read")]
@@ -111,3 +127,5 @@ public sealed class NotificationsController(ISender sender, IUserContext userCon
         return Ok(new { deleted });
     }
 }
+
+public sealed record BatchDeleteNotificationsRequest(IReadOnlyList<Guid> Ids);

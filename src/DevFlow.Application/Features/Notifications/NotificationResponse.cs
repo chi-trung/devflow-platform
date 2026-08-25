@@ -20,7 +20,11 @@ public sealed record GetNotificationsQuery(
     int PageSize,
     bool UnreadOnly) : IRequest<PagedResult<NotificationResponse>>;
 
-public sealed record GetUnreadCountQuery(Guid UserId) : IRequest<int>;
+public sealed record GetUnreadCountQuery(Guid UserId, Guid? WorkspaceId = null) : IRequest<UnreadCountResponse>;
+
+public sealed record UnreadCountResponse(
+    int UnreadCount,
+    DateTimeOffset? LastUnreadAt);
 
 public sealed record MarkNotificationReadCommand(
     Guid UserId,
