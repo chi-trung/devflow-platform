@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Plus, ArrowUpRight, Boxes, CalendarRange } from "lucide-react";
+import { useAuth } from "../auth/AuthContext";
 import { api, pagedItems } from "../lib/api";
 import { loadDashboard, type DashboardResult } from "../lib/dashboard";
 import { useApi } from "../hooks/useApi";
@@ -32,6 +33,7 @@ function slugify(name: string): string {
 
 export function DashboardPage() {
   const { t } = useTranslation();
+  const { currentUser } = useAuth();
   const {
     data: workspacesRaw,
     error,
@@ -52,6 +54,28 @@ export function DashboardPage() {
 
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
+
+  const displayName = currentUser?.displayName ?? currentUser?.username ?? "";
+  const hour = new Date().getHours();
+  const greeting = useMemo(() => {
+    const key =
+      hour < 12
+        ? "dashboard.greetingMorning"
+        : hour < 18
+          ? "dashboard.greetingAfternoon"
+          : "dashboard.greetingEvening";
+    return t(key, { name: displayName });
+  }, [hour, displayName, t]);
+  const todayDate = useMemo(
+    () =>
+      new Date().toLocaleDateString(undefined, {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
+    [],
+  );
 
   useEffect(() => {
     const ws = pagedItems<WorkspaceResponse>(workspacesRaw);
@@ -126,20 +150,72 @@ export function DashboardPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-5xl px-6 py-10">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              {t("dashboard.dashboard")}
-            </p>
-            <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">
-              {t("dashboard.title")}
-            </h1>
-          </div>
-          {!creating && (
-            <Button onClick={() => setCreating(true)}>
-              <Plus className="size-4" aria-hidden />
-              {t("dashboard.newWorkspace")}
-            </Button>
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          {selectedWsId && workspaces.length > 0 ? (
+            <>
+              <div>
+                <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  {t("dashboard.dashboard")}
+                </p>
+                <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">
+                  {greeting}
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t("dashboard.today", { date: todayDate })}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {projects.length > 0 && (
+                  <select
+                    aria-label={t("dashboard.project")}
+                    value={selectedProjectId}
+                    onChange={(event) => setSelectedProjectId(event.target.value)}
+                    className="cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  >
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <select
+                  aria-label={t("dashboard.workspace")}
+                  value={selectedWsId}
+                  onChange={(event) => setSelectedWsId(event.target.value)}
+                  className="cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  {workspaces.map((workspace) => (
+                    <option key={workspace.id} value={workspace.id}>
+                      {workspace.name}
+                    </option>
+                  ))}
+                </select>
+                {!creating && (
+                  <Button onClick={() => setCreating(true)}>
+                    <Plus className="size-4" aria-hidden />
+                    {t("dashboard.newWorkspace")}
+                  </Button>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  {t("dashboard.dashboard")}
+                </p>
+                <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">
+                  {t("dashboard.title")}
+                </h1>
+              </div>
+              {!creating && (
+                <Button onClick={() => setCreating(true)}>
+                  <Plus className="size-4" aria-hidden />
+                  {t("dashboard.newWorkspace")}
+                </Button>
+              )}
+            </>
           )}
         </div>
 
@@ -184,38 +260,10 @@ export function DashboardPage() {
 
         {selectedWsId && workspaces && workspaces.length > 0 && (
           <section aria-label={t("dashboard.overview")} className="mb-10">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="mb-3">
               <h2 className="font-display text-lg font-semibold tracking-tight">
                 {t("dashboard.overview")}
               </h2>
-              <div className="flex flex-wrap items-center gap-2">
-                {projects.length > 0 && (
-                  <select
-                    aria-label={t("dashboard.project")}
-                    value={selectedProjectId}
-                    onChange={(event) => setSelectedProjectId(event.target.value)}
-                    className="cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                  >
-                    {projects.map((project) => (
-                      <option key={project.id} value={project.id}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                <select
-                  aria-label={t("dashboard.workspace")}
-                  value={selectedWsId}
-                  onChange={(event) => setSelectedWsId(event.target.value)}
-                  className="cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                >
-                  {workspaces.map((workspace) => (
-                    <option key={workspace.id} value={workspace.id}>
-                      {workspace.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
 
             {dashboardLoading ? (

@@ -28,6 +28,10 @@
   "dashboard": {
     "title": "Workspaces",
     "dashboard": "Tổng quan",
+    "greetingMorning": "Chào buổi sáng, {{name}} 👋",
+    "greetingAfternoon": "Chào buổi chiều, {{name}} 👋",
+    "greetingEvening": "Chào buổi tối, {{name}} 👋",
+    "today": "Hôm nay là {{date}}",
     "overview": "Tổng quan",
     "totalTasks": "Tổng tasks",
     "inProgress": "Đang thực hiện",

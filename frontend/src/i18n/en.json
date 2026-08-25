@@ -28,6 +28,10 @@
   "dashboard": {
     "title": "Workspaces",
     "dashboard": "Dashboard",
+    "greetingMorning": "Good morning, {{name}} 👋",
+    "greetingAfternoon": "Good afternoon, {{name}} 👋",
+    "greetingEvening": "Good evening, {{name}} 👋",
+    "today": "Today is {{date}}",
     "overview": "Overview",
     "totalTasks": "Total Tasks",
     "inProgress": "In Progress",
