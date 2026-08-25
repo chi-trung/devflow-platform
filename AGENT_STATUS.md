@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅** | **Sprint 29 Complete ✅** | **Sprint 30 Complete ✅** | **Sprint 31 Planning 🚧**
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅** | **Sprint 29 Complete ✅** | **Sprint 30 Complete ✅** | **Sprint 31 Complete ✅** | **Sprint 32 Planning 🚧**
 
 ---
 
@@ -22,7 +22,7 @@
 | **Sprint 28** | Webhook Reliability & Project Mgmt UX (DLQ fix + admin retry + test coverage + reporting/search polish + project settings UI + analytics tiles + notification mentions) | ✅ Agent A: A28.1 webhook DLQ fix + admin retry endpoint — PR #124; A28.2 review/merge — PRs #125, #127, #128, #129, #130; Agent B: B28.1 tests Bulk/Export/Import/Users, B28.2 reporting trends + search sort/custom-field — PR #125 | ✅ Agent C: C28.1 project settings UI + Dialog/EmptyState, C28.2 search filter parity + sort — PR #129; Agent D: D28.1 workspace analytics tiles, D28.2 mention filter + settings link + vi.json — PR #127 | Complete ✅ |
 | **Sprint 29** | File Upload Safety & Settings Polish (upload size/type limits + workspace/sprint/template edit + bulk ops UX + attachment upload UX + vi.json completion + notification badge) | ✅ Agent A: A29.1 file upload size limit + type whitelist; A29.2 Workspace/Sprint/Template PUT endpoints; A29.3 review/merge; Agent B: B29.1 attachment pagination + cache headers, B29.2 notification batch-delete + unread-count, B29.3 tests | ✅ Agent C: C29.1 bulk ops UI (select-all + batch action bar), C29.2 attachment upload progress/error/retry; Agent D: D29.1 workspace/sprint/template edit UI, D29.2 vi.json 122 keys + AppShell badge | Complete ✅ |
 | **Sprint 30** | Webhook Admin UI, Watcher List, Security Fixes & Polish (template scoping fix + README/docs + watchers query/UI + integration tests + DLQ admin UI + EmptyState adoption + outbox i18n) | ✅ Agent A: A30.1 template scoping fix — PR #145, A30.2 README/docs — PR #146, A30.3 review/merge — PRs #147, #148; Agent B: B30.1 GetTaskWatchersQuery + endpoint, B30.2 integration tests — PR #147 | ✅ Agent C: C30.1 watcher list UI, C30.2 DLQ admin UI; Agent D: D30.1 EmptyState adoption, D30.2 outbox i18n — PR #148 | Complete ✅ |
-| **Sprint 31** | Project-Level RBAC, Outbox Admin Batch, EmptyState Sweep & Depth Polish (ProjectMember entity + CQRS + epic deps + project auth guard + member UI + DLQ batch + EmptyState sweep + epic deps UI + i18n) | 🚧 A31.1 ProjectMember entity/migration/repo, A31.2 member CQRS endpoints, A31.3 review/merge; B31.1 outbox replay-all/purge, B31.2 epic deps, B31.3 ProjectAuthorizationBehavior | 🚧 C31.1 project member UI, C31.2 DLQ Replay-all/Purge buttons; D31.1 EmptyState sweep (~20 files), D31.2 epic deps UI + i18n | Planning 🚧 |
+| **Sprint 31** | Project-Level RBAC, Outbox Admin Batch, EmptyState Sweep & Depth Polish (ProjectMember entity + CQRS + epic deps + project auth guard + member UI + DLQ batch + EmptyState sweep + epic deps UI + i18n) | ✅ A31.1 ProjectMember entity/migration/repo, A31.2 member CQRS endpoints, A31.3 review/merge — PR #150; B31.1 outbox replay-all/purge, B31.2 epic deps, B31.3 ProjectAuthorizationBehavior — PR #151 | ✅ C31.1 project member UI, C31.2 DLQ Replay-all/Purge buttons — PR #152; D31.1 EmptyState sweep (~20 files), D31.2 epic deps UI + i18n — PR #153 | Complete ✅ |
 
 ---
 
@@ -438,6 +438,34 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
+### 🚀 Sprint 31 — Project-Level RBAC, Outbox Admin Batch, EmptyState Sweep & Depth Polish ✅ Complete
+
+**Goal:** Hiện thực hóa RBAC cấp project (mới — workspace-only trước đây), admin batch ops cho outbox DLQ (replay-all/purge), thêm epic-to-epic dependencies, và áp dụng rộng rãi `<EmptyState>` component trên toàn frontend.
+
+> **Plan:** `docs/sprint31/plan.md` — 8 tasks / 4 agents.
+> **Prompts:** `docs/sprint31/prompts/prompt-{B,C,D}.md`.
+> **PRs:** #149 (docs), #150 (A31.1+2), #151 (B31.1-3), #152 (C31.1+2), #153 (D31.1+2).
+
+#### 🚀 Agent A (Team Lead — Backend ProjectMember + RBAC) ✅
+- [x] **A31.1: `ProjectMember` entity + migration + repository** — bảng `project_members`, `ProjectMemberRole` (Member/Manager), repository CRUD + `GetByProjectAsync`. *(PR #150 merged)*
+- [x] **A31.2: Member CQRS endpoints** — `GET/POST /projects/{projectId}/members`, `PATCH/DELETE /members/{userId}`; Manager-gated; `ProjectAuthorizationBehavior` pipeline guard (project-scoped RBAC song song workspace RBAC). *(PR #150 merged)*
+- [x] **A31.3: Review & merge B/C/D PRs** — chạy `dotnet test`/`npm run build` + i18n parity; rebase C lên main (D đã merge trước) resolve 10 conflicts; fix duplicate `EmptyState` import. *(PRs #150, #151, #152, #153 all merged)*
+
+#### 🤖 Agent B (Backend — Outbox Batch + Epic Deps + RBAC Guard) ✅
+- [x] **B31.1: Outbox replay-all/purge** — `POST /outbox/dead-letter/replay-all` → `{requeued:n}`, `DELETE /outbox/dead-letter` → `{deleted:n}`; Admin-gated. *(PR #151 merged)*
+- [x] **B31.2: Epic-to-epic dependencies** — `GET/POST /epics/{epicId}/dependencies`, `DELETE /dependencies/{blockedByEpicId}`; `EpicResponse` gain `blockedByEpicIds`. *(PR #151 merged)*
+- [x] **B31.3: `ProjectAuthorizationBehavior`** — MediatR pipeline attribute quản lý truy cập theo project role; unit tests. *(PR #151 merged)*
+
+#### 🎨 Agent C (Frontend — Project Member UI + DLQ Batch) ✅
+- [x] **C31.1: `ProjectSettingsPage`** — member list/add/remove/role-update, add-member dropdown từ workspace members. *(PR #152 merged)*
+- [x] **C31.2: DLQ Replay-all/Purge buttons** — trên `WebhooksPage`, confirm dialogs + loading states; `replayAllDeadLetterMessages`/`purgeDeadLetterMessages` API. *(PR #152 merged)*
+
+#### 🚀 Agent D (Frontend + i18n — EmptyState Sweep + Epic Deps UI) ✅
+- [x] **D31.1: EmptyState sweep** — `SprintHealthCard`, `CumulativeFlow`, `TeamPerformancePanel`, `BurndownChart`, `ImportTasksModal`, `ExportImportModal`, `LabelsPage`, `TemplatesPage`, `WorkspacePage`, `DashboardPage`, `SprintPlanningPage`, `WebhooksPage`, `EpicsPage`, ...; widen `EmptyState` props (`title`/`description` → `React.ReactNode`). *(PR #153 merged)*
+- [x] **D31.2: Epic deps UI + i18n** — "Blocked by" expandable section + add/remove dependency picker (Admin) trên `EpicsPage`; `epic.*` blocker keys + `outbox.*` batch keys en+vi. *(PR #153 merged)*
+
+---
+
 ## 🔒 Multi-Agent Coordination Guidelines
 
 1. **Branch Prefixes:**
@@ -452,5 +480,5 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-*DevFlow Architecture Team — Updated 2026-08-25 (Sprint 30 Complete ✅)*
+*DevFlow Architecture Team — Updated 2026-08-25 (Sprint 31 Complete ✅)*
 

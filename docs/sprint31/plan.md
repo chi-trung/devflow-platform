@@ -181,13 +181,13 @@ DELETE .../epics/{epicId}/dependencies/{blockedByEpicId}
 
 ## ✅ Definition of Done (Sprint 31)
 
-- [ ] A31.1 ProjectMember entity + migration + repository
-- [ ] A31.2 Project member CQRS endpoints + tests
-- [ ] A31.3 All PRs reviewed/merged; AGENT_STATUS updated
-- [ ] B31.1 Outbox replay-all + purge endpoints + tests
-- [ ] B31.2 Epic-to-epic dependency CQRS + tests
-- [ ] B31.3 Project authorization guard + tests
-- [ ] C31.1 Project member management UI
-- [ ] C31.2 DLQ Replay-all/Purge UI
-- [ ] D31.1 EmptyState adoption in remaining files, build green
-- [ ] D31.2 Epic dependency UI + i18n parity green
+- [x] A31.1 ProjectMember entity + migration + repository
+- [x] A31.2 Project member CQRS endpoints + tests
+- [x] A31.3 All PRs reviewed/merged; AGENT_STATUS updated
+- [x] B31.1 Outbox replay-all + purge endpoints + tests
+- [x] B31.2 Epic-to-epic dependency CQRS + tests
+- [x] B31.3 Project authorization guard + tests
+- [x] C31.1 Project member management UI
+- [x] C31.2 DLQ Replay-all/Purge UI
+- [x] D31.1 EmptyState adoption in remaining files, build green
+- [x] D31.2 Epic dependency UI + i18n parity green

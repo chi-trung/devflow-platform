@@ -21,7 +21,7 @@ Built as a long-term learning project with a strong focus on architecture, testi
 | Architecture | Clean Architecture, CQRS + MediatR |
 | Database | PostgreSQL + EF Core |
 | Auth | JWT access tokens + rotating refresh tokens |
-| Testing | xUnit (303 unit tests) |
+| Testing | xUnit (333 unit tests) |
 | DevOps | Docker Compose, GitHub Actions |
 
 **Frontend**
@@ -123,7 +123,15 @@ npm run dev                   # http://localhost:3000, proxies /api to :5217
 - [x] Integration test expansion (project → sprint → task flow) — shared DB collection fixture
 - [x] EmptyState component adoption in top pages (Activities, Board, CustomFields, GitHub, MyTasks)
 
-### Next up — Sprint 31
-- EmptyState adoption in remaining 21 files
-- Project-level member management / RBAC
+### Sprint 31
+- [x] Project-level member management / RBAC — `ProjectMember` entity + member CRUD endpoints + Manager-gated UI
+- [x] Outbox DLQ admin batch — Replay-all / Purge buttons on Webhooks page
+- [x] Epic-to-epic dependencies — backend CQRS + frontend "Blocked by" section
+- [x] EmptyState adoption across remaining pages (dashboard cards, epics, webhooks, import/export, ...)
+- [x] Project authorization guard (`ProjectAuthorizationBehavior`) — project-scoped RBAC pipeline
+
+### Next up — Sprint 32
 - Component library catalog / design sync
+- tsvector search ranking (beyond ILIKE)
+- Time-tracking reporting (`GetTeamReportTrends` placeholder)
+- Custom field grouping UI
