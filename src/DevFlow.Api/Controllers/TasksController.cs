@@ -387,5 +387,22 @@ public sealed class TasksController(ISender sender) : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("{taskId:guid}/watchers")]
+    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Tasks.Watch.TaskWatcherResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetWatchers(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new Application.Features.Tasks.Watch.GetTaskWatchersQuery(workspaceId, projectId, taskId),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
     public sealed record ReorderTasksRequest(IReadOnlyList<ReorderTaskItem> Tasks);
 }

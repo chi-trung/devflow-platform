@@ -4,7 +4,8 @@ using System.Text.Json;
 
 namespace DevFlow.IntegrationTests;
 
-public class AuthAndWorkspaceIntegrationTests(DevFlowWebApplicationFactory factory) : IClassFixture<DevFlowWebApplicationFactory>
+[Collection("IntegrationTests")]
+public class AuthAndWorkspaceIntegrationTests(DevFlowWebApplicationFactory factory)
 {
     private readonly HttpClient client = factory.CreateClient();
 

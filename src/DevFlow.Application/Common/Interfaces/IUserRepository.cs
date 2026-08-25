@@ -18,6 +18,10 @@ public interface IUserRepository
         IEnumerable<Guid> userIds,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyDictionary<Guid, User>> GetByIdsAsync(
+        IEnumerable<Guid> userIds,
+        CancellationToken cancellationToken = default);
+
     Task<bool> ExistsByUsernameExceptIdAsync(string username, Guid userId, CancellationToken cancellationToken = default);
 
     Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default);
