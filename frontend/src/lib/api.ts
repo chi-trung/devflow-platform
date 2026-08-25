@@ -979,7 +979,7 @@ export async function uploadTaskAttachment(
     xhr.addEventListener("error", () => reject(new Error("Upload failed")));
     xhr.addEventListener("abort", () => reject(new Error("Upload aborted")));
 
-    const token = (window as unknown as { tokens?: { access: string } }).tokens?.access;
+    const token = tokens.access;
     if (token) {
       xhr.setRequestHeader("Authorization", `Bearer ${token}`);
     }
