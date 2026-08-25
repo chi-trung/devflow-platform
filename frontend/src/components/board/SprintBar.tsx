@@ -168,15 +168,15 @@ export function SprintBar({
 
   return (
     <div className="mb-5 flex flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-3">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <CalendarRange className="size-4 shrink-0 text-primary" aria-hidden />
 
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex min-w-0 items-center gap-2 text-sm">
           <span className="sr-only">{t("sprint.filterSrOnly")}</span>
           <select
             value={filter}
             onChange={(event) => onFilterChange(event.target.value)}
-            className="rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            className="max-w-56 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
           >
             <option value="all">{t("sprint.allTasks")}</option>
             <option value="none">{t("sprint.noSprintFilter")}</option>
@@ -189,7 +189,7 @@ export function SprintBar({
           </select>
         </label>
 
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center gap-x-2 gap-y-1.5">
           {active && (
             <>
               <Badge tone="teal">{t("sprint.active")}</Badge>

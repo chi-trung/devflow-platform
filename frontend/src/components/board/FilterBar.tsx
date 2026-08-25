@@ -10,7 +10,7 @@ import {
 import type { LabelResponse, WorkspaceMemberResponse } from "../../types/api";
 
 const inputClass =
-  "rounded-lg border border-border bg-card px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none";
+  "max-w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none";
 
 interface FilterBarProps {
   projectId: string;
@@ -102,7 +102,7 @@ export function FilterBar({
   return (
     <section
       aria-label={t("filter.filters")}
-      className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2"
+      className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-border bg-surface px-3 py-2"
     >
       <span className="flex items-center gap-1.5 font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         <Filter className="size-3.5" aria-hidden />

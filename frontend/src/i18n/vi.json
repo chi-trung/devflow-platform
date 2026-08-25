@@ -106,6 +106,7 @@
     "dropHere": "Thả tasks vào đây",
     "dragHint": "Kéo thẻ giữa các cột — thay đổi tự động lưu.",
     "projects": "Dự án",
+    "projectNav": "Điều hướng dự án",
     "bulkActionFailed": "Thao tác hàng loạt thất bại.",
     "blockedMoveDetail": "\"{{title}}\" đang bị chặn — hãy xử lý các blocker trước.",
     "moveFailed": "Di chuyển task thất bại.",
