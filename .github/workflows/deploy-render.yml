@@ -2,8 +2,11 @@ name: Deploy Backend to Render
 
 # Render free tier does NOT auto-deploy on push; a merged backend change
 # stays unserved until someone clicks Manual Deploy. This workflow fires
-# Render's deploy hook after any push that touches backend/API code lands
-# on main, so production always serves the merged code.
+# Render's deploy hook after a push to main that touches backend/API code.
+#
+# NOTE: `on.push.paths` combined with `branches` silently produces empty
+# "failure" runs (0 jobs) instead of filtering — so we accept all pushes to
+# main and gate on changed files inside the job instead.
 #
 # Requires the repo secret RENDER_DEPLOY_HOOK — the Deploy Hook URL from
 # Render dashboard (service → Settings → Deploy Hook). Without it, the job
@@ -12,20 +15,31 @@ name: Deploy Backend to Render
 on:
   push:
     branches: [main]
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - '*.sln'
-      - 'Directory.*'
-      - 'global.json'
 
 jobs:
   deploy:
     name: Trigger Render deploy hook
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Check for backend changes
+        id: changes
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD || git diff --name-only HEAD^ HEAD)
+          if echo "$CHANGED" | grep -Eq '^(src/|tests/|.*\.sln$|Directory\.|global\.json)'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Backend changes detected — will deploy."
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No backend changes — skipping deploy."
+          fi
+
       - name: Fire deploy hook
-        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
+        if: ${{ steps.changes.outputs.changed == 'true' && secrets.RENDER_DEPLOY_HOOK != '' }}
         run: |
           curl -fsS \
             -X POST \
@@ -33,6 +47,11 @@ jobs:
             -H "Accept: application/json" \
             --data '{}' \
             "${{ secrets.RENDER_DEPLOY_HOOK }}"
+
+      - name: No backend changes
+        if: ${{ steps.changes.outputs.changed == 'false' }}
+        run: echo "No backend changes in this push — skipping auto-deploy."
+
       - name: No hook configured
-        if: ${{ secrets.RENDER_DEPLOY_HOOK == '' }}
+        if: ${{ steps.changes.outputs.changed == 'true' && secrets.RENDER_DEPLOY_HOOK == '' }}
         run: echo "RENDER_DEPLOY_HOOK is not set — skipping auto-deploy. Deploy manually from the Render dashboard."
