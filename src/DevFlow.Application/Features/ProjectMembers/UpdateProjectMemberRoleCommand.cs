@@ -5,8 +5,9 @@ using MediatR;
 namespace DevFlow.Application.Features.ProjectMembers;
 
 [RequireWorkspaceRole(WorkspaceRole.Admin)]
+[RequireProjectRole(ProjectRole.Manager)]
 public sealed record UpdateProjectMemberRoleCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     Guid UserId,
-    ProjectRole Role) : IRequest, IWorkspaceRequest;
+    ProjectRole Role) : IRequest, IProjectRequest;

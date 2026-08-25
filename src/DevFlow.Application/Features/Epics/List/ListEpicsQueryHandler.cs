@@ -10,7 +10,8 @@ namespace DevFlow.Application.Features.Epics.List;
 public sealed class ListEpicsQueryHandler(
     IProjectRepository projectRepository,
     IEpicRepository epicRepository,
-    ITaskItemRepository taskItemRepository) : IRequestHandler<ListEpicsQuery, IReadOnlyList<EpicResponse>>
+    ITaskItemRepository taskItemRepository,
+    IEpicDependencyRepository dependencyRepository) : IRequestHandler<ListEpicsQuery, IReadOnlyList<EpicResponse>>
 {
     public async Task<IReadOnlyList<EpicResponse>> Handle(
         ListEpicsQuery query,
@@ -25,13 +26,17 @@ public sealed class ListEpicsQueryHandler(
 
         var epics = await epicRepository.GetForProjectAsync(query.ProjectId, cancellationToken);
         var tasks = await taskItemRepository.GetForProjectAsync(query.ProjectId, status: null, cancellationToken);
+        var dependencies = await dependencyRepository.GetForEpicsAsync(epics.Select(e => e.Id), cancellationToken);
 
         return epics
-            .Select(epic => BuildEpicResponse(epic, tasks))
+            .Select(epic => BuildEpicResponse(epic, tasks, dependencies))
             .ToList();
     }
 
-    private static EpicResponse BuildEpicResponse(Epic epic, IReadOnlyList<TaskItem> tasks)
+    private static EpicResponse BuildEpicResponse(
+        Epic epic,
+        IReadOnlyList<TaskItem> tasks,
+        IReadOnlyList<EpicDependency> dependencies)
     {
         var epicTasks = tasks.Where(task => task.EpicId == epic.Id).ToList();
         var completedTasks = epicTasks.Count(task => task.Status == TaskItemStatus.Done);
@@ -44,6 +49,11 @@ public sealed class ListEpicsQueryHandler(
             ? 0
             : Math.Round(completedTasks * 100.0 / epicTasks.Count, 1);
 
+        var blockedBy = dependencies
+            .Where(d => d.EpicId == epic.Id)
+            .Select(d => d.BlockedById)
+            .ToList();
+
         return new EpicResponse(
             epic.Id,
             epic.ProjectId,
@@ -55,6 +65,7 @@ public sealed class ListEpicsQueryHandler(
             completedTasks,
             completionPercent,
             totalStoryPoints,
-            completedStoryPoints);
+            completedStoryPoints,
+            blockedBy);
     }
 }

@@ -3,6 +3,7 @@ using System;
 using DevFlow.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DevFlow.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(DevFlowDbContext))]
-    partial class DevFlowDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260825055603_AddEpicDependencies")]
+    partial class AddEpicDependencies
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -631,45 +634,6 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_projects_workspace_id_key");
 
                     b.ToTable("projects", (string)null);
-                });
-
-            modelBuilder.Entity("DevFlow.Domain.Entities.ProjectMember", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at_utc");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("project_id");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("role");
-
-                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at_utc");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_project_members");
-
-                    b.HasIndex("ProjectId", "UserId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_project_members_project_id_user_id");
-
-                    b.ToTable("project_members", (string)null);
                 });
 
             modelBuilder.Entity("DevFlow.Domain.Entities.PullRequest", b =>
@@ -1576,16 +1540,6 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_projects_workspaces_workspace_id");
-                });
-
-            modelBuilder.Entity("DevFlow.Domain.Entities.ProjectMember", b =>
-                {
-                    b.HasOne("DevFlow.Domain.Entities.Project", null)
-                        .WithMany()
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_project_members_projects_project_id");
                 });
 
             modelBuilder.Entity("DevFlow.Domain.Entities.PullRequest", b =>

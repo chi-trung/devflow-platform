@@ -45,4 +45,32 @@ public sealed class OutboxController(ISender sender) : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPost("dead-letter/replay-all")]
+    [ProducesResponseType(typeof(ReplayAllResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ReplayAll(
+        Guid workspaceId,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new ReplayAllOutboxMessagesCommand(workspaceId),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpDelete("dead-letter")]
+    [ProducesResponseType(typeof(PurgeDeadLetterResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> PurgeDeadLetter(
+        Guid workspaceId,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new PurgeDeadLetterMessagesCommand(workspaceId),
+            cancellationToken);
+
+        return Ok(result);
+    }
 }

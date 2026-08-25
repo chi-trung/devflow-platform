@@ -68,4 +68,22 @@ public sealed class OutboxRepository(DevFlowDbContext context) : IOutboxReposito
         context.OutboxMessages.Update(message);
         return true;
     }
+
+    public async Task<IReadOnlyList<OutboxMessage>> GetAllDeadLetteredAsync(CancellationToken cancellationToken = default)
+    {
+        return await context.OutboxMessages
+            .Where(m => m.FailedPermanentlyAt != null)
+            .OrderByDescending(m => m.FailedPermanentlyAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> PurgeDeadLetteredAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var messages = await context.OutboxMessages
+            .Where(m => ids.Contains(m.Id))
+            .ToListAsync(cancellationToken);
+
+        context.OutboxMessages.RemoveRange(messages);
+        return messages.Count;
+    }
 }

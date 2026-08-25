@@ -91,4 +91,60 @@ public sealed class EpicsController(ISender sender) : ControllerBase
 
         return NoContent();
     }
+
+    [HttpGet("{epicId:guid}/dependencies")]
+    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Epics.Dependencies.EpicDependencyResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ListDependencies(
+        Guid workspaceId,
+        Guid projectId,
+        Guid epicId,
+        CancellationToken cancellationToken)
+    {
+        var dependencies = await sender.Send(
+            new Application.Features.Epics.Dependencies.ListEpicDependenciesQuery(workspaceId, projectId, epicId),
+            cancellationToken);
+
+        return Ok(dependencies);
+    }
+
+    [HttpPost("{epicId:guid}/dependencies")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AddDependency(
+        Guid workspaceId,
+        Guid projectId,
+        Guid epicId,
+        AddEpicDependencyRequest request,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Epics.Dependencies.AddEpicDependencyCommand(
+                workspaceId, projectId, epicId, request.BlockedByEpicId),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpDelete("{epicId:guid}/dependencies/{blockedByEpicId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RemoveDependency(
+        Guid workspaceId,
+        Guid projectId,
+        Guid epicId,
+        Guid blockedByEpicId,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Epics.Dependencies.RemoveEpicDependencyCommand(
+                workspaceId, projectId, epicId, blockedByEpicId),
+            cancellationToken);
+
+        return NoContent();
+    }
 }

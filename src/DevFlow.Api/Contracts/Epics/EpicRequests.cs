@@ -11,3 +11,5 @@ public sealed record UpdateEpicRequest(
     string? Description,
     DateTimeOffset? StartDateUtc,
     DateTimeOffset? EndDateUtc);
+
+public sealed record AddEpicDependencyRequest(Guid BlockedByEpicId);
