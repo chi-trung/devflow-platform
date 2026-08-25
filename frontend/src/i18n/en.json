@@ -227,7 +227,11 @@
     "unwatchAria": "Stop watching this task",
     "watched": "Now watching this task",
     "unwatched": "Stopped watching this task",
-    "watchFailed": "Couldn't update watch status"
+    "watchFailed": "Couldn't update watch status",
+    "watchers": "Watchers",
+    "watcherCount_one": "{{count}} watcher",
+    "watcherCount_other": "{{count}} watchers",
+    "noWatchers": "No watchers yet"
   },
   "filter": {
     "filters": "Filters",
@@ -1173,6 +1177,22 @@
     "test": "Test webhook",
     "apply": "Apply"
   },
+  "outbox": {
+    "dlqTitle": "Dead Letter Queue",
+    "dlqDescription": "Webhook messages that failed permanently after all retries. Inspect and replay them.",
+    "dlqEmpty": "No dead-lettered messages",
+    "dlqLoadFailed": "Failed to load dead-letter queue",
+    "type": "Type",
+    "error": "Error",
+    "retryCount": "Retries",
+    "occurredAt": "Occurred",
+    "failedPermanentlyAt": "Failed permanently",
+    "replay": "Replay",
+    "replaying": "Replaying...",
+    "replaySuccess": "Message re-queued for retry",
+    "replayFailed": "Failed to re-queue message",
+    "adminOnly": "Admin only"
+  },
   "subtask": {
     "subtasks": "Subtasks",
     "progress": "{{done}}/{{total}} done",
@@ -1219,5 +1239,21 @@
     "expires": "Expires",
     "created": "Created",
     "lastUsed": "Last used"
+  },
+  "outbox": {
+    "dlqTitle": "Dead Letter Queue",
+    "dlqDescription": "Webhook messages that failed permanently after all retries. Inspect and replay them.",
+    "dlqEmpty": "No dead-lettered messages",
+    "dlqLoadFailed": "Failed to load dead-letter queue",
+    "type": "Type",
+    "error": "Error",
+    "retryCount": "Retries",
+    "occurredAt": "Occurred",
+    "failedPermanentlyAt": "Failed permanently",
+    "replay": "Replay",
+    "replaying": "Replaying...",
+    "replaySuccess": "Message re-queued for retry",
+    "replayFailed": "Failed to re-queue message",
+    "adminOnly": "Admin only"
   }
 }

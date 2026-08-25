@@ -4,6 +4,7 @@ import { ArrowLeft, Activity, ChevronLeft, ChevronRight, Filter, X } from "lucid
 import { Link, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { Skeleton } from "../components/ui/Skeleton";
+import { EmptyState } from "../components/ui/EmptyState";
 import { getActivities, type GetActivitiesFilters } from "../lib/api";
 import type { ActivityResponse, ActivityResponsePage, WorkspaceMemberResponse } from "../types/api";
 import { api } from "../lib/api";
@@ -272,15 +273,11 @@ export function ActivitiesPage() {
             {t("activity.loadFailed")}
           </div>
         ) : activities.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
-            <Activity className="size-8 text-muted-foreground" aria-hidden />
-            <p className="font-display text-lg font-semibold">
-              {t("activity.emptyTitle")}
-            </p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              {t("activity.emptyDescription")}
-            </p>
-          </div>
+          <EmptyState
+            icon={<Activity className="size-8 text-muted-foreground" aria-hidden />}
+            title={t("activity.emptyTitle")}
+            description={t("activity.emptyDescription")}
+          />
         ) : (
           <>
             {/* Total count */}

@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { CalendarClock, ListTodo, Boxes } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import { Skeleton } from "../components/ui/Skeleton";
+import { EmptyState } from "../components/ui/EmptyState";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { useApi } from "../hooks/useApi";
 import { getMyTasks } from "../lib/api";
@@ -75,12 +76,10 @@ export function MyTasksPage() {
             <Skeleton className="h-16" />
           </div>
         ) : taskList.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border px-6 py-16 text-center">
-            <Boxes className="size-8 text-muted-foreground/50" aria-hidden />
-            <p className="text-sm text-muted-foreground">
-              {t("myTasks.empty")}
-            </p>
-          </div>
+          <EmptyState
+            icon={<Boxes className="size-8 text-muted-foreground/50" aria-hidden />}
+            title={t("myTasks.empty")}
+          />
         ) : (
           <ul className="space-y-2">
             {taskList.map((task) => (

@@ -140,6 +140,22 @@ export interface TaskAttachmentResponse {
   createdAtUtc: string;
 }
 
+export interface TaskWatcherResponse {
+  userId: string;
+  username: string;
+  displayName: string;
+}
+
+export interface DeadLetterMessageDto {
+  id: string;
+  type: string;
+  occurredAtUtc: string;
+  processedAtUtc?: string;
+  retryCount: number;
+  error?: string;
+  failedPermanentlyAt: string;
+}
+
 export interface FieldErrors {
   [field: string]: string[];
 }

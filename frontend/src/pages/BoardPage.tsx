@@ -41,6 +41,7 @@ import { Badge } from "../components/ui/Badge";
 import { Pagination } from "../components/ui/Pagination";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
+import { EmptyState } from "../components/ui/EmptyState";
 import { Column } from "../components/board/Column";
 import { CreateTaskForm } from "../components/board/CreateTaskForm";
 import { TaskDetailPanel } from "../components/board/TaskDetailPanel";
@@ -932,21 +933,17 @@ export function BoardPage() {
         ) : error ? (
           <ErrorAlert message={error} />
         ) : tasks.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/40 px-8 py-16 text-center rise">
-            <span className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <SquareKanban className="size-6" aria-hidden />
-            </span>
-            <p className="font-display text-lg font-semibold">
-              {t("board.empty")}
-            </p>
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              {t("board.emptyDesc")}
-            </p>
-            <Button className="mt-5" onClick={() => setCreating(true)}>
-              <Plus className="size-4" aria-hidden />
-              {t("board.newTask")}
-            </Button>
-          </div>
+          <EmptyState
+            icon={<SquareKanban className="size-8 text-muted-foreground" aria-hidden />}
+            title={t("board.empty")}
+            description={t("board.emptyDesc")}
+            action={
+              <Button onClick={() => setCreating(true)}>
+                <Plus className="size-4" aria-hidden />
+                {t("board.newTask")}
+              </Button>
+            }
+          />
         ) : (
           <>
             <div className="flex flex-col gap-4 pb-4 lg:flex-row">

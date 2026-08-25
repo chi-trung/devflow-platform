@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { X, Paperclip, Download, Trash2, BookmarkPlus, Eye, RefreshCw } from "lucide-react";
-import { api, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask, uploadTaskAttachment } from "../../lib/api";
+import { api, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask, uploadTaskAttachment, getTaskWatchers } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { ErrorAlert } from "../ui/ErrorAlert";
 import { Avatar } from "../ui/Avatar";
@@ -12,6 +12,7 @@ import type {
   SprintResponse,
   TaskItemResponse,
   TaskAttachmentResponse,
+  TaskWatcherResponse,
   WorkspaceMemberResponse,
 } from "../../types/api";
 import { DependencySection } from "./DependencySection";
@@ -69,6 +70,8 @@ export function TaskDetailPanel({
   const [uploadQueue, setUploadQueue] = useState<{ file: File; progress: number; error: string | null }[]>([]);
   const [watching, setWatching] = useState(false);
   const [watchingLoading, setWatchingLoading] = useState(true);
+  const [watchers, setWatchers] = useState<TaskWatcherResponse[]>([]);
+  const [watchersLoading, setWatchersLoading] = useState(true);
   const { push } = useToast();
 
   useEffect(() => {
@@ -91,7 +94,24 @@ export function TaskDetailPanel({
 
   useEffect(() => {
     let cancelled = false;
-    setWatchingLoading(true);
+    setWatchersLoading(true);
+    void getTaskWatchers(workspaceId, projectId, task.id)
+      .then((data) => {
+        if (!cancelled) setWatchers(data);
+      })
+      .catch(() => {
+        if (!cancelled) setWatchers([]);
+      })
+      .finally(() => {
+        if (!cancelled) setWatchersLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId, projectId, task.id]);
+
+  useEffect(() => {
+    let cancelled = false;
     void isWatchingTask(workspaceId, projectId, task.id)
       .then((result) => {
         if (!cancelled) setWatching(result);
@@ -432,6 +452,8 @@ export function TaskDetailPanel({
         setWatching(true);
         push(t("task.watched"));
       }
+      const data = await getTaskWatchers(workspaceId, projectId, task.id);
+      setWatchers(data);
     } catch {
       push(t("task.watchFailed"), "error");
     } finally {
@@ -568,6 +590,33 @@ export function TaskDetailPanel({
               ))}
             </select>
           </label>
+
+          <div className="flex flex-col gap-1 text-sm font-medium">
+            {t("task.watchers")}
+            {watchersLoading ? (
+              <p className="text-xs text-muted-foreground">{t("task.loading")}</p>
+            ) : watchers.length === 0 ? (
+              <p className="text-xs text-muted-foreground">{t("task.noWatchers")}</p>
+            ) : (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {watchers.map((watcher) => (
+                  <div
+                    key={watcher.userId}
+                    className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-card px-2 py-1 text-xs"
+                  >
+                    <Avatar
+                      name={watcher.displayName || watcher.username}
+                      id={watcher.userId}
+                      size="sm"
+                    />
+                    <span className="truncate font-medium text-foreground">
+                      {watcher.displayName || watcher.username}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           <label className="flex flex-col gap-1 text-sm font-medium">
             {t("task.sprint")}

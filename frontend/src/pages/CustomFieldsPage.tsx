@@ -6,6 +6,7 @@ import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Skeleton } from "../components/ui/Skeleton";
+import { EmptyState } from "../components/ui/EmptyState";
 import {
   createCustomField,
   deleteCustomField,
@@ -263,23 +264,19 @@ export function CustomFieldsPage() {
             ))}
           </div>
         ) : fields.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
-            <p className="font-display text-lg font-semibold">
-              {t("customField.emptyTitle")}
-            </p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              {t("customField.emptyDescription")}
-            </p>
-            {!creating && (
-              <Button
-                className="mt-2"
-                onClick={() => setCreating(true)}
-              >
-                <Plus className="size-4" aria-hidden />
-                {t("customField.create")}
-              </Button>
-            )}
-          </div>
+          <EmptyState
+            icon={<Plus className="size-8 text-muted-foreground" aria-hidden />}
+            title={t("customField.emptyTitle")}
+            description={t("customField.emptyDescription")}
+            action={
+              !creating ? (
+                <Button onClick={() => setCreating(true)}>
+                  <Plus className="size-4" aria-hidden />
+                  {t("customField.create")}
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
           <ul className="flex flex-col gap-2">
             {fields.map((field) => {

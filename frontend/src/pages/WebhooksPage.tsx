@@ -1,18 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Plus, Trash2, Play, Globe } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Play, Globe, RefreshCw } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Skeleton } from "../components/ui/Skeleton";
+import { EmptyState } from "../components/ui/EmptyState";
+import { useToast } from "../components/ui/ToastProvider";
 import {
+  api,
   createWebhook,
   deleteWebhook,
   getWebhooks,
+  getDeadLetterMessages,
+  replayDeadLetterMessage,
   testWebhook,
 } from "../lib/api";
-import type { WebhookResponse } from "../types/api";
+import type { WebhookResponse, DeadLetterMessageDto } from "../types/api";
+import { useApi } from "../hooks/useApi";
+import type { WorkspaceResponse } from "../types/api";
 
 const WEBHOOK_EVENTS = [
   "task.created",
@@ -26,6 +33,7 @@ const WEBHOOK_EVENTS = [
 
 export function WebhooksPage() {
   const { t } = useTranslation();
+  const { push } = useToast();
   const { workspaceId = "" } = useParams();
   const [webhooks, setWebhooks] = useState<WebhookResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +46,17 @@ export function WebhooksPage() {
   const [url, setUrl] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [secret, setSecret] = useState("");
+
+  const { data: workspace } = useApi<WorkspaceResponse>(
+    () => api(`/workspaces/${workspaceId}`),
+    [workspaceId],
+  );
+  const isAdmin = workspace?.role === "Owner" || workspace?.role === "Admin";
+
+  const [deadLetters, setDeadLetters] = useState<DeadLetterMessageDto[]>([]);
+  const [dlqLoading, setDlqLoading] = useState(false);
+  const [dlqError, setDlqError] = useState<string | null>(null);
+  const [replayingId, setReplayingId] = useState<string | null>(null);
 
   const loadWebhooks = useCallback(async () => {
     setLoading(true);
@@ -110,6 +129,32 @@ export function WebhooksPage() {
       loadWebhooks();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("webhook.deleteFailed"));
+    }
+  }
+
+  async function loadDeadLetters() {
+    setDlqLoading(true);
+    setDlqError(null);
+    try {
+      const data = await getDeadLetterMessages(workspaceId);
+      setDeadLetters(data);
+    } catch (err) {
+      setDlqError(err instanceof Error ? err.message : t("outbox.dlqLoadFailed"));
+    } finally {
+      setDlqLoading(false);
+    }
+  }
+
+  async function handleReplay(messageId: string) {
+    setReplayingId(messageId);
+    try {
+      await replayDeadLetterMessage(workspaceId, messageId);
+      push(t("outbox.replaySuccess"));
+      loadDeadLetters();
+    } catch {
+      push(t("outbox.replayFailed"), "error");
+    } finally {
+      setReplayingId(null);
     }
   }
 
@@ -305,6 +350,93 @@ export function WebhooksPage() {
               </li>
             ))}
           </ul>
+        )}
+
+        {isAdmin && (
+          <section className="mt-8">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="font-display text-xl font-semibold tracking-tight">
+                  {t("outbox.dlqTitle")}
+                </h2>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {t("outbox.dlqDescription")}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={loadDeadLetters}
+                disabled={dlqLoading}
+              >
+                <RefreshCw className="size-4" aria-hidden />
+                {t("common.refresh")}
+              </Button>
+            </div>
+
+            {dlqError && (
+              <div className="mb-4">
+                <div className="rounded-xl border border-border bg-surface p-4 text-sm text-destructive">
+                  {dlqError}
+                </div>
+              </div>
+            )}
+
+            {dlqLoading ? (
+              <div className="flex flex-col gap-3">
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} className="h-20 w-full" />
+                ))}
+              </div>
+            ) : deadLetters.length === 0 ? (
+              <EmptyState
+                icon={<Globe className="size-8 text-muted-foreground" aria-hidden />}
+                title={t("outbox.dlqEmpty")}
+                description={t("outbox.dlqDescription")}
+              />
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {deadLetters.map((msg) => (
+                  <li
+                    key={msg.id}
+                    className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors duration-200 hover:border-border-strong"
+                  >
+                    <Globe className="size-4 text-muted-foreground shrink-0" aria-hidden />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {msg.type}
+                      </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span className="font-mono">{msg.retryCount} {t("outbox.retryCount")}</span>
+                        <span>• {formatDate(msg.occurredAtUtc)}</span>
+                        <span>• {formatDate(msg.failedPermanentlyAt)}</span>
+                      </div>
+                      {msg.error && (
+                        <p
+                          className="mt-1 truncate text-xs text-destructive"
+                          title={msg.error}
+                        >
+                          {msg.error}
+                        </p>
+                      )}
+                    </div>
+                    <div className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void handleReplay(msg.id)}
+                        disabled={replayingId === msg.id}
+                      >
+                        <RefreshCw className="size-3.5" aria-hidden />
+                        {replayingId === msg.id
+                          ? t("outbox.replaying")
+                          : t("outbox.replay")}
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         )}
 
         {pendingDelete && (
