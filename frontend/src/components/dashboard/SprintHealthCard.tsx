@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Timer, Flame } from "lucide-react";
-import { api } from "../../lib/api";
+import { api, pagedItems } from "../../lib/api";
 import { Skeleton } from "../ui/Skeleton";
 import { EmptyState } from "../ui/EmptyState";
 import type { SprintResponse, BurndownResponse } from "../../types/api";
@@ -20,8 +20,11 @@ export function SprintHealthCard({ workspaceId, projectId, className = "" }: Spr
 
   useEffect(() => {
     let cancelled = false;
-    api<SprintResponse[]>(`/workspaces/${workspaceId}/projects/${projectId}/sprints`)
-      .then((sprints) => {
+    // /sprints returns a PagedResult ({ items, totalCount, ... }), not a flat
+    // array — unwrap through pagedItems or sprints.find crashes the dashboard.
+    api<unknown>(`/workspaces/${workspaceId}/projects/${projectId}/sprints`)
+      .then((raw) => {
+        const sprints = pagedItems<SprintResponse>(raw);
         if (cancelled) return;
         const active = sprints.find((s) => s.status === "Active");
         setSprint(active ?? null);
