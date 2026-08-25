@@ -21,7 +21,7 @@ Built as a long-term learning project with a strong focus on architecture, testi
 | Architecture | Clean Architecture, CQRS + MediatR |
 | Database | PostgreSQL + EF Core |
 | Auth | JWT access tokens + rotating refresh tokens |
-| Testing | xUnit (50 unit tests) |
+| Testing | xUnit (303 unit tests) |
 | DevOps | Docker Compose, GitHub Actions |
 
 **Frontend**
@@ -103,10 +103,22 @@ npm run dev                   # http://localhost:3000, proxies /api to :5217
 - [x] Search
 - [x] Settings
 - [x] Mobile Navigation
-- [ ] Burndown Charts
-- [ ] Velocity Metrics
-- [ ] GitHub Integration
-- [ ] Email Notifications
-- [ ] Bulk Operations
-- [ ] Task Templates
-- [ ] Custom Fields
+- [x] Burndown Charts
+- [x] Velocity Metrics
+- [x] GitHub Integration
+- [x] Email Notifications
+- [x] Bulk Operations
+- [x] Task Templates
+- [x] Custom Fields
+- [x] Attachment Upload (size + type safety)
+- [x] Webhook Dead-Letter Queue (admin retry)
+- [x] Project Import / Export
+- [x] Google OAuth
+- [x] Saved Searches
+- [x] My Tasks (cross-project)
+
+### Next up — Sprint 30
+- [ ] Watcher list UI (who is watching a task)
+- [ ] Webhook DLQ admin UI (inspect + replay)
+- [ ] Integration test expansion (project → sprint → task flow)
+- [ ] EmptyState component adoption in top pages
