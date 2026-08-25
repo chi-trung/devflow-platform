@@ -22,4 +22,10 @@ public interface IOutboxRepository
     /// cycle retries it. Returns false when the message is not dead-lettered.
     /// </summary>
     Task<bool> ReplayAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>Fetches ALL dead-lettered messages (no take limit) for batch ops.</summary>
+    Task<IReadOnlyList<OutboxMessage>> GetAllDeadLetteredAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Hard-deletes dead-lettered messages by id. Returns deleted count.</summary>
+    Task<int> PurgeDeadLetteredAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken = default);
 }

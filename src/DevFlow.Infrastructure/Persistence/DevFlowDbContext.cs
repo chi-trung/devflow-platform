@@ -30,6 +30,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<Epic> Epics => Set<Epic>();
 
+    public DbSet<EpicDependency> EpicDependencies => Set<EpicDependency>();
+
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
 
     public DbSet<TaskAttachment> TaskAttachments => Set<TaskAttachment>();
