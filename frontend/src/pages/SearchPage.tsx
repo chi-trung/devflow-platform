@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Search, FileText, FolderOpen, Layers, Tag, Users, MessageSquare, ChevronUp, ChevronDown } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
@@ -6,7 +6,7 @@ import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Skeleton } from "../components/ui/Skeleton";
-import { searchWorkspace, getSavedSearches, api } from "../lib/api";
+import { searchWorkspace, getSavedSearches, api, pagedItems } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import type { SearchResponse, WorkspaceMemberResponse, ProjectResponse, SavedSearchResponse, LabelResponse } from "../types/api";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -59,11 +59,16 @@ export function SearchPage() {
   );
   const members = membersRaw ?? [];
 
-  const { data: projectsRaw } = useApi<ProjectResponse[]>(
+  // /workspaces/{id}/projects returns a PagedResult ({ items, totalCount }),
+  // not a flat array — unwrap or projects[0] crashes ("not a function").
+  const { data: projectsRaw } = useApi<unknown>(
     () => api(`/workspaces/${workspaceId}/projects`),
     [workspaceId],
   );
-  const projects = projectsRaw ?? [];
+  const projects = useMemo(
+    () => pagedItems<ProjectResponse>(projectsRaw),
+    [projectsRaw],
+  );
 
   const selectedProjectId = projects[0]?.id ?? "";
 
