@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Circle, CircleDot, Eye, CheckCircle2, Check } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { TaskItemResponse, WorkspaceMemberResponse } from "../../types/api";
+import type { TaskItemResponse, WorkspaceMemberResponse, CustomFieldValueResponse } from "../../types/api";
 import { TaskCard } from "./TaskCard";
 
 // Cards rendered initially per column; more stream in as the sentinel
@@ -14,6 +14,7 @@ interface ColumnProps {
   status: TaskItemResponse["status"];
   tasks: TaskItemResponse[];
   members: WorkspaceMemberResponse[];
+  customFieldsByTaskId?: ReadonlyMap<string, CustomFieldValueResponse[]>;
   onDropTask: (
     taskId: string,
     status: TaskItemResponse["status"],
@@ -45,6 +46,7 @@ export function Column({
   status,
   tasks,
   members,
+  customFieldsByTaskId,
   onDropTask,
   onDelete,
   onSelect,
@@ -180,6 +182,7 @@ export function Column({
             key={task.id}
             task={task}
             members={members}
+            customFieldValues={customFieldsByTaskId?.get(task.id)}
             onDelete={onDelete}
             onSelect={onSelect}
             selectionMode={selectionMode}

@@ -53,4 +53,19 @@ public sealed class CustomFieldRepository(DevFlowDbContext dbContext) : ICustomF
 
         return results.Select(r => (r.Field, r.Value)).ToList();
     }
+
+    public async Task<IReadOnlyList<(Guid TaskId, CustomField Field, string? Value)>>
+        GetFieldValuesForProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+    {
+        var results = await dbContext.TaskCustomFieldValues
+            .Join(
+                dbContext.CustomFields,
+                v => v.FieldId,
+                f => f.Id,
+                (v, f) => new { v.TaskId, Field = f, v.Value })
+            .Where(row => row.Field.ProjectId == projectId)
+            .ToListAsync(cancellationToken);
+
+        return results.Select(r => (r.TaskId, r.Field, r.Value)).ToList();
+    }
 }

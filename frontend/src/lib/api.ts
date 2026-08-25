@@ -873,6 +873,30 @@ export function getTaskFieldValues(
   );
 }
 
+export interface ProjectCustomFieldValuesResponse {
+  taskId: string;
+  values: CustomFieldValueResponse[];
+}
+
+/**
+ * Custom-field values for every task in a project, in ONE request. The board
+ * renders up to 100 cards; fetching per-card was an N+1 that made project
+ * loads slow. Returns a map keyed by task id (values grouped by task).
+ */
+export async function getProjectTaskFieldValues(
+  workspaceId: string,
+  projectId: string,
+): Promise<Map<string, CustomFieldValueResponse[]>> {
+  const list = await api<ProjectCustomFieldValuesResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/fields/tasks-values`,
+  );
+  const map = new Map<string, CustomFieldValueResponse[]>();
+  for (const row of list ?? []) {
+    map.set(row.taskId, row.values ?? []);
+  }
+  return map;
+}
+
 export async function setTaskFieldValue(
   workspaceId: string,
   projectId: string,

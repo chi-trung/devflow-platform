@@ -17,4 +17,12 @@ public interface ICustomFieldRepository
     Task AddFieldValueAsync(TaskCustomFieldValue value, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<(CustomField Field, string? Value)>> GetFieldValuesForTaskAsync(Guid taskId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// All task custom-field values for every task in a project in one query.
+    /// Board pages render up to 100 cards; calling GetFieldValuesForTaskAsync
+    /// per card was an N+1 that made project loads slow on cold tiers.
+    /// </summary>
+    Task<IReadOnlyList<(Guid TaskId, CustomField Field, string? Value)>>
+        GetFieldValuesForProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
 }

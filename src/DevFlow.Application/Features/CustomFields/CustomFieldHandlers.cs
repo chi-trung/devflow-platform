@@ -69,6 +69,35 @@ public class GetTaskCustomFieldValuesHandler(ICustomFieldRepository repo) : IReq
     }
 }
 
+/// <summary>Custom-field values for every task in a project, in one query.</summary>
+public sealed record ProjectCustomFieldValuesResponse(
+    Guid TaskId,
+    IReadOnlyList<CustomFieldValueResponse> Values);
+
+[RequireWorkspaceRole(WorkspaceRole.Member)]
+public sealed record GetProjectCustomFieldValuesQuery(Guid WorkspaceId, Guid ProjectId)
+    : IRequest<List<ProjectCustomFieldValuesResponse>>, IWorkspaceRequest;
+
+public class GetProjectCustomFieldValuesHandler(ICustomFieldRepository repo)
+    : IRequestHandler<GetProjectCustomFieldValuesQuery, List<ProjectCustomFieldValuesResponse>>
+{
+    public async Task<List<ProjectCustomFieldValuesResponse>> Handle(
+        GetProjectCustomFieldValuesQuery request, CancellationToken ct)
+    {
+        // One grouped query instead of one per task (the board renders up to
+        // 100 cards; the per-task endpoint was an N+1 that made project loads
+        // slow on cold tiers).
+        var values = await repo.GetFieldValuesForProjectAsync(request.ProjectId, ct);
+        return values
+            .GroupBy(v => v.TaskId)
+            .Select(g => new ProjectCustomFieldValuesResponse(
+                g.Key,
+                g.Select(v => new CustomFieldValueResponse(
+                    v.Field.Id, v.Field.Name, v.Field.FieldType, v.Value)).ToList()))
+            .ToList();
+    }
+}
+
 [RequireWorkspaceRole(WorkspaceRole.Admin)]
 public sealed record UpdateCustomFieldCommand(Guid WorkspaceId, Guid ProjectId, Guid FieldId, string Name, string FieldType, string? Options, bool IsRequired, int SortOrder) : IRequest, IWorkspaceRequest;
 

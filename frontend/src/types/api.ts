@@ -411,6 +411,11 @@ export interface CustomFieldValueResponse {
   value: string | null;
 }
 
+export interface ProjectCustomFieldValuesResponse {
+  taskId: string;
+  values: CustomFieldValueResponse[];
+}
+
 export interface WebhookResponse {
   id: string;
   url: string;

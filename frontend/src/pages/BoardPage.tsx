@@ -28,6 +28,7 @@ import {
   bulkAssignTasks,
   bulkDeleteTasks,
   bulkMoveTasks,
+  getProjectTaskFieldValues,
   pagedItems,
   reorderTasks,
 } from "../lib/api";
@@ -58,6 +59,7 @@ import { BoardPresence } from "../components/board/BoardPresence";
 import { usePresence } from "../hooks/usePresence";
 import type {
   ActivityResponse,
+  CustomFieldValueResponse,
   LabelResponse,
   ProjectResponse,
   SprintResponse,
@@ -187,6 +189,14 @@ export function BoardPage() {
     reload: reloadActivities,
   } = useApi<ActivityResponse[]>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/activities`),
+    [workspaceId, projectId],
+  );
+
+  // Custom-field values for the whole project in ONE request. The board used
+  // to fire a request per TaskCard (N+1) which made project loads slow — this
+  // map is passed down to each Column/Card instead.
+  const { data: customFieldsByTaskId } = useApi<Map<string, CustomFieldValueResponse[]>>(
+    () => getProjectTaskFieldValues(workspaceId, projectId),
     [workspaceId, projectId],
   );
 
@@ -977,6 +987,7 @@ export function BoardPage() {
                     status={status}
                     tasks={pagedTasks.filter((t) => t.status === status)}
                     members={members ?? []}
+                    customFieldsByTaskId={customFieldsByTaskId ?? undefined}
                     onDropTask={(taskId, next, beforeId) =>
                       void moveTask(taskId, next, beforeId)
                     }
