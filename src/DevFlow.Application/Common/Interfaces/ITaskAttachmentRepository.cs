@@ -10,5 +10,13 @@ public interface ITaskAttachmentRepository
 
     Task<IReadOnlyList<TaskAttachment>> GetForTaskAsync(Guid taskItemId, CancellationToken cancellationToken = default);
 
+    Task<(IReadOnlyList<TaskAttachment> Items, int TotalCount)> GetForTaskPagedAsync(
+        Guid taskItemId,
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default);
+
+    Task<int> DeleteAttachmentsForTaskAsync(Guid taskItemId, CancellationToken cancellationToken = default);
+
     Task RemoveAsync(TaskAttachment attachment, CancellationToken cancellationToken = default);
 }

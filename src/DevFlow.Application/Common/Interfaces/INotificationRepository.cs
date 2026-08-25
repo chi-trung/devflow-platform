@@ -11,7 +11,11 @@ public interface INotificationRepository
         int take = 20,
         CancellationToken cancellationToken = default);
 
-    Task<int> GetUnreadCountAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<int> GetUnreadCountAsync(Guid userId, Guid? workspaceId = null, CancellationToken cancellationToken = default);
+
+    Task<DateTimeOffset?> GetLastUnreadAtAsync(Guid userId, Guid? workspaceId, CancellationToken cancellationToken = default);
+
+    Task<int> BatchDeleteAsync(Guid userId, IReadOnlyList<Guid> ids, CancellationToken cancellationToken = default);
 
     Task<Notification?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 

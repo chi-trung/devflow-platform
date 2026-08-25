@@ -10,7 +10,8 @@ namespace DevFlow.Application.Features.Tasks.Attachments;
 public sealed record TaskAttachmentFileResult(
     byte[] Data,
     string ContentType,
-    string FileName);
+    string FileName,
+    DateTimeOffset CreatedAtUtc);
 
 [RequireWorkspaceRole(WorkspaceRole.Member)]
 public sealed record DownloadTaskAttachmentQuery(
@@ -50,6 +51,7 @@ public sealed class DownloadTaskAttachmentQueryHandler(
         return new TaskAttachmentFileResult(
             attachment.Data,
             attachment.ContentType,
-            attachment.FileName);
+            attachment.FileName,
+            attachment.CreatedAtUtc);
     }
 }

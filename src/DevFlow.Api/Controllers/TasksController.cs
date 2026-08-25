@@ -102,15 +102,17 @@ public sealed class TasksController(ISender sender) : ControllerBase
     }
 
     [HttpGet("{taskId:guid}/attachments")]
-    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Tasks.Attachments.TaskAttachmentResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Application.Common.Models.PagedResult<Application.Features.Tasks.Attachments.TaskAttachmentResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListAttachments(
         Guid workspaceId,
         Guid projectId,
         Guid taskId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
         var attachments = await sender.Send(
-            new Application.Features.Tasks.Attachments.ListTaskAttachmentsQuery(workspaceId, projectId, taskId),
+            new Application.Features.Tasks.Attachments.ListTaskAttachmentsQuery(workspaceId, projectId, taskId, page, pageSize),
             cancellationToken);
 
         return Ok(attachments);
@@ -166,6 +168,24 @@ public sealed class TasksController(ISender sender) : ControllerBase
         var fileResult = await sender.Send(
             new Application.Features.Tasks.Attachments.DownloadTaskAttachmentQuery(workspaceId, projectId, taskId, attachmentId),
             cancellationToken);
+
+        // Inline for images/PDFs so they preview in-browser; attachment otherwise.
+        var isInline = fileResult.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+            || fileResult.ContentType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase);
+
+        Response.Headers.CacheControl = "private, max-age=3600";
+        Response.Headers.LastModified = fileResult.CreatedAtUtc.ToString("R");
+
+        if (isInline)
+        {
+            var disposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("inline")
+            {
+                FileName = fileResult.FileName,
+                FileNameStar = fileResult.FileName,
+            };
+            Response.Headers.ContentDisposition = disposition.ToString();
+            return File(fileResult.Data, fileResult.ContentType);
+        }
 
         return File(fileResult.Data, fileResult.ContentType, fileResult.FileName);
     }
