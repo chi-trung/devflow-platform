@@ -189,7 +189,7 @@ export function SprintBar({
           </select>
         </label>
 
-        <div className="ml-auto flex flex-wrap items-center gap-x-2 gap-y-1.5">
+        <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-1.5 sm:w-auto sm:ml-auto">
           {active && (
             <>
               <Badge tone="teal">{t("sprint.active")}</Badge>

@@ -745,7 +745,7 @@ export function BoardPage() {
               </div>
               <nav
                 aria-label={t("board.projectNav")}
-                className="no-scrollbar -mx-1 flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto px-1 py-0.5"
+                className="no-scrollbar -mx-1 flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto px-1 py-0.5 sm:flex-wrap sm:overflow-visible"
               >
               <Link
                 to={`/workspaces/${workspaceId}/projects/${projectId}/sprints`}

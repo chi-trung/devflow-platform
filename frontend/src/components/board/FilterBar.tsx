@@ -155,26 +155,28 @@ export function FilterBar({
         </select>
       )}
 
-      <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        {t("filter.dueFrom")}
-        <input
-          type="date"
-          aria-label={t("filter.dueDateFrom")}
-          value={current.dueFrom}
-          onChange={(event) => onChange({ dueFrom: event.target.value })}
-          className={inputClass}
-        />
-      </label>
-      <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        {t("filter.to")}
-        <input
-          type="date"
-          aria-label={t("filter.dueDateTo")}
-          value={current.dueTo}
-          onChange={(event) => onChange({ dueTo: event.target.value })}
-          className={inputClass}
-        />
-      </label>
+      <span className="flex flex-wrap items-center gap-x-1.5 gap-y-2">
+        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          {t("filter.dueFrom")}
+          <input
+            type="date"
+            aria-label={t("filter.dueDateFrom")}
+            value={current.dueFrom}
+            onChange={(event) => onChange({ dueFrom: event.target.value })}
+            className={inputClass}
+          />
+        </label>
+        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          {t("filter.to")}
+          <input
+            type="date"
+            aria-label={t("filter.dueDateTo")}
+            value={current.dueTo}
+            onChange={(event) => onChange({ dueTo: event.target.value })}
+            className={inputClass}
+          />
+        </label>
+      </span>
 
       <button
         type="button"
@@ -191,7 +193,7 @@ export function FilterBar({
         {t("filter.blocked")}
       </button>
 
-      <div className="ml-auto flex flex-wrap items-center gap-1.5">
+      <div className="flex w-full flex-wrap items-center gap-1.5 pt-1 sm:w-auto sm:pt-0 sm:ml-auto">
         {(presetNames.length > 0 || activePreset) && (
           <select
             aria-label={t("filter.loadPreset")}
