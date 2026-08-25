@@ -9,4 +9,6 @@ public sealed record CreateProjectCommand(
     Guid WorkspaceId,
     string Name,
     string Key,
-    string? Description) : IRequest<Guid>, IWorkspaceRequest;
+    string? Description,
+    string? Emoji = null,
+    string? CoverColor = null) : IRequest<Guid>, IWorkspaceRequest;

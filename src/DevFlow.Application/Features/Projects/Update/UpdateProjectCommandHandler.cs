@@ -19,6 +19,8 @@ public sealed class UpdateProjectCommandHandler(
         }
 
         project.UpdateDetails(command.Name, command.Description);
+        project.UpdateEmoji(command.Emoji);
+        project.UpdateCoverColor(command.CoverColor);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

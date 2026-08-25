@@ -10,6 +10,7 @@ public class ListTaskItemsCacheTests
 {
     private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
+    private readonly ITaskAttachmentRepository _taskAttachmentRepository = Substitute.For<ITaskAttachmentRepository>();
     private readonly ICacheService _cache = Substitute.For<ICacheService>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
@@ -20,6 +21,9 @@ public class ListTaskItemsCacheTests
     {
         _project = Project.Create(_workspaceId, "DevFlow Core", "DEV", null);
         _projectRepository.GetByIdAsync(_project.Id, Arg.Any<CancellationToken>()).Returns(_project);
+        _taskAttachmentRepository.GetByTaskIdsAsync(
+                Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, IReadOnlyList<TaskAttachment>>());
     }
 
     [Fact]
@@ -31,7 +35,7 @@ public class ListTaskItemsCacheTests
         _taskItemRepository.GetForProjectPagedAsync(_project.Id, (TaskItemStatus?)null, 0, 20, Arg.Any<CancellationToken>())
             .Returns(new[] { task });
 
-        var handler = new ListTaskItemsQueryHandler(_projectRepository, _taskItemRepository, _cache);
+        var handler = new ListTaskItemsQueryHandler(_projectRepository, _taskItemRepository, _taskAttachmentRepository, _cache);
         var query = new ListTaskItemsQuery(_workspaceId, _project.Id, null, 1, 20);
 
         await handler.Handle(query, CancellationToken.None);
@@ -54,7 +58,7 @@ public class ListTaskItemsCacheTests
         _taskItemRepository.GetForProjectPagedAsync(_project.Id, TaskItemStatus.Done, 20, 20, Arg.Any<CancellationToken>())
             .Returns(new[] { task });
 
-        var handler = new ListTaskItemsQueryHandler(_projectRepository, _taskItemRepository, _cache);
+        var handler = new ListTaskItemsQueryHandler(_projectRepository, _taskItemRepository, _taskAttachmentRepository, _cache);
         var query = new ListTaskItemsQuery(_workspaceId, _project.Id, TaskItemStatus.Done, 2, 20);
 
         await handler.Handle(query, CancellationToken.None);

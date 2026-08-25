@@ -24,6 +24,8 @@ public sealed class GetProjectByIdQueryHandler(
             project.Name,
             project.Key,
             project.Description,
-            project.Status.ToString());
+            project.Status.ToString(),
+            project.Emoji,
+            project.CoverColor);
     }
 }

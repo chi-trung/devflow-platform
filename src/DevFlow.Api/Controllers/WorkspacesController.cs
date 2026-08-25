@@ -67,7 +67,7 @@ public sealed class WorkspacesController(ISender sender) : ControllerBase
     public async Task<IActionResult> Update(Guid id, UpdateWorkspaceRequest request, CancellationToken cancellationToken)
     {
         var workspace = await sender.Send(
-            new Application.Features.Workspaces.Update.UpdateWorkspaceCommand(id, request.Name, request.Description),
+            new Application.Features.Workspaces.Update.UpdateWorkspaceCommand(id, request.Name, request.Description, request.Emoji),
             cancellationToken);
 
         return Ok(workspace);

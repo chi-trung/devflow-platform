@@ -16,6 +16,14 @@ public interface ITaskAttachmentRepository
         int take,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Batch-fetches attachment metadata for many task ids in a single grouped
+    /// query (avoids N+1). Used to build card attachment summaries.
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, IReadOnlyList<TaskAttachment>>> GetByTaskIdsAsync(
+        IEnumerable<Guid> taskItemIds,
+        CancellationToken cancellationToken = default);
+
     Task<int> DeleteAttachmentsForTaskAsync(Guid taskItemId, CancellationToken cancellationToken = default);
 
     Task RemoveAsync(TaskAttachment attachment, CancellationToken cancellationToken = default);

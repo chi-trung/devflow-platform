@@ -10,6 +10,7 @@ namespace DevFlow.Application.Features.Tasks.List;
 public sealed class ListTaskItemsQueryHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
+    ITaskAttachmentRepository taskAttachmentRepository,
     ICacheService cacheService) : IRequestHandler<ListTaskItemsQuery, PagedResult<TaskItemResponse>>
 {
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
@@ -53,6 +54,12 @@ public sealed class ListTaskItemsQueryHandler(
         var tasks = await taskItemRepository.GetForProjectPagedAsync(
             query.ProjectId, query.Status, skip, pageSize, cancellationToken);
 
+        // Batch-fetch attachment metadata for the whole page in one grouped
+        // query — avoids N+1 attachment queries per task card.
+        var attachmentByTaskId = await taskAttachmentRepository.GetByTaskIdsAsync(
+            tasks.Select(task => task.Id),
+            cancellationToken);
+
         var items = tasks
             .Select(task => new TaskItemResponse(
                 task.Id,
@@ -68,9 +75,31 @@ public sealed class ListTaskItemsQueryHandler(
                 task.StoryPoints,
                 task.DueDateUtc,
                 task.CompletedAtUtc,
-                task.Position))
+                task.Position,
+                BuildAttachmentSummary(attachmentByTaskId.GetValueOrDefault(task.Id))))
             .ToList();
 
         return new PagedResult<TaskItemResponse>(items, totalCount, query.Page, pageSize);
+    }
+
+    /// <summary>
+    /// Builds a card attachment summary: total count plus up to 3 image/*
+    /// previews ({id, contentType}). Attachments are ordered newest-first
+    /// (as returned by the repository).
+    /// </summary>
+    private static AttachmentSummary? BuildAttachmentSummary(IReadOnlyList<TaskAttachment>? attachments)
+    {
+        if (attachments is null || attachments.Count == 0)
+        {
+            return null;
+        }
+
+        var previews = attachments
+            .Where(attachment => attachment.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            .Take(3)
+            .Select(attachment => new AttachmentPreview(attachment.Id, attachment.ContentType))
+            .ToList();
+
+        return new AttachmentSummary(attachments.Count, previews);
     }
 }

@@ -28,7 +28,8 @@ public sealed class ListWorkspacesQueryHandler(
                 membership.Workspace.Name,
                 membership.Workspace.Slug,
                 membership.Workspace.Description,
-                membership.Role.ToString()))
+                membership.Role.ToString(),
+                membership.Workspace.Emoji))
             .ToList();
 
         return new PagedResult<WorkspaceResponse>(items, totalCount, page, pageSize);

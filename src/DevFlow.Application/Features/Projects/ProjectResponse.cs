@@ -5,4 +5,6 @@ public sealed record ProjectResponse(
     string Name,
     string Key,
     string? Description,
-    string Status);
+    string Status,
+    string? Emoji = null,
+    string? CoverColor = null);

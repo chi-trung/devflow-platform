@@ -12,7 +12,8 @@ namespace DevFlow.Application.Features.Workspaces.Update;
 public sealed record UpdateWorkspaceCommand(
     Guid WorkspaceId,
     string Name,
-    string? Description) : IRequest<WorkspaceResponse>, IWorkspaceRequest;
+    string? Description,
+    string? Emoji = null) : IRequest<WorkspaceResponse>, IWorkspaceRequest;
 
 public sealed class UpdateWorkspaceCommandHandler(
     IWorkspaceRepository workspaceRepository,
@@ -39,6 +40,7 @@ public sealed class UpdateWorkspaceCommandHandler(
         }
 
         workspace.UpdateDetails(command.Name, command.Description);
+        workspace.UpdateEmoji(command.Emoji);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var role = await workspaceRepository.GetMemberRoleAsync(workspace.Id, userContext.UserId, cancellationToken);
@@ -48,6 +50,7 @@ public sealed class UpdateWorkspaceCommandHandler(
             workspace.Name,
             workspace.Slug,
             workspace.Description,
-            role?.ToString() ?? "Member");
+            role?.ToString() ?? "Member",
+            workspace.Emoji);
     }
 }
