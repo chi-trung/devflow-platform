@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { X, Paperclip, Download, Trash2, BookmarkPlus, Eye, RefreshCw } from "lucide-react";
-import { api, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask, uploadTaskAttachment, getTaskWatchers } from "../../lib/api";
+import { api, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask, uploadTaskAttachment, getTaskWatchers, pagedItems } from "../../lib/api";
 import { AttachmentRowThumb } from "./AttachmentThumbnails";
 import { Button } from "../ui/Button";
 import { ErrorAlert } from "../ui/ErrorAlert";
@@ -154,9 +154,13 @@ export function TaskDetailPanel({
       ),
     );
     const loadAttachments = loadWithRetry<TaskAttachmentResponse[]>(() =>
+      // The endpoint returns a PagedResult ({ items, totalCount, ... }), not a
+      // flat array — unwrap through pagedItems or attachments.map() crashes
+      // the panel ("re.map is not a function") on every task with a detail
+      // panel open. Same shape contract as the tasks/sprints/labels lists.
       api<TaskAttachmentResponse[]>(
         `/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/attachments`,
-      ),
+      ).then((res) => pagedItems<TaskAttachmentResponse>(res)),
     );
 
     // Comments and attachments are independent — a failure in one must not
