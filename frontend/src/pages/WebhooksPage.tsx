@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Plus, Trash2, Play, Globe, RefreshCw } from "lucide-react";
+import { EmptyState } from "../components/ui/EmptyState";
 import { Link, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Skeleton } from "../components/ui/Skeleton";
-import { EmptyState } from "../components/ui/EmptyState";
 import { useToast } from "../components/ui/ToastProvider";
 import {
   api,
@@ -15,6 +15,8 @@ import {
   getWebhooks,
   getDeadLetterMessages,
   replayDeadLetterMessage,
+  replayAllDeadLetterMessages,
+  purgeDeadLetterMessages,
   testWebhook,
 } from "../lib/api";
 import type { WebhookResponse, DeadLetterMessageDto } from "../types/api";
@@ -57,6 +59,9 @@ export function WebhooksPage() {
   const [dlqLoading, setDlqLoading] = useState(false);
   const [dlqError, setDlqError] = useState<string | null>(null);
   const [replayingId, setReplayingId] = useState<string | null>(null);
+  const [replayingAll, setReplayingAll] = useState(false);
+  const [purging, setPurging] = useState(false);
+  const [pendingPurge, setPendingPurge] = useState(false);
 
   const loadWebhooks = useCallback(async () => {
     setLoading(true);
@@ -155,6 +160,33 @@ export function WebhooksPage() {
       push(t("outbox.replayFailed"), "error");
     } finally {
       setReplayingId(null);
+    }
+  }
+
+  async function handleReplayAll() {
+    setReplayingAll(true);
+    try {
+      const result = await replayAllDeadLetterMessages(workspaceId);
+      push(t("outbox.replayAllSuccess", { count: result.requeued }));
+      loadDeadLetters();
+    } catch {
+      push(t("outbox.replayAllFailed"), "error");
+    } finally {
+      setReplayingAll(false);
+    }
+  }
+
+  async function handlePurge() {
+    setPurging(true);
+    try {
+      await purgeDeadLetterMessages(workspaceId);
+      push(t("outbox.purgeSuccess"));
+      setDeadLetters([]);
+    } catch {
+      push(t("outbox.purgeFailed"), "error");
+    } finally {
+      setPurging(false);
+      setPendingPurge(false);
     }
   }
 
@@ -359,14 +391,35 @@ export function WebhooksPage() {
                   {t("outbox.dlqDescription")}
                 </p>
               </div>
-              <Button
-                variant="outline"
-                onClick={loadDeadLetters}
-                disabled={dlqLoading}
-              >
-                <RefreshCw className="size-4" aria-hidden />
-                {t("common.refresh")}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={loadDeadLetters}
+                  disabled={dlqLoading}
+                >
+                  <RefreshCw className="size-4" aria-hidden />
+                  {t("common.refresh")}
+                </Button>
+                {deadLetters.length > 0 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={handleReplayAll}
+                      disabled={replayingAll}
+                    >
+                      <RefreshCw className="size-4" aria-hidden />
+                      {replayingAll ? t("outbox.replaying") : t("outbox.replayAll")}
+                    </Button>
+                    <Button
+                      variant="danger"
+                      onClick={() => setPendingPurge(true)}
+                      disabled={purging}
+                    >
+                      {t("outbox.purge")}
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
 
             {dlqError && (
@@ -442,6 +495,16 @@ export function WebhooksPage() {
             confirmLabel={t("webhook.deleteConfirm")}
             onConfirm={handleDelete}
             onCancel={() => setPendingDelete(null)}
+          />
+        )}
+
+        {pendingPurge && (
+          <ConfirmDialog
+            title={t("outbox.purge")}
+            message={t("outbox.purgeConfirm")}
+            confirmLabel={t("outbox.purge")}
+            onConfirm={handlePurge}
+            onCancel={() => setPendingPurge(false)}
           />
         )}
       </div>

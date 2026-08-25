@@ -1211,6 +1211,27 @@
     "purgeSuccess": "Đã xóa hàng đợi thư chết",
     "purgeFailed": "Không xóa được hàng đợi thư chết"
   },
+  "projectMember": {
+    "title": "Thành viên dự án",
+    "description": "Quản lý ai có quyền truy cập vào dự án này.",
+    "empty": "Chưa có thành viên nào",
+    "addTitle": "Thêm thành viên dự án",
+    "addLabel": "Thành viên",
+    "addPlaceholder": "Tìm kiếm thành viên workspace…",
+    "addSuccess": "Đã thêm thành viên vào dự án",
+    "addFailed": "Không thêm được thành viên",
+    "removeTitle": "Xóa thành viên?",
+    "removeConfirm": "Bạn có chắc muốn xóa {{name}} khỏi dự án này?",
+    "removeSuccess": "Đã xóa {{name}} khỏi dự án",
+    "removeFailed": "Không xóa được thành viên",
+    "removeAria": "Xóa {{name}} khỏi dự án",
+    "loadFailed": "Không tải được danh sách thành viên",
+    "roleLabel": "Vai trò",
+    "manager": "Quản lý",
+    "member": "Thành viên",
+    "cannotRemoveSelf": "Bạn không thể xóa chính mình khỏi dự án",
+    "mustBeWorkspaceMember": "Người dùng phải là thành viên của workspace"
+  },
   "subtask": {
     "subtasks": "Công việc con",
     "progress": "{{done}}/{{total}} xong",

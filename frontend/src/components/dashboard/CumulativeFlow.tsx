@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Layers } from "lucide-react";
 import { EmptyState } from "../ui/EmptyState";
 import type { DashboardData } from "../../types/api";
+import { EmptyState } from "../ui/EmptyState";
 
 interface CumulativeFlowProps {
   data: DashboardData;
