@@ -47,7 +47,7 @@ export function SprintHealthCard({ workspaceId, projectId, className = "" }: Spr
 
   if (!sprint) {
     return (
-      <div className={className}>
+      <div className={`flex flex-col justify-center rounded-xl border border-border bg-card p-5 ${className}`}>
         <EmptyState
           icon={<Timer className="size-8 text-muted-foreground/40" aria-hidden />}
           title={t("dashboard.noActiveSprint")}
