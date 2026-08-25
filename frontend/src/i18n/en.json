@@ -914,7 +914,17 @@
     "completionBadge": "{{pct}}% complete",
     "overdue": "Overdue",
     "dueSoon": "Due soon",
-    "onTrack": "On track"
+    "onTrack": "On track",
+    "blockedBy": "Blocked by",
+    "blockedBadge": "Blocked",
+    "noBlockers": "No blockers — this epic can start any time.",
+    "addBlocker": "Add dependency",
+    "addBlockerPlaceholder": "Select an epic that must finish first",
+    "removeBlocker": "Remove dependency",
+    "blockerAdded": "Dependency added",
+    "blockerAddFailed": "Failed to add dependency",
+    "blockerRemoved": "Dependency removed",
+    "blockerRemoveFailed": "Failed to remove dependency"
   },
   "common": {
     "save": "Save",
@@ -1191,7 +1201,15 @@
     "replaying": "Replaying...",
     "replaySuccess": "Message re-queued for retry",
     "replayFailed": "Failed to re-queue message",
-    "adminOnly": "Admin only"
+    "adminOnly": "Admin only",
+    "replayAll": "Replay all",
+    "replayAllConfirm": "Re-queue every dead-lettered message for retry?",
+    "replayAllSuccess": "{{count}} message(s) re-queued",
+    "replayAllFailed": "Failed to re-queue messages",
+    "purge": "Purge queue",
+    "purgeConfirm": "Delete every dead-lettered message? This cannot be undone.",
+    "purgeSuccess": "Dead-letter queue purged",
+    "purgeFailed": "Failed to purge dead-letter queue"
   },
   "subtask": {
     "subtasks": "Subtasks",
@@ -1239,21 +1257,5 @@
     "expires": "Expires",
     "created": "Created",
     "lastUsed": "Last used"
-  },
-  "outbox": {
-    "dlqTitle": "Dead Letter Queue",
-    "dlqDescription": "Webhook messages that failed permanently after all retries. Inspect and replay them.",
-    "dlqEmpty": "No dead-lettered messages",
-    "dlqLoadFailed": "Failed to load dead-letter queue",
-    "type": "Type",
-    "error": "Error",
-    "retryCount": "Retries",
-    "occurredAt": "Occurred",
-    "failedPermanentlyAt": "Failed permanently",
-    "replay": "Replay",
-    "replaying": "Replaying...",
-    "replaySuccess": "Message re-queued for retry",
-    "replayFailed": "Failed to re-queue message",
-    "adminOnly": "Admin only"
   }
 }

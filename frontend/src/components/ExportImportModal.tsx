@@ -8,10 +8,12 @@ import {
   Check,
   AlertCircle,
   X,
+  ShieldAlert,
 } from "lucide-react";
 import { exportProjectBackup, importProjectBackup } from "../lib/api";
 import { useToast } from "./ui/ToastProvider";
 import { Button } from "./ui/Button";
+import { EmptyState } from "./ui/EmptyState";
 
 interface ExportImportModalProps {
   workspaceId: string;
@@ -164,8 +166,11 @@ export function ExportImportModal({
             </button>
           </div>
         ) : (
-          <div className="mb-5 rounded-lg border border-dashed border-border bg-card/50 p-4 text-center text-sm text-muted-foreground">
-            {t("board.adminOnlyHint")}
+          <div className="mb-5">
+            <EmptyState
+              icon={<ShieldAlert className="size-8 text-muted-foreground" aria-hidden />}
+              title={t("board.adminOnlyHint")}
+            />
           </div>
         )}
 

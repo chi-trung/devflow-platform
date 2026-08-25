@@ -914,7 +914,17 @@
     "completionBadge": "{{pct}}% hoàn thành",
     "overdue": "Quá hạn",
     "dueSoon": "Sắp đến hạn",
-    "onTrack": "Đúng tiến độ"
+    "onTrack": "Đúng tiến độ",
+    "blockedBy": "Bị chặn bởi",
+    "blockedBadge": "Bị chặn",
+    "noBlockers": "Không có ràng buộc — epic này có thể bắt đầu bất cứ lúc nào.",
+    "addBlocker": "Thêm ràng buộc",
+    "addBlockerPlaceholder": "Chọn epic phải hoàn thành trước",
+    "removeBlocker": "Gỡ ràng buộc",
+    "blockerAdded": "Đã thêm ràng buộc",
+    "blockerAddFailed": "Không thêm được ràng buộc",
+    "blockerRemoved": "Đã gỡ ràng buộc",
+    "blockerRemoveFailed": "Không gỡ được ràng buộc"
   },
   "common": {
     "save": "Lưu",
@@ -1191,7 +1201,15 @@
     "replaying": "Đang phát lại...",
     "replaySuccess": "Tin nhắn đã được xếp hàng để thử lại",
     "replayFailed": "Không thể xếp hàng thử lại tin nhắn",
-    "adminOnly": "Chỉ quản trị viên"
+    "adminOnly": "Chỉ quản trị viên",
+    "replayAll": "Phát lại tất cả",
+    "replayAllConfirm": "Đưa toàn bộ tin nhắn trong hàng đợi thư chết trở lại để thử lại?",
+    "replayAllSuccess": "Đã đưa {{count}} tin nhắn trở lại hàng đợi",
+    "replayAllFailed": "Không đưa lại được các tin nhắn",
+    "purge": "Xóa hàng đợi",
+    "purgeConfirm": "Xóa toàn bộ tin nhắn trong hàng đợi thư chết? Không thể hoàn tác.",
+    "purgeSuccess": "Đã xóa hàng đợi thư chết",
+    "purgeFailed": "Không xóa được hàng đợi thư chết"
   },
   "subtask": {
     "subtasks": "Công việc con",
@@ -1239,21 +1257,5 @@
     "expires": "Hết hạn",
     "created": "Tạo lúc",
     "lastUsed": "Sử dụng lần cuối"
-  },
-  "outbox": {
-    "dlqTitle": "Hàng đợi tin đã chết",
-    "dlqDescription": "Các tin webhook thất bại vĩnh viễn sau khi thử lại. Xem và phát lại.",
-    "dlqEmpty": "Không có tin nào trong hàng đợi đã chết",
-    "dlqLoadFailed": "Không tải được hàng đợi đã chết",
-    "type": "Loại",
-    "error": "Lỗi",
-    "retryCount": "Số lần thử",
-    "occurredAt": "Xảy ra lúc",
-    "failedPermanentlyAt": "Thất bại vĩnh viễn lúc",
-    "replay": "Phát lại",
-    "replaying": "Đang phát lại...",
-    "replaySuccess": "Đã đưa tin trở lại hàng đợi để thử lại",
-    "replayFailed": "Không đưa được tin trở lại hàng đợi",
-    "adminOnly": "Chỉ dành cho quản trị viên"
   }
 }

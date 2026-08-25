@@ -285,23 +285,19 @@ export function WebhooksPage() {
             ))}
           </div>
         ) : webhooks.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
-            <p className="font-display text-lg font-semibold">
-              {t("webhook.emptyTitle")}
-            </p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              {t("webhook.emptyDescription")}
-            </p>
-            {!creating && (
-              <Button
-                className="mt-2"
-                onClick={() => setCreating(true)}
-              >
-                <Plus className="size-4" aria-hidden />
-                {t("webhook.create")}
-              </Button>
-            )}
-          </div>
+          <EmptyState
+            icon={<Globe className="size-8 text-muted-foreground" aria-hidden />}
+            title={t("webhook.emptyTitle")}
+            description={t("webhook.emptyDescription")}
+            action={
+              !creating && (
+                <Button className="mt-2" onClick={() => setCreating(true)}>
+                  <Plus className="size-4" aria-hidden />
+                  {t("webhook.create")}
+                </Button>
+              )
+            }
+          />
         ) : (
           <ul className="flex flex-col gap-2">
             {webhooks.map((webhook) => (

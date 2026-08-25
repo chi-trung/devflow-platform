@@ -1,5 +1,5 @@
 interface BadgeProps {
-  children: string;
+  children: React.ReactNode;
   tone?: "teal" | "red" | "amber" | "violet" | "neutral";
 }
 

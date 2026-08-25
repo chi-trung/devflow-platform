@@ -444,6 +444,13 @@ export interface EpicResponse {
   completionPercent: number;
   totalStoryPoints: number;
   completedStoryPoints: number;
+  /** Ids of epics this epic is blocked by. Absent on older backend responses — guard with `?? []`. */
+  blockedByEpicIds?: string[];
+}
+
+export interface EpicDependencyResponse {
+  epicId: string;
+  blockedByEpicId: string;
 }
 
 export interface EpicCreatedResponse {

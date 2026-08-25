@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { FileUp, X } from "lucide-react";
+import { FileUp, X, ShieldAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { importTasks } from "../../lib/api";
 import type { ImportResultResponse } from "../../types/api";
 import { Button } from "../ui/Button";
+import { EmptyState } from "../ui/EmptyState";
 import { ErrorAlert } from "../ui/ErrorAlert";
 
 interface ImportTasksModalProps {
@@ -94,9 +95,10 @@ export function ImportTasksModal({
         </div>
 
         {!isAdmin ? (
-          <div className="rounded-lg border border-dashed border-border bg-card/50 p-4 text-center text-sm text-muted-foreground">
-            {t("board.adminOnlyHint")}
-          </div>
+          <EmptyState
+            icon={<ShieldAlert className="size-8 text-muted-foreground" aria-hidden />}
+            title={t("board.adminOnlyHint")}
+          />
         ) : result ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm">

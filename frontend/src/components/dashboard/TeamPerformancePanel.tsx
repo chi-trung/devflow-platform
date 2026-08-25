@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Gauge } from "lucide-react";
 import { api } from "../../lib/api";
+import { EmptyState } from "../ui/EmptyState";
 
 interface CycleLeadTimeResponse {
   cycleTimeP50?: number | null;
@@ -48,10 +49,11 @@ export function TeamPerformancePanel({
 
   if (unavailable) {
     return (
-      <div
-        className={`flex items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-sm text-muted-foreground ${className}`}
-      >
-        {t("dashboard.analyticsUnavailable")}
+      <div className={className}>
+        <EmptyState
+          icon={<Gauge className="size-8 text-muted-foreground" aria-hidden />}
+          title={t("dashboard.analyticsUnavailable")}
+        />
       </div>
     );
   }

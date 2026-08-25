@@ -9,6 +9,7 @@ import { useToast } from "../components/ui/ToastProvider";
 import { AppShell } from "../components/AppShell";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Button } from "../components/ui/Button";
+import { EmptyState } from "../components/ui/EmptyState";
 import { Dialog } from "../components/ui/Dialog";
 import { Field } from "../components/ui/Field";
 import { Input } from "../components/ui/Input";
@@ -507,20 +508,18 @@ export function WorkspacePage() {
             ) : projError ? (
               <ErrorAlert message={projError} />
             ) : !withStats || withStats.length === 0 ? (
-              <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-card/50 px-8 py-16 text-center rise">
-                <span className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <FolderKanban className="size-6" aria-hidden />
-                </span>
-                <p className="font-display text-lg font-semibold">
-                  {t("workspace.noProjectsYet")}
-                </p>
-                <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                  {t("workspace.noProjectsDesc")}
-                </p>
-                <Button className="mt-5" onClick={() => setCreating(true)}>
-                  <Plus className="size-4" aria-hidden />
-                  {t("workspace.newProject")}
-                </Button>
+              <div className="rise">
+                <EmptyState
+                  icon={<FolderKanban className="size-8 text-primary" aria-hidden />}
+                  title={t("workspace.noProjectsYet")}
+                  description={t("workspace.noProjectsDesc")}
+                  action={
+                    <Button className="mt-3" onClick={() => setCreating(true)}>
+                      <Plus className="size-4" aria-hidden />
+                      {t("workspace.newProject")}
+                    </Button>
+                  }
+                />
               </div>
             ) : (
               <>
