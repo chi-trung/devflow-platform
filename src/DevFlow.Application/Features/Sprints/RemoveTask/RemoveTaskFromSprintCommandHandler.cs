@@ -30,7 +30,13 @@ public sealed class RemoveTaskFromSprintCommandHandler(
 
         var task = await taskItemRepository.GetByIdAsync(command.TaskId, cancellationToken);
 
-        if (task is null || task.ProjectId != command.ProjectId || task.SprintId != command.SprintId)
+        // The task belongs to the project but its current sprint is irrelevant —
+        // "remove from sprint" means "back to backlog", no matter which sprint it
+        // was in. Requiring task.SprintId == command.SprintId throws a 404 when
+        // the client drops a task into the backlog after its sprintId changed
+        // (stale sprint id in the UI state), which is a wrong outcome for a
+        // perfectly valid drag-and-drop.
+        if (task is null || task.ProjectId != command.ProjectId)
         {
             throw new NotFoundException(nameof(TaskItem), command.TaskId);
         }

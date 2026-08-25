@@ -116,7 +116,7 @@ public class SprintHandlerTests
     }
 
     [Fact]
-    public async Task RemoveTask_ShouldThrowNotFound_WhenTaskIsInDifferentSprint()
+    public async Task RemoveTask_ShouldSucceed_WhenTaskIsInDifferentSprint()
     {
         var sprint = Sprint.Create(_project.Id, "Sprint 1", null);
         _sprintRepository.GetByIdAsync(sprint.Id, Arg.Any<CancellationToken>()).Returns(sprint);
@@ -129,6 +129,10 @@ public class SprintHandlerTests
             _projectRepository, _sprintRepository, _taskItemRepository, _unitOfWork);
         var command = new RemoveTaskFromSprintCommand(_workspaceId, _project.Id, sprint.Id, task.Id);
 
-        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, CancellationToken.None));
+        await handler.Handle(command, CancellationToken.None);
+
+        // "Remove from sprint" means "back to backlog" — the task's current
+        // sprint is irrelevant, so a mismatched sprint id must still succeed.
+        Assert.Null(task.SprintId);
     }
 }
