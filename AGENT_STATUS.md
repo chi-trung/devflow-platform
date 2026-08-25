@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅** | **Sprint 29 Complete ✅** | **Sprint 30 Complete ✅** | **Sprint 31 Complete ✅** | **Sprint 32 Planning 🚧**
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅** | **Sprint 29 Complete ✅** | **Sprint 30 Complete ✅** | **Sprint 31 Complete ✅** | **Sprint 32 Complete ✅**
 
 ---
 
@@ -23,6 +23,7 @@
 | **Sprint 29** | File Upload Safety & Settings Polish (upload size/type limits + workspace/sprint/template edit + bulk ops UX + attachment upload UX + vi.json completion + notification badge) | ✅ Agent A: A29.1 file upload size limit + type whitelist; A29.2 Workspace/Sprint/Template PUT endpoints; A29.3 review/merge; Agent B: B29.1 attachment pagination + cache headers, B29.2 notification batch-delete + unread-count, B29.3 tests | ✅ Agent C: C29.1 bulk ops UI (select-all + batch action bar), C29.2 attachment upload progress/error/retry; Agent D: D29.1 workspace/sprint/template edit UI, D29.2 vi.json 122 keys + AppShell badge | Complete ✅ |
 | **Sprint 30** | Webhook Admin UI, Watcher List, Security Fixes & Polish (template scoping fix + README/docs + watchers query/UI + integration tests + DLQ admin UI + EmptyState adoption + outbox i18n) | ✅ Agent A: A30.1 template scoping fix — PR #145, A30.2 README/docs — PR #146, A30.3 review/merge — PRs #147, #148; Agent B: B30.1 GetTaskWatchersQuery + endpoint, B30.2 integration tests — PR #147 | ✅ Agent C: C30.1 watcher list UI, C30.2 DLQ admin UI; Agent D: D30.1 EmptyState adoption, D30.2 outbox i18n — PR #148 | Complete ✅ |
 | **Sprint 31** | Project-Level RBAC, Outbox Admin Batch, EmptyState Sweep & Depth Polish (ProjectMember entity + CQRS + epic deps + project auth guard + member UI + DLQ batch + EmptyState sweep + epic deps UI + i18n) | ✅ A31.1 ProjectMember entity/migration/repo, A31.2 member CQRS endpoints, A31.3 review/merge — PR #150; B31.1 outbox replay-all/purge, B31.2 epic deps, B31.3 ProjectAuthorizationBehavior — PR #151 | ✅ C31.1 project member UI, C31.2 DLQ Replay-all/Purge buttons — PR #152; D31.1 EmptyState sweep (~20 files), D31.2 epic deps UI + i18n — PR #153 | Complete ✅ |
+| **Sprint 32** | Visual Identity & Product Polish (De-AI-fy) — Dashboard greeting + `Logo` brand mark + workspace/project emoji + coverColor + attachment thumbnails + illustrations + auth hero + motion + presence dots | ✅ A32.1 dashboard greeting, A32.2 `Logo`/`BrandMark` component + favicon, A32.3 review/merge — PR #155; B32.1 emoji + coverColor fields/migration, B32.2 `AttachmentSummary` — PR #156 | ✅ C32.1 EmptyState illustrations, C32.2 AuthLayout hero, C32.3 emoji UI + `Logo` adoption, C32.4 cover gradients, C32.5 micro-animations, C32.6 presence dot, C32.7 attachment thumbnails — PR #157 | Complete ✅ |
 
 ---
 
@@ -466,6 +467,33 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
+### 🎨 Sprint 32 — Visual Identity & Product Polish (De-AI-fy) ✅ Complete
+
+**Goal:** Trả lời feedback *"website chỉ thấy chữ và icon mang tính AI quá"* — thêm imagery, human feel và motion thật sự: illustration system cho empty states, hero illustration auth page, emoji/cover cho workspace + project, project card thumbnails, micro-animations, presence dots.
+
+> **Plan:** `docs/sprint32/plan.md` (wise-prancing-ritchie.md) — 12 tasks / 3 agents.
+> **PRs:** #155 (A32.1+2), #156 (B32.1+2), #157 (C32.1-7).
+
+#### 🚀 Agent A (Team Lead — Greeting + Brand Mark) ✅
+- [x] **A32.1: Dashboard greeting header** — time-of-day greeting ("Good morning/afternoon/evening, {name} 👋") + today's date, relocated workspace/project selectors into the row. *(PR #155 merged)*
+- [x] **A32.2: `Logo`/`BrandMark` component + favicon polish** — reusable teal rounded-square + three-bar SVG mark themed via `var(--color-*)`, extracted from AppShell/AuthLayout; favicon refined. *(PR #155 merged)*
+- [x] **A32.3: Review & merge B/C PRs** — squash-merge #156 (backend) + #157 (frontend, rebased onto merged main); verified `npm run build` + `dotnet test` 344/344 green on clean main; update AGENT_STATUS.md. *(PRs #155, #156, #157 all merged)*
+
+#### 🤖 Agent B (Backend — Emoji/Cover + Attachment Summary) ✅
+- [x] **B32.1: Workspace emoji + Project emoji/coverColor** — additive nullable fields, EF migration `AddEmojiAndCoverColor`, exposed in responses + optional in create/update requests; 4+ tests (`EmojiCoverColorTests`). *(PR #156 merged)*
+- [x] **B32.2: `TaskItemResponse.AttachmentSummary`** — `Count` + up to 3 image previews `{id, contentType}` via single grouped query (no N+1); 3+ tests (`AttachmentSummaryHandlerTests`). *(PR #156 merged)*
+
+#### 🎨 Agent C (Frontend — Visual Identity) ✅
+- [x] **C32.1: EmptyState illustration system** — 6 inline SVG scenes (board/tasks/search/notifications/users/chart) themed via tokens; additive `illustration` prop on `EmptyState`; applied to ~7 high-traffic screens. *(PR #157 merged)*
+- [x] **C32.2: AuthLayout hero** — left panel upgraded from blurred blobs to a composed kanban SVG hero + `Logo` adoption. *(PR #157 merged)*
+- [x] **C32.3: Emoji logo UI + `Logo` adoption** — `EmojiCover`/`EmojiPickers`; emoji tiles in AppShell sidebar + CommandPalette + WorkspacePage; pickers in project create/edit + workspace edit forms; AppShell brand links adopt `Logo`. *(PR #157 merged)*
+- [x] **C32.4: Project cover gradients** — `coverColor` key → Tailwind gradient banner on project cards + board header; 6-swatch color picker; unknown keys render nothing. *(PR #157 merged)*
+- [x] **C32.5: Micro-animations** — `.animate-fade-in`/`.animate-rise`/`.hover-lift` utilities; applied to dashboard + project cards; fixed dead `animate-in slide-in-from-right` in ActivityDrawer. *(PR #157 merged)*
+- [x] **C32.6: Avatar presence dot** — additive `online` prop; BoardPresence wires `usePresence().onlineIds`. *(PR #157 merged)*
+- [x] **C32.7: Attachment thumbnails** — `useAttachmentPreviews` (fetch→blob→objectURL, revoke-on-unmount) + `ThumbnailStrip` (+N chip) on TaskCard; `AttachmentRowThumb` image previews in TaskDetailPanel; `getAttachmentObjectUrl` helper. *(PR #157 merged)*
+
+---
+
 ## 🔒 Multi-Agent Coordination Guidelines
 
 1. **Branch Prefixes:**
@@ -480,5 +508,5 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-*DevFlow Architecture Team — Updated 2026-08-25 (Sprint 31 Complete ✅)*
+*DevFlow Architecture Team — Updated 2026-08-25 (Sprint 32 Complete ✅)*
 

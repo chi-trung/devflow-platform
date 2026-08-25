@@ -130,7 +130,19 @@ npm run dev                   # http://localhost:3000, proxies /api to :5217
 - [x] EmptyState adoption across remaining pages (dashboard cards, epics, webhooks, import/export, ...)
 - [x] Project authorization guard (`ProjectAuthorizationBehavior`) — project-scoped RBAC pipeline
 
-### Next up — Sprint 32
+### Sprint 32 — Visual Identity & Product Polish (De-AI-fy)
+- [x] Dashboard time-of-day greeting + reusable `Logo`/`BrandMark` brand mark
+- [x] Workspace emoji + Project emoji/coverColor — additive nullable fields + pickers
+- [x] `TaskItemResponse.AttachmentSummary` — count + up to 3 image previews (batch query)
+- [x] EmptyState illustration system — 6 theme-aware SVG scenes applied across pages
+- [x] AuthLayout hero illustration (kanban scene) + `Logo` adoption
+- [x] Emoji logo UI — sidebar, command palette, workspace header, project cards
+- [x] Project cover gradients — palette-keyed banners on cards + board header
+- [x] Micro-animations — hover-lift, fade-in, rise utilities
+- [x] Avatar presence dots on the board (from `usePresence`)
+- [x] Attachment image thumbnails on task cards + detail panel (fetch→blob→objectURL)
+
+### Next up — Sprint 33
 - Component library catalog / design sync
 - tsvector search ranking (beyond ILIKE)
 - Time-tracking reporting (`GetTeamReportTrends` placeholder)
