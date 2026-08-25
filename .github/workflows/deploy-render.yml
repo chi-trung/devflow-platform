@@ -1,0 +1,38 @@
+name: Deploy Backend to Render
+
+# Render free tier does NOT auto-deploy on push; a merged backend change
+# stays unserved until someone clicks Manual Deploy. This workflow fires
+# Render's deploy hook after any push that touches backend/API code lands
+# on main, so production always serves the merged code.
+#
+# Requires the repo secret RENDER_DEPLOY_HOOK — the Deploy Hook URL from
+# Render dashboard (service → Settings → Deploy Hook). Without it, the job
+# is skipped (manual deploy still works, same as before).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.sln'
+      - 'Directory.*'
+      - 'global.json'
+
+jobs:
+  deploy:
+    name: Trigger Render deploy hook
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fire deploy hook
+        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
+        run: |
+          curl -fsS \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            --data '{}' \
+            "${{ secrets.RENDER_DEPLOY_HOOK }}"
+      - name: No hook configured
+        if: ${{ secrets.RENDER_DEPLOY_HOOK == '' }}
+        run: echo "RENDER_DEPLOY_HOOK is not set — skipping auto-deploy. Deploy manually from the Render dashboard."
