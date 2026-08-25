@@ -8,6 +8,10 @@ name: Deploy Backend to Render
 # "failure" runs (0 jobs) instead of filtering — so we accept all pushes to
 # main and gate on changed files inside the job instead.
 #
+# NOTE: `secrets` must NOT be referenced inside `if:` conditions — that makes
+# the whole workflow invalid ("workflow file issue", 0 jobs, no logs). Check
+# the secret in a shell step via env instead and gate on its output.
+#
 # Requires the repo secret RENDER_DEPLOY_HOOK — the Deploy Hook URL from
 # Render dashboard (service → Settings → Deploy Hook). Without it, the job
 # is skipped (manual deploy still works, same as before).
@@ -38,20 +42,33 @@ jobs:
             echo "No backend changes — skipping deploy."
           fi
 
+      - name: Check deploy hook configured
+        id: hook
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Fire deploy hook
-        if: ${{ steps.changes.outputs.changed == 'true' && secrets.RENDER_DEPLOY_HOOK != '' }}
+        if: steps.changes.outputs.changed == 'true' && steps.hook.outputs.configured == 'true'
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
           curl -fsS \
             -X POST \
             -H "Content-Type: application/json" \
             -H "Accept: application/json" \
             --data '{}' \
-            "${{ secrets.RENDER_DEPLOY_HOOK }}"
+            "$RENDER_DEPLOY_HOOK"
 
       - name: No backend changes
-        if: ${{ steps.changes.outputs.changed == 'false' }}
+        if: steps.changes.outputs.changed == 'false'
         run: echo "No backend changes in this push — skipping auto-deploy."
 
       - name: No hook configured
-        if: ${{ steps.changes.outputs.changed == 'true' && secrets.RENDER_DEPLOY_HOOK == '' }}
+        if: steps.changes.outputs.changed == 'true' && steps.hook.outputs.configured == 'false'
         run: echo "RENDER_DEPLOY_HOOK is not set — skipping auto-deploy. Deploy manually from the Render dashboard."
