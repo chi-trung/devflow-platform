@@ -15,6 +15,7 @@ public class EpicHandlerTests
     private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly IEpicRepository _epicRepository = Substitute.For<IEpicRepository>();
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
+    private readonly IEpicDependencyRepository _dependencyRepository = Substitute.For<IEpicDependencyRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
@@ -71,7 +72,7 @@ public class EpicHandlerTests
         _taskItemRepository.GetForProjectAsync(_project.Id, (TaskItemStatus?)null, Arg.Any<CancellationToken>())
             .Returns(new[] { done, open, unrelated });
 
-        var handler = new ListEpicsQueryHandler(_projectRepository, _epicRepository, _taskItemRepository);
+        var handler = new ListEpicsQueryHandler(_projectRepository, _epicRepository, _taskItemRepository, _dependencyRepository);
         var result = await handler.Handle(new ListEpicsQuery(_workspaceId, _project.Id), CancellationToken.None);
 
         var response = Assert.Single(result);
@@ -80,6 +81,7 @@ public class EpicHandlerTests
         Assert.Equal(50, response.CompletionPercent);
         Assert.Equal(8, response.TotalStoryPoints);
         Assert.Equal(5, response.CompletedStoryPoints);
+        Assert.Empty(response.BlockedByEpicIds);
     }
 
     [Fact]

@@ -29,4 +29,20 @@ public sealed class EpicDependencyRepository(DevFlowDbContext dbContext) : IEpic
             .Where(d => d.EpicId == epicId)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<EpicDependency>> GetForEpicsAsync(
+        IEnumerable<Guid> epicIds, CancellationToken cancellationToken = default)
+    {
+        var ids = epicIds.ToList();
+
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        return await dbContext.EpicDependencies
+            .AsNoTracking()
+            .Where(d => ids.Contains(d.EpicId))
+            .ToListAsync(cancellationToken);
+    }
 }

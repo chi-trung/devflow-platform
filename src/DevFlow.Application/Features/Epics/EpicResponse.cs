@@ -11,4 +11,5 @@ public sealed record EpicResponse(
     int CompletedTasks,
     double CompletionPercent,
     int TotalStoryPoints,
-    int CompletedStoryPoints);
+    int CompletedStoryPoints,
+    IReadOnlyList<Guid> BlockedByEpicIds);

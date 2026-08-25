@@ -9,4 +9,6 @@ public interface IEpicDependencyRepository
     Task RemoveAsync(Guid epicId, Guid blockedById, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<EpicDependency>> GetForEpicAsync(Guid epicId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<EpicDependency>> GetForEpicsAsync(IEnumerable<Guid> epicIds, CancellationToken cancellationToken = default);
 }
