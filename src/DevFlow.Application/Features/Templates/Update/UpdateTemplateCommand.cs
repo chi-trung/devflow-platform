@@ -38,6 +38,11 @@ public class UpdateTemplateHandler(
         var template = await repo.GetByIdAsync(request.TemplateId, ct)
             ?? throw new NotFoundException(nameof(Domain.Entities.TaskTemplate), request.TemplateId);
 
+        if (template.ProjectId != request.ProjectId)
+        {
+            throw new NotFoundException(nameof(Domain.Entities.TaskTemplate), request.TemplateId);
+        }
+
         template.Update(request.Name, template.Title, request.Description, template.Priority, template.EstimateMinutes);
         await uow.SaveChangesAsync(ct);
 
