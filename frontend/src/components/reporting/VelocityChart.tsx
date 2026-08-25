@@ -1,6 +1,7 @@
 import { BarChart3 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { VelocityResponse } from "../../types/api";
+import { EmptyState } from "../ui/EmptyState";
 
 const W = 640;
 const H = 220;
@@ -20,10 +21,11 @@ export function VelocityChart({ data, className = "" }: VelocityChartProps) {
 
   if (sprints.length === 0) {
     return (
-      <div
-        className={`flex items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-sm text-muted-foreground ${className}`}
-      >
-        {t("reports.noSprintsVelocity")}
+      <div className={className}>
+        <EmptyState
+          icon={<BarChart3 className="size-8 text-muted-foreground" aria-hidden />}
+          title={t("reports.noSprintsVelocity")}
+        />
       </div>
     );
   }

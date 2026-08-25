@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Users, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { formatMinutes } from "../../lib/format";
 import type { TeamReportResponse, WorkspaceMemberResponse } from "../../types/api";
+import { EmptyState } from "../ui/EmptyState";
 import { Avatar } from "../ui/Avatar";
 
 interface TeamReportCardsProps {
@@ -14,10 +15,11 @@ export function TeamReportCards({ data, members, className = "" }: TeamReportCar
   const { t } = useTranslation();
   if (data.members.length === 0) {
     return (
-      <div
-        className={`flex items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-sm text-muted-foreground ${className}`}
-      >
-        {t("reports.noTeamActivity")}
+      <div className={className}>
+        <EmptyState
+          icon={<Users className="size-8 text-muted-foreground" aria-hidden />}
+          title={t("reports.noTeamActivity")}
+        />
       </div>
     );
   }

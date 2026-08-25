@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Activity } from "lucide-react";
 import type { CycleLeadTimeResponse } from "../../types/api";
+import { EmptyState } from "../ui/EmptyState";
 
 const W = 640;
 const H = 220;
@@ -22,10 +23,11 @@ export function CycleLeadTimeChart({ data, className = "" }: CycleLeadTimeChartP
 
   if (data.tasks.length === 0) {
     return (
-      <div
-        className={`flex items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-sm text-muted-foreground ${className}`}
-      >
-        {t("reports.noCycleLeadData")}
+      <div className={className}>
+        <EmptyState
+          icon={<Activity className="size-8 text-muted-foreground" aria-hidden />}
+          title={t("reports.noCycleLeadData")}
+        />
       </div>
     );
   }

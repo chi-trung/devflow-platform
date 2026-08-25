@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import { TrendingDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { BurndownResponse } from "../../types/api";
+import { EmptyState } from "../ui/EmptyState";
 
 const W = 640;
 const H = 240;
@@ -41,10 +42,11 @@ export function BurndownChartApi({ data, className = "" }: BurndownChartApiProps
 
   if (days === 0) {
     return (
-      <div
-        className={`flex items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-sm text-muted-foreground ${className}`}
-      >
-        {t("reports.noBurndownData")}
+      <div className={className}>
+        <EmptyState
+          icon={<TrendingDown className="size-8 text-muted-foreground" aria-hidden />}
+          title={t("reports.noBurndownData")}
+        />
       </div>
     );
   }
