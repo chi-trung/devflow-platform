@@ -82,7 +82,7 @@ export function TaskDistribution({ data }: TaskDistributionProps) {
   return (
     <section
       aria-label={t("dashboard.distribution")}
-      className="rounded-xl border border-border bg-card p-5"
+      className="flex flex-col rounded-xl border border-border bg-card p-5"
     >
       <h2 className="mb-4 inline-flex items-center gap-1.5 font-display font-semibold">
         <ChartPie className="size-4 text-primary" aria-hidden />
@@ -90,11 +90,13 @@ export function TaskDistribution({ data }: TaskDistributionProps) {
       </h2>
 
       {total === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          {t("dashboard.noTasksCreate")}
-        </p>
+        <div className="flex min-h-[15rem] flex-1 items-center justify-center">
+          <p className="text-center text-sm text-muted-foreground">
+            {t("dashboard.noTasksCreate")}
+          </p>
+        </div>
       ) : (
-        <div className="flex flex-col items-center gap-6 sm:flex-row">
+        <div className="flex flex-1 flex-col items-center gap-6 sm:flex-row">
           <div className="relative shrink-0">
             <svg
               width={SIZE}
