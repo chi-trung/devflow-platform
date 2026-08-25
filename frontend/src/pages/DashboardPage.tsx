@@ -15,6 +15,7 @@ import { Avatar } from "../components/ui/Avatar";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { EmptyState } from "../components/ui/EmptyState";
+import { EmptyTasksIllustration } from "../components/illustrations/EmptyStateIllustrations";
 import { StatsCards } from "../components/dashboard/StatsCards";
 import { CumulativeFlow } from "../components/dashboard/CumulativeFlow";
 import { TaskDistribution } from "../components/dashboard/TaskDistribution";
@@ -359,6 +360,7 @@ export function DashboardPage() {
           <div className="rise">
             <EmptyState
               icon={<Boxes className="size-8 text-primary" aria-hidden />}
+              illustration={<EmptyTasksIllustration className="size-24" />}
               title={t("dashboard.noWorkspaces")}
               description={t("dashboard.noWorkspacesDesc")}
               action={

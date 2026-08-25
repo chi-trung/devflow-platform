@@ -39,10 +39,12 @@ import { AppShell } from "../components/AppShell";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
+import { EmojiTile, coverGradient } from "../components/ui/EmojiCover";
 import { Pagination } from "../components/ui/Pagination";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { EmptyState } from "../components/ui/EmptyState";
+import { EmptyBoardIllustration } from "../components/illustrations/EmptyStateIllustrations";
 import { Column } from "../components/board/Column";
 import { CreateTaskForm } from "../components/board/CreateTaskForm";
 import { TaskDetailPanel } from "../components/board/TaskDetailPanel";
@@ -697,9 +699,17 @@ export function BoardPage() {
           {t("board.projects")}
         </Link>
 
+        {project && coverGradient(project.coverColor) && (
+          <div
+            aria-hidden
+            className={`pointer-events-none -mx-2 mb-4 h-10 rounded-lg bg-gradient-to-br ${coverGradient(project.coverColor)} sm:-mx-0`}
+          />
+        )}
+
         <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
+              {project?.emoji && <EmojiTile emoji={project.emoji} size="md" />}
               <h1 className="font-display text-2xl font-semibold tracking-tight">
                 {project?.name ?? <Skeleton className="h-8 w-48" />}
               </h1>
@@ -943,6 +953,7 @@ export function BoardPage() {
         ) : tasks.length === 0 ? (
           <EmptyState
             icon={<SquareKanban className="size-8 text-muted-foreground" aria-hidden />}
+            illustration={<EmptyBoardIllustration className="size-24" />}
             title={t("board.empty")}
             description={t("board.emptyDesc")}
             action={

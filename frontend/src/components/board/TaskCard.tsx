@@ -7,6 +7,7 @@ import { Avatar } from "../ui/Avatar";
 import { EstimationModal } from "../estimation/EstimationModal";
 import { useApi } from "../../hooks/useApi";
 import { api, getTaskFieldValues } from "../../lib/api";
+import { useAttachmentPreviews, ThumbnailStrip } from "./AttachmentThumbnails";
 
 const priorityDot: Record<TaskItemResponse["priority"], string> = {
   Critical: "bg-destructive",
@@ -57,6 +58,13 @@ export function TaskCard({
   const [showChildForm, setShowChildForm] = useState(false);
   const [childTitle, setChildTitle] = useState("");
   const [addingChild, setAddingChild] = useState(false);
+
+  const previews = useAttachmentPreviews({
+    workspaceId,
+    projectId,
+    taskId: task.id,
+    previews: task.attachmentSummary?.previews,
+  });
 
   const { data: customFields = [] } = useApi(
     () => getTaskFieldValues(workspaceId, projectId, task.id),
@@ -266,6 +274,14 @@ export function TaskCard({
           </span>
         )}
       </div>
+
+      {task.attachmentSummary && task.attachmentSummary.count > 0 && (
+        <ThumbnailStrip
+          previews={previews}
+          count={task.attachmentSummary.count}
+        />
+      )}
+
       <EstimationModal
         open={estimationOpen}
         onClose={() => setEstimationOpen(false)}

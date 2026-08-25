@@ -4,6 +4,7 @@ import { CalendarClock, ListTodo, Boxes } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
+import { EmptyTasksIllustration } from "../components/illustrations/EmptyStateIllustrations";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { useApi } from "../hooks/useApi";
 import { getMyTasks } from "../lib/api";
@@ -78,6 +79,7 @@ export function MyTasksPage() {
         ) : taskList.length === 0 ? (
           <EmptyState
             icon={<Boxes className="size-8 text-muted-foreground/50" aria-hidden />}
+            illustration={<EmptyTasksIllustration className="size-24" />}
             title={t("myTasks.empty")}
           />
         ) : (

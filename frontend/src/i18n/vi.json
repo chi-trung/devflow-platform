@@ -998,7 +998,14 @@
     "colorThemeAria": "Chủ đề màu",
     "openMenuAria": "Mở menu",
     "closeMenuAria": "Đóng menu",
-    "primaryNavAria": "Điều hướng chính"
+    "primaryNavAria": "Điều hướng chính",
+    "emojiPicker": {
+      "label": "Chọn emoji",
+      "clear": "Xóa"
+    },
+    "coverColor": {
+      "label": "Ảnh bìa"
+    }
   },
   "taskCard": {
     "aria": "Task: {{title}}",

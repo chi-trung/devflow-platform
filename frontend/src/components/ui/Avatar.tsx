@@ -18,9 +18,11 @@ interface AvatarProps {
   name: string;
   id?: string;
   size?: "sm" | "md";
+  /** When true, renders a green presence dot at the bottom-right corner. */
+  online?: boolean;
 }
 
-export function Avatar({ name, id, size = "sm" }: AvatarProps) {
+export function Avatar({ name, id, size = "sm", online = false }: AvatarProps) {
   const initials = name
     .split(/[\s_-]+/)
     .filter(Boolean)
@@ -31,13 +33,22 @@ export function Avatar({ name, id, size = "sm" }: AvatarProps) {
   const tone = PALETTE[hashString(id ?? name) % PALETTE.length];
   const sizeClasses =
     size === "sm" ? "size-6 text-[10px]" : "size-9 text-sm";
+  const dotSize = size === "sm" ? "size-1.5" : "size-2";
 
   return (
-    <span
-      aria-hidden
-      className={`flex shrink-0 select-none items-center justify-center rounded-lg font-display font-semibold ${tone} ${sizeClasses}`}
-    >
-      {initials || "?"}
+    <span className="relative inline-flex shrink-0">
+      <span
+        aria-hidden
+        className={`flex select-none items-center justify-center rounded-lg font-display font-semibold ${tone} ${sizeClasses}`}
+      >
+        {initials || "?"}
+      </span>
+      {online && (
+        <span
+          aria-label="online"
+          className={`absolute -right-0.5 -bottom-0.5 ${dotSize} rounded-full bg-emerald-500 ring-2 ring-surface`}
+        />
+      )}
     </span>
   );
 }

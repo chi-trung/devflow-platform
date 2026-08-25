@@ -4,7 +4,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   CalendarRange,
   CircleUserRound,
-  FolderKanban,
   House,
   KanbanSquare,
   ListTodo,
@@ -17,6 +16,8 @@ import { api, pagedItems } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
 import { Avatar } from "./ui/Avatar";
+import { Logo } from "./ui/Logo";
+import { EmojiTile } from "./ui/EmojiCover";
 import { CommandPalette } from "./CommandPalette";
 import { ApiStatusDot } from "./user/ApiStatusDot";
 import { ThemeToggle } from "./ui/ThemeToggle";
@@ -190,15 +191,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center justify-between pr-2">
           <Link
             to="/"
-            className="flex items-center gap-2 px-4 py-4"
+            className="px-4 py-4"
             aria-label="DevFlow home"
           >
-            <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-on-primary">
-              <KanbanSquare className="size-4" aria-hidden />
-            </span>
-            <span className="font-display text-base font-semibold tracking-tight">
-              DevFlow
-            </span>
+            <Logo />
           </Link>
           <button
             type="button"
@@ -241,7 +237,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           : "text-muted-foreground hover:bg-elevated/60 hover:text-foreground"
                       }`}
                     >
-                      <Avatar name={workspace.name} id={workspace.id} />
+                      {workspace.emoji ? (
+                        <EmojiTile emoji={workspace.emoji} size="sm" />
+                      ) : (
+                        <Avatar name={workspace.name} id={workspace.id} />
+                      )}
                       <span className="truncate">{workspace.name}</span>
                     </Link>
                   </li>
@@ -268,7 +268,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       to={`/workspaces/${workspaceId}/projects/${project.id}`}
                       className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated/60 hover:text-foreground"
                     >
-                      <FolderKanban className="size-4 shrink-0" aria-hidden />
+                      <EmojiTile emoji={project.emoji} size="sm" />
                       <span className="truncate">{project.name}</span>
                     </Link>
                   </li>
@@ -344,12 +344,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <Menu className="size-5" aria-hidden />
           </button>
-          <Link to="/" className="flex items-center gap-2">
-            <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-on-primary">
-              <KanbanSquare className="size-4" aria-hidden />
-            </span>
-            <span className="font-display font-semibold">DevFlow</span>
-          </Link>
+          <Logo size="sm" to="/" />
         </div>
         <div className="flex items-center gap-1.5">
           <ApiStatusDot />

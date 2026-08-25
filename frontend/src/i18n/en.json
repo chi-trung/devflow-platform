@@ -998,7 +998,14 @@
     "colorThemeAria": "Color theme",
     "openMenuAria": "Open menu",
     "closeMenuAria": "Close menu",
-    "primaryNavAria": "Primary navigation"
+    "primaryNavAria": "Primary navigation",
+    "emojiPicker": {
+      "label": "Choose an emoji",
+      "clear": "Clear"
+    },
+    "coverColor": {
+      "label": "Cover"
+    }
   },
   "taskCard": {
     "aria": "Task: {{title}}",
