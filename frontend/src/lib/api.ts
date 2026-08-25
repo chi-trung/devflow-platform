@@ -27,6 +27,8 @@ import type {
   TaskDependencyResponse,
   TaskItemResponse,
   TaskAttachmentResponse,
+  TaskWatcherResponse,
+  DeadLetterMessageDto,
   TeamReportResponse,
   TemplateResponse,
   TimeEntryResponse,
@@ -1194,6 +1196,35 @@ export async function isWatchingTask(
 ): Promise<boolean> {
   return api<boolean>(
     `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/watch`,
+  );
+}
+
+export function getTaskWatchers(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+): Promise<TaskWatcherResponse[]> {
+  return api<TaskWatcherResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/watchers`,
+  );
+}
+
+export function getDeadLetterMessages(
+  workspaceId: string,
+  batchSize = 100,
+): Promise<DeadLetterMessageDto[]> {
+  return api<DeadLetterMessageDto[]>(
+    `/workspaces/${workspaceId}/outbox/dead-letter?batchSize=${batchSize}`,
+  );
+}
+
+export async function replayDeadLetterMessage(
+  workspaceId: string,
+  messageId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/outbox/${messageId}/replay`,
+    { method: "POST" },
   );
 }
 

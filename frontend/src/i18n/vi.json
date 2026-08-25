@@ -227,7 +227,11 @@
     "unwatchAria": "Bỏ theo dõi task này",
     "watched": "Đang theo dõi task này",
     "unwatched": "Đã bỏ theo dõi",
-    "watchFailed": "Không thể cập nhật trạng thái theo dõi"
+    "watchFailed": "Không thể cập nhật trạng thái theo dõi",
+    "watchers": "Người theo dõi",
+    "watcherCount_one": "{{count}} người theo dõi",
+    "watcherCount_other": "{{count}} người theo dõi",
+    "noWatchers": "Chưa có người theo dõi"
   },
   "filter": {
     "filters": "Bộ lọc",
@@ -1173,6 +1177,22 @@
     "test": "Test webhook",
     "apply": "Áp dụng"
   },
+  "outbox": {
+    "dlqTitle": "Hàng đợi thư chết (DLQ)",
+    "dlqDescription": "Tin nhắn webhook thất bại vĩnh viễn sau khi đã thử lại hết lần. Kiểm tra và phát lại chúng.",
+    "dlqEmpty": "Không có tin nhắn nào trong hàng đợi thư chết",
+    "dlqLoadFailed": "Không tải được hàng đợi thư chết",
+    "type": "Loại",
+    "error": "Lỗi",
+    "retryCount": "Số lần thử lại",
+    "occurredAt": "Thời điểm xảy ra",
+    "failedPermanentlyAt": "Thất bại vĩnh viễn lúc",
+    "replay": "Phát lại",
+    "replaying": "Đang phát lại...",
+    "replaySuccess": "Tin nhắn đã được xếp hàng để thử lại",
+    "replayFailed": "Không thể xếp hàng thử lại tin nhắn",
+    "adminOnly": "Chỉ quản trị viên"
+  },
   "subtask": {
     "subtasks": "Công việc con",
     "progress": "{{done}}/{{total}} xong",
@@ -1219,5 +1239,21 @@
     "expires": "Hết hạn",
     "created": "Tạo lúc",
     "lastUsed": "Sử dụng lần cuối"
+  },
+  "outbox": {
+    "dlqTitle": "Hàng đợi tin đã chết",
+    "dlqDescription": "Các tin webhook thất bại vĩnh viễn sau khi thử lại. Xem và phát lại.",
+    "dlqEmpty": "Không có tin nào trong hàng đợi đã chết",
+    "dlqLoadFailed": "Không tải được hàng đợi đã chết",
+    "type": "Loại",
+    "error": "Lỗi",
+    "retryCount": "Số lần thử",
+    "occurredAt": "Xảy ra lúc",
+    "failedPermanentlyAt": "Thất bại vĩnh viễn lúc",
+    "replay": "Phát lại",
+    "replaying": "Đang phát lại...",
+    "replaySuccess": "Đã đưa tin trở lại hàng đợi để thử lại",
+    "replayFailed": "Không đưa được tin trở lại hàng đợi",
+    "adminOnly": "Chỉ dành cho quản trị viên"
   }
 }

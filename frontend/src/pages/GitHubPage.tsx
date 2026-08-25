@@ -6,6 +6,7 @@ import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Skeleton } from "../components/ui/Skeleton";
+import { EmptyState } from "../components/ui/EmptyState";
 import { GitHubSettingsSection } from "../components/settings/GitHubSettingsSection";
 import {
   addPR,
@@ -290,14 +291,11 @@ export function GitHubPage() {
             ))}
           </div>
         ) : prs.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
-            <p className="font-display text-lg font-semibold">
-              {t("github.emptyPrs")}
-            </p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              {t("github.emptyPrsDescription")}
-            </p>
-          </div>
+          <EmptyState
+            icon={<Github className="size-8 text-muted-foreground" aria-hidden />}
+            title={t("github.emptyPrs")}
+            description={t("github.emptyPrsDescription")}
+          />
         ) : (
           <ul className="flex flex-col gap-2">
             {prs.map((pr) => (
