@@ -276,7 +276,7 @@ export function DashboardPage() {
                     <Skeleton key={i} className="h-28" />
                   ))}
                 </div>
-                <div className="grid gap-4 lg:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <Skeleton className="h-72" />
                   <Skeleton className="h-72" />
                 </div>
@@ -299,14 +299,14 @@ export function DashboardPage() {
                   />
                 )}
                 <CumulativeFlow data={dashboard.data} className="mb-4" />
-                <div className="mb-4 grid gap-4 lg:grid-cols-2">
+                <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <TaskDistribution data={dashboard.data} />
                   <ActivityFeed
                     items={dashboard.data.recentActivity}
                     workspaceId={selectedWsId}
                   />
                 </div>
-                <div className="grid gap-4 lg:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <TeamReportPanel workspaceId={selectedWsId} />
                   {selectedProjectId && (
                     <SprintHealthCard
