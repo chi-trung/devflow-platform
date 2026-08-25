@@ -188,13 +188,20 @@ export function BoardPage() {
     [workspaceId, projectId],
   );
 
+  // /activities returns a PagedResult ({ items, totalCount, ... }), not a
+  // flat array — unwrap through pagedItems or ActivityDrawer's activities.map
+  // crashes the page ("n.map is not a function").
   const {
-    data: activities,
+    data: activitiesRaw,
     loading: activitiesLoading,
     reload: reloadActivities,
-  } = useApi<ActivityResponse[]>(
+  } = useApi<unknown>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/activities`),
     [workspaceId, projectId],
+  );
+  const activities = useMemo(
+    () => pagedItems<ActivityResponse>(activitiesRaw),
+    [activitiesRaw],
   );
 
   // Custom-field values for the whole project in ONE request. The board used
