@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
 import { RequireAuth } from "./auth/RequireAuth";
 import { ToastProvider } from "./components/ui/ToastProvider";
@@ -35,6 +35,15 @@ function LoadingFallback() {
   );
 }
 
+// Remounts WorkspacePage when the workspace param changes so no state (project
+// lists, stats, members) from the previous workspace can leak into the next
+// one. Without this, the N+1 stats fetch would call /tasks with an old project
+// list + a new workspaceId → spurious 404s in the console (workspace mismatch).
+function KeyedWorkspacePage() {
+  const { workspaceId } = useParams();
+  return <WorkspacePage key={workspaceId} />;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -52,7 +61,7 @@ export default function App() {
                 <Route path="/saved-searches" element={<SavedSearchesPage />} />
                 <Route
                   path="/workspaces/:workspaceId"
-                  element={<WorkspacePage />}
+                  element={<KeyedWorkspacePage />}
                 />
                 <Route
                   path="/workspaces/:workspaceId/projects/:projectId"
