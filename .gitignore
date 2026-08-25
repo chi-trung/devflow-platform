@@ -70,3 +70,9 @@ pgdata/
 .aider*
 .kilo/
 frontend/_apply.cjs
+
+# Playwright E2E artifacts
+node_modules/
+playwright-report/
+test-results/
+pw-out.json

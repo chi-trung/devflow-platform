@@ -1,0 +1,12 @@
+{
+  "name": "devflow-e2e",
+  "private": true,
+  "description": "Playwright E2E smoke tests for DevFlow (root package — the frontend has its own package.json under frontend/)",
+  "scripts": {
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "e2e:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  }
+}
