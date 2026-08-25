@@ -453,6 +453,21 @@ export function BoardPage() {
     });
   }
 
+  function handleSelectAllInColumn(status: TaskItemResponse["status"], select: boolean) {
+    const columnTaskIds = visibleTasks
+      .filter((t) => t.status === status)
+      .map((t) => t.id);
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (select) {
+        columnTaskIds.forEach((id) => next.add(id));
+      } else {
+        columnTaskIds.forEach((id) => next.delete(id));
+      }
+      return next;
+    });
+  }
+
   async function runBulk(
     action: () => Promise<void>,
     successMessage: string,
@@ -954,6 +969,7 @@ export function BoardPage() {
                     selectionMode={selectedIds.size > 0}
                     selectedIds={selectedIds}
                     onToggleSelect={toggleSelect}
+                    onSelectAllInColumn={(select) => handleSelectAllInColumn(status, select)}
                     workspaceId={workspaceId}
                     projectId={projectId}
                     onEstimationSaved={handleEstimationSaved}

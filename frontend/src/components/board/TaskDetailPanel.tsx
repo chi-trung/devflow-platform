@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { X, Paperclip, Download, Trash2, BookmarkPlus, Eye } from "lucide-react";
-import { api, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask } from "../../lib/api";
+import { X, Paperclip, Download, Trash2, BookmarkPlus, Eye, RefreshCw } from "lucide-react";
+import { api, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask, uploadTaskAttachment } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { ErrorAlert } from "../ui/ErrorAlert";
 import { Avatar } from "../ui/Avatar";
@@ -66,6 +66,7 @@ export function TaskDetailPanel({
   const [attachments, setAttachments] = useState<TaskAttachmentResponse[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadQueue, setUploadQueue] = useState<{ file: File; progress: number; error: string | null }[]>([]);
   const [watching, setWatching] = useState(false);
   const [watchingLoading, setWatchingLoading] = useState(true);
   const { push } = useToast();
@@ -173,36 +174,107 @@ export function TaskDetailPanel({
     };
   }, [task.id, workspaceId, projectId]);
 
-  async function uploadFile(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+  const MAX_QUEUE_SIZE = 5;
+  const BLOCKED_EXTENSIONS = new Set([
+    ".exe",
+    ".dll",
+    ".bat",
+    ".sh",
+    ".cmd",
+    ".ps1",
+    ".js",
+    ".vbs",
+    ".scr",
+  ]);
 
-    setUploading(true);
+  function getFileExtension(fileName: string): string {
+    const lastDot = fileName.lastIndexOf(".");
+    if (lastDot === -1) return "";
+    return fileName.slice(lastDot).toLowerCase();
+  }
+
+  function validateFile(file: File): string | null {
+    if (file.size > MAX_FILE_SIZE) {
+      return t("board.fileTooLarge", { maxSize: "10 MB" });
+    }
+    if (BLOCKED_EXTENSIONS.has(getFileExtension(file.name))) {
+      return t("board.fileTypeNotAllowed");
+    }
+    return null;
+  }
+
+  async function processUpload(item: { file: File; progress: number; error: string | null }) {
+    setUploadQueue((curr) =>
+      curr.map((q) => (q.file === item.file ? { ...q, error: null } : q)),
+    );
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch(
-        `/api/v1/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/attachments`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${tokens.access}`,
-          },
-          body: formData,
+      const created = await uploadTaskAttachment(
+        workspaceId,
+        projectId,
+        task.id,
+        item.file,
+        (progress) => {
+          setUploadQueue((curr) =>
+            curr.map((q) => (q.file === item.file ? { ...q, progress } : q)),
+          );
         },
       );
-
-      if (!res.ok) throw new Error(t("board.uploadFailed"));
-      const created = (await res.json()) as TaskAttachmentResponse;
       setAttachments((curr) => [created, ...curr]);
       push(t("task.fileAttached"));
-    } catch {
-      push(t("board.uploadFailed"), "error");
-    } finally {
-      setUploading(false);
-      event.target.value = "";
+      setUploadQueue((curr) => curr.filter((q) => q.file !== item.file));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t("board.uploadFailed");
+      setUploadQueue((curr) =>
+        curr.map((q) => (q.file === item.file ? { ...q, error: message } : q)),
+      );
     }
+  }
+
+  async function uploadFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
+
+    const validFiles: File[] = [];
+    for (const file of files) {
+      const error = validateFile(file);
+      if (error) {
+        push(error, "error");
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (validFiles.length === 0) {
+      event.target.value = "";
+      return;
+    }
+
+    setUploading(true);
+    const newQueue = validFiles.map((file) => ({
+      file,
+      progress: 0,
+      error: null as string | null,
+    }));
+
+    setUploadQueue((curr) => {
+      const combined = [...curr, ...newQueue];
+      return combined.slice(-MAX_QUEUE_SIZE);
+    });
+
+    for (const item of newQueue) {
+      await processUpload(item);
+    }
+
+    setUploading(false);
+    event.target.value = "";
+  }
+
+  async function retryUpload(item: { file: File; progress: number; error: string | null }) {
+    setUploadQueue((curr) =>
+      curr.map((q) => (q.file === item.file ? { ...q, progress: 0, error: null } : q)),
+    );
+    await processUpload(item);
   }
 
   async function downloadAttachment(att: TaskAttachmentResponse) {
@@ -605,11 +677,47 @@ export function TaskDetailPanel({
             </div>
 
             <div className="flex flex-col gap-1.5">
+              {uploadQueue.map((item) => (
+                <div
+                  key={item.file.name + item.file.size}
+                  className="rounded-lg border border-border/60 bg-card p-2 text-xs"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-medium text-foreground">
+                      {item.file.name}
+                    </span>
+                    <span className="shrink-0 text-[10px] font-mono text-muted-foreground">
+                      {Math.round(item.file.size / 1024)} KB
+                    </span>
+                  </div>
+                  {item.error ? (
+                    <div className="mt-1 flex items-center gap-2">
+                      <p className="text-xs text-destructive">{item.error}</p>
+                      <button
+                        type="button"
+                        onClick={() => void retryUpload(item)}
+                        className="inline-flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <RefreshCw className="size-3" aria-hidden />
+                        {t("task.retry")}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
+                      <div
+                        className="h-full bg-primary transition-all duration-150"
+                        style={{ width: `${Math.round(item.progress * 100)}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+
               {attachmentsLoading ? (
                 <p className="text-xs text-muted-foreground">
                   {t("task.loading")}
                 </p>
-              ) : attachments.length === 0 ? (
+              ) : attachments.length === 0 && uploadQueue.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
                   {t("task.noAttachments")}
                 </p>
