@@ -20,6 +20,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<Project> Projects => Set<Project>();
 
+    public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
+
     public DbSet<TaskItem> TaskItems => Set<TaskItem>();
 
     public DbSet<Comment> Comments => Set<Comment>();

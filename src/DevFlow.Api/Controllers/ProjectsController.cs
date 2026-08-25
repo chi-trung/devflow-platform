@@ -148,4 +148,82 @@ public sealed class ProjectsController(ISender sender) : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpGet("{projectId:guid}/members")]
+    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.ProjectMembers.ProjectMemberResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ListMembers(
+        Guid workspaceId,
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        var members = await sender.Send(
+            new Application.Features.ProjectMembers.ListProjectMembersQuery(workspaceId, projectId),
+            cancellationToken);
+
+        return Ok(members);
+    }
+
+    [HttpPost("{projectId:guid}/members")]
+    [ProducesResponseType(typeof(Application.Features.ProjectMembers.ProjectMemberResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> AddMember(
+        Guid workspaceId,
+        Guid projectId,
+        AddProjectMemberRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new Application.Features.ProjectMembers.AddProjectMemberCommand(
+            workspaceId,
+            projectId,
+            request.UserId,
+            request.Role);
+
+        var member = await sender.Send(command, cancellationToken);
+
+        return StatusCode(StatusCodes.Status201Created, member);
+    }
+
+    [HttpPatch("{projectId:guid}/members/{userId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateMemberRole(
+        Guid workspaceId,
+        Guid projectId,
+        Guid userId,
+        UpdateProjectMemberRoleRequest request,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.ProjectMembers.UpdateProjectMemberRoleCommand(
+                workspaceId,
+                projectId,
+                userId,
+                request.Role),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpDelete("{projectId:guid}/members/{userId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RemoveMember(
+        Guid workspaceId,
+        Guid projectId,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.ProjectMembers.RemoveProjectMemberCommand(workspaceId, projectId, userId),
+            cancellationToken);
+
+        return NoContent();
+    }
 }
