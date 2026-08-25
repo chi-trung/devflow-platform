@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅** | **Sprint 29 Complete ✅** | **Sprint 30 In Progress 🚧**
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅** | **Sprint 29 Complete ✅** | **Sprint 30 Complete ✅**
 
 ---
 
@@ -21,7 +21,7 @@
 | **Sprint 27** | Search & Event Coverage (DB-level search + pagination + Email 4 events + Restore UI + Prefs UI + DB backup) | ✅ Agent A: A27.1 global search rewrite — PR #121, A27.2 review/merge; Agent B: B27.1 email templates+toggles, B27.2 unit tests — PR #122 | ✅ Agent C: C27.1 paginated search UI, C27.2 archived-project list + Restore UI — PR #123; Agent D: D27.1 prefs settings UI, D27.2 DB backup automation — PR #120 | Complete ✅ |
 | **Sprint 28** | Webhook Reliability & Project Mgmt UX (DLQ fix + admin retry + test coverage + reporting/search polish + project settings UI + analytics tiles + notification mentions) | ✅ Agent A: A28.1 webhook DLQ fix + admin retry endpoint — PR #124; A28.2 review/merge — PRs #125, #127, #128, #129, #130; Agent B: B28.1 tests Bulk/Export/Import/Users, B28.2 reporting trends + search sort/custom-field — PR #125 | ✅ Agent C: C28.1 project settings UI + Dialog/EmptyState, C28.2 search filter parity + sort — PR #129; Agent D: D28.1 workspace analytics tiles, D28.2 mention filter + settings link + vi.json — PR #127 | Complete ✅ |
 | **Sprint 29** | File Upload Safety & Settings Polish (upload size/type limits + workspace/sprint/template edit + bulk ops UX + attachment upload UX + vi.json completion + notification badge) | ✅ Agent A: A29.1 file upload size limit + type whitelist; A29.2 Workspace/Sprint/Template PUT endpoints; A29.3 review/merge; Agent B: B29.1 attachment pagination + cache headers, B29.2 notification batch-delete + unread-count, B29.3 tests | ✅ Agent C: C29.1 bulk ops UI (select-all + batch action bar), C29.2 attachment upload progress/error/retry; Agent D: D29.1 workspace/sprint/template edit UI, D29.2 vi.json 122 keys + AppShell badge | Complete ✅ |
-| **Sprint 30** | Webhook Admin UI, Watcher List, Security Fixes & Polish (template scoping fix + README/docs + watchers query/UI + integration tests + DLQ admin UI + EmptyState adoption + outbox i18n) | 🚧 Agent A: A30.1 template scoping fix, A30.2 README/docs, A30.3 review/merge; Agent B: B30.1 GetTaskWatchersQuery + endpoint, B30.2 integration tests | 🚧 Agent C: C30.1 watcher list UI, C30.2 DLQ admin UI; Agent D: D30.1 EmptyState adoption, D30.2 outbox i18n | In Progress 🚧 |
+| **Sprint 30** | Webhook Admin UI, Watcher List, Security Fixes & Polish (template scoping fix + README/docs + watchers query/UI + integration tests + DLQ admin UI + EmptyState adoption + outbox i18n) | ✅ Agent A: A30.1 template scoping fix — PR #145, A30.2 README/docs — PR #146, A30.3 review/merge — PRs #147, #148; Agent B: B30.1 GetTaskWatchersQuery + endpoint, B30.2 integration tests — PR #147 | ✅ Agent C: C30.1 watcher list UI, C30.2 DLQ admin UI; Agent D: D30.1 EmptyState adoption, D30.2 outbox i18n — PR #148 | Complete ✅ |
 
 ---
 
@@ -410,29 +410,30 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-### 🚀 Sprint 30 — Webhook Admin UI, Watcher List, Security Fixes & Polish 🚧 In Progress
+### 🚀 Sprint 30 — Webhook Admin UI, Watcher List, Security Fixes & Polish ✅ Complete
 
 **Goal:** Bịt P0 authorization gap (template update không kiểm tra project scoping), hiện thực hóa DLQ admin UI (backend đã có từ A28.1 nhưng chưa có UI), thêm watcher list (backend + UI), mở rộng integration tests, áp dụng EmptyState vào 5 pages, cập nhật README roadmap đã lỗi thời.
 
 > **Plan:** `docs/sprint30/plan.md` — 8 tasks / 4 agents.
 > **Prompts:** `docs/sprint30/prompts/prompt-{B,C,D}.md`.
+> **PRs:** #145 (A30.1), #146 (A30.2), #147 (B30.1+2), #148 (C30.1+2 + D30.1+2).
 
-#### 🚀 Agent A (Team Lead — Backend Security + Docs) 🚧
-- [x] **A30.1: Template scoping fix** — `UpdateTemplateCommandHandler` verify `template.ProjectId == request.ProjectId` → NotFound (mirror `UpdateSprintCommandHandler`); 2 unit tests mới.
-- [x] **A30.2: README/docs cleanup** — `README.md` 50→303 unit tests + tick shipped features; `docs/sprint30/plan.md` + prompts.
-- [ ] **A30.3: Review & merge B/C/D PRs** — chạy `dotnet test`/`npm run build` + i18n parity; update AGENT_STATUS.md.
+#### 🚀 Agent A (Team Lead — Backend Security + Docs) ✅
+- [x] **A30.1: Template scoping fix** — `UpdateTemplateCommandHandler` verify `template.ProjectId == request.ProjectId` → NotFound (mirror `UpdateSprintCommandHandler`); 2 unit tests mới. *(PR #145 merged)*
+- [x] **A30.2: README/docs cleanup** — `README.md` 50→303 unit tests + tick shipped features; `docs/sprint30/plan.md` + prompts. *(PR #146 merged)*
+- [x] **A30.3: Review & merge B/C/D PRs** — chạy `dotnet test`/`npm run build` + i18n parity; fix review findings (username/displayName mapping, integration-test DB race) trước khi merge. *(PRs #147, #148 merged)*
 
-#### 🤖 Agent B (Backend — Watchers + Integration Tests) 🚧
-- [ ] **B30.1: `GetTaskWatchersQuery` + endpoint** — `GET /tasks/{taskId}/watchers` (userId/username/displayName), handler mirrors `IsWatchingTaskQueryHandler`, bulk `GetDisplayNamesAsync`, ≥4 unit tests.
-- [ ] **B30.2: `ProjectAndSprintIntegrationTests.cs`** — flow register→login→workspace→project→sprint→task→PATCH InProgress; mirror `AuthAndWorkspaceIntegrationTests` + Docker guard.
+#### 🤖 Agent B (Backend — Watchers + Integration Tests) ✅
+- [x] **B30.1: `GetTaskWatchersQuery` + endpoint** — `GET /tasks/{taskId}/watchers` (userId/username/displayName), handler mirrors `IsWatchingTaskQueryHandler`, bulk `GetByIdsAsync`, 5 unit tests. *(PR #147 merged; fix: return real username via new `IUserRepository.GetByIdsAsync`)*
+- [x] **B30.2: `ProjectAndSprintIntegrationTests.cs`** — flow register→login→workspace→project→sprint→task→PATCH InProgress; shared collection fixture fix (two hosts raced on EF Migrate → `pg_type_typname_nsp_index`); 308/308 unit tests + integration green. *(PR #147 merged)*
 
-#### 🎨 Agent C (Frontend — Watcher List + DLQ UI) 🚧
-- [ ] **C30.1: Watcher list in `TaskDetailPanel`** — `getTaskWatchers` API, avatars + names + count, refetch sau toggle watch.
-- [ ] **C30.2: DLQ admin UI trên `WebhooksPage`** — section "Dead Letter Queue" (Admin-gated), list dead-lettered messages + per-row Replay, reuse EmptyState.
+#### 🎨 Agent C (Frontend — Watcher List + DLQ UI) ✅
+- [x] **C30.1: Watcher list in `TaskDetailPanel`** — `getTaskWatchers` API, avatars + names + count, refetch sau toggle watch. *(PR #148 merged)*
+- [x] **C30.2: DLQ admin UI trên `WebhooksPage`** — section "Dead Letter Queue" (Admin-gated), list dead-lettered messages + per-row Replay, reuse EmptyState. *(PR #148 merged)*
 
-#### 🚀 Agent D (Frontend + i18n — EmptyState + DLQ i18n) 🚧
-- [ ] **D30.1: EmptyState adoption** — 5 pages (Activities/Board/CustomFields/GitHub/MyTasks) dùng `<EmptyState>` component; 21 file còn lại defer Sprint 31+.
-- [ ] **D30.2: outbox i18n keys** — `outbox.*` en+vi (dlqTitle/dlqDescription/dlqEmpty/replay/...), i18n parity green.
+#### 🚀 Agent D (Frontend + i18n — EmptyState + DLQ i18n) ✅
+- [x] **D30.1: EmptyState adoption** — 5 pages (Activities/Board/CustomFields/GitHub/MyTasks) dùng `<EmptyState>` component; 21 file còn lại defer Sprint 31+. *(PR #148 merged)*
+- [x] **D30.2: outbox i18n keys** — `outbox.*` en+vi (dlqTitle/dlqDescription/dlqEmpty/replay/...), i18n parity green. *(PR #148 merged)*
 
 ---
 
@@ -450,5 +451,5 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-*DevFlow Architecture Team — Updated 2026-08-25 (Sprint 30 In Progress 🚧)*
+*DevFlow Architecture Team — Updated 2026-08-25 (Sprint 30 Complete ✅)*
 
