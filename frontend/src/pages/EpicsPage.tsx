@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Plus, Pencil, Trash2, GripVertical, List, Flag, Link2, X, Milestone as MilestoneIcon } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, GripVertical, List, Flag, Link2, X } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";

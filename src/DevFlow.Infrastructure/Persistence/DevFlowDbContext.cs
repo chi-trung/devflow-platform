@@ -34,6 +34,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<Milestone> Milestones => Set<Milestone>();
 
+    public DbSet<KnowledgeEntry> KnowledgeEntries => Set<KnowledgeEntry>();
+
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
 
     public DbSet<TaskAttachment> TaskAttachments => Set<TaskAttachment>();

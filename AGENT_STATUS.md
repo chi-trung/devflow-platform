@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅** | **Sprint 29 Complete ✅** | **Sprint 30 Complete ✅** | **Sprint 31 Complete ✅** | **Sprint 32 Complete ✅**
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅** | **Sprint 29 Complete ✅** | **Sprint 30 Complete ✅** | **Sprint 31 Complete ✅** | **Sprint 32 Complete ✅** | **Sprint 33 Complete ✅**
 
 ---
 
@@ -24,6 +24,7 @@
 | **Sprint 30** | Webhook Admin UI, Watcher List, Security Fixes & Polish (template scoping fix + README/docs + watchers query/UI + integration tests + DLQ admin UI + EmptyState adoption + outbox i18n) | ✅ Agent A: A30.1 template scoping fix — PR #145, A30.2 README/docs — PR #146, A30.3 review/merge — PRs #147, #148; Agent B: B30.1 GetTaskWatchersQuery + endpoint, B30.2 integration tests — PR #147 | ✅ Agent C: C30.1 watcher list UI, C30.2 DLQ admin UI; Agent D: D30.1 EmptyState adoption, D30.2 outbox i18n — PR #148 | Complete ✅ |
 | **Sprint 31** | Project-Level RBAC, Outbox Admin Batch, EmptyState Sweep & Depth Polish (ProjectMember entity + CQRS + epic deps + project auth guard + member UI + DLQ batch + EmptyState sweep + epic deps UI + i18n) | ✅ A31.1 ProjectMember entity/migration/repo, A31.2 member CQRS endpoints, A31.3 review/merge — PR #150; B31.1 outbox replay-all/purge, B31.2 epic deps, B31.3 ProjectAuthorizationBehavior — PR #151 | ✅ C31.1 project member UI, C31.2 DLQ Replay-all/Purge buttons — PR #152; D31.1 EmptyState sweep (~20 files), D31.2 epic deps UI + i18n — PR #153 | Complete ✅ |
 | **Sprint 32** | Visual Identity & Product Polish (De-AI-fy) — Dashboard greeting + `Logo` brand mark + workspace/project emoji + coverColor + attachment thumbnails + illustrations + auth hero + motion + presence dots | ✅ A32.1 dashboard greeting, A32.2 `Logo`/`BrandMark` component + favicon, A32.3 review/merge — PR #155; B32.1 emoji + coverColor fields/migration, B32.2 `AttachmentSummary` — PR #156 | ✅ C32.1 EmptyState illustrations, C32.2 AuthLayout hero, C32.3 emoji UI + `Logo` adoption, C32.4 cover gradients, C32.5 micro-animations, C32.6 presence dot, C32.7 attachment thumbnails — PR #157 | Complete ✅ |
+| **Sprint 33** | Compounding Knowledge Base (landing-parity C) — `KnowledgeEntry` entity (ADR/Pattern/Runbook) + lifecycle + weight + full CRUD/supersede API + **auto-capture Draft Runbook when a task ships** + Knowledge page/cards/supersede UI + i18n | ✅ C1 entity/config/migration/repository, C1b CQRS + `KnowledgeController` + auto-capture hook in `UpdateTaskItemCommandHandler` + 8 handler tests + auto-capture tests — PR #187 | ✅ C2 `KnowledgePage` + `KnowledgeEntryCard` + create/edit + supersede UI + `knowledge.*`/`nav.knowledge` en+vi + nav wiring — PR #187 | Complete ✅ |
 
 ---
 
@@ -494,6 +495,21 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
+### 🚀 Sprint 33 — Compounding Knowledge Base (Wiki / ADR / Runbook + Auto-Capture) ✅ Complete
+
+**Goal:** Đóng gap landing ↔ app — *"Compounding wiki — ADRs, patterns & runbooks captured automatically as work ships"* / *"Iron Law: anything shipped is documented"*. App không có gì: không `KnowledgeEntry`, không endpoint ADR/runbook, không ghi quyết định khi task ship.
+
+> **Plan:** `docs/sprint33/plan.md` (wise-prancing-ritchie.md, "PR 3 — Sprint C").
+> **PR:** #187 (C1 + C1b + C2 + C3 — một PR fullstack).
+
+#### 🚀 Agent A (Team Lead — Fullstack) ✅
+- [x] **C1: `KnowledgeEntry` entity + migration + repository** — `KnowledgeType` (Adr/Pattern/Runbook), `KnowledgeStatus` (Draft/Proposed/Accepted/Superseded/Deprecated), `Weight` 0..1 (ưu tiên cho AI planner Sprint E), `TaskId` link tới task, self-FK `SupersededById`; bảng `knowledge_entries`, migration `20260826060339_AddKnowledgeEntries`; `IKnowledgeRepository` + `KnowledgeRepository` (order Weight desc). *(PR #187)*
+- [x] **C1b: Knowledge CQRS + controller + auto-capture hook** — Create/List/Update/Delete/Supersede handlers + `KnowledgeController` (`/knowledge`, `POST /knowledge/{id}/supersede`) + `KnowledgeRequests`; **auto-capture**: trong `UpdateTaskItemCommandHandler`, khi task chuyển sang `Done` → tạo Draft Runbook từ title/description + tag "auto-captured" (cùng transaction với activity log); 8 handler tests + auto-capture assertion. *(PR #187)*
+- [x] **C2: Knowledge page + cards + supersede UI** — `KnowledgePage` (active/retired groups, create/edit Dialog, supersede Dialog, ConfirmDialog, EmptyState), `KnowledgeEntryCard` (status/type badge + weight chip + auto-captured indicator), `knowledge.*` + `nav.knowledge` en+vi, route `/knowledge` + nav item. *(PR #187)*
+- [x] **C3: Docs + merge** — `docs/sprint33/plan.md`, AGENT_STATUS; verified `dotnet test` 362/362 + `npm run build` + `npm test` 30/30 trước khi squash-merge. *(PR #187 merged)*
+
+---
+
 ## 🔒 Multi-Agent Coordination Guidelines
 
 1. **Branch Prefixes:**
@@ -508,5 +524,5 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-*DevFlow Architecture Team — Updated 2026-08-25 (Sprint 32 Complete ✅)*
+*DevFlow Architecture Team — Updated 2026-08-26 (Sprint 33 Complete ✅)*
 
