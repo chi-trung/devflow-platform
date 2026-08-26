@@ -153,6 +153,46 @@ body {
   animation: shimmer 1.4s linear infinite;
 }
 
+/* ── Landing page hero animations ─────────────────────────────────────── */
+
+/* Draws the hero pipeline connector line (stroke-dashoffset loop). */
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.animate-dash-flow {
+  animation: dash-flow 1.2s linear infinite;
+}
+
+/* Gentle vertical drift for decorative float cards in the hero. */
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+/* Soft glow pulse for the active stage node in the hero diagram. */
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 2.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
