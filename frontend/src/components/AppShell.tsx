@@ -19,6 +19,8 @@ import { Avatar } from "./ui/Avatar";
 import { Logo } from "./ui/Logo";
 import { EmojiTile } from "./ui/EmojiCover";
 import { CommandPalette } from "./CommandPalette";
+import { AiFloatingButton } from "./ai/AiFloatingButton";
+import type { AiPageContext } from "./ai/AiSuggestedPrompts";
 import { ApiStatusDot } from "./user/ApiStatusDot";
 import { ThemeToggle } from "./ui/ThemeToggle";
 import { NotificationsPanel } from "./notifications/NotificationsPanel";
@@ -39,6 +41,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const workspaceId = location.pathname.match(
     /^\/workspaces\/([0-9a-f-]{36})/i,
   )?.[1];
+
+  const projectId = location.pathname.match(
+    /^\/workspaces\/[0-9a-f-]{36}\/projects\/([0-9a-f-]{36})/i,
+  )?.[1];
+
+  const pageContext = useMemo((): AiPageContext => {
+    if (!workspaceId) return "workspace";
+    const path = location.pathname;
+    if (/\/epics(\/|$)/i.test(path) && /\/projects\//i.test(path))
+      return "epics";
+    if (/\/sprints(\/|$)/i.test(path) && /\/projects\//i.test(path))
+      return "sprints";
+    if (/\/projects\//i.test(path) && !/\/sprints|\/epics/i.test(path))
+      return "board";
+    if (path.endsWith("/dashboard") || path === `/workspaces/${workspaceId}`)
+      return "dashboard";
+    return "workspace";
+  }, [workspaceId, location.pathname]);
 
   useEffect(() => {
     setDrawerOpen(false);
@@ -391,6 +411,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onClose={() => setPaletteOpen(false)}
         workspaceId={workspaceId}
       />
+
+      {workspaceId && (
+        <AiFloatingButton
+          workspaceId={workspaceId}
+          projectId={projectId}
+          context={pageContext}
+        />
+      )}
     </div>
   );
 }

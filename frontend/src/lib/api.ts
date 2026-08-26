@@ -49,6 +49,7 @@ import type {
   WebhookResponse,
   WebhookTestResponse,
   AiPlanResponse,
+  AiExecuteResponse,
 } from "../types/api";
 
 // In dev the Vite proxy forwards /api to localhost; in production
@@ -1678,5 +1679,37 @@ export async function applyAiPlan(
   return api<AiPlanResponse>(
     `/workspaces/${workspaceId}/projects/${projectId}/ai/${planId}/apply`,
     { method: "POST" },
+  );
+}
+
+// ── AI assistant (floating) ─────────────────────────────────────────────
+// POST .../workspaces/{workspaceId}/ai/execute?projectId=...
+//   body { prompt, pageContext } -> AiExecuteResponse
+// The assistant can create tasks/sprints/epics, set deadlines, assign,
+// etc. projectId is optional; the backend falls back to the workspace's
+// first project when the prompt does not name one.
+
+export interface AiExecuteInput {
+  prompt: string;
+  pageContext?: string | null;
+}
+
+export async function aiExecute(
+  workspaceId: string,
+  projectId: string | undefined,
+  input: AiExecuteInput,
+): Promise<AiExecuteResponse> {
+  const query = projectId
+    ? `?projectId=${encodeURIComponent(projectId)}`
+    : "";
+  return api<AiExecuteResponse>(
+    `/workspaces/${workspaceId}/ai/execute${query}`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        prompt: input.prompt,
+        pageContext: input.pageContext ?? null,
+      }),
+    },
   );
 }
