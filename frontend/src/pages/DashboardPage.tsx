@@ -16,6 +16,11 @@ import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { EmptyState } from "../components/ui/EmptyState";
 import { EmptyTasksIllustration } from "../components/illustrations/EmptyStateIllustrations";
+import {
+  isOnboardingDone,
+  OnboardingTour,
+  TourReopenButton,
+} from "../components/onboarding/OnboardingTour";
 import { StatsCards } from "../components/dashboard/StatsCards";
 import { CumulativeFlow } from "../components/dashboard/CumulativeFlow";
 import { TaskDistribution } from "../components/dashboard/TaskDistribution";
@@ -52,6 +57,20 @@ export function DashboardPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [selectedWsId, setSelectedWsId] = useState("");
+
+  // First-login onboarding tour. Auto-opens once (localStorage flag) after the
+  // dashboard data has rendered; can be reopened from the greeting row.
+  const [tourOpen, setTourOpen] = useState(false);
+  const forceTour = useMemo(
+    () => new URLSearchParams(window.location.search).get("tour") === "1",
+    [],
+  );
+  useEffect(() => {
+    if (!tourOpen && (forceTour || !isOnboardingDone())) {
+      setTourOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWsId]);
 
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
@@ -170,6 +189,7 @@ export function DashboardPage() {
               <div className="flex flex-wrap items-center gap-2">
                 {projects.length > 0 && (
                   <select
+                    data-tour="project-select"
                     aria-label={t("dashboard.project")}
                     value={selectedProjectId}
                     onChange={(event) => setSelectedProjectId(event.target.value)}
@@ -183,6 +203,7 @@ export function DashboardPage() {
                   </select>
                 )}
                 <select
+                  data-tour="workspace-select"
                   aria-label={t("dashboard.workspace")}
                   value={selectedWsId}
                   onChange={(event) => setSelectedWsId(event.target.value)}
@@ -195,11 +216,15 @@ export function DashboardPage() {
                   ))}
                 </select>
                 {!creating && (
-                  <Button onClick={() => setCreating(true)}>
+                  <Button
+                    data-tour="new-workspace"
+                    onClick={() => setCreating(true)}
+                  >
                     <Plus className="size-4" aria-hidden />
                     {t("dashboard.newWorkspace")}
                   </Button>
                 )}
+                <TourReopenButton onOpen={() => setTourOpen(true)} />
               </div>
             </>
           ) : (
@@ -290,7 +315,9 @@ export function DashboardPage() {
               </div>
             ) : dashboard ? (
               <>
-                <StatsCards data={dashboard.data} className="mb-4" />
+                <div data-tour="stats">
+                  <StatsCards data={dashboard.data} className="mb-4" />
+                </div>
                 {selectedProjectId && (
                   <DashboardCycleLeadChart
                     workspaceId={selectedWsId}
@@ -309,10 +336,12 @@ export function DashboardPage() {
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <TeamReportPanel workspaceId={selectedWsId} />
                   {selectedProjectId && (
-                    <SprintHealthCard
-                      workspaceId={selectedWsId}
-                      projectId={selectedProjectId}
-                    />
+                    <div data-tour="sprint-health">
+                      <SprintHealthCard
+                        workspaceId={selectedWsId}
+                        projectId={selectedProjectId}
+                      />
+                    </div>
                   )}
                 </div>
                 {dashboard.data.upcomingDeadlines.length > 0 ? (
@@ -408,6 +437,7 @@ export function DashboardPage() {
           </ul>
         )}
       </div>
+      <OnboardingTour open={tourOpen} onClose={() => setTourOpen(false)} />
     </AppShell>
   );
 }

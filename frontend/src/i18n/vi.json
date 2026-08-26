@@ -1,4 +1,151 @@
 {
+  "landing": {
+    "nav": {
+      "features": "Tính năng",
+      "pricing": "Bảng giá",
+      "docs": "Tài liệu",
+      "login": "Đăng nhập",
+      "signup": "Bắt đầu miễn phí"
+    },
+    "heroEyebrow": "WORKFLOW · TRI THỨC TÍCH LŨY",
+    "heroTitle": "Luồng làm việc AI biết ghi nhớ",
+    "heroSubtitle": "Biến ý tưởng thành công việc hoàn thành với các giai đoạn có cấu trúc, một AI agent lập kế hoạch và triển khai, cùng kho tri thức tích lũy theo từng bản phát hành.",
+    "ctaStart": "Bắt đầu miễn phí",
+    "ctaViewLogin": "Đăng nhập",
+    "stages": {
+      "idea": "Ý tưởng",
+      "planning": "Lên kế hoạch",
+      "approved": "Đã duyệt",
+      "inProgress": "Đang làm",
+      "review": "Đánh giá",
+      "done": "Hoàn thành"
+    },
+    "pipelineTitle": "Một luồng có cấu trúc, từ ý tưởng đến khi hoàn thành",
+    "pipelineSubtitle": "Mọi task đều đi qua các giai đoạn giống nhau, để không gì bị bỏ sót và mọi quyết định đều để lại dấu vết.",
+    "featuresTitle": "Mọi thứ bạn cần để ship một cách tự tin",
+    "featuresSubtitle": "Một quy trình hoàn chỉnh cho các đội muốn có cấu trúc mà không rườm rà.",
+    "features": {
+      "flows": {
+        "title": "Luồng có cấu trúc",
+        "desc": "Pipeline 7 giai đoạn — Ý tưởng, Lên kế hoạch, Duyệt, Sẵn sàng, Đang làm, Đánh giá, Hoàn thành — với tiêu chí chấp nhận và nhật ký kiểm toán tự động.",
+        "b1": "Tiêu chí chấp nhận ở mọi giai đoạn",
+        "b2": "Nhật ký kiểm toán tự động mọi thay đổi",
+        "b3": "Chuyển trạng thái tự động khi công việc tiến triển"
+      },
+      "ai": {
+        "title": "Tích hợp AI Agent",
+        "desc": "Một AI agent lập kế hoạch công việc và viết code, được kiểm soát bởi tri thức của đội bạn. Bật tự duyệt để có một luồng hoàn toàn tự động.",
+        "b1": "Lập kế hoạch có kiểm soát tri thức",
+        "b2": "Bật/tắt tự duyệt để tự chủ",
+        "b3": "MCP server cho các công cụ của bạn"
+      },
+      "wiki": {
+        "title": "LLM-Wiki tích lũy",
+        "desc": "ADR, pattern và runbook được tự động ghi lại khi công việc hoàn thành. Tri thức của đội bạn tích lũy thay vì bay hơi.",
+        "b1": "Tự động ghi lại ADR & runbook",
+        "b2": "Cảnh báo lệch khi code thay đổi",
+        "b3": "Luật Sắt: mọi thứ ship đều được ghi chép"
+      },
+      "kanban": {
+        "title": "Kanban trực quan",
+        "desc": "Kéo task qua các cột với sự hiện diện thời gian thực, lên kế hoạch sprint và ánh xạ dependency dễ dàng.",
+        "b1": "Kéo thả với sự hiện diện thời gian thực",
+        "b2": "Sprint, bộ lọc và tìm kiếm đã lưu",
+        "b3": "Dependency và blocker trực quan"
+      },
+      "orgs": {
+        "title": "Tổ chức & Đội nhóm",
+        "desc": "Workspace và vai trò mở rộng từ dự án cá nhân đến cả tổ chức — lời mời, phân quyền và kiểm toán đều có sẵn.",
+        "b1": "Workspace phân theo vai trò",
+        "b2": "Mời đồng đội chỉ trong một cú nhấp",
+        "b3": "Kiểm soát truy cập theo dự án"
+      },
+      "releases": {
+        "title": "Quản lý phát hành",
+        "desc": "Theo dõi những gì ship khi nào. Epic, mốc quan trọng và báo cáo giữ cả đội luôn đồng bộ về tiến độ.",
+        "b1": "Epic, mốc quan trọng & roadmap",
+        "b2": "Burndown, vận tốc & cycle time",
+        "b3": "Tích hợp GitHub và webhook"
+      }
+    },
+    "howTitle": "Cách hoạt động",
+    "howSubtitle": "Từ ý tưởng đến khi hoàn thành chỉ trong ba bước.",
+    "how": {
+      "step1": {
+        "label": "BƯỚC 01",
+        "title": "Tạo một Flow",
+        "desc": "Thiết lập dự án, mời đội của bạn và định nghĩa các giai đoạn mà công việc sẽ đi qua."
+      },
+      "step2": {
+        "label": "BƯỚC 02",
+        "title": "AI Lập kế hoạch & Triển khai",
+        "desc": "Agent biến các ý tưởng đã duyệt thành task và code, học hỏi từ các pattern đã được đội bạn ghi chép."
+      },
+      "step3": {
+        "label": "BƯỚC 03",
+        "title": "Đánh giá & Phát hành",
+        "desc": "Con người đánh giá ở mọi điểm gác, rồi ship một cách tự tin — và xem wiki của bạn lớn lên theo từng bản phát hành."
+      }
+    },
+    "ctaTitle": "Sẵn sàng hợp lý hóa quy trình phát triển?",
+    "ctaSubtitle": "Thiết lập flow đầu tiên của bạn trong vài phút — miễn phí, không cần thẻ tín dụng.",
+    "ctaButton": "Bắt đầu miễn phí",
+    "footer": {
+      "product": "Sản phẩm",
+      "features": "Tính năng",
+      "pricing": "Bảng giá",
+      "docs": "Tài liệu",
+      "changelog": "Nhật ký thay đổi",
+      "resources": "Tài nguyên",
+      "blog": "Blog",
+      "community": "Cộng đồng",
+      "help": "Trung tâm trợ giúp",
+      "legal": "Pháp lý",
+      "privacy": "Quyền riêng tư",
+      "terms": "Điều khoản",
+      "copyright": "© 2026 DevFlow"
+    }
+  },
+  "onboarding": {
+    "stepOf": "{{current}}/{{total}} bước",
+    "next": "Tiếp theo",
+    "done": "Xong",
+    "skip": "Bỏ qua",
+    "close": "Đóng tour",
+    "helpButton": "Hướng dẫn",
+    "welcome": {
+      "title": "Chào mừng đến DevFlow 🎉",
+      "desc": "Tour ngắn này giới thiệu những điều cốt lõi. Nhấn Tiếp theo để đi qua bảng điều khiển."
+    },
+    "step1": {
+      "title": "Workspace",
+      "desc": "Chuyển đổi giữa các workspace tại đây. Một workspace chứa đội, dự án và bảng của bạn."
+    },
+    "step2": {
+      "title": "Dự án",
+      "desc": "Chọn dự án bạn muốn làm việc. Mỗi dự án có bảng, sprint và báo cáo riêng."
+    },
+    "step3": {
+      "title": "Workspace mới",
+      "desc": "Tạo workspace mới để bắt đầu một đội, bộ dự án và bảng mới."
+    },
+    "step4": {
+      "title": "Workspace trong thanh bên",
+      "desc": "Nhảy tới bất kỳ workspace nào của bạn từ thanh bên."
+    },
+    "step5": {
+      "title": "Điều hướng",
+      "desc": "Hồ sơ, cài đặt và nhiều thứ khác nằm ở đây."
+    },
+    "step6": {
+      "title": "Sức khỏe Sprint",
+      "desc": "Theo dõi burndown và sức khỏe của sprint đang chạy tại đây."
+    },
+    "step7": {
+      "title": "Thống kê & hoạt động",
+      "desc": "Cycle time, phân bố và hoạt động gần đây cho bạn bức tranh toàn cảnh."
+    }
+  },
   "app": {
     "name": "DevFlow"
   },

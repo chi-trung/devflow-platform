@@ -1,9 +1,10 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
-import { AuthProvider } from "./auth/AuthContext";
+import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { RequireAuth } from "./auth/RequireAuth";
 import { ToastProvider } from "./components/ui/ToastProvider";
 
+const LandingPage = lazy(() => import("./pages/LandingPage").then(m => ({ default: m.LandingPage })));
 const LoginPage = lazy(() => import("./pages/LoginPage").then(m => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import("./pages/RegisterPage").then(m => ({ default: m.RegisterPage })));
 const DashboardPage = lazy(() => import("./pages/DashboardPage").then(m => ({ default: m.DashboardPage })));
@@ -35,6 +36,14 @@ function LoadingFallback() {
   );
 }
 
+// `/` is public: anonymous visitors see the marketing landing page, signed-in
+// users land on the dashboard. Same URL, different content based on auth.
+function HomeRoute() {
+  const { status } = useAuth();
+  if (status === "loading") return <LoadingFallback />;
+  return status === "authenticated" ? <DashboardPage /> : <LandingPage />;
+}
+
 // Remounts WorkspacePage when the workspace param changes so no state (project
 // lists, stats, members) from the previous workspace can leak into the next
 // one. Without this, the N+1 stats fetch would call /tasks with an old project
@@ -51,10 +60,10 @@ export default function App() {
         <ToastProvider>
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
+              <Route path="/" element={<HomeRoute />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route element={<RequireAuth />}>
-                <Route path="/" element={<DashboardPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />

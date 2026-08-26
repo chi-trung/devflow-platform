@@ -219,7 +219,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </kbd>
           </button>
 
-          <section>
+          <section data-tour="sidebar-workspaces">
             <h2 className="px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
               {t("nav.workspaces")}
             </h2>
@@ -311,7 +311,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </section>
         </nav>
 
-        <div className="relative shrink-0 border-t border-border px-3 py-2.5">
+        <div
+          data-tour="sidebar-bottom"
+          className="relative shrink-0 border-t border-border px-3 py-2.5"
+        >
           {currentUser && (
             <div className="flex items-center gap-1.5">
               <ApiStatusDot />
