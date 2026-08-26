@@ -464,7 +464,14 @@
   "definitionOfDone": "Definition of done",
   "dodMet": "DoD met",
   "dodPlaceholder": "type acceptance criteria — one per line",
-  "showMore": "Show {count} more"
+  "showMore": "Show {count} more",
+  "swimlane": "Swimlanes",
+  "swimlaneNone": "None",
+  "swimlaneByAssignee": "Assignee",
+  "swimlaneByEpic": "Epic",
+  "swimlaneGroupBy": "Group by",
+  "swimlaneUnassigned": "Unassigned",
+  "swimlaneNoEpic": "No epic"
  },
  "taskStatus": {
   "Idea": "Idea",

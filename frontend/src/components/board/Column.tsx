@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Lightbulb, PencilRuler, ShieldCheck, CircleDot, Play, Eye, CheckCircle2, Check } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { TaskItemResponse, WorkspaceMemberResponse, CustomFieldValueResponse } from "../../types/api";
+import type { TaskItemResponse, WorkspaceMemberResponse, CustomFieldValueResponse, EpicResponse } from "../../types/api";
 import { TaskCard } from "./TaskCard";
 
 // Cards rendered initially per column; more stream in as the sentinel
@@ -14,6 +14,8 @@ interface ColumnProps {
   status: TaskItemResponse["status"];
   tasks: TaskItemResponse[];
   members: WorkspaceMemberResponse[];
+  epics?: EpicResponse[];
+  swimlaneMode?: "none" | "assignee" | "epic";
   customFieldsByTaskId?: ReadonlyMap<string, CustomFieldValueResponse[]>;
   onDropTask: (
     taskId: string,
@@ -49,6 +51,8 @@ export function Column({
   status,
   tasks,
   members,
+  epics = [],
+  swimlaneMode = "none",
   customFieldsByTaskId,
   onDropTask,
   onDelete,
@@ -100,6 +104,66 @@ export function Column({
     [tasks, visibleCount],
   );
   const hiddenCount = tasks.length - shown.length;
+
+  // Swimlane groups: partition the (windowed) tasks by assignee or epic,
+  // preserving the natural order. Lanes are sorted by label so the layout
+  // stays stable across filters, with "Unassigned"/"No epic" always last.
+  const swimlanes = useMemo(() => {
+    if (swimlaneMode === "none") return null;
+    const groups = new Map<string, TaskItemResponse[]>();
+    for (const task of shown) {
+      const key =
+        swimlaneMode === "assignee"
+          ? task.assigneeId ?? "unassigned"
+          : task.epicId ?? "no-epic";
+      const list = groups.get(key);
+      if (list) list.push(task);
+      else groups.set(key, [task]);
+    }
+    const labelFor = (key: string) => {
+      if (key === "unassigned") return t("board.swimlaneUnassigned");
+      if (key === "no-epic") return t("board.swimlaneNoEpic");
+      if (swimlaneMode === "assignee") {
+        return (
+          members.find((m) => m.userId === key)?.displayName ||
+          members.find((m) => m.userId === key)?.username ||
+          key
+        );
+      }
+      return epics.find((e) => e.id === key)?.name || key;
+    };
+    const keys = [...groups.keys()];
+    keys.sort((a, b) => {
+      const aFallback = a === "unassigned" || a === "no-epic";
+      const bFallback = b === "unassigned" || b === "no-epic";
+      if (aFallback !== bFallback) return aFallback ? 1 : -1;
+      return labelFor(a).localeCompare(labelFor(b));
+    });
+    return keys.map((key) => ({
+      key,
+      label: labelFor(key),
+      tasks: groups.get(key) ?? [],
+    }));
+  }, [shown, swimlaneMode, members, epics, t]);
+
+  function renderTasks(taskList: TaskItemResponse[]) {
+    return taskList.map((task) => (
+      <TaskCard
+        key={task.id}
+        task={task}
+        members={members}
+        customFieldValues={customFieldsByTaskId?.get(task.id)}
+        onDelete={onDelete}
+        onSelect={onSelect}
+        selectionMode={selectionMode}
+        selected={selectedIds?.has(task.id) ?? false}
+        onToggleSelect={onToggleSelect}
+        workspaceId={workspaceId}
+        projectId={projectId}
+        onEstimationSaved={onEstimationSaved}
+      />
+    ));
+  }
 
   return (
     <section
@@ -180,22 +244,25 @@ export function Column({
       </header>
 
       <div className="flex flex-col gap-2">
-        {shown.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            members={members}
-            customFieldValues={customFieldsByTaskId?.get(task.id)}
-            onDelete={onDelete}
-            onSelect={onSelect}
-            selectionMode={selectionMode}
-            selected={selectedIds?.has(task.id) ?? false}
-            onToggleSelect={onToggleSelect}
-            workspaceId={workspaceId}
-            projectId={projectId}
-            onEstimationSaved={onEstimationSaved}
-          />
-        ))}
+        {swimlanes ? (
+          swimlanes.map((lane) => (
+            <div key={lane.key} className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-2 rounded-md bg-elevated/60 px-2 py-1">
+                <span className="min-w-0 flex-1 truncate text-xs font-medium text-muted-foreground">
+                  {lane.label}
+                </span>
+                <span className="shrink-0 rounded bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                  {lane.tasks.length}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1.5 pl-2">
+                {renderTasks(lane.tasks)}
+              </div>
+            </div>
+          ))
+        ) : (
+          renderTasks(shown)
+        )}
         {hiddenCount > 0 && (
           <div ref={sentinelRef} className="pb-1">
             <button
