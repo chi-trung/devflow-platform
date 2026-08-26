@@ -15,6 +15,10 @@ import type {
   MilestoneCreatedResponse,
   MilestoneResponse,
   GitHubIntegrationResponse,
+  KnowledgeEntryCreatedResponse,
+  KnowledgeEntryResponse,
+  CreateKnowledgeEntryRequest,
+  UpdateKnowledgeEntryRequest,
   ImportResultResponse,
   LabelResponse,
   LoginResponse,
@@ -913,6 +917,70 @@ export async function deleteMilestone(
   await api(
     `/workspaces/${workspaceId}/projects/${projectId}/milestones/${milestoneId}`,
     { method: "DELETE" },
+  );
+}
+
+export function getKnowledgeEntries(
+  workspaceId: string,
+  projectId: string,
+): Promise<KnowledgeEntryResponse[]> {
+  return api<KnowledgeEntryResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/knowledge`,
+  );
+}
+
+export async function createKnowledgeEntry(
+  workspaceId: string,
+  projectId: string,
+  input: CreateKnowledgeEntryRequest,
+): Promise<KnowledgeEntryCreatedResponse> {
+  return api<KnowledgeEntryCreatedResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/knowledge`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function updateKnowledgeEntry(
+  workspaceId: string,
+  projectId: string,
+  entryId: string,
+  input: UpdateKnowledgeEntryRequest,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/knowledge/${entryId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function deleteKnowledgeEntry(
+  workspaceId: string,
+  projectId: string,
+  entryId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/knowledge/${entryId}`,
+    { method: "DELETE" },
+  );
+}
+
+export async function supersedeKnowledgeEntry(
+  workspaceId: string,
+  projectId: string,
+  entryId: string,
+  supersededByEntryId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/knowledge/${entryId}/supersede`,
+    {
+      method: "POST",
+      body: JSON.stringify({ supersededByEntryId }),
+    },
   );
 }
 

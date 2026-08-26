@@ -502,6 +502,49 @@ export interface MilestoneCreatedResponse {
   id: string;
 }
 
+export type KnowledgeType = "Adr" | "Pattern" | "Runbook";
+
+export type KnowledgeStatus =
+  | "Draft"
+  | "Proposed"
+  | "Accepted"
+  | "Superseded"
+  | "Deprecated";
+
+export interface KnowledgeEntryResponse {
+  id: string;
+  projectId: string;
+  taskId: string | null;
+  title: string;
+  body: string | null;
+  type: KnowledgeType;
+  status: KnowledgeStatus;
+  weight: number;
+  tags: string | null;
+  supersededById: string | null;
+  createdAtUtc: string;
+  updatedAtUtc: string | null;
+}
+
+export interface CreateKnowledgeEntryRequest {
+  title: string;
+  body?: string | null;
+  type: KnowledgeType;
+  tags?: string | null;
+}
+
+export interface UpdateKnowledgeEntryRequest {
+  title: string;
+  body?: string | null;
+  type: KnowledgeType;
+  tags?: string | null;
+  status: KnowledgeStatus;
+}
+
+export interface KnowledgeEntryCreatedResponse {
+  id: string;
+}
+
 export interface EpicDependencyResponse {
   epicId: string;
   blockedByEpicId: string;

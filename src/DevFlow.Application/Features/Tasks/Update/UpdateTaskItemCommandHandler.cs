@@ -19,6 +19,7 @@ public sealed class UpdateTaskItemCommandHandler(
     IEmailService emailService,
     IRealtimeNotificationService realtimeNotificationService,
     IActivityLogRepository activityLog,
+    IKnowledgeRepository knowledgeRepository,
     IUserContext userContext,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateTaskItemCommand>
 {
@@ -77,6 +78,20 @@ public sealed class UpdateTaskItemCommandHandler(
                 "moved task to",
                 task.Status.ToString());
             await activityLog.AddAsync(statusLog, cancellationToken);
+
+            // Auto-capture: when a task ships (moves into Done), create a Draft
+            // runbook from its title/description so anything shipped is documented.
+            if (task.Status == TaskItemStatus.Done)
+            {
+                var draftEntry = KnowledgeEntry.CaptureFromTask(
+                    command.ProjectId,
+                    task.Id,
+                    task.Title,
+                    task.Description,
+                    KnowledgeType.Runbook,
+                    tags: "auto-captured");
+                await knowledgeRepository.AddAsync(draftEntry, cancellationToken);
+            }
         }
 
         if (command.AssigneeId != oldAssigneeId)

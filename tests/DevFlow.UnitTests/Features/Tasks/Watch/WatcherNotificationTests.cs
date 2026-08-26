@@ -21,6 +21,7 @@ public class WatcherNotificationTests
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
     private readonly IRealtimeNotificationService _realtimeService = Substitute.For<IRealtimeNotificationService>();
     private readonly IActivityLogRepository _activityLogRepository = Substitute.For<IActivityLogRepository>();
+    private readonly IKnowledgeRepository _knowledgeRepository = Substitute.For<IKnowledgeRepository>();
     private readonly IUserContext _userContext = Substitute.For<IUserContext>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
@@ -100,7 +101,7 @@ public class WatcherNotificationTests
         var handler = new UpdateTaskItemCommandHandler(
             _projectRepository, _taskItemRepository, _workspaceRepository,
             _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository,
-            _emailService, _realtimeService, _activityLogRepository, _userContext, _unitOfWork);
+            _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork);
 
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, _task.Id, "Watched task", null,
@@ -122,7 +123,7 @@ public class WatcherNotificationTests
         var handler = new UpdateTaskItemCommandHandler(
             _projectRepository, _taskItemRepository, _workspaceRepository,
             _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository,
-            _emailService, _realtimeService, _activityLogRepository, _userContext, _unitOfWork);
+            _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork);
 
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, _task.Id, "Watched task", null,

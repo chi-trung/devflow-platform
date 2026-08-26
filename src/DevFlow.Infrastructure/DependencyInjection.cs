@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<ISprintRepository, SprintRepository>();
         services.AddScoped<IEpicRepository, EpicRepository>();
         services.AddScoped<IMilestoneRepository, MilestoneRepository>();
+        services.AddScoped<IKnowledgeRepository, KnowledgeRepository>();
         services.AddScoped<IEpicDependencyRepository, EpicDependencyRepository>();
         services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
         services.AddScoped<ITaskAttachmentRepository, TaskAttachmentRepository>();

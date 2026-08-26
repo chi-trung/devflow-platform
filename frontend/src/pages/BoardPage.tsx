@@ -23,6 +23,7 @@ import {
   Activity,
   Users,
   Milestone as MilestoneIcon,
+  BookOpen,
 } from "lucide-react";
 import {
   api,
@@ -727,6 +728,11 @@ export function BoardPage() {
       to: `/workspaces/${workspaceId}/projects/${projectId}/milestones`,
       icon: MilestoneIcon,
       label: t("milestone.title"),
+    },
+    {
+      to: `/workspaces/${workspaceId}/projects/${projectId}/knowledge`,
+      icon: BookOpen,
+      label: t("knowledge.title"),
     },
     { to: "/saved-searches", icon: Bookmark, label: t("savedSearch.title") },
     {
