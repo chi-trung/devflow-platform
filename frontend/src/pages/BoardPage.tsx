@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, NavLink, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   Plus,
@@ -700,6 +700,57 @@ export function BoardPage() {
     }
   }
 
+  const projectNavLinks = [
+    {
+      to: `/workspaces/${workspaceId}/projects/${projectId}/sprints`,
+      icon: CalendarRange,
+      label: t("nav.sprints"),
+    },
+    {
+      to: `/workspaces/${workspaceId}/projects/${projectId}/reports`,
+      icon: BarChart3,
+      label: t("nav.reports"),
+    },
+    {
+      to: `/workspaces/${workspaceId}/projects/${projectId}/epics`,
+      icon: List,
+      label: t("epic.title"),
+    },
+    { to: "/saved-searches", icon: Bookmark, label: t("savedSearch.title") },
+    {
+      to: `/workspaces/${workspaceId}/projects/${projectId}/labels`,
+      icon: Tag,
+      label: t("label.title"),
+    },
+    {
+      to: `/workspaces/${workspaceId}/projects/${projectId}/fields`,
+      icon: Settings2,
+      label: t("customField.title"),
+    },
+    {
+      to: `/workspaces/${workspaceId}/projects/${projectId}/settings`,
+      icon: Users,
+      label: t("projectMember.title"),
+    },
+    {
+      to: `/workspaces/${workspaceId}/projects/${projectId}/templates`,
+      icon: FileText,
+      label: t("template.title"),
+    },
+    { to: `/workspaces/${workspaceId}/webhooks`, icon: Webhook, label: t("webhook.title") },
+    {
+      to: `/workspaces/${workspaceId}/projects/${projectId}/github`,
+      icon: Github,
+      label: t("github.title"),
+    },
+    {
+      to: `/workspaces/${workspaceId}/projects/${projectId}/activities`,
+      icon: Activity,
+      label: t("activity.title"),
+    },
+    { to: `/workspaces/${workspaceId}/search`, icon: Search, label: t("search.title") },
+  ];
+
   return (
     <AppShell>
       <div className="flex h-full flex-col px-4 py-6 sm:px-6">
@@ -747,91 +798,23 @@ export function BoardPage() {
                 aria-label={t("board.projectNav")}
                 className="no-scrollbar -mx-1 flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto px-1 py-0.5 sm:flex-wrap sm:overflow-visible"
               >
-              <Link
-                to={`/workspaces/${workspaceId}/projects/${projectId}/sprints`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
-              >
-                <CalendarRange className="size-4" aria-hidden />
-                <span className="hidden xs:inline sm:inline">{t("nav.sprints")}</span>
-              </Link>
-              <Link
-                to={`/workspaces/${workspaceId}/projects/${projectId}/reports`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
-              >
-                <BarChart3 className="size-4" aria-hidden />
-                <span className="hidden xs:inline sm:inline">{t("nav.reports")}</span>
-              </Link>
-              <Link
-                to={`/workspaces/${workspaceId}/projects/${projectId}/epics`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
-              >
-                <List className="size-4" aria-hidden />
-                <span className="hidden xs:inline sm:inline">{t("epic.title")}</span>
-              </Link>
-              <Link
-                to="/saved-searches"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
-              >
-                <Bookmark className="size-4" aria-hidden />
-                <span className="hidden xs:inline sm:inline">{t("savedSearch.title")}</span>
-              </Link>
-              <Link
-                to={`/workspaces/${workspaceId}/projects/${projectId}/labels`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
-              >
-                <Tag className="size-4" aria-hidden />
-                <span className="hidden xs:inline sm:inline">{t("label.title")}</span>
-              </Link>
-              <Link
-                to={`/workspaces/${workspaceId}/projects/${projectId}/fields`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
-              >
-                <Settings2 className="size-4" aria-hidden />
-                <span className="hidden xs:inline sm:inline">{t("customField.title")}</span>
-              </Link>
-              <Link
-                to={`/workspaces/${workspaceId}/projects/${projectId}/settings`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
-              >
-                <Users className="size-4" aria-hidden />
-                <span className="hidden xs:inline sm:inline">{t("projectMember.title")}</span>
-              </Link>
-              <Link
-                to={`/workspaces/${workspaceId}/projects/${projectId}/templates`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
-              >
-                <FileText className="size-4" aria-hidden />
-                <span className="hidden xs:inline sm:inline">{t("template.title")}</span>
-              </Link>
-              <Link
-                to={`/workspaces/${workspaceId}/webhooks`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
-              >
-                <Webhook className="size-4" aria-hidden />
-                <span className="hidden xs:inline sm:inline">{t("webhook.title")}</span>
-              </Link>
-              <Link
-                to={`/workspaces/${workspaceId}/projects/${projectId}/github`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
-              >
-                <Github className="size-4" aria-hidden />
-                <span className="hidden xs:inline sm:inline">{t("github.title")}</span>
-              </Link>
-              <Link
-                to={`/workspaces/${workspaceId}/projects/${projectId}/activities`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
-              >
-                <Activity className="size-4" aria-hidden />
-                <span className="hidden xs:inline sm:inline">{t("activity.title")}</span>
-              </Link>
-              <Link
-                to={`/workspaces/${workspaceId}/search`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] sm:px-3.5"
-              >
-                <Search className="size-4" aria-hidden />
-                <span className="hidden xs:inline sm:inline">{t("search.title")}</span>
-              </Link>
-            </nav>
+                {projectNavLinks.map(({ to, icon: Icon, label }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    className={({ isActive }) =>
+                      `inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-2 text-sm transition-all duration-200 active:scale-[0.98] sm:px-2.5 sm:py-1.5 ${
+                        isActive
+                          ? "border-border-strong bg-elevated text-foreground"
+                          : "border-border text-foreground hover:border-border-strong hover:bg-elevated"
+                      }`
+                    }
+                  >
+                    <Icon className="size-4 shrink-0" aria-hidden />
+                    <span className="hidden xs:inline sm:inline">{label}</span>
+                  </NavLink>
+                ))}
+              </nav>
             </div>
             {/* Actions row — search + log + graph + help + create. Wraps
                 naturally, separate from the nav links so mobile stays tidy. */}
