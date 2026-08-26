@@ -107,4 +107,80 @@ public sealed class GeminiAiClient : IAiClient
             throw new InvalidOperationException($"AI request failed: {ex.Message}", ex);
         }
     }
+
+    public async Task<string?> ExecuteActionAsync(
+        string systemPrompt,
+        string userContext,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured)
+        {
+            return null;
+        }
+
+        var baseUrl = string.IsNullOrWhiteSpace(_options.BaseUrl)
+            ? DefaultBaseUrl
+            : _options.BaseUrl.TrimEnd('/');
+        var url = $"{baseUrl}/models/{_options.Model}:generateContent";
+
+        // Use a tighter token budget for quick action responses.
+        var payload = new
+        {
+            contents = new[]
+            {
+                new { role = "user", parts = new[] { new { text = systemPrompt + "\n\n" + userContext } } },
+            },
+            generationConfig = new
+            {
+                temperature = 0.3,
+                maxOutputTokens = 1000,
+                responseMimeType = "application/json",
+            },
+        };
+
+        var json = JsonSerializer.Serialize(payload);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
+        request.Headers.Add("X-goog-api-key", _options.ApiKey);
+
+        try
+        {
+            // Use a CancellationTokenSource with 30-second timeout so the
+            // assistant feels responsive even if the LLM is slow.
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(TimeSpan.FromSeconds(30));
+
+            var response = await _httpClient.SendAsync(request, cts.Token);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new InvalidOperationException($"AI API error {(int)response.StatusCode}: {body}");
+            }
+
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            using var document = JsonDocument.Parse(responseBody);
+            if (document.RootElement.TryGetProperty("candidates", out var candidates) &&
+                candidates.GetArrayLength() > 0 &&
+                candidates[0].TryGetProperty("content", out var candidateContent) &&
+                candidateContent.TryGetProperty("parts", out var parts) &&
+                parts.GetArrayLength() > 0 &&
+                parts[0].TryGetProperty("text", out var text))
+            {
+                return text.GetString();
+            }
+
+            return null;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"AI request failed: {ex.Message}", ex);
+        }
+    }
 }

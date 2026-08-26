@@ -65,6 +65,22 @@ export interface AiPlanResponse {
   createdAtUtc: string;
 }
 
+export type AiActionStatus = "success" | "failed" | "skipped";
+
+export interface ExecutedAction {
+  type: string;
+  label: string;
+  entityId: string | null;
+  status: AiActionStatus;
+  message: string | null;
+}
+
+export interface AiExecuteResponse {
+  summary: string | null;
+  actions: ExecutedAction[];
+  error: string | null;
+}
+
 export interface SprintResponse {
   id: string;
   projectId: string;
