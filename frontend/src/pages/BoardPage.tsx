@@ -1016,11 +1016,11 @@ export function BoardPage() {
           />
         ) : (
           <>
-            <div className="flex flex-col gap-4 pb-4 lg:flex-row lg:items-stretch lg:overflow-x-auto">
+            <div className="flex flex-col gap-4 pb-4 lg:flex-row lg:flex-wrap lg:items-stretch">
               {COLUMNS.map(({ title, status }, index) => (
                 <div
                   key={status}
-                  className="rise flex min-w-0 flex-1 flex-col lg:min-w-[280px]"
+                  className="rise flex min-w-0 flex-1 flex-col lg:min-w-[280px] lg:flex-1"
                   style={{ animationDelay: `${index * 60}ms` }}
                 >
                   <Column
