@@ -12,6 +12,12 @@
   "heroSubtitle": "Biến ý tưởng thành công việc hoàn thành với các giai đoạn có cấu trúc, một AI agent lập kế hoạch và triển khai, cùng kho tri thức tích lũy theo từng bản phát hành.",
   "ctaStart": "Bắt đầu miễn phí",
   "ctaViewLogin": "Đăng nhập",
+  "showcase": {
+   "eyebrow": "BẢNG ĐIỀU KHIỂN TRỰC TIẾP",
+   "title": "Toàn bộ luồng công việc trên một màn hình",
+   "subtitle": "Sức khỏe sprint, chỉ số flow và hoạt động đội nhóm — bảng điều khiển giữ mọi giai đoạn của pipeline trong tầm mắt.",
+   "alt": "Ảnh chụp bảng điều khiển DevFlow"
+  },
   "stages": {
    "idea": "Ý tưởng",
    "planning": "Lên kế hoạch",

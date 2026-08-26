@@ -96,7 +96,7 @@ export function IntelligenceSection() {
             {/* prompt line */}
             <div className="mb-4 rounded-lg bg-[#0a0e14] px-3 py-2.5 text-[12.5px] leading-relaxed dark:bg-black/40">
               <span className="text-emerald-400">{t("landing.intel.terminalPrompt")}</span>{" "}
-              <span className="text-foreground">{t("landing.intel.terminalQuery")}</span>
+              <span className="break-words text-foreground">{t("landing.intel.terminalQuery")}</span>
             </div>
 
             {/* RAG tag */}
@@ -116,7 +116,7 @@ export function IntelligenceSection() {
                     className={`flex items-center gap-2.5 rounded-lg border bg-card px-2.5 py-2 ${status.chip}`}
                   >
                     <span className={`size-2 shrink-0 rounded-full ${status.dot}`} aria-hidden />
-                    <span className="text-[11.5px] font-semibold tracking-wide">{entry.id}</span>
+                    <span className="shrink-0 text-[11.5px] font-semibold tracking-wide">{entry.id}</span>
                     <span className="min-w-0 flex-1 truncate text-[11.5px] text-muted-foreground">
                       {entry.title}
                     </span>
@@ -132,8 +132,8 @@ export function IntelligenceSection() {
 
             {/* context bundle footer */}
             <div className="mt-3 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-[11px] text-primary">
-              <span className="size-1.5 rounded-full bg-primary animate-glow-pulse" aria-hidden />
-              {t("landing.intel.terminalContextBundle")}
+              <span className="size-1.5 shrink-0 rounded-full bg-primary animate-glow-pulse" aria-hidden />
+              <span className="min-w-0 flex-1">{t("landing.intel.terminalContextBundle")}</span>
             </div>
           </BrowserFrame>
         </div>
