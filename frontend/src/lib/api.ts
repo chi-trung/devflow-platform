@@ -48,6 +48,7 @@ import type {
   VelocityResponse,
   WebhookResponse,
   WebhookTestResponse,
+  AiPlanResponse,
 } from "../types/api";
 
 // In dev the Vite proxy forwards /api to localhost; in production
@@ -1635,5 +1636,47 @@ export async function updateTemplate(
   await api(
     `/workspaces/${workspaceId}/projects/${projectId}/templates/${templateId}`,
     { method: "PUT", body: JSON.stringify(input) },
+  );
+}
+
+// ── AI planner ──────────────────────────────────────────────────────────
+// Sprint E: knowledge-grounded plan generation with real LLM API calls.
+// GET .../ai/plans/{taskId}/latest -> AiPlanResponse | 204 (none yet)
+// POST .../ai/plan                 body { taskId } -> AiPlanResponse
+// POST .../ai/{planId}/apply       -> AiPlanResponse
+
+export async function getLatestAiPlan(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+): Promise<AiPlanResponse | null> {
+  try {
+    return await api<AiPlanResponse>(
+      `/workspaces/${workspaceId}/projects/${projectId}/ai/plans/${taskId}/latest`,
+    );
+  } catch {
+    return null;
+  }
+}
+
+export async function planAiTask(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+): Promise<AiPlanResponse> {
+  return api<AiPlanResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/ai/plan`,
+    { method: "POST", body: JSON.stringify({ taskId }) },
+  );
+}
+
+export async function applyAiPlan(
+  workspaceId: string,
+  projectId: string,
+  planId: string,
+): Promise<AiPlanResponse> {
+  return api<AiPlanResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/ai/${planId}/apply`,
+    { method: "POST" },
   );
 }

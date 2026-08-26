@@ -42,6 +42,27 @@ export interface ProjectResponse {
   emoji?: string | null;
   /** Optional palette key the frontend maps to a cover gradient. */
   coverColor?: string | null;
+  /** When true, AI plans are auto-applied (self-approval on). */
+  approveAiPlans?: boolean;
+}
+
+export interface AiPlanSubtaskResponse {
+  title: string;
+  description: string | null;
+  priority: string;
+}
+
+export interface AiPlanResponse {
+  id: string;
+  taskId: string;
+  projectId: string;
+  status: string;
+  applied: boolean;
+  summary: string | null;
+  steps: string[];
+  subtasks: AiPlanSubtaskResponse[];
+  definitionOfDone: string[];
+  createdAtUtc: string;
 }
 
 export interface SprintResponse {

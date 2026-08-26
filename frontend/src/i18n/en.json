@@ -43,7 +43,7 @@
     "desc": "An AI agent that plans work and writes the code, gated by your knowledge. Toggle self-approval on for a fully autonomous flow.",
     "b1": "Knowledge-gated planning",
     "b2": "Self-approval toggle for autonomy",
-    "b3": "MCP server for your tools"
+    "b3": "REST API + webhooks for your tools"
    },
    "wiki": {
     "title": "Compounding LLM-Wiki",
@@ -706,6 +706,22 @@
   "today": "Today",
   "yesterday": "Yesterday",
   "pageOf": "Page {{current}} / {{total}}"
+ },
+ "ai": {
+  "aiPlanner": "AI Planner",
+  "askAiToPlan": "Ask AI to plan",
+  "generating": "Generating plan…",
+  "pending": "Pending",
+  "applied": "Applied",
+  "steps": "Steps",
+  "proposedSubtasks": "Proposed subtasks",
+  "dod": "Definition of Done",
+  "allMet": "all met",
+  "applyPlan": "Apply plan",
+  "applying": "Applying…",
+  "regenerate": "Regenerate",
+  "planFailed": "Failed to generate the plan. Check that the AI planner is configured.",
+  "applyFailed": "Failed to apply the plan."
  },
  "timeTracking": {
   "timeTracking": "Time tracking",
