@@ -182,7 +182,7 @@
    ]
   },
   "mock": {
-   "url": "app.dev-flow.tech",
+   "url": "devflow-platform-kappa.vercel.app",
    "flows": {
     "todo": "Todo",
     "doing": "Doing",

@@ -82,29 +82,6 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
           );
         })}
 
-        {/* connector line through the centers of the stage pills, so it reads
-            as one connected pipeline instead of a floating bar */}
-        <path
-          d="M99 92 H789"
-          stroke="var(--color-border-strong)"
-          strokeWidth="2"
-          strokeDasharray="6 6"
-          className="animate-dash-flow"
-        />
-        {stages.map((s, i) => {
-          const cx = 99 + i * 138;
-          const active = s.key === "inProgress";
-          return (
-            <circle
-              key={s.key}
-              cx={cx}
-              cy="92"
-              r={active ? 6 : 3}
-              fill={active ? "var(--color-primary)" : "var(--color-border-strong)"}
-            />
-          );
-        })}
-
         {/* ── task card (left) ── */}
         <g>
           <rect x="48" y="120" width="250" height="150" rx="12" fill="var(--color-card)" stroke="var(--color-border-strong)" strokeWidth="1.5" />
