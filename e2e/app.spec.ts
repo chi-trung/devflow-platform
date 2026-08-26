@@ -197,6 +197,10 @@ test.describe("DevFlow E2E", () => {
     await page.waitForURL("/", { timeout: 15_000 });
     await page.waitForTimeout(2000);
 
+    // The first-login onboarding tour auto-opens on a fresh browser; pre-set
+    // its completion flag so the tour overlay doesn't intercept the assertions.
+    await page.evaluate(() => localStorage.setItem("devflow.onboardingDone", "1"));
+
     // Verify the sidebar shows the workspace name
     await expect(page.locator("main")).toBeVisible({ timeout: 5_000 });
 

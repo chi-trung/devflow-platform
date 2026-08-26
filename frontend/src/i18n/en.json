@@ -1,4 +1,151 @@
 {
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "docs": "Docs",
+      "login": "Log in",
+      "signup": "Get started free"
+    },
+    "heroEyebrow": "WORKFLOW · COMPOUNDING KNOWLEDGE",
+    "heroTitle": "The AI coding workflow that remembers",
+    "heroSubtitle": "Turn ideas into shipped work with structured stages, an AI agent that plans and implements, and a knowledge base that compounds with every release.",
+    "ctaStart": "Start building free",
+    "ctaViewLogin": "Log in",
+    "stages": {
+      "idea": "Idea",
+      "planning": "Planning",
+      "approved": "Approved",
+      "inProgress": "In Progress",
+      "review": "Review",
+      "done": "Done"
+    },
+    "pipelineTitle": "One structured flow, from idea to shipped",
+    "pipelineSubtitle": "Every task moves through the same stages, so nothing falls through the cracks and every decision leaves a trail.",
+    "featuresTitle": "Everything you need to ship with confidence",
+    "featuresSubtitle": "A complete workflow for teams that want structure without the ceremony.",
+    "features": {
+      "flows": {
+        "title": "Structured Flows",
+        "desc": "A 7-stage pipeline — Idea, Planning, Approval, Ready, In Progress, Review, Done — with acceptance criteria and an automatic audit trail.",
+        "b1": "Acceptance criteria on every stage",
+        "b2": "Automatic audit trail of every change",
+        "b3": "Auto transitions when work moves forward"
+      },
+      "ai": {
+        "title": "AI Agent Integration",
+        "desc": "An AI agent that plans work and writes the code, gated by your knowledge. Toggle self-approval on for a fully autonomous flow.",
+        "b1": "Knowledge-gated planning",
+        "b2": "Self-approval toggle for autonomy",
+        "b3": "MCP server for your tools"
+      },
+      "wiki": {
+        "title": "Compounding LLM-Wiki",
+        "desc": "ADRs, patterns, and runbooks captured automatically as work ships. Your team's knowledge compounds instead of evaporating.",
+        "b1": "Auto-captured ADRs & runbooks",
+        "b2": "Drift warnings when code moves on",
+        "b3": "The Iron Law: anything shipped is documented"
+      },
+      "kanban": {
+        "title": "Visual Kanban Board",
+        "desc": "Drag tasks across columns with live presence, sprint planning, and effortless dependency mapping.",
+        "b1": "Drag & drop with real-time presence",
+        "b2": "Sprints, filters, and saved searches",
+        "b3": "Dependencies and blockers, visual"
+      },
+      "orgs": {
+        "title": "Organizations & Teams",
+        "desc": "Workspaces and roles scale from a solo project to a full organization — invitations, permissions, and audit all built in.",
+        "b1": "Role-based workspaces",
+        "b2": "Invite teammates in one click",
+        "b3": "Per-project access control"
+      },
+      "releases": {
+        "title": "Release Management",
+        "desc": "Track what ships when. Epics, milestones, and reports keep the whole team aligned on delivery.",
+        "b1": "Epics, milestones & roadmap",
+        "b2": "Burndown, velocity & cycle time",
+        "b3": "GitHub integration and webhooks"
+      }
+    },
+    "howTitle": "How it works",
+    "howSubtitle": "From idea to shipped in three steps.",
+    "how": {
+      "step1": {
+        "label": "STEP 01",
+        "title": "Create a Flow",
+        "desc": "Set up a project, invite your team, and define the stages your work moves through."
+      },
+      "step2": {
+        "label": "STEP 02",
+        "title": "AI Plans & Implements",
+        "desc": "The agent turns approved ideas into tasks and code, learning from your team's documented patterns."
+      },
+      "step3": {
+        "label": "STEP 03",
+        "title": "Review & Ship",
+        "desc": "Human review at every gate, then ship with confidence — and watch your wiki grow with every release."
+      }
+    },
+    "ctaTitle": "Ready to streamline your development?",
+    "ctaSubtitle": "Set up your first flow in minutes — free, no credit card required.",
+    "ctaButton": "Start building free",
+    "footer": {
+      "product": "Product",
+      "features": "Features",
+      "pricing": "Pricing",
+      "docs": "Docs",
+      "changelog": "Changelog",
+      "resources": "Resources",
+      "blog": "Blog",
+      "community": "Community",
+      "help": "Help center",
+      "legal": "Legal",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "copyright": "© 2026 DevFlow"
+    }
+  },
+  "onboarding": {
+    "stepOf": "{{current}}/{{total}} bước",
+    "next": "Next",
+    "done": "Xong",
+    "skip": "Skip",
+    "close": "Close tour",
+    "helpButton": "Hướng dẫn",
+    "welcome": {
+      "title": "Welcome to DevFlow 🎉",
+      "desc": "This short tour shows you the essentials. Click Next to walk through the dashboard."
+    },
+    "step1": {
+      "title": "Workspace",
+      "desc": "Switch between your workspaces here. A workspace holds your team, projects and boards."
+    },
+    "step2": {
+      "title": "Project",
+      "desc": "Pick the project you want to work on. Each project has its own board, sprints and reports."
+    },
+    "step3": {
+      "title": "New workspace",
+      "desc": "Create a new workspace to start a fresh team, set of projects and boards."
+    },
+    "step4": {
+      "title": "Workspaces sidebar",
+      "desc": "Jump to any of your workspaces from the sidebar."
+    },
+    "step5": {
+      "title": "Navigation",
+      "desc": "Your profile, settings and more live here."
+    },
+    "step6": {
+      "title": "Sprint health",
+      "desc": "Keep an eye on your active sprint's burndown and health here."
+    },
+    "step7": {
+      "title": "Stats & activity",
+      "desc": "Cycle time, distribution and recent activity give you the full picture at a glance."
+    }
+  },
   "app": {
     "name": "DevFlow"
   },
