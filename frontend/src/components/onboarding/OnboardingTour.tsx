@@ -179,22 +179,49 @@ export function OnboardingTour({
     : t(current.descriptionKey);
 
   const highlight = pageReady && rect ? (
-    <div
-      aria-hidden
-      className="pointer-events-none fixed z-[80] rounded-lg border-2 border-primary ring-4 ring-primary/30 transition-all duration-300"
-      style={{
-        top: rect.top - 4,
-        left: rect.left - 4,
-        width: rect.width + 8,
-        height: rect.height + 8,
-      }}
-    />
+    <>
+      {/* Spotlight halo — a huge box-shadow dims everything *around* the target
+          while the element inside stays fully legible (no dark overlay or blur
+          sitting on top of it). Sits 8px out so the ring's edge meets the halo. */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed z-[80] rounded-lg transition-all duration-300"
+        style={{
+          top: rect.top - 8,
+          left: rect.left - 8,
+          width: rect.width + 16,
+          height: rect.height + 16,
+          boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.55)",
+        }}
+      />
+      {/* Teal border + ring on its own element so Tailwind's ring box-shadow
+          isn't overridden by the halo's shadow. */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed z-[80] rounded-lg border-2 border-primary ring-4 ring-primary/30 transition-all duration-300"
+        style={{
+          top: rect.top - 4,
+          left: rect.left - 4,
+          width: rect.width + 8,
+          height: rect.height + 8,
+        }}
+      />
+    </>
   ) : null;
 
   return (
     <>
-      {/* Overlay — captures clicks so the user must use the tour controls */}
-      <div className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-[2px]" />
+      {/* Click-catcher: transparent on targeted steps (the halo provides the
+          dimming), a solid dim on the welcome step which has no target. Keeps
+          clicks trapped in the tour. */}
+      <div
+        className={
+          welcome
+            ? "fixed inset-0 z-[80] bg-black/50"
+            : "fixed inset-0 z-[80]"
+        }
+        aria-hidden="true"
+      />
 
       {highlight}
 
