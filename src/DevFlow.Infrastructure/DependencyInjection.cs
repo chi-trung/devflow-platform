@@ -25,11 +25,20 @@ public static class DependencyInjection
         services.Configure<OAuthSettings>(configuration.GetSection(OAuthSettings.SectionName));
         services.Configure<AiOptions>(configuration.GetSection(AiOptions.SectionName));
 
-        // AI planner: OpenAI-compatible client when configured, no-op fallback
-        // otherwise so the API stays responsive on Render free tier without a key.
+        // AI planner: provider-specific client when a key is configured, no-op
+        // fallback otherwise so the API stays responsive without an AI key.
+        // Provider is chosen explicitly ("gemini" → Google Generative Language
+        // API, anything else with a key → OpenAI-compatible chat/completions).
         if (!string.IsNullOrWhiteSpace(configuration["Ai:ApiKey"]))
         {
-            services.AddHttpClient<IAiClient, OpenAiAiClient>();
+            if (string.Equals(configuration["Ai:Provider"], "gemini", StringComparison.OrdinalIgnoreCase))
+            {
+                services.AddHttpClient<IAiClient, GeminiAiClient>();
+            }
+            else
+            {
+                services.AddHttpClient<IAiClient, OpenAiAiClient>();
+            }
         }
         else
         {
