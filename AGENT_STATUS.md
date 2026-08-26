@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅** | **Sprint 29 Complete ✅** | **Sprint 30 Complete ✅** | **Sprint 31 Complete ✅** | **Sprint 32 Complete ✅** | **Sprint 33 Complete ✅**
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅** | **Sprint 29 Complete ✅** | **Sprint 30 Complete ✅** | **Sprint 31 Complete ✅** | **Sprint 32 Complete ✅** | **Sprint 33 Complete ✅** | **Sprint 34 Complete ✅**
 
 ---
 
@@ -25,6 +25,7 @@
 | **Sprint 31** | Project-Level RBAC, Outbox Admin Batch, EmptyState Sweep & Depth Polish (ProjectMember entity + CQRS + epic deps + project auth guard + member UI + DLQ batch + EmptyState sweep + epic deps UI + i18n) | ✅ A31.1 ProjectMember entity/migration/repo, A31.2 member CQRS endpoints, A31.3 review/merge — PR #150; B31.1 outbox replay-all/purge, B31.2 epic deps, B31.3 ProjectAuthorizationBehavior — PR #151 | ✅ C31.1 project member UI, C31.2 DLQ Replay-all/Purge buttons — PR #152; D31.1 EmptyState sweep (~20 files), D31.2 epic deps UI + i18n — PR #153 | Complete ✅ |
 | **Sprint 32** | Visual Identity & Product Polish (De-AI-fy) — Dashboard greeting + `Logo` brand mark + workspace/project emoji + coverColor + attachment thumbnails + illustrations + auth hero + motion + presence dots | ✅ A32.1 dashboard greeting, A32.2 `Logo`/`BrandMark` component + favicon, A32.3 review/merge — PR #155; B32.1 emoji + coverColor fields/migration, B32.2 `AttachmentSummary` — PR #156 | ✅ C32.1 EmptyState illustrations, C32.2 AuthLayout hero, C32.3 emoji UI + `Logo` adoption, C32.4 cover gradients, C32.5 micro-animations, C32.6 presence dot, C32.7 attachment thumbnails — PR #157 | Complete ✅ |
 | **Sprint 33** | Compounding Knowledge Base (landing-parity C) — `KnowledgeEntry` entity (ADR/Pattern/Runbook) + lifecycle + weight + full CRUD/supersede API + **auto-capture Draft Runbook when a task ships** + Knowledge page/cards/supersede UI + i18n | ✅ C1 entity/config/migration/repository, C1b CQRS + `KnowledgeController` + auto-capture hook in `UpdateTaskItemCommandHandler` + 8 handler tests + auto-capture tests — PR #187 | ✅ C2 `KnowledgePage` + `KnowledgeEntryCard` + create/edit + supersede UI + `knowledge.*`/`nav.knowledge` en+vi + nav wiring — PR #187 | Complete ✅ |
+| **Sprint 34** | Board Swimlanes (landing-parity D) — group tasks within each board column by assignee or epic, vertical lane headers with per-lane counts, trailing "Unassigned"/"No epic" lanes | ✅ Frontend-only (D1) — tasks already carry `AssigneeId`/`EpicId` from `TaskItemResponse`; no backend change needed | ✅ D1 `Column` swimlane partitioning + lane headers, `BoardPage` swimlane toggle (None/Assignee/Epic) + epics fetch, `epicId` on frontend task type, `board.swimlane*` en+vi — PR #188 | Complete ✅ |
 
 ---
 
@@ -510,6 +511,19 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
+### 🚀 Sprint 34 — Board Swimlanes (Landing-Parity D) ✅ Complete
+
+**Goal:** Đóng gap landing ↔ app — *"swimlanes"*. Trước đây mỗi cột board chỉ render task dạng flat list; giờ người dùng có thể nhóm task trong từng cột theo **assignee** hoặc **epic**, với lane header dọc + count từng lane.
+
+> **Plan:** `wise-prancing-ritchie.md` (sprint D — "PR 4 — Sprint D"). Frontend-only — `TaskItemResponse` backend đã có `AssigneeId`/`EpicId` từ trước, không cần thay đổi backend hay migration.
+> **PR:** #188 (D1 — một PR frontend).
+
+#### 🚀 Agent A (Team Lead — Frontend) ✅
+- [x] **D1: Swimlane toggle + grouping** — `Column.tsx` partition tasks theo `assigneeId`/`epicId` (Map preserve order), sort lane theo label (lane "Unassigned"/"No epic" luôn cuối), render lane header + count; windowed rendering (12-card chunk), drag-and-drop + bulk selection hoạt động trong lane. `BoardPage` thêm toggle `None/Assignee/Epic` trong toolbar + fetch epics (`getEpics`); expose `epicId` trên frontend `TaskItemResponse` (đang thiếu) + fix 2 literal (`GraphModal`, optimistic create). i18n `board.swimlane*` en+vi (parity giữ 100%). *(PR #188 merged)*
+- [x] **D1 verify + docs** — `npm run build` (tsc strict) green + `npm test` 30/30 trước khi squash-merge; update AGENT_STATUS.
+
+---
+
 ## 🔒 Multi-Agent Coordination Guidelines
 
 1. **Branch Prefixes:**
@@ -524,5 +538,5 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-*DevFlow Architecture Team — Updated 2026-08-26 (Sprint 33 Complete ✅)*
+*DevFlow Architecture Team — Updated 2026-08-26 (Sprint 34 Complete ✅)*
 
