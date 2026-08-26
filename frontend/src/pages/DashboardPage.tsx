@@ -66,11 +66,20 @@ export function DashboardPage() {
     [],
   );
   useEffect(() => {
-    if (!tourOpen && (forceTour || !isOnboardingDone())) {
-      setTourOpen(true);
-    }
+    if (tourOpen) return;
+    if (!forceTour && isOnboardingDone()) return;
+    // Open only once the greeting row (with the selects the tour highlights)
+    // is actually in the DOM — otherwise the first highlight box has nothing
+    // to anchor to. Poll until it appears (dashboard data has loaded).
+    const id = window.setInterval(() => {
+      if (document.querySelector('[data-tour="workspace-select"]')) {
+        window.clearInterval(id);
+        setTourOpen(true);
+      }
+    }, 200);
+    return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedWsId]);
+  }, [tourOpen, forceTour]);
 
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
