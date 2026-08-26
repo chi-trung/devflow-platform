@@ -464,7 +464,14 @@
   "definitionOfDone": "Định nghĩa hoàn thành",
   "dodMet": "Đã đạt DoD",
   "dodPlaceholder": "gõ tiêu chí chấp nhận — mỗi dòng một mục",
-  "showMore": "Xem thêm {count}"
+  "showMore": "Xem thêm {count}",
+  "swimlane": "Swimlanes",
+  "swimlaneNone": "Không",
+  "swimlaneByAssignee": "Người phụ trách",
+  "swimlaneByEpic": "Epic",
+  "swimlaneGroupBy": "Nhóm theo",
+  "swimlaneUnassigned": "Chưa gán",
+  "swimlaneNoEpic": "Không có epic"
  },
  "taskStatus": {
   "Idea": "Idea",

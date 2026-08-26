@@ -64,9 +64,11 @@ import { KeyboardHelpModal } from "../components/board/KeyboardHelpModal";
 import { ImportTasksModal } from "../components/board/ImportTasksModal";
 import { BoardPresence } from "../components/board/BoardPresence";
 import { usePresence } from "../hooks/usePresence";
+import { getEpics } from "../lib/api";
 import type {
   ActivityResponse,
   CustomFieldValueResponse,
+  EpicResponse,
   LabelResponse,
   ProjectResponse,
   SprintResponse,
@@ -181,6 +183,11 @@ export function BoardPage() {
     [labelsRaw],
   );
 
+  const { data: epics } = useApi<EpicResponse[]>(
+    () => getEpics(workspaceId, projectId),
+    [workspaceId, projectId],
+  );
+
   const {
     data: tasksRaw,
     error,
@@ -244,6 +251,7 @@ export function BoardPage() {
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [graphOpen, setGraphOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [swimlaneMode, setSwimlaneMode] = useState<"none" | "assignee" | "epic">("none");
   const { currentUser } = useAuth();
   const { push } = useToast();
 
@@ -658,6 +666,7 @@ export function BoardPage() {
       priority: input.priority,
       assigneeId: null,
       sprintId: null,
+      epicId: null,
       dueDateUtc: input.dueDateUtc,
       completedAtUtc: null,
       position: tasks.length,
@@ -864,6 +873,19 @@ export function BoardPage() {
               >
                 <Keyboard className="size-4" aria-hidden />
               </button>
+              <div className="flex items-center gap-1.5">
+                <span className="hidden text-xs text-muted-foreground sm:inline">{t("board.swimlaneGroupBy")}</span>
+                <select
+                  aria-label={t("board.swimlane")}
+                  value={swimlaneMode}
+                  onChange={(e) => setSwimlaneMode(e.target.value as "none" | "assignee" | "epic")}
+                  className="rounded-lg border border-border bg-card px-2 py-1.5 text-xs transition-colors duration-200 focus:border-primary focus:outline-none"
+                >
+                  <option value="none">{t("board.swimlaneNone")}</option>
+                  <option value="assignee">{t("board.swimlaneByAssignee")}</option>
+                  <option value="epic">{t("board.swimlaneByEpic")}</option>
+                </select>
+              </div>
               <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-2 py-1.5 transition-colors duration-200 focus-within:border-primary">
               <Search className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
               <input
@@ -1006,6 +1028,8 @@ export function BoardPage() {
                     status={status}
                     tasks={pagedTasks.filter((t) => t.status === status)}
                     members={members ?? []}
+                    epics={epics ?? []}
+                    swimlaneMode={swimlaneMode}
                     customFieldsByTaskId={customFieldsByTaskId ?? undefined}
                     onDropTask={(taskId, next, beforeId) =>
                       void moveTask(taskId, next, beforeId)

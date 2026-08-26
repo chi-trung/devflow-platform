@@ -66,6 +66,7 @@ export interface TaskItemResponse {
   priority: "Low" | "Medium" | "High" | "Critical";
   assigneeId: string | null;
   sprintId: string | null;
+  epicId: string | null;
   dueDateUtc: string | null;
   completedAtUtc: string | null;
   isBlocked?: boolean;

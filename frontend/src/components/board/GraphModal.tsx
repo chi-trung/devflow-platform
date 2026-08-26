@@ -234,6 +234,7 @@ export function GraphModal({
         priority: "Medium",
         assigneeId: node.assigneeId,
         sprintId: null,
+        epicId: null,
         dueDateUtc: null,
         completedAtUtc: null,
       });
