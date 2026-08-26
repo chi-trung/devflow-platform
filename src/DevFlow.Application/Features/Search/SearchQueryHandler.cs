@@ -88,7 +88,18 @@ public sealed class SearchQueryHandler(
     }
 
     private static TaskItemStatus? ParseStatus(string? status)
-        => Enum.TryParse<TaskItemStatus>(status, true, out var s) ? s : null;
+    {
+        if (string.IsNullOrWhiteSpace(status)) return null;
+
+        // Backward-compat aliases from the old 4-stage pipeline. Saved
+        // searches and bookmarks that still say "Backlog"/"InReview" keep
+        // resolving to the renamed stages instead of silently becoming null.
+        var normalized = status.Trim().ToLowerInvariant();
+        if (normalized == "backlog") return TaskItemStatus.Idea;
+        if (normalized == "inreview") return TaskItemStatus.Review;
+
+        return Enum.TryParse<TaskItemStatus>(status, true, out var s) ? s : null;
+    }
 
     private static TaskItemPriority? ParsePriority(string? priority)
         => Enum.TryParse<TaskItemPriority>(priority, true, out var p) ? p : null;

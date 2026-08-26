@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { X, Paperclip, Download, Trash2, BookmarkPlus, Eye, RefreshCw } from "lucide-react";
+import { X, Paperclip, Download, Trash2, BookmarkPlus, Eye, RefreshCw, CheckSquare, Square } from "lucide-react";
 import { api, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask, uploadTaskAttachment, getTaskWatchers, pagedItems } from "../../lib/api";
 import { AttachmentRowThumb } from "./AttachmentThumbnails";
 import { Button } from "../ui/Button";
@@ -36,6 +36,85 @@ interface TaskDetailPanelProps {
   onTaskChanged: () => void;
 }
 
+/**
+ * Definition of Done field — a textarea that doubles as a rendered checklist.
+ * Lines starting with "- [ ]" or "- [x]" are shown as clickable checkbox items
+ * so the user can toggle items without leaving the panel.
+ */
+function DefinitionOfDoneField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const { t } = useTranslation();
+
+  function toggleCheckbox(lineIndex: number) {
+    const lines = value.split("\n");
+    const line = lines[lineIndex];
+    if (!line) return;
+    if (/^- \[ \]/.test(line)) {
+      lines[lineIndex] = line.replace("- [ ]", "- [x]");
+    } else if (/^- \[x\]/i.test(line)) {
+      lines[lineIndex] = line.replace("- [x]", "- [ ]").replace("- [X]", "- [ ]");
+    }
+    onChange(lines.join("\n"));
+  }
+
+  const totalItems = value.split("\n").filter((l) => /^- \[.\]/.test(l)).length;
+  const checkedItems = value.split("\n").filter((l) => /^- \[x\]/i.test(l)).length;
+  const allMet = totalItems > 0 && checkedItems === totalItems;
+
+  return (
+    <label className="flex flex-col gap-1 text-sm font-medium">
+      <span className="inline-flex items-center gap-1.5">
+        {t("task.definitionOfDone")}
+        {allMet && (
+          <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-500">
+            {t("task.dodMet")}
+          </span>
+        )}
+      </span>
+      <textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        rows={3}
+        placeholder={`- [ ] ${t("task.dodPlaceholder")}`}
+        className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+      />
+      {/* Rendered checklist preview */}
+      {value.split("\n").some((l) => /^- \[.\]/.test(l)) && (
+        <ul className="mt-1 space-y-0.5">
+          {value.split("\n").map((line, i) => {
+            const checked = /^- \[x\]/i.test(line);
+            const isItem = /^- \[.\]/.test(line);
+            if (!isItem) return null;
+            return (
+              <li key={i}>
+                <button
+                  type="button"
+                  onClick={() => toggleCheckbox(i)}
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {checked ? (
+                    <CheckSquare className="size-3.5 text-emerald-500" />
+                  ) : (
+                    <Square className="size-3.5" />
+                  )}
+                  <span className={checked ? "line-through opacity-60" : ""}>
+                    {line.replace(/^- \[.\] /, "")}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </label>
+  );
+}
+
 export function TaskDetailPanel({
   task,
   currentUser,
@@ -50,6 +129,9 @@ export function TaskDetailPanel({
   const { t } = useTranslation();
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
+  const [definitionOfDone, setDefinitionOfDone] = useState(
+    task.definitionOfDone ?? "",
+  );
   const [dueDate, setDueDate] = useState(
     task.dueDateUtc ? task.dueDateUtc.slice(0, 10) : "",
   );
@@ -78,6 +160,7 @@ export function TaskDetailPanel({
   useEffect(() => {
     setTitle(task.title);
     setDescription(task.description ?? "");
+    setDefinitionOfDone(task.definitionOfDone ?? "");
     setDueDate(task.dueDateUtc ? task.dueDateUtc.slice(0, 10) : "");
     setStatus(task.status);
     setPriority(task.priority);
@@ -87,6 +170,7 @@ export function TaskDetailPanel({
     task.id,
     task.title,
     task.description,
+    task.definitionOfDone,
     task.dueDateUtc,
     task.status,
     task.priority,
@@ -356,6 +440,7 @@ export function TaskDetailPanel({
           body: JSON.stringify({
             title: title.trim(),
             description: description.trim() || null,
+            definitionOfDone: definitionOfDone.trim() || null,
             status,
             priority,
             assigneeId,
@@ -417,6 +502,7 @@ export function TaskDetailPanel({
   const dirty =
     title.trim() !== task.title ||
     (description.trim() || null) !== task.description ||
+    (definitionOfDone.trim() || null) !== task.definitionOfDone ||
     (dueDate ? new Date(`${dueDate}T12:00:00`).toISOString() : null) !==
       task.dueDateUtc ||
     status !== task.status ||
@@ -553,9 +639,12 @@ export function TaskDetailPanel({
                 }
                 className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
               >
-                <option value="Backlog">{t("board.backlog")}</option>
+                <option value="Idea">{t("board.idea")}</option>
+                <option value="Planning">{t("board.planning")}</option>
+                <option value="Approval">{t("board.approval")}</option>
+                <option value="Ready">{t("board.ready")}</option>
                 <option value="InProgress">{t("board.inProgress")}</option>
-                <option value="InReview">{t("board.inReview")}</option>
+                <option value="Review">{t("board.review")}</option>
                 <option value="Done">{t("board.done")}</option>
               </select>
             </label>
@@ -668,6 +757,11 @@ export function TaskDetailPanel({
               className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
             />
           </label>
+
+          <DefinitionOfDoneField
+            value={definitionOfDone}
+            onChange={setDefinitionOfDone}
+          />
 
           <DependencySection
             workspaceId={workspaceId}

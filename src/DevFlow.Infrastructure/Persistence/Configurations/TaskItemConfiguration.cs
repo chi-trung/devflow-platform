@@ -18,6 +18,10 @@ internal sealed class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
         builder.Property(task => task.Description)
             .HasMaxLength(5000);
 
+        builder.Property(task => task.DefinitionOfDone)
+            .HasMaxLength(2000)
+            .IsRequired(false);
+
         builder.Property(task => task.Status)
             .HasConversion<string>()
             .HasMaxLength(20)

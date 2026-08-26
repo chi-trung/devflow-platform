@@ -19,7 +19,7 @@ public class TaskItem : BaseEntity, IAuditableEntity, ISoftDeletable
         Title = title;
         Description = description;
         Priority = priority;
-        Status = TaskItemStatus.Backlog;
+        Status = TaskItemStatus.Idea;
     }
 
     public Guid ProjectId { get; private set; }
@@ -27,6 +27,13 @@ public class TaskItem : BaseEntity, IAuditableEntity, ISoftDeletable
     public string Title { get; private set; } = string.Empty;
 
     public string? Description { get; private set; }
+
+    /// <summary>
+    /// Definition of Done — the acceptance criteria / checklist that marks this
+    /// task complete. Part of the 7-stage pipeline: every task can carry its own
+    /// DoD independent of the stage it sits in.
+    /// </summary>
+    public string? DefinitionOfDone { get; private set; }
 
     public TaskItemStatus Status { get; private set; }
 
@@ -85,8 +92,24 @@ public class TaskItem : BaseEntity, IAuditableEntity, ISoftDeletable
         DueDateUtc = dueDateUtc;
     }
 
+    /// <summary>
+    /// Sets the Definition of Done — the acceptance criteria for this task.
+    /// </summary>
+    public void SetDefinitionOfDone(string? definitionOfDone)
+    {
+        DefinitionOfDone = definitionOfDone?.Trim();
+    }
+
+    /// <summary>
+    /// Changes the task status with 7-stage auto-transitions:
+    /// - Ready → InProgress  auto-starts the clock
+    /// - InProgress → Review marks the review phase
+    /// - Review → Done stamps completion
+    /// - Re-opening from Done clears CompletedAtUtc
+    /// </summary>
     public void ChangeStatus(TaskItemStatus status)
     {
+        // Re-opening / moving away from Done clears the completion timestamp
         if (Status == TaskItemStatus.Done && status != TaskItemStatus.Done)
         {
             CompletedAtUtc = null;
@@ -94,11 +117,13 @@ public class TaskItem : BaseEntity, IAuditableEntity, ISoftDeletable
 
         Status = status;
 
+        // Start the clock when the task enters active work
         if (status == TaskItemStatus.InProgress && StartedAtUtc is null)
         {
             StartedAtUtc = DateTimeOffset.UtcNow;
         }
 
+        // Stamp completion when the task is marked Done
         if (status == TaskItemStatus.Done)
         {
             CompletedAtUtc = DateTimeOffset.UtcNow;

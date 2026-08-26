@@ -21,16 +21,22 @@ const PAD_TOP = 46;
 const PAD_BOTTOM = 28;
 
 const COLUMNS: TaskItemResponse["status"][] = [
-  "Backlog",
+  "Idea",
+  "Planning",
+  "Approval",
+  "Ready",
   "InProgress",
-  "InReview",
+  "Review",
   "Done",
 ];
 
 const STATUS_LABEL_KEYS: Record<TaskItemResponse["status"], string> = {
-  Backlog: "task.backlogStatus",
+  Idea: "task.ideaStatus",
+  Planning: "task.planningStatus",
+  Approval: "task.approvalStatus",
+  Ready: "task.readyStatus",
   InProgress: "task.inProgressStatus",
-  InReview: "task.inReviewStatus",
+  Review: "task.reviewStatus",
   Done: "task.doneStatus",
 };
 

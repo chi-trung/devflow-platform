@@ -76,9 +76,12 @@ const TASKS_PER_PAGE = 24;
 
 function getColumns(t: (key: string) => string): { title: string; status: TaskItemResponse["status"] }[] {
   return [
-    { title: t("board.backlog"), status: "Backlog" },
+    { title: t("board.idea"), status: "Idea" },
+    { title: t("board.planning"), status: "Planning" },
+    { title: t("board.approval"), status: "Approval" },
+    { title: t("board.ready"), status: "Ready" },
     { title: t("board.inProgress"), status: "InProgress" },
-    { title: t("board.inReview"), status: "InReview" },
+    { title: t("board.review"), status: "Review" },
     { title: t("board.done"), status: "Done" },
   ];
 }
@@ -116,11 +119,14 @@ function parseSearchQuery(raw: string): ParsedSearch {
       parsed.blockedOnly = true;
     } else if (key === "status") {
       const normalized = value.replace(/[-_]/g, "");
-      if (normalized === "backlog") parsed.status = "Backlog";
+      if (normalized === "idea") parsed.status = "Idea";
+      else if (normalized === "planning") parsed.status = "Planning";
+      else if (normalized === "approval") parsed.status = "Approval";
+      else if (normalized === "ready") parsed.status = "Ready";
       else if (normalized === "inprogress" || normalized === "wip")
         parsed.status = "InProgress";
-      else if (normalized === "inreview" || normalized === "review")
-        parsed.status = "InReview";
+      else if (normalized === "review" || normalized === "inreview")
+        parsed.status = "Review";
       else if (normalized === "done" || normalized === "completed")
         parsed.status = "Done";
     } else if (key === "priority") {
@@ -646,7 +652,7 @@ export function BoardPage() {
       projectId,
       title: input.title,
       description: input.description,
-      status: "Backlog",
+      status: "Idea",
       priority: input.priority,
       assigneeId: null,
       sprintId: null,

@@ -41,7 +41,7 @@ public class ImportHandlerTests
             ProjectName = "DevFlow",
             Tasks =
             {
-                new TaskBackupDto { Id = taskId, Title = "Imported task", Status = "Backlog", Priority = "Medium" },
+                new TaskBackupDto { Id = taskId, Title = "Imported task", Status = "Idea", Priority = "Medium" },
             },
             Comments =
             {

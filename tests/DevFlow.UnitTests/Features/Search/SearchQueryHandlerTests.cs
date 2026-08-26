@@ -61,7 +61,7 @@ public class SearchQueryHandlerTests
                 Arg.Any<int>(),
                 Arg.Any<CancellationToken>())
             .Returns(new PagedSearchItems<TaskItemSearchRow>([
-                new TaskItemSearchRow(Guid.NewGuid(), "Fix login bug", "Backlog", Guid.NewGuid(), "DEV")
+                new TaskItemSearchRow(Guid.NewGuid(), "Fix login bug", "Idea", Guid.NewGuid(), "DEV")
             ], 1));
 
         var handler = new SearchQueryHandler(_searchRepository, _workspaceRepository);
@@ -103,8 +103,8 @@ public class SearchQueryHandlerTests
                 Arg.Any<TaskItemSearchSort?>(),
                 0, 10, Arg.Any<CancellationToken>())
             .Returns(new PagedSearchItems<TaskItemSearchRow>([
-                new TaskItemSearchRow(Guid.NewGuid(), "task 1", "Backlog", Guid.NewGuid(), "DEV"),
-                new TaskItemSearchRow(Guid.NewGuid(), "task 2", "Backlog", Guid.NewGuid(), "DEV")
+                new TaskItemSearchRow(Guid.NewGuid(), "task 1", "Idea", Guid.NewGuid(), "DEV"),
+                new TaskItemSearchRow(Guid.NewGuid(), "task 2", "Idea", Guid.NewGuid(), "DEV")
             ], 25));
 
         var handler = new SearchQueryHandler(_searchRepository, _workspaceRepository);
@@ -145,7 +145,7 @@ public class SearchQueryHandlerTests
         await _searchRepository.Received(1).SearchTasksAsync(
             _workspaceId,
             "login",
-            Arg.Is<TaskItemSearchFilters>(f => f.Status == TaskItemStatus.InReview && f.Priority == TaskItemPriority.High),
+            Arg.Is<TaskItemSearchFilters>(f => f.Status == TaskItemStatus.Review && f.Priority == TaskItemPriority.High),
             Arg.Any<TaskItemSearchSort?>(),
             0, 10,
             Arg.Any<CancellationToken>());

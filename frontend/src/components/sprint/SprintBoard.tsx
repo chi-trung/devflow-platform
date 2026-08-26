@@ -77,9 +77,17 @@ function TaskRow({ task }: TaskRowProps) {
           ? t("sprint.colDone")
           : task.status === "InProgress"
             ? t("sprint.colWip")
-            : task.status === "InReview"
+            : task.status === "Review"
               ? t("sprint.colReview")
-              : ""}
+              : task.status === "Idea"
+                ? t("board.idea")
+                : task.status === "Planning"
+                  ? t("board.planning")
+                  : task.status === "Approval"
+                    ? t("board.approval")
+                    : task.status === "Ready"
+                      ? t("board.ready")
+                      : ""}
       </span>
     </li>
   );

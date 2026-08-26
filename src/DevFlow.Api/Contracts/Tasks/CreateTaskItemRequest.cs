@@ -6,7 +6,8 @@ public sealed record CreateTaskItemRequest(
     string Title,
     string? Description,
     TaskItemPriority Priority,
-    DateTimeOffset? DueDateUtc);
+    DateTimeOffset? DueDateUtc,
+    string? DefinitionOfDone = null);
 
 public sealed record UpdateTaskItemRequest(
     string Title,
@@ -14,6 +15,7 @@ public sealed record UpdateTaskItemRequest(
     TaskItemStatus Status,
     TaskItemPriority Priority,
     Guid? AssigneeId,
-    DateTimeOffset? DueDateUtc);
+    DateTimeOffset? DueDateUtc,
+    string? DefinitionOfDone = null);
 
 public sealed record CreateCommentRequest(string Content);

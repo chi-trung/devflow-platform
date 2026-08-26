@@ -60,7 +60,9 @@ export interface TaskItemResponse {
   projectId: string;
   title: string;
   description: string | null;
-  status: "Backlog" | "InProgress" | "InReview" | "Done";
+  /** Optional acceptance criteria / definition-of-done checklist (Sprint A). */
+  definitionOfDone?: string | null;
+  status: "Idea" | "Planning" | "Approval" | "Ready" | "InProgress" | "Review" | "Done";
   priority: "Low" | "Medium" | "High" | "Critical";
   assigneeId: string | null;
   sprintId: string | null;

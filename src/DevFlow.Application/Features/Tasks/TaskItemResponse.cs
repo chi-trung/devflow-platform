@@ -5,6 +5,7 @@ public sealed record TaskItemResponse(
     Guid ProjectId,
     string Title,
     string? Description,
+    string? DefinitionOfDone,
     string Status,
     string Priority,
     Guid? AssigneeId,

@@ -154,7 +154,13 @@ public sealed class ImportController(
                 continue;
             }
 
-            if (!Enum.TryParse<TaskItemStatus>(item.Status, true, out var status))
+            // Backward-compat: pre-7-stage CSVs used "Backlog" — map it to the
+            // new default stage "Idea" so old exports still import cleanly.
+            var statusText = string.Equals(item.Status, "Backlog", StringComparison.OrdinalIgnoreCase)
+                ? nameof(TaskItemStatus.Idea)
+                : item.Status;
+
+            if (!Enum.TryParse<TaskItemStatus>(statusText, true, out var status))
             {
                 errors.Add($"Invalid status '{item.Status}' for task '{item.Title}'.");
                 skipped++;
@@ -174,7 +180,7 @@ public sealed class ImportController(
                 item.Description?.Trim(),
                 priority);
 
-            if (status != TaskItemStatus.Backlog)
+            if (status != TaskItemStatus.Idea)
             {
                 task.ChangeStatus(status);
             }

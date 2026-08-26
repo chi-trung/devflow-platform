@@ -11,9 +11,12 @@ import { getMyTasks } from "../lib/api";
 import type { MyTaskItem } from "../lib/api";
 
 const statusBadge: Record<string, string> = {
-  Backlog: "bg-muted-foreground/10 text-muted-foreground",
+  Idea: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
+  Planning: "bg-sky-500/10 text-sky-600 dark:text-sky-300",
+  Approval: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
+  Ready: "bg-primary/10 text-primary",
   InProgress: "bg-primary/10 text-primary",
-  InReview: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
+  Review: "bg-violet-500/10 text-violet-600 dark:text-violet-300",
   Done: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
 };
 

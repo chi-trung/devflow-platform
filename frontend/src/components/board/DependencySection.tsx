@@ -28,9 +28,12 @@ export function DependencySection({
 }: DependencySectionProps) {
   const { t } = useTranslation();
   const statusLabel: Record<TaskItemResponse["status"], string> = {
-    Backlog: t("task.backlogStatus"),
+    Idea: t("task.ideaStatus"),
+    Planning: t("task.planningStatus"),
+    Approval: t("task.approvalStatus"),
+    Ready: t("task.readyStatus"),
     InProgress: t("task.inProgressStatus"),
-    InReview: t("task.inReviewStatus"),
+    Review: t("task.reviewStatus"),
     Done: t("task.doneStatus"),
   };
   const [dependencies, setDependencies] = useState<

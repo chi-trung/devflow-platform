@@ -15,7 +15,8 @@ public sealed record UpdateTaskItemCommand(
     TaskItemStatus Status,
     TaskItemPriority Priority,
     Guid? AssigneeId,
-    DateTimeOffset? DueDateUtc) : IRequest, IWorkspaceRequest, IProjectEvent, INotificationEvent
+    DateTimeOffset? DueDateUtc,
+    string? DefinitionOfDone = null) : IRequest, IWorkspaceRequest, IProjectEvent, INotificationEvent
 {
         public string ActivityVerb => "updated task";
         public string ActivityLabel => Title ?? "a task";

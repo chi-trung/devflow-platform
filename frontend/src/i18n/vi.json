@@ -390,8 +390,13 @@
  },
  "board": {
   "backlog": "Chờ xử lý",
+  "idea": "Idea",
+  "planning": "Planning",
+  "approval": "Approval",
+  "ready": "Ready",
   "inProgress": "Đang thực hiện",
   "inReview": "Đang review",
+  "review": "Review",
   "done": "Hoàn thành",
   "newTask": "Task mới",
   "importTasks": "Nhập file",
@@ -454,7 +459,19 @@
   "deleteCommentFailed": "Không thể xóa bình luận.",
   "saveTemplateFailed": "Không thể lưu mẫu.",
   "createTaskFailed": "Tạo task thất bại.",
+  "definitionOfDone": "Định nghĩa hoàn thành",
+  "dodMet": "Đã đạt DoD",
+  "dodPlaceholder": "gõ tiêu chí chấp nhận — mỗi dòng một mục",
   "showMore": "Xem thêm {count}"
+ },
+ "taskStatus": {
+  "Idea": "Idea",
+  "Planning": "Planning",
+  "Approval": "Approval",
+  "Ready": "Ready",
+  "InProgress": "Đang thực hiện",
+  "Review": "Review",
+  "Done": "Hoàn thành"
  },
  "myTasks": {
   "title": "Việc của tôi",
@@ -509,8 +526,13 @@
   "high": "Cao",
   "critical": "Khẩn cấp",
   "backlogStatus": "Chờ xử lý",
+  "ideaStatus": "Idea",
+  "planningStatus": "Planning",
+  "approvalStatus": "Approval",
+  "readyStatus": "Ready",
   "inProgressStatus": "Đang thực hiện",
   "inReviewStatus": "Đang review",
+  "reviewStatus": "Review",
   "doneStatus": "Hoàn thành",
   "savedAsTemplate": "Đã lưu thành mẫu",
   "fileAttached": "Đã đính kèm tệp",
@@ -1153,7 +1175,7 @@
   "importedCount": "Đã nhập {{count}} task",
   "skippedCount": "bỏ qua {{count}}",
   "errors": "Các dòng gặp lỗi:",
-  "statusHint": "status: Backlog/InProgress/InReview/Done, priority: Low/Medium/High/Critical"
+  "statusHint": "status: Idea/Planning/Approval/Ready/InProgress/Review/Done, priority: Low/Medium/High/Critical"
  },
  "importExport": {
   "title": "Nhập / Xuất",

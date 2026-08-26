@@ -126,7 +126,7 @@ public class WatcherNotificationTests
 
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, _task.Id, "Watched task", null,
-            TaskItemStatus.Backlog, TaskItemPriority.High, null, null);
+            TaskItemStatus.Idea, TaskItemPriority.High, null, null);
 
         await handler.Handle(command, CancellationToken.None);
 

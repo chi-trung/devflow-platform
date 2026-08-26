@@ -30,6 +30,11 @@ public sealed class CreateTaskItemCommandHandler(
             command.Description,
             command.Priority);
 
+        if (!string.IsNullOrWhiteSpace(command.DefinitionOfDone))
+        {
+            task.SetDefinitionOfDone(command.DefinitionOfDone);
+        }
+
         await taskItemRepository.AddAsync(task, cancellationToken);
 
         var log = ActivityLog.Create(

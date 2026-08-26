@@ -8,12 +8,15 @@ interface CumulativeFlowProps {
   className?: string;
 }
 
-const STATUS_ORDER = ["Backlog", "InProgress", "InReview", "Done"] as const;
+const STATUS_ORDER = ["Idea", "Planning", "Approval", "Ready", "InProgress", "Review", "Done"] as const;
 
 const STATUS_COLORS: Record<string, string> = {
-  Backlog: "var(--color-border-strong, #64748b)",
-  InProgress: "var(--color-primary)",
-  InReview: "var(--color-warning, #f59e0b)",
+  Idea: "var(--color-border-strong, #64748b)",
+  Planning: "#38bdf8",
+  Approval: "#34d399",
+  Ready: "var(--color-primary)",
+  InProgress: "var(--color-warning, #f59e0b)",
+  Review: "#a78bfa",
   Done: "var(--color-success, #10b981)",
 };
 

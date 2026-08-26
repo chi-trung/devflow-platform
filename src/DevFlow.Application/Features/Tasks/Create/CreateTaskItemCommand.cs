@@ -12,7 +12,8 @@ public sealed record CreateTaskItemCommand(
     string Title,
     string? Description,
     TaskItemPriority Priority,
-    DateTimeOffset? DueDateUtc) : IRequest<TaskItemCreatedResponse>, IWorkspaceRequest, IProjectEvent
+    DateTimeOffset? DueDateUtc,
+    string? DefinitionOfDone = null) : IRequest<TaskItemCreatedResponse>, IWorkspaceRequest, IProjectEvent
 {
         public string ActivityVerb => "created task";
         public string ActivityLabel => Title;

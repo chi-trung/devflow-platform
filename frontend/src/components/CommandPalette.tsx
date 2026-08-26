@@ -476,9 +476,12 @@ export function CommandPalette({
               className="rounded-md border border-border bg-surface px-1.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:border-border-strong focus:outline-none"
             >
               <option value="">{t("commandPalette.anyStatus")}</option>
-              <option value="Backlog">{t("task.backlogStatus")}</option>
+              <option value="Idea">{t("board.idea")}</option>
+              <option value="Planning">{t("board.planning")}</option>
+              <option value="Approval">{t("board.approval")}</option>
+              <option value="Ready">{t("board.ready")}</option>
               <option value="InProgress">{t("board.inProgress")}</option>
-              <option value="InReview">{t("board.inReview")}</option>
+              <option value="Review">{t("board.review")}</option>
               <option value="Done">{t("board.done")}</option>
             </select>
             <select

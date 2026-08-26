@@ -56,6 +56,14 @@ export function TaskCard({
     task.dueDateUtc !== null &&
     task.status !== "Done" &&
     new Date(task.dueDateUtc).getTime() < Date.now();
+  // Definition of Done: all "- [x]" checklist items are ticked (and there is
+  // at least one item). A bare text DoD without items never shows as "met".
+  const dodItems = (task.definitionOfDone ?? "")
+    .split("\n")
+    .filter((line) => /^- \[.\]/.test(line));
+  const dodMet =
+    dodItems.length > 0 &&
+    dodItems.every((line) => /^- \[x\]/i.test(line));
   const [estimationOpen, setEstimationOpen] = useState(false);
   const [showChildForm, setShowChildForm] = useState(false);
   const [childTitle, setChildTitle] = useState("");
@@ -202,6 +210,15 @@ export function TaskCard({
           >
             <ListChecks className="size-3" aria-hidden />
             {task.subtaskCount}
+          </span>
+        )}
+        {dodMet && (
+          <span
+            title={t("task.dodMet")}
+            className="flex items-center gap-1 rounded-md bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-500"
+          >
+            <Check className="size-3" aria-hidden />
+            {t("task.dodMet")}
           </span>
         )}
         {(customFields ?? [])

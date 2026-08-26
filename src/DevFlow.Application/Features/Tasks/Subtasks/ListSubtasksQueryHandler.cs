@@ -38,6 +38,7 @@ public sealed class ListSubtasksQueryHandler(
                 task.ProjectId,
                 task.Title,
                 task.Description,
+                task.DefinitionOfDone,
                 task.Status.ToString(),
                 task.Priority.ToString(),
                 task.AssigneeId,

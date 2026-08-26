@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Circle, CircleDot, Eye, CheckCircle2, Check } from "lucide-react";
+import { Lightbulb, PencilRuler, ShieldCheck, CircleDot, Play, Eye, CheckCircle2, Check } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { TaskItemResponse, WorkspaceMemberResponse, CustomFieldValueResponse } from "../../types/api";
 import { TaskCard } from "./TaskCard";
@@ -35,10 +35,13 @@ const COLUMN_META: Record<
   TaskItemResponse["status"],
   { icon: LucideIcon; accent: string }
 > = {
-  Backlog: { icon: Circle, accent: "text-muted-foreground" },
-  InProgress: { icon: CircleDot, accent: "text-primary" },
-  InReview: { icon: Eye, accent: "text-violet-300" },
-  Done: { icon: CheckCircle2, accent: "text-sky-300" },
+  Idea: { icon: Lightbulb, accent: "text-amber-300" },
+  Planning: { icon: PencilRuler, accent: "text-sky-300" },
+  Approval: { icon: ShieldCheck, accent: "text-emerald-300" },
+  Ready: { icon: CircleDot, accent: "text-primary" },
+  InProgress: { icon: Play, accent: "text-sky-400" },
+  Review: { icon: Eye, accent: "text-violet-300" },
+  Done: { icon: CheckCircle2, accent: "text-teal-300" },
 };
 
 export function Column({
