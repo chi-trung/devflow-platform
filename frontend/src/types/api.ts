@@ -460,6 +460,7 @@ export interface SavedSearchResponse {
 export interface EpicResponse {
   id: string;
   projectId: string;
+  milestoneId: string | null;
   name: string;
   description: string | null;
   startDateUtc: string | null;
@@ -471,6 +472,34 @@ export interface EpicResponse {
   completedStoryPoints: number;
   /** Ids of epics this epic is blocked by. Absent on older backend responses — guard with `?? []`. */
   blockedByEpicIds?: string[];
+}
+
+export type MilestoneStatus = "Planned" | "Active" | "Completed";
+
+export interface MilestoneResponse {
+  id: string;
+  projectId: string;
+  name: string;
+  description: string | null;
+  targetDateUtc: string | null;
+  status: MilestoneStatus;
+}
+
+export interface CreateMilestoneRequest {
+  name: string;
+  description?: string | null;
+  targetDateUtc?: string | null;
+}
+
+export interface UpdateMilestoneRequest {
+  name: string;
+  description?: string | null;
+  targetDateUtc?: string | null;
+  status: MilestoneStatus;
+}
+
+export interface MilestoneCreatedResponse {
+  id: string;
 }
 
 export interface EpicDependencyResponse {
@@ -485,6 +514,7 @@ export interface EpicCreatedResponse {
 export interface CreateEpicRequest {
   name: string;
   description?: string | null;
+  milestoneId?: string | null;
   startDateUtc?: string | null;
   endDateUtc?: string | null;
 }
@@ -492,6 +522,7 @@ export interface CreateEpicRequest {
 export interface UpdateEpicRequest {
   name: string;
   description?: string | null;
+  milestoneId?: string | null;
   startDateUtc?: string | null;
   endDateUtc?: string | null;
 }

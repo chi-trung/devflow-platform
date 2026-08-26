@@ -4,15 +4,15 @@ using DevFlow.Application.Common.Interfaces;
 using DevFlow.Domain.Entities;
 using MediatR;
 
-namespace DevFlow.Application.Features.Epics.Create;
+namespace DevFlow.Application.Features.Milestones.Create;
 
-public sealed class CreateEpicCommandHandler(
+public sealed class CreateMilestoneCommandHandler(
     IProjectRepository projectRepository,
-    IEpicRepository epicRepository,
-    IUnitOfWork unitOfWork) : IRequestHandler<CreateEpicCommand, EpicCreatedResponse>
+    IMilestoneRepository milestoneRepository,
+    IUnitOfWork unitOfWork) : IRequestHandler<CreateMilestoneCommand, MilestoneCreatedResponse>
 {
-    public async Task<EpicCreatedResponse> Handle(
-        CreateEpicCommand command,
+    public async Task<MilestoneCreatedResponse> Handle(
+        CreateMilestoneCommand command,
         CancellationToken cancellationToken)
     {
         var project = await projectRepository.GetByIdAsync(command.ProjectId, cancellationToken);
@@ -22,18 +22,15 @@ public sealed class CreateEpicCommandHandler(
             throw new NotFoundException(nameof(Project), command.ProjectId);
         }
 
-        var epic = Epic.Create(
+        var milestone = Milestone.Create(
             command.ProjectId,
             command.Name,
             command.Description,
-            command.StartDateUtc,
-            command.EndDateUtc);
+            command.TargetDateUtc);
 
-        epic.AttachToMilestone(command.MilestoneId);
-
-        await epicRepository.AddAsync(epic, cancellationToken);
+        await milestoneRepository.AddAsync(milestone, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new EpicCreatedResponse(epic.Id);
+        return new MilestoneCreatedResponse(milestone.Id);
     }
 }

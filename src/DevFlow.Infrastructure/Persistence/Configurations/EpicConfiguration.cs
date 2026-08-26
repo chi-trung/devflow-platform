@@ -2,6 +2,7 @@ using DevFlow.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+
 namespace DevFlow.Infrastructure.Persistence.Configurations;
 
 internal sealed class EpicConfiguration : IEntityTypeConfiguration<Epic>
@@ -22,6 +23,12 @@ internal sealed class EpicConfiguration : IEntityTypeConfiguration<Epic>
             .HasForeignKey(epic => epic.ProjectId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasOne<Milestone>()
+            .WithMany()
+            .HasForeignKey(epic => epic.MilestoneId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.HasIndex(epic => new { epic.ProjectId, epic.StartDateUtc });
+        builder.HasIndex(epic => epic.MilestoneId);
     }
 }

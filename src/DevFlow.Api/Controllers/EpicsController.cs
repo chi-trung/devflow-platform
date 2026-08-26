@@ -31,6 +31,7 @@ public sealed class EpicsController(ISender sender) : ControllerBase
                 projectId,
                 request.Name,
                 request.Description,
+                request.MilestoneId,
                 request.StartDateUtc,
                 request.EndDateUtc),
             cancellationToken);
@@ -68,6 +69,7 @@ public sealed class EpicsController(ISender sender) : ControllerBase
                 epicId,
                 request.Name,
                 request.Description,
+                request.MilestoneId,
                 request.StartDateUtc,
                 request.EndDateUtc),
             cancellationToken);

@@ -2,6 +2,7 @@ import type {
   BurndownResponse,
   CreateLabelRequest,
   CreateEpicRequest,
+  CreateMilestoneRequest,
   ActivityResponsePage,
   CustomFieldResponse,
   CustomFieldValueResponse,
@@ -11,6 +12,8 @@ import type {
   EpicDependencyResponse,
   EpicResponse,
   FieldErrors,
+  MilestoneCreatedResponse,
+  MilestoneResponse,
   GitHubIntegrationResponse,
   ImportResultResponse,
   LabelResponse,
@@ -35,6 +38,7 @@ import type {
   TemplateResponse,
   TimeEntryResponse,
   UpdateEpicRequest,
+  UpdateMilestoneRequest,
   UserProfileResponse,
   VelocityHistoryResponse,
   VelocityResponse,
@@ -859,6 +863,55 @@ export async function removeEpicDependency(
 ): Promise<void> {
   await api(
     `/workspaces/${workspaceId}/projects/${projectId}/epics/${epicId}/dependencies/${blockedByEpicId}`,
+    { method: "DELETE" },
+  );
+}
+
+export function getMilestones(
+  workspaceId: string,
+  projectId: string,
+): Promise<MilestoneResponse[]> {
+  return api<MilestoneResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/milestones`,
+  );
+}
+
+export async function createMilestone(
+  workspaceId: string,
+  projectId: string,
+  input: CreateMilestoneRequest,
+): Promise<MilestoneCreatedResponse> {
+  return api<MilestoneCreatedResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/milestones`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function updateMilestone(
+  workspaceId: string,
+  projectId: string,
+  milestoneId: string,
+  input: UpdateMilestoneRequest,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/milestones/${milestoneId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function deleteMilestone(
+  workspaceId: string,
+  projectId: string,
+  milestoneId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/milestones/${milestoneId}`,
     { method: "DELETE" },
   );
 }

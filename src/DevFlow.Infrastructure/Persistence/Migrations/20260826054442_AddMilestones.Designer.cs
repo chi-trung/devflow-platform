@@ -3,6 +3,7 @@ using System;
 using DevFlow.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DevFlow.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(DevFlowDbContext))]
-    partial class DevFlowDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260826054442_AddMilestones")]
+    partial class AddMilestones
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -188,10 +191,6 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("end_date_utc");
 
-                    b.Property<Guid?>("MilestoneId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("milestone_id");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -212,9 +211,6 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_epics");
-
-                    b.HasIndex("MilestoneId")
-                        .HasDatabaseName("ix_epics_milestone_id");
 
                     b.HasIndex("ProjectId", "StartDateUtc")
                         .HasDatabaseName("ix_epics_project_id_start_date_utc");
@@ -1586,12 +1582,6 @@ namespace DevFlow.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("DevFlow.Domain.Entities.Epic", b =>
                 {
-                    b.HasOne("DevFlow.Domain.Entities.Milestone", null)
-                        .WithMany()
-                        .HasForeignKey("MilestoneId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_epics_milestones_milestone_id");
-
                     b.HasOne("DevFlow.Domain.Entities.Project", null)
                         .WithMany()
                         .HasForeignKey("ProjectId")

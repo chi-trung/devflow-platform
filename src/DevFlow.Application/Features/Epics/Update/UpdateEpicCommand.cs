@@ -12,6 +12,7 @@ public sealed record UpdateEpicCommand(
     Guid EpicId,
     string Name,
     string? Description,
+    Guid? MilestoneId,
     DateTimeOffset? StartDateUtc,
     DateTimeOffset? EndDateUtc) : IRequest, IWorkspaceRequest, IProjectEvent
 {

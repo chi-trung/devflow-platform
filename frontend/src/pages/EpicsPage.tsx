@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Plus, Pencil, Trash2, GripVertical, List, Flag, Link2, X } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, Plus, Pencil, Trash2, GripVertical, List, Flag, Link2, X, Milestone as MilestoneIcon } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
@@ -17,20 +17,23 @@ import {
   deleteEpic,
   getEpicDependencies,
   getEpics,
+  getMilestones,
   removeEpicDependency,
   updateEpic,
 } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
-import type { EpicResponse, CreateEpicRequest, UpdateEpicRequest, WorkspaceMemberResponse } from "../types/api";
+import type { EpicResponse, CreateEpicRequest, UpdateEpicRequest, MilestoneResponse, WorkspaceMemberResponse } from "../types/api";
 
 type ViewMode = "list" | "roadmap";
 
 export function EpicsPage() {
   const { t } = useTranslation();
   const { push } = useToast();
+  const navigate = useNavigate();
   const { workspaceId = "", projectId = "" } = useParams();
   const [epics, setEpics] = useState<EpicResponse[]>([]);
+  const [milestones, setMilestones] = useState<MilestoneResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -59,6 +62,7 @@ export function EpicsPage() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [milestoneId, setMilestoneId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -66,8 +70,12 @@ export function EpicsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getEpics(workspaceId, projectId);
+      const [data, milestoneData] = await Promise.all([
+        getEpics(workspaceId, projectId),
+        getMilestones(workspaceId, projectId),
+      ]);
       setEpics(data);
+      setMilestones(milestoneData);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("epic.loadFailed"));
     } finally {
@@ -142,6 +150,7 @@ export function EpicsPage() {
   function resetForm() {
     setName("");
     setDescription("");
+    setMilestoneId("");
     setStartDate("");
     setEndDate("");
     setEditing(null);
@@ -156,6 +165,7 @@ export function EpicsPage() {
       const payload: CreateEpicRequest | UpdateEpicRequest = {
         name: name.trim(),
         description: description.trim() || null,
+        milestoneId: milestoneId || null,
         startDateUtc: startDate || null,
         endDateUtc: endDate || null,
       };
@@ -178,6 +188,7 @@ export function EpicsPage() {
     setEditing(epic);
     setName(epic.name);
     setDescription(epic.description ?? "");
+    setMilestoneId(epic.milestoneId ?? "");
     setStartDate(epic.startDateUtc ?? "");
     setEndDate(epic.endDateUtc ?? "");
     setCreating(true);
@@ -328,6 +339,23 @@ export function EpicsPage() {
                   className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
                 />
               </div>
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-sm font-medium">
+                  {t("epic.milestoneLabel")}
+                </label>
+                <select
+                  value={milestoneId}
+                  onChange={(e) => setMilestoneId(e.target.value)}
+                  className="w-full cursor-pointer rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                >
+                  <option value="">{t("epic.milestoneNone")}</option>
+                  {milestones.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Button type="submit" disabled={saving || !name.trim()}>
@@ -366,7 +394,14 @@ export function EpicsPage() {
             }
           />
         ) : view === "roadmap" ? (
-          <EpicRoadmap epics={epics} onSelect={handleEdit} />
+          <EpicRoadmap
+            epics={epics}
+            milestones={milestones}
+            onSelect={handleEdit}
+            onMilestoneSelect={() =>
+              navigate(`/workspaces/${workspaceId}/projects/${projectId}/milestones`)
+            }
+          />
         ) : (
           <ul className="flex flex-col gap-3">
             {epics.map((epic) => {
