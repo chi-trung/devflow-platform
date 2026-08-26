@@ -75,7 +75,18 @@ public sealed class OpenAiAiClient : IAiClient
             }
 
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            using var document = JsonDocument.Parse(responseBody);
+
+            // Some OpenAI-compatible proxies (LiteLLM, and certain deepseek
+            // gateways) append a streaming sentinel to an otherwise normal
+            // non-streaming response: ...}}data: [DONE]. Strip it so the
+            // payload parses as plain JSON.
+            var doneMarker = responseBody.LastIndexOf("data: [DONE]", StringComparison.OrdinalIgnoreCase);
+            if (doneMarker >= 0)
+            {
+                responseBody = responseBody[..doneMarker];
+            }
+
+            using var document = JsonDocument.Parse(responseBody.TrimEnd());
             if (document.RootElement.TryGetProperty("choices", out var choices) &&
                 choices.GetArrayLength() > 0 &&
                 choices[0].TryGetProperty("message", out var message) &&
