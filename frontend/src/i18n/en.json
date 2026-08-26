@@ -390,8 +390,13 @@
  },
  "board": {
   "backlog": "Backlog",
+  "idea": "Idea",
+  "planning": "Planning",
+  "approval": "Approval",
+  "ready": "Ready",
   "inProgress": "In Progress",
   "inReview": "In Review",
+  "review": "Review",
   "done": "Done",
   "newTask": "New task",
   "importTasks": "Import",
@@ -454,7 +459,19 @@
   "deleteCommentFailed": "Failed to delete comment.",
   "saveTemplateFailed": "Failed to save template.",
   "createTaskFailed": "Failed to create task.",
+  "definitionOfDone": "Definition of done",
+  "dodMet": "DoD met",
+  "dodPlaceholder": "type acceptance criteria — one per line",
   "showMore": "Show {count} more"
+ },
+ "taskStatus": {
+  "Idea": "Idea",
+  "Planning": "Planning",
+  "Approval": "Approval",
+  "Ready": "Ready",
+  "InProgress": "In Progress",
+  "Review": "Review",
+  "Done": "Done"
  },
  "myTasks": {
   "title": "My Tasks",
@@ -509,8 +526,13 @@
   "high": "High",
   "critical": "Critical",
   "backlogStatus": "Backlog",
+  "ideaStatus": "Idea",
+  "planningStatus": "Planning",
+  "approvalStatus": "Approval",
+  "readyStatus": "Ready",
   "inProgressStatus": "In Progress",
   "inReviewStatus": "In Review",
+  "reviewStatus": "Review",
   "doneStatus": "Done",
   "savedAsTemplate": "Saved as template",
   "fileAttached": "File attached",
@@ -1153,7 +1175,7 @@
   "importedCount": "{{count}} task(s) imported",
   "skippedCount": "{{count}} skipped",
   "errors": "Rows with problems:",
-  "statusHint": "status: Backlog/InProgress/InReview/Done, priority: Low/Medium/High/Critical"
+  "statusHint": "status: Idea/Planning/Approval/Ready/InProgress/Review/Done, priority: Low/Medium/High/Critical"
  },
  "importExport": {
   "title": "Import / Export",

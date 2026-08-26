@@ -11,7 +11,7 @@ const DAY_MS = 86_400_000;
 function emptyDashboard(): DashboardData {
   return {
     totalTasks: 0,
-    tasksByStatus: { Backlog: 0, InProgress: 0, InReview: 0, Done: 0 },
+    tasksByStatus: { Idea: 0, Planning: 0, Approval: 0, Ready: 0, InProgress: 0, Review: 0, Done: 0 },
     tasksByPriority: { Low: 0, Medium: 0, High: 0, Critical: 0 },
     overdueCount: 0,
     recentActivity: [],

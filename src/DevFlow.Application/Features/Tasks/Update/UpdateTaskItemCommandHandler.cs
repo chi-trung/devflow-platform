@@ -58,6 +58,7 @@ public sealed class UpdateTaskItemCommandHandler(
         task.UpdateDetails(command.Title, command.Description, command.Priority, command.DueDateUtc);
         task.ChangeStatus(command.Status);
         task.AssignTo(command.AssigneeId);
+        task.SetDefinitionOfDone(command.DefinitionOfDone);
 
         // Cascading state rule: when the last open subtask is completed, complete its parent.
         if (task.Status == TaskItemStatus.Done && task.ParentTaskId is not null)

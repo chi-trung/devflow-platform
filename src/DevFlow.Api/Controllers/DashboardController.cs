@@ -118,9 +118,12 @@ public sealed class DashboardController(DevFlowDbContext dbContext) : Controller
             // DashboardData contract (and the CQRS handler's output).
             tasksByStatus = new Dictionary<string, int>
             {
-                [nameof(TaskItemStatus.Backlog)] = tasks.Count(t => t.Status == TaskItemStatus.Backlog),
+                [nameof(TaskItemStatus.Idea)] = tasks.Count(t => t.Status == TaskItemStatus.Idea),
+                [nameof(TaskItemStatus.Planning)] = tasks.Count(t => t.Status == TaskItemStatus.Planning),
+                [nameof(TaskItemStatus.Approval)] = tasks.Count(t => t.Status == TaskItemStatus.Approval),
+                [nameof(TaskItemStatus.Ready)] = tasks.Count(t => t.Status == TaskItemStatus.Ready),
                 [nameof(TaskItemStatus.InProgress)] = tasks.Count(t => t.Status == TaskItemStatus.InProgress),
-                [nameof(TaskItemStatus.InReview)] = tasks.Count(t => t.Status == TaskItemStatus.InReview),
+                [nameof(TaskItemStatus.Review)] = tasks.Count(t => t.Status == TaskItemStatus.Review),
                 [nameof(TaskItemStatus.Done)] = tasks.Count(t => t.Status == TaskItemStatus.Done),
             },
             tasksByPriority = new Dictionary<string, int>

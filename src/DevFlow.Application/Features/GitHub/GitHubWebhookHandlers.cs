@@ -101,9 +101,9 @@ public static class GitHubWebhookHandler
                 action,
                 task.Title), cancellationToken);
 
-            if (payload.Event == "pull_request" && payload.Action == "opened" && task.Status != TaskItemStatus.InReview)
+            if (payload.Event == "pull_request" && payload.Action == "opened" && task.Status != TaskItemStatus.Review)
             {
-                task.ChangeStatus(TaskItemStatus.InReview);
+                task.ChangeStatus(TaskItemStatus.Review);
             }
             else if (payload.Event == "pull_request" && payload.PrMerged && task.Status != TaskItemStatus.Done)
             {

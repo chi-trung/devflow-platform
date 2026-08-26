@@ -134,7 +134,7 @@ public class GitHubWebhookHandlerTests
             _gitHubRepository, _activityLogRepository, _taskItemRepository, _projectRepository, _unitOfWork,
             CancellationToken.None);
 
-        Assert.Equal(TaskItemStatus.InReview, _task.Status);
+        Assert.Equal(TaskItemStatus.Review, _task.Status);
         await _activityLogRepository.Received(1).AddAsync(
             Arg.Is<ActivityLog>(log => log.Action.Contains("PR open", StringComparison.OrdinalIgnoreCase)),
             Arg.Any<CancellationToken>());

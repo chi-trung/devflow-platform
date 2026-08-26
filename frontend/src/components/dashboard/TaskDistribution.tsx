@@ -10,9 +10,12 @@ const STROKE = 26;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
-  Backlog: "#64748b",
-  InProgress: "#38bdf8",
-  InReview: "#a78bfa",
+  Idea: "#64748b",
+  Planning: "#38bdf8",
+  Approval: "#34d399",
+  Ready: "#0ea5e9",
+  InProgress: "#f59e0b",
+  Review: "#a78bfa",
   Done: "#14b8a6",
 };
 
@@ -42,9 +45,12 @@ export function TaskDistribution({ data }: TaskDistributionProps) {
   const navigate = useNavigate();
 
   const STATUS_LABELS: Record<TaskStatus, string> = {
-    Backlog: t("board.backlog"),
+    Idea: t("board.idea"),
+    Planning: t("board.planning"),
+    Approval: t("board.approval"),
+    Ready: t("board.ready"),
     InProgress: t("board.inProgress"),
-    InReview: t("board.inReview"),
+    Review: t("board.review"),
     Done: t("board.done"),
   };
 

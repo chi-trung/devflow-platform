@@ -28,7 +28,8 @@ public sealed class TasksController(ISender sender) : ControllerBase
             request.Title,
             request.Description,
             request.Priority,
-            request.DueDateUtc);
+            request.DueDateUtc,
+            request.DefinitionOfDone);
 
         var taskId = await sender.Send(command, cancellationToken);
 
@@ -77,7 +78,8 @@ public sealed class TasksController(ISender sender) : ControllerBase
             request.Status,
             request.Priority,
             request.AssigneeId,
-            request.DueDateUtc);
+            request.DueDateUtc,
+            request.DefinitionOfDone);
 
         await sender.Send(command, cancellationToken);
 

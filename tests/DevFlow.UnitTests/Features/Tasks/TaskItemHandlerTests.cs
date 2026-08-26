@@ -50,7 +50,7 @@ public class TaskItemHandlerTests
         await _taskItemRepository.Received(1).AddAsync(
             Arg.Is<TaskItem>(task =>
                 task.Title == "Design board layout" &&
-                task.Status == TaskItemStatus.Backlog &&
+                task.Status == TaskItemStatus.Idea &&
                 task.Priority == TaskItemPriority.High),
             Arg.Any<CancellationToken>());
         await _activityLogRepository.Received(1).AddAsync(

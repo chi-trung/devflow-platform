@@ -138,9 +138,13 @@ public class ImportProjectBackupHandler(
                     priority);
                 EntityIdSetter.SetId(task, newTaskId);
 
-                // Apply status
-                if (Enum.TryParse<TaskItemStatus>(taskData.Status, true, out var status)
-                    && status != TaskItemStatus.Backlog)
+                // Apply status (Backlog in old backups maps to the new Idea stage)
+                var statusText = string.Equals(taskData.Status, "Backlog", StringComparison.OrdinalIgnoreCase)
+                    ? nameof(TaskItemStatus.Idea)
+                    : taskData.Status;
+
+                if (Enum.TryParse<TaskItemStatus>(statusText, true, out var status)
+                    && status != TaskItemStatus.Idea)
                 {
                     task.ChangeStatus(status);
                 }

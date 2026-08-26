@@ -2,10 +2,13 @@ namespace DevFlow.Domain.Enums;
 
 public enum TaskItemStatus
 {
-    Backlog = 0,
-    InProgress = 1,
-    InReview = 2,
-    Done = 3
+    Idea = 0,
+    Planning = 1,
+    Approval = 2,
+    Ready = 3,
+    InProgress = 4,
+    Review = 5,
+    Done = 6
 }
 
 public enum TaskItemPriority

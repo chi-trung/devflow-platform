@@ -96,7 +96,7 @@ export function SubtaskSection({
     if (togglingId) return;
     setTogglingId(subtask.id);
     setError(null);
-    const nextStatus = subtask.status === "Done" ? "Backlog" : "Done";
+    const nextStatus = subtask.status === "Done" ? "Idea" : "Done";
     try {
       await api(`/workspaces/${workspaceId}/projects/${projectId}/tasks/${subtask.id}`, {
         method: "PATCH",
