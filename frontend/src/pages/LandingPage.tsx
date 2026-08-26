@@ -7,6 +7,7 @@ import { ThemeToggle } from "../components/ui/ThemeToggle";
 import { HeroFlowDiagram } from "../components/landing/HeroFlowDiagram";
 import { IntelligenceSection } from "../components/landing/IntelligenceSection";
 import { FeatureBrowserFrame } from "../components/landing/FeatureBrowserFrame";
+import { ScreenshotShowcase } from "../components/landing/ScreenshotShowcase";
 
 const HOW_STEPS = [
   { key: "step1", icon: "01" },
@@ -48,7 +49,7 @@ export function LandingPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background text-foreground">
+    <div className="flex min-h-dvh flex-col bg-background text-foreground overflow-x-hidden">
       {/* ─── Sticky header ─── */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
@@ -124,11 +125,14 @@ export function LandingPage() {
             </div>
 
             {/* Animated flow diagram (desktop + mobile SVGs) */}
-            <div className="mx-auto mt-14 max-w-4xl">
+            <div className="mx-auto mt-14 max-w-4xl px-0 overflow-visible">
               <HeroFlowDiagram className="mx-auto" />
             </div>
           </div>
         </section>
+
+        {/* ─── Dashboard screenshot ─── */}
+        <ScreenshotShowcase />
 
         {/* ─── The Intelligence ─── */}
         <IntelligenceSection />

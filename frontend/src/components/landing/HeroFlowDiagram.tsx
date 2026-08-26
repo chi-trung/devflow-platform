@@ -29,7 +29,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
       {/* ─── Desktop (side-by-side flow) ─── */}
       <svg
         viewBox="0 0 900 440"
-        className={`hidden w-full md:block ${className}`}
+        className={`hidden w-full overflow-visible md:block ${className}`}
         role="img"
         aria-label={t("landing.hero.flow.taskId") + " " + t("landing.hero.flow.taskTitle")}
         focusable="false"
@@ -72,7 +72,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
                 x={x + 59}
                 y={s.y + 25}
                 textAnchor="middle"
-                fontSize="13"
+                fontSize="12"
                 fontWeight={active ? 700 : 600}
                 fill={active ? "var(--color-on-primary)" : "var(--color-foreground)"}
               >
@@ -82,15 +82,28 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
           );
         })}
 
-        {/* connector line under pills */}
+        {/* connector line through the centers of the stage pills, so it reads
+            as one connected pipeline instead of a floating bar */}
         <path
-          d="M40 92 H860"
+          d="M99 92 H789"
           stroke="var(--color-border-strong)"
           strokeWidth="2"
           strokeDasharray="6 6"
           className="animate-dash-flow"
         />
-        <circle cx="450" cy="92" r="4" fill="var(--color-primary)" />
+        {stages.map((s, i) => {
+          const cx = 99 + i * 138;
+          const active = s.key === "inProgress";
+          return (
+            <circle
+              key={s.key}
+              cx={cx}
+              cy="92"
+              r={active ? 6 : 3}
+              fill={active ? "var(--color-primary)" : "var(--color-border-strong)"}
+            />
+          );
+        })}
 
         {/* ── task card (left) ── */}
         <g>
@@ -167,7 +180,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
       {/* ─── Mobile (stacked vertical flow) ─── */}
       <svg
         viewBox="0 0 360 560"
-        className={`w-full md:hidden ${className}`}
+        className={`w-full overflow-visible md:hidden ${className}`}
         role="img"
         aria-label={t("landing.hero.flow.taskId") + " " + t("landing.hero.flow.taskTitle")}
         focusable="false"

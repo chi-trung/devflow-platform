@@ -12,6 +12,12 @@
   "heroSubtitle": "Turn ideas into shipped work with structured stages, an AI agent that plans and implements, and a knowledge base that compounds with every release.",
   "ctaStart": "Start building free",
   "ctaViewLogin": "Log in",
+  "showcase": {
+   "eyebrow": "LIVE DASHBOARD",
+   "title": "Your whole flow on one screen",
+   "subtitle": "Sprint health, flow metrics, and team activity — the dashboard that keeps every stage of your pipeline in view.",
+   "alt": "DevFlow dashboard screenshot"
+  },
   "stages": {
    "idea": "Idea",
    "planning": "Planning",

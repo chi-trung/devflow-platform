@@ -59,15 +59,15 @@ function FlowsMock() {
         { head: t("landing.mock.flows.doing"), cards: ["card3", "card4"], highlight: false },
         { head: t("landing.mock.flows.done"), cards: ["card5", "card6"], highlight: true },
       ].map((col) => (
-        <div key={col.head} className="rounded-lg bg-surface/60 p-2">
-          <p className="mb-2 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div key={col.head} className="min-w-0 rounded-lg bg-surface/60 p-2">
+          <p className="mb-2 truncate text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
             {col.head}
           </p>
           <div className="space-y-1.5">
             {col.cards.map((c) => (
               <div
                 key={c}
-                className={`rounded-md px-2 py-1.5 text-[10.5px] leading-tight ${
+                className={`truncate rounded-md px-2 py-1.5 text-[10.5px] leading-tight ${
                   col.highlight ? "border border-primary/40 bg-primary/10 text-foreground" : "bg-card text-muted-foreground"
                 }`}
               >
@@ -94,7 +94,7 @@ function AiMock() {
           <div className="h-2 w-2/3 rounded-full bg-elevated" />
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10.5px] font-medium text-primary">
           {t("landing.mock.ai.gateApproved")}
         </span>
@@ -129,8 +129,8 @@ function WikiMock() {
           key={i}
           className={`flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 text-[11px] ${row.tone}`}
         >
-          <span className={`size-1.5 rounded-full ${row.tone.split(" ")[1]}`} aria-hidden />
-          <span className="truncate">{row.text}</span>
+          <span className={`size-1.5 shrink-0 rounded-full ${row.tone.split(" ")[1]}`} aria-hidden />
+          <span className="min-w-0 flex-1 truncate">{row.text}</span>
         </div>
       ))}
     </div>
@@ -146,13 +146,13 @@ function KanbanMock() {
         { head: t("landing.mock.kanban.doing"), cards: ["card3", "card4"], dim: false },
         { head: t("landing.mock.kanban.done"), cards: ["card5", "card6"], dim: true },
       ].map((col) => (
-        <div key={col.head} className="rounded-lg bg-surface/60 p-2">
-          <p className="mb-2 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div key={col.head} className="min-w-0 rounded-lg bg-surface/60 p-2">
+          <p className="mb-2 truncate text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
             {col.head}
           </p>
           <div className="space-y-1.5">
             {col.cards.map((c, ci) => (
-              <div key={c} className="rounded-md bg-card px-2 py-1.5">
+              <div key={c} className="min-w-0 rounded-md bg-card px-2 py-1.5">
                 <p className="truncate text-[10.5px] leading-tight text-foreground">
                   {t(`landing.mock.kanban.${c}`)}
                 </p>
@@ -207,11 +207,11 @@ function ReleasesMock() {
   ];
   return (
     <div className="space-y-2.5">
-      <div className="flex items-center justify-between">
-        <span className="rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">
+      <div className="flex flex-wrap items-center justify-between gap-1.5">
+        <span className="shrink-0 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">
           {t("landing.mock.releases.version")}
         </span>
-        <span className="font-mono text-[10px] text-muted-foreground">{t("landing.mock.releases.target")}</span>
+        <span className="min-w-0 truncate font-mono text-[10px] text-muted-foreground">{t("landing.mock.releases.target")}</span>
       </div>
       <div>
         <div className="mb-1 flex items-center justify-between text-[10.5px] text-muted-foreground">
@@ -226,7 +226,7 @@ function ReleasesMock() {
         {rows.map((row) => (
           <div key={row.text} className="flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-[11px] text-foreground">
             <span className={`size-2 shrink-0 rounded-full ${row.done ? "bg-primary" : "bg-elevated ring-1 ring-border"}`} aria-hidden />
-            <span className="truncate">{row.text}</span>
+            <span className="min-w-0 flex-1 truncate">{row.text}</span>
           </div>
         ))}
       </div>
