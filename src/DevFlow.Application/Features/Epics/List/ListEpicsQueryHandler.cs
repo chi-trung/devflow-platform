@@ -57,6 +57,7 @@ public sealed class ListEpicsQueryHandler(
         return new EpicResponse(
             epic.Id,
             epic.ProjectId,
+            epic.MilestoneId,
             epic.Name,
             epic.Description,
             epic.StartDateUtc,

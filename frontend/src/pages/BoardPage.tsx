@@ -22,6 +22,7 @@ import {
   Github,
   Activity,
   Users,
+  Milestone as MilestoneIcon,
 } from "lucide-react";
 import {
   api,
@@ -721,6 +722,11 @@ export function BoardPage() {
       to: `/workspaces/${workspaceId}/projects/${projectId}/epics`,
       icon: List,
       label: t("epic.title"),
+    },
+    {
+      to: `/workspaces/${workspaceId}/projects/${projectId}/milestones`,
+      icon: MilestoneIcon,
+      label: t("milestone.title"),
     },
     { to: "/saved-searches", icon: Bookmark, label: t("savedSearch.title") },
     {

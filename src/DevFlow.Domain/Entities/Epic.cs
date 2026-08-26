@@ -17,6 +17,8 @@ public class Epic : BaseEntity, IAuditableEntity
 
     public Guid ProjectId { get; private set; }
 
+    public Guid? MilestoneId { get; private set; }
+
     public string Name { get; private set; } = string.Empty;
 
     public string? Description { get; private set; }
@@ -37,6 +39,11 @@ public class Epic : BaseEntity, IAuditableEntity
         }
 
         return new Epic(projectId, name.Trim(), description?.Trim());
+    }
+
+    public void AttachToMilestone(Guid? milestoneId)
+    {
+        MilestoneId = milestoneId;
     }
 
     public static Epic Create(

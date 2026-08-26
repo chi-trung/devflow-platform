@@ -3,21 +3,19 @@ using DevFlow.Application.Common.Behaviors;
 using DevFlow.Domain.Enums;
 using MediatR;
 
-namespace DevFlow.Application.Features.Epics.Create;
+namespace DevFlow.Application.Features.Milestones.Update;
 
 [RequireWorkspaceRole(WorkspaceRole.Member)]
-public sealed record CreateEpicCommand(
+public sealed record UpdateMilestoneCommand(
     Guid WorkspaceId,
     Guid ProjectId,
+    Guid MilestoneId,
     string Name,
     string? Description,
-    Guid? MilestoneId,
-    DateTimeOffset? StartDateUtc,
-    DateTimeOffset? EndDateUtc) : IRequest<EpicCreatedResponse>, IWorkspaceRequest, IProjectEvent
+    DateTimeOffset? TargetDateUtc,
+    MilestoneStatus Status) : IRequest, IWorkspaceRequest, IProjectEvent
 {
-    public string ActivityVerb => "created epic";
+    public string ActivityVerb => "updated milestone";
     public string ActivityLabel => Name;
     public Guid? ActivityTaskId => null;
 }
-
-public sealed record EpicCreatedResponse(Guid Id);

@@ -33,6 +33,8 @@ public sealed class UpdateEpicCommandHandler(
             command.StartDateUtc,
             command.EndDateUtc);
 
+        epic.AttachToMilestone(command.MilestoneId);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

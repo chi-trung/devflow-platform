@@ -16,6 +16,7 @@ const SprintPlanningPage = lazy(() => import("./pages/SprintPlanningPage").then(
 const ReportsPage = lazy(() => import("./pages/ReportsPage").then(m => ({ default: m.ReportsPage })));
 const SavedSearchesPage = lazy(() => import("./pages/SavedSearchesPage").then(m => ({ default: m.SavedSearchesPage })));
 const EpicsPage = lazy(() => import("./pages/EpicsPage").then(m => ({ default: m.EpicsPage })));
+const MilestonesPage = lazy(() => import("./pages/MilestonesPage").then(m => ({ default: m.MilestonesPage })));
 const LabelsPage = lazy(() => import("./pages/LabelsPage").then(m => ({ default: m.LabelsPage })));
 const CustomFieldsPage = lazy(() => import("./pages/CustomFieldsPage").then(m => ({ default: m.CustomFieldsPage })));
 const TemplatesPage = lazy(() => import("./pages/TemplatesPage").then(m => ({ default: m.TemplatesPage })));
@@ -87,6 +88,10 @@ export default function App() {
                 <Route
                   path="/workspaces/:workspaceId/projects/:projectId/epics"
                   element={<EpicsPage />}
+                />
+                <Route
+                  path="/workspaces/:workspaceId/projects/:projectId/milestones"
+                  element={<MilestonesPage />}
                 />
                 <Route
                   path="/workspaces/:workspaceId/projects/:projectId/labels"

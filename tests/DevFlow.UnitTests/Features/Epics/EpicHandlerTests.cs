@@ -33,7 +33,7 @@ public class EpicHandlerTests
         var handler = new CreateEpicCommandHandler(_projectRepository, _epicRepository, _unitOfWork);
         var command = new CreateEpicCommand(
             _workspaceId, _project.Id, "Sprint 18 Epic", "Hierarchy support",
-            DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(30));
+            null, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(30));
 
         var response = await handler.Handle(command, CancellationToken.None);
 
@@ -47,7 +47,7 @@ public class EpicHandlerTests
     {
         var handler = new CreateEpicCommandHandler(_projectRepository, _epicRepository, _unitOfWork);
         var command = new CreateEpicCommand(
-            _workspaceId, Guid.NewGuid(), "Ghost Epic", null, null, null);
+            _workspaceId, Guid.NewGuid(), "Ghost Epic", null, null, null, null);
 
         await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, CancellationToken.None));
     }
@@ -93,7 +93,7 @@ public class EpicHandlerTests
 
         var handler = new UpdateEpicCommandHandler(_projectRepository, _epicRepository, _unitOfWork);
         var command = new UpdateEpicCommand(
-            _workspaceId, _project.Id, epic.Id, "Renamed", null, null, null);
+            _workspaceId, _project.Id, epic.Id, "Renamed", null, null, null, null);
 
         await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, CancellationToken.None));
     }

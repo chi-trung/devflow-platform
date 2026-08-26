@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Flag } from "lucide-react";
-import type { EpicResponse } from "../../types/api";
+import { Flag, Milestone as MilestoneIcon } from "lucide-react";
+import type { EpicResponse, MilestoneResponse } from "../../types/api";
 
 const DAY_MS = 86_400_000;
 const DAY_W = 26;
@@ -9,7 +9,9 @@ const LABEL_W = 208;
 
 interface EpicRoadmapProps {
   epics: EpicResponse[];
+  milestones?: MilestoneResponse[];
   onSelect?: (epic: EpicResponse) => void;
+  onMilestoneSelect?: (milestone: MilestoneResponse) => void;
 }
 
 interface TrackEpic {
@@ -33,7 +35,7 @@ function monthLabel(ms: number): string {
   });
 }
 
-export function EpicRoadmap({ epics, onSelect }: EpicRoadmapProps) {
+export function EpicRoadmap({ epics, milestones, onSelect, onMilestoneSelect }: EpicRoadmapProps) {
   const { t } = useTranslation();
 
   const range = useMemo(() => {
@@ -159,6 +161,64 @@ export function EpicRoadmap({ epics, onSelect }: EpicRoadmapProps) {
               {t("epic.roadmapNoDates")}
             </div>
           )}
+
+          {(milestones ?? []).map((m) => {
+            const groupEpics = scheduled.filter((tr) => tr.epic.milestoneId === m.id);
+            if (groupEpics.length === 0) return null;
+            return (
+              <div key={`m-${m.id}`} className="flex border-b border-border/50 last:border-b-0">
+                <div
+                  className="sticky left-0 z-10 flex shrink-0 items-center gap-2 bg-card px-4 py-2"
+                  style={{ width: LABEL_W }}
+                >
+                  <MilestoneIcon className="size-3.5 shrink-0 text-primary" aria-hidden />
+                  <button
+                    type="button"
+                    onClick={() => onMilestoneSelect?.(m)}
+                    className="min-w-0 flex-1 truncate text-left text-xs font-semibold uppercase tracking-wide text-primary hover:underline"
+                    title={m.name}
+                  >
+                    {m.name}
+                  </button>
+                  <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+                    {t(`milestone.status.${m.status}`)}
+                  </span>
+                </div>
+                <div className="relative py-2" style={{ width: trackW }}>
+                  <div className="relative h-5 w-full">
+                    {monthTicks.map((tick) => (
+                      <div
+                        key={tick.index}
+                        className="absolute inset-y-0 border-l border-border/40"
+                        style={{ left: tick.index * DAY_W }}
+                      />
+                    ))}
+                    {showToday && (
+                      <div
+                        className="absolute inset-y-0 border-l border-dashed border-primary"
+                        style={{ left: todayIndex * DAY_W }}
+                      />
+                    )}
+                    {groupEpics.map(({ epic, leftDays, widthDays }) => (
+                      <button
+                        key={epic.id}
+                        type="button"
+                        onClick={() => onSelect?.(epic)}
+                        title={`${epic.name} · ${Math.round(epic.completionPercent)}%`}
+                        className="absolute top-1/2 flex h-4 -translate-y-1/2 items-center overflow-hidden rounded-full border border-border-strong bg-elevated transition-transform duration-150 hover:scale-y-110"
+                        style={{ left: leftDays * DAY_W, width: Math.max(6, widthDays * DAY_W) }}
+                      >
+                        <span
+                          className="h-full rounded-full bg-primary transition-all duration-300"
+                          style={{ width: `${Math.min(100, Math.max(0, epic.completionPercent))}%` }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
 
           {scheduled.map(({ epic, leftDays, widthDays, milestone }) => (
             <div
