@@ -29,7 +29,8 @@ public sealed class ListProjectsQueryHandler(
                 project.Description,
                 project.Status.ToString(),
                 project.Emoji,
-                project.CoverColor))
+                project.CoverColor,
+                project.ApproveAiPlans))
             .ToList();
 
         return new PagedResult<ProjectResponse>(items, totalCount, page, pageSize);

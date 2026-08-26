@@ -1,5 +1,6 @@
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Email;
+using DevFlow.Infrastructure.AI;
 using DevFlow.Infrastructure.Authentication;
 using DevFlow.Infrastructure.Caching;
 using DevFlow.Infrastructure.Outbox;
@@ -22,6 +23,18 @@ public static class DependencyInjection
     {
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.Configure<OAuthSettings>(configuration.GetSection(OAuthSettings.SectionName));
+        services.Configure<AiOptions>(configuration.GetSection(AiOptions.SectionName));
+
+        // AI planner: OpenAI-compatible client when configured, no-op fallback
+        // otherwise so the API stays responsive on Render free tier without a key.
+        if (!string.IsNullOrWhiteSpace(configuration["Ai:ApiKey"]))
+        {
+            services.AddHttpClient<IAiClient, OpenAiAiClient>();
+        }
+        else
+        {
+            services.AddScoped<IAiClient, NoOpAiClient>();
+        }
 
         services.AddSingleton<AuditableEntityInterceptor>();
         services.AddSingleton<SoftDeleteInterceptor>();
@@ -48,6 +61,7 @@ public static class DependencyInjection
         services.AddScoped<IEpicRepository, EpicRepository>();
         services.AddScoped<IMilestoneRepository, MilestoneRepository>();
         services.AddScoped<IKnowledgeRepository, KnowledgeRepository>();
+        services.AddScoped<IAiPlanRepository, AiPlanRepository>();
         services.AddScoped<IEpicDependencyRepository, EpicDependencyRepository>();
         services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
         services.AddScoped<ITaskAttachmentRepository, TaskAttachmentRepository>();

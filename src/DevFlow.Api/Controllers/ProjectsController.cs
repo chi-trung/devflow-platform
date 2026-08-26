@@ -83,7 +83,8 @@ public sealed class ProjectsController(ISender sender) : ControllerBase
             request.Name,
             request.Description,
             request.Emoji,
-            request.CoverColor);
+            request.CoverColor,
+            request.ApproveAiPlans);
 
         await sender.Send(command, cancellationToken);
 

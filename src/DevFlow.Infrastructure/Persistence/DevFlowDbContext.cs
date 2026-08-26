@@ -36,6 +36,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<KnowledgeEntry> KnowledgeEntries => Set<KnowledgeEntry>();
 
+    public DbSet<AiPlan> AiPlans => Set<AiPlan>();
+
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
 
     public DbSet<TaskAttachment> TaskAttachments => Set<TaskAttachment>();

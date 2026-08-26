@@ -38,6 +38,13 @@ public class Project : BaseEntity, IAuditableEntity, ISoftDeletable
 
     public ProjectStatus Status { get; private set; } = ProjectStatus.Active;
 
+    /// <summary>
+    /// When true, AI-generated plans for this project's tasks are applied
+    /// automatically (subtasks created, DoD set) without manual review.
+    /// When false (default), plans are stored as pending and the user applies them.
+    /// </summary>
+    public bool ApproveAiPlans { get; private set; }
+
     public DateTimeOffset CreatedAtUtc { get; set; }
 
     public DateTimeOffset? UpdatedAtUtc { get; set; }
@@ -95,6 +102,11 @@ public class Project : BaseEntity, IAuditableEntity, ISoftDeletable
     public void UpdateCoverColor(string? coverColor)
     {
         CoverColor = string.IsNullOrWhiteSpace(coverColor) ? null : coverColor.Trim();
+    }
+
+    public void SetApproveAiPlans(bool approve)
+    {
+        ApproveAiPlans = approve;
     }
 
     public void Archive()

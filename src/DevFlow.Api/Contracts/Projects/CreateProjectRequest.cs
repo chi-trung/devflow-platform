@@ -13,4 +13,5 @@ public sealed record UpdateProjectRequest(
     string Name,
     string? Description,
     string? Emoji = null,
-    string? CoverColor = null);
+    string? CoverColor = null,
+    bool? ApproveAiPlans = null);
