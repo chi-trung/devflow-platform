@@ -198,8 +198,18 @@ test.describe("DevFlow E2E", () => {
     await page.waitForTimeout(2000);
 
     // The first-login onboarding tour auto-opens on a fresh browser; pre-set
-    // its completion flag so the tour overlay doesn't intercept the assertions.
-    await page.evaluate(() => localStorage.setItem("devflow.onboardingDone", "1"));
+    // its completion flag (per-user key) so the tour overlay doesn't intercept
+    // the assertions.
+    await page.evaluate(() => {
+      const access = localStorage.getItem("devflow.accessToken");
+      const payload = access ? access.split(".")[1] : null;
+      const userId = payload
+        ? (JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/"))) as {
+            sub?: string;
+          }).sub
+        : "";
+      localStorage.setItem(`devflow.onboardingDone.${userId ?? ""}`, "1");
+    });
 
     // Verify the sidebar shows the workspace name
     await expect(page.locator("main")).toBeVisible({ timeout: 5_000 });

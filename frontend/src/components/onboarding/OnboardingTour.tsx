@@ -6,25 +6,29 @@ import { BrandMark } from "../ui/Logo";
 
 const FLAG_KEY = "devflow.onboardingDone";
 
-export const ONBOARDING_FLAG_KEY = FLAG_KEY;
+/** Flag is per-user (suffixed with the user id) so a brand-new account on the
+ * same browser still gets the first-login tour. */
+const flagKey = (userId: string) => `${FLAG_KEY}.${userId}`;
 
 /** Set once the tour is finished/skipped, so it only runs after first login. */
-export function setOnboardingDone() {
+export function setOnboardingDone(userId: string) {
   try {
-    localStorage.setItem(FLAG_KEY, "1");
+    localStorage.setItem(flagKey(userId), "1");
   } catch {
     // storage unavailable — nothing to persist
   }
 }
 
-/** True when the tour has already been dismissed on this browser. */
-export function isOnboardingDone() {
+/** True when the tour has already been dismissed on this browser for this user. */
+export function isOnboardingDone(userId: string) {
   try {
-    return localStorage.getItem(FLAG_KEY) === "1";
+    return localStorage.getItem(flagKey(userId)) === "1";
   } catch {
     return true;
   }
 }
+
+export const ONBOARDING_FLAG_KEY = FLAG_KEY;
 
 interface TourStep {
   /** Resolves the element to highlight. Null → centered (welcome) step. */
@@ -32,6 +36,10 @@ interface TourStep {
   /** i18n keys resolved at render time. */
   titleKey: string;
   descriptionKey: string;
+  /** Show the tooltip card to the left of the target instead of below/above.
+   * For right-column targets (e.g. sprint health) where a below card reads
+   * awkwardly. Falls back to below/above when there isn't room. */
+  placeLeft?: boolean;
 }
 
 interface HighlightRect {
@@ -58,9 +66,11 @@ const TOOLTIP_W = 320;
 export function OnboardingTour({
   open,
   onClose,
+  userId,
 }: {
   open: boolean;
   onClose: () => void;
+  userId: string;
 }) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
@@ -72,9 +82,9 @@ export function OnboardingTour({
   const rafRef = useRef<number | null>(null);
 
   const finish = useCallback(() => {
-    setOnboardingDone();
+    setOnboardingDone(userId);
     onClose();
-  }, [onClose]);
+  }, [userId, onClose]);
 
   // Unblock the first target measurement once the current step's element exists.
   useEffect(() => {
@@ -109,8 +119,20 @@ export function OnboardingTour({
       const spaceBelow = vh - r.bottom;
       const spaceAbove = r.top;
       const placeBelow = spaceBelow > 220 || spaceBelow >= spaceAbove;
+      const roomLeft = r.left - 16 >= TOOLTIP_W + 12;
 
-      if (placeBelow) {
+      if (STEPS[step].placeLeft && roomLeft) {
+        // Right-column target: put the card to the LEFT, vertically centered
+        // on the highlight box, so it reads against empty margin instead of
+        // squatting under a half-visible card below.
+        setCardPos({
+          top: Math.min(
+            Math.max(12, r.top + r.height / 2 - 110),
+            vh - 40,
+          ),
+          left: r.left - TOOLTIP_W - 12,
+        });
+      } else if (placeBelow) {
         setCardPos({
           top: Math.min(r.bottom + 12, vh - 40),
           left: Math.min(Math.max(16, r.left), vw - TOOLTIP_W - 16),
@@ -329,11 +351,12 @@ const STEPS: TourStep[] = [
     titleKey: "onboarding.step5.title",
     descriptionKey: "onboarding.step5.desc",
   },
-  // step 6 — sprint health card
+  // step 6 — sprint health card (right column → tooltip to the LEFT)
   {
     target: byDataTour("sprint-health"),
     titleKey: "onboarding.step6.title",
     descriptionKey: "onboarding.step6.desc",
+    placeLeft: true,
   },
   // step 7 — stats row
   {

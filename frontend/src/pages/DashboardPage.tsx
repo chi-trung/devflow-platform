@@ -65,9 +65,10 @@ export function DashboardPage() {
     () => new URLSearchParams(window.location.search).get("tour") === "1",
     [],
   );
+  const userId = currentUser?.id ?? "";
   useEffect(() => {
     if (tourOpen) return;
-    if (!forceTour && isOnboardingDone()) return;
+    if (!forceTour && isOnboardingDone(userId)) return;
     // Open only once the greeting row (with the selects the tour highlights)
     // is actually in the DOM — otherwise the first highlight box has nothing
     // to anchor to. Poll until it appears (dashboard data has loaded).
@@ -79,7 +80,7 @@ export function DashboardPage() {
     }, 200);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tourOpen, forceTour]);
+  }, [tourOpen, forceTour, userId]);
 
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
@@ -446,7 +447,11 @@ export function DashboardPage() {
           </ul>
         )}
       </div>
-      <OnboardingTour open={tourOpen} onClose={() => setTourOpen(false)} />
+      <OnboardingTour
+        open={tourOpen}
+        onClose={() => setTourOpen(false)}
+        userId={userId}
+      />
     </AppShell>
   );
 }
