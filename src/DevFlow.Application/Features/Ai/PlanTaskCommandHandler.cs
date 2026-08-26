@@ -172,11 +172,13 @@ public sealed class PlanTaskCommandHandler(
 
     private static AiPlanResponse BuildResponse(AiPlan plan, bool applied)
     {
-        var subtasks = JsonSerializer.Deserialize<List<AiPlanSubtaskContract>>(plan.SubtasksJson)
+        var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        var subtasks = JsonSerializer.Deserialize<List<AiPlanSubtaskContract>>(
+                plan.SubtasksJson, jsonOptions)
             ?? new List<AiPlanSubtaskContract>();
-        var steps = JsonSerializer.Deserialize<List<string>>(plan.StepsJson)
+        var steps = JsonSerializer.Deserialize<List<string>>(plan.StepsJson, jsonOptions)
             ?? new List<string>();
-        var doD = JsonSerializer.Deserialize<List<string>>(plan.DefinitionOfDoneJson)
+        var doD = JsonSerializer.Deserialize<List<string>>(plan.DefinitionOfDoneJson, jsonOptions)
             ?? new List<string>();
 
         return new AiPlanResponse(

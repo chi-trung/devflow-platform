@@ -48,12 +48,13 @@ public sealed class ApplyAiPlanCommandHandler(
             throw new NotFoundException(nameof(TaskItem), plan.TaskId);
         }
 
+        var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         var contract = new AiPlanContract
         {
             Summary = plan.Summary,
-            Steps = JsonSerializer.Deserialize<List<string>>(plan.StepsJson) ?? new(),
-            Subtasks = JsonSerializer.Deserialize<List<AiPlanSubtaskContract>>(plan.SubtasksJson) ?? new(),
-            DefinitionOfDone = JsonSerializer.Deserialize<List<string>>(plan.DefinitionOfDoneJson) ?? new(),
+            Steps = JsonSerializer.Deserialize<List<string>>(plan.StepsJson, jsonOptions) ?? new(),
+            Subtasks = JsonSerializer.Deserialize<List<AiPlanSubtaskContract>>(plan.SubtasksJson, jsonOptions) ?? new(),
+            DefinitionOfDone = JsonSerializer.Deserialize<List<string>>(plan.DefinitionOfDoneJson, jsonOptions) ?? new(),
         };
 
         // Supersede any other pending plans for this task.
@@ -72,11 +73,13 @@ public sealed class ApplyAiPlanCommandHandler(
 
     private static AiPlanResponse BuildResponse(AiPlan plan)
     {
-        var subtasks = JsonSerializer.Deserialize<List<AiPlanSubtaskContract>>(plan.SubtasksJson)
+        var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        var subtasks = JsonSerializer.Deserialize<List<AiPlanSubtaskContract>>(
+                plan.SubtasksJson, jsonOptions)
             ?? new List<AiPlanSubtaskContract>();
-        var steps = JsonSerializer.Deserialize<List<string>>(plan.StepsJson)
+        var steps = JsonSerializer.Deserialize<List<string>>(plan.StepsJson, jsonOptions)
             ?? new List<string>();
-        var doD = JsonSerializer.Deserialize<List<string>>(plan.DefinitionOfDoneJson)
+        var doD = JsonSerializer.Deserialize<List<string>>(plan.DefinitionOfDoneJson, jsonOptions)
             ?? new List<string>();
 
         return new AiPlanResponse(
