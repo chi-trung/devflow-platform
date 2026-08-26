@@ -7,4 +7,5 @@ public sealed record ProjectResponse(
     string? Description,
     string Status,
     string? Emoji = null,
-    string? CoverColor = null);
+    string? CoverColor = null,
+    bool ApproveAiPlans = false);

@@ -142,8 +142,18 @@ npm run dev                   # http://localhost:3000, proxies /api to :5217
 - [x] Avatar presence dots on the board (from `usePresence`)
 - [x] Attachment image thumbnails on task cards + detail panel (fetch→blob→objectURL)
 
-### Next up — Sprint 33
-- Component library catalog / design sync
-- tsvector search ranking (beyond ILIKE)
-- Time-tracking reporting (`GetTeamReportTrends` placeholder)
-- Custom field grouping UI
+### Sprint 33 — Compounding Knowledge Base (Wiki / ADR / Runbook + Auto-Capture)
+- [x] `KnowledgeEntry` entity — ADR/Pattern/Runbook types, lifecycle (Draft→Proposed→Accepted→Superseded→Deprecated), weighted contribution (0–1)
+- [x] Full CRUD + Supersede API (`KnowledgeController`) + auto-capture Draft Runbook when a task ships
+- [x] Knowledge page + entry cards + create/edit/supersede UI + `nav.knowledge`
+
+### Sprint 34 — Board Swimlanes
+- [x] Column-level grouping by assignee or epic — vertical lane headers + per-lane counts
+- [x] Swimlane toggle in board toolbar (None / Assignee / Epic)
+
+### Sprint 35 — AI Agent (Real LLM Planning + Self-Approval)
+- [x] Provider-agnostic `IAiClient` — bring your own API key + base URL (OpenAI, LiteLLM, Ollama, …)
+- [x] Knowledge-gated planning prompt — weighted `KnowledgeEntry` top-12 context
+- [x] Per-project self-approval toggle — auto-apply or review-before-apply
+- [x] `AiPlanPanel` in TaskDetailPanel — ask AI to plan, view steps/subtasks/DoD, apply or regenerate
+- [x] Landing copy alignment: MCP claim → "REST API + webhooks"

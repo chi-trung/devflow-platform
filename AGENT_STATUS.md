@@ -1,7 +1,7 @@
 # 🚀 AGENT STATUS & BIG UPDATE ROADMAP — DevFlow 2.0
 
 > **Current Milestone:** DevFlow 2.0 Enterprise & Performance Evolution  
-> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅** | **Sprint 29 Complete ✅** | **Sprint 30 Complete ✅** | **Sprint 31 Complete ✅** | **Sprint 32 Complete ✅** | **Sprint 33 Complete ✅** | **Sprint 34 Complete ✅**
+> **Status:** Sprint 17 Complete ✅ | Sprint 18 Complete ✅ | Sprint 19 Complete ✅ | Sprint 20 Complete ✅ | Sprint 21 Complete ✅ | Sprint 22 Complete ✅ | Sprint 23 Complete ✅ | Sprint 24 Complete ✅ | Sprint 25 Complete ✅ | **Sprint 26 Complete ✅** | **Sprint 27 Complete ✅** | **Sprint 28 Complete ✅** | **Sprint 29 Complete ✅** | **Sprint 30 Complete ✅** | **Sprint 31 Complete ✅** | **Sprint 32 Complete ✅** | **Sprint 33 Complete ✅** | **Sprint 34 Complete ✅** | **Sprint 35 Complete ✅**
 
 ---
 
@@ -26,6 +26,7 @@
 | **Sprint 32** | Visual Identity & Product Polish (De-AI-fy) — Dashboard greeting + `Logo` brand mark + workspace/project emoji + coverColor + attachment thumbnails + illustrations + auth hero + motion + presence dots | ✅ A32.1 dashboard greeting, A32.2 `Logo`/`BrandMark` component + favicon, A32.3 review/merge — PR #155; B32.1 emoji + coverColor fields/migration, B32.2 `AttachmentSummary` — PR #156 | ✅ C32.1 EmptyState illustrations, C32.2 AuthLayout hero, C32.3 emoji UI + `Logo` adoption, C32.4 cover gradients, C32.5 micro-animations, C32.6 presence dot, C32.7 attachment thumbnails — PR #157 | Complete ✅ |
 | **Sprint 33** | Compounding Knowledge Base (landing-parity C) — `KnowledgeEntry` entity (ADR/Pattern/Runbook) + lifecycle + weight + full CRUD/supersede API + **auto-capture Draft Runbook when a task ships** + Knowledge page/cards/supersede UI + i18n | ✅ C1 entity/config/migration/repository, C1b CQRS + `KnowledgeController` + auto-capture hook in `UpdateTaskItemCommandHandler` + 8 handler tests + auto-capture tests — PR #187 | ✅ C2 `KnowledgePage` + `KnowledgeEntryCard` + create/edit + supersede UI + `knowledge.*`/`nav.knowledge` en+vi + nav wiring — PR #187 | Complete ✅ |
 | **Sprint 34** | Board Swimlanes (landing-parity D) — group tasks within each board column by assignee or epic, vertical lane headers with per-lane counts, trailing "Unassigned"/"No epic" lanes | ✅ Frontend-only (D1) — tasks already carry `AssigneeId`/`EpicId` from `TaskItemResponse`; no backend change needed | ✅ D1 `Column` swimlane partitioning + lane headers, `BoardPage` swimlane toggle (None/Assignee/Epic) + epics fetch, `epicId` on frontend task type, `board.swimlane*` en+vi — PR #188 | Complete ✅ |
+| **Sprint 35** | AI Agent (landing-parity E) — real provider-agnostic LLM planning + self-approval toggle + Sprint F landing copy cleanup (MCP claim → REST API + webhooks) | ✅ E1 `IAiClient` + `OpenAiAiClient`/`NoOpAiClient`, `AiPlan` entity + migration (`ai_plans` + `approve_ai_plans`), `PlanTaskCommand` (weighted KnowledgeEntries, auto-apply on self-approval), `ApplyAiPlanCommand` + shared `AiPlanApplier`, `GetLatestAiPlanQuery`, `AiController`, 503 mapping, 16 new tests — commit `36d7a45` | ✅ E2 `AiPlanPanel` in `TaskDetailPanel` (ask/plan/apply/regenerate, pending/applied badges, DoD checklist), `ai.*` en+vi, `AiPlanResponse`/`AiPlanSubtaskResponse` types + API fns; F landing `ai.b3` rephrase en+vi | Complete ✅ |
 
 ---
 
@@ -524,6 +525,23 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
+### 🚀 Sprint 35 — AI Agent (Landing-Parity E): Real LLM Planning + Self-Approval ✅ Complete
+
+**Goal:** Đóng gap landing ↔ app — *"An AI agent that plans work and writes the code, gated by your knowledge. Toggle self-approval on for a fully autonomous flow."* Trước đây app không có AI gì; sprint này thêm luồng lập kế hoạch LLM thật, provider-agnostic (người dùng tự cung cấp API key + base URL), prompt được gating bởi knowledge base, và toggle self-approval theo project. Kèm Sprint F: đổi claim *"MCP server for your tools"* → *"REST API + webhooks for your tools"* (MCP không ship).
+
+> **Plan:** `docs/sprint35/plan.md` (wise-prancing-ritchie.md, "PR 5 — Sprint E" + Sprint F).
+> **Branch:** `feat/landing-parity-sprint-e`. **Backend commit:** `36d7a45`. **Frontend + docs:** cùng branch.
+
+#### 🚀 Agent A (Team Lead — Fullstack) ✅
+- [x] **E1: Backend AI client + planning pipeline** — `IAiClient.PlanTaskAsync`; `OpenAiAiClient` (bất kỳ endpoint OpenAI-compatible qua `Ai:BaseUrl` — OpenAI/LiteLLM/Ollama; lỗi API/auth → `InvalidOperationException`) + `NoOpAiClient` fallback (null → 503); `AiPlan` entity + migration `20260826071724_AddAiPlansAndApproveAiPlans` (`ai_plans` table, status `Pending→Applied|Superseded`, JSON-stored steps/subtasks/DoD; `approve_ai_plans` bool trên `projects` default false). *(commit `36d7a45`)*
+- [x] **E1: `PlanTaskCommand` + weighted knowledge** — prompt từ task + top-12 `KnowledgeEntry` (body truncate 800 chars), gọi `IAiClient`, parse JSON contract, supersede các pending plan cũ, persist plan, **auto-apply khi `project.ApproveAiPlans` true**. `ApplyAiPlanCommand` validate plan `Pending` + áp dụng qua **`AiPlanApplier`** chung (dedupe subtask theo title, priority fallback Medium, copy sprint/epic/assignee, nối DoD `\n`). `GetLatestAiPlanQuery` (null → 204). `AiController` 3 endpoints (`POST /ai/plan`, `POST /ai/{planId}/apply`, `GET /ai/plans/{taskId}/latest`). `AiPlanningUnavailableException` → 503. `UpdateProjectCommand` nhận optional `ApproveAiPlans`. *(commit `36d7a45`)*
+- [x] **E1: Tests** — 16 tests mới (`PlanTaskCommandHandlerTests` 6: persist pending / auto-apply / weighted knowledge / null client / empty plan / supersede; `ApplyAiPlanCommandHandlerTests` 5: tạo subtasks + DoD / priority fallback / skip existing / conflict non-pending / supersede; `AiPlanContractTests` 4: parse / malformed / case-insensitive / lifecycle). 378/378 unit tests green. *(commit `36d7a45`)*
+- [x] **E2: Frontend `AiPlanPanel`** — component mới trong `TaskDetailPanel.tsx` (sau `TaskPullRequests`): nút "Ask AI to plan" → render plan (summary, steps, proposed subtasks kèm priority badges, DoD checklist + "all met" badge) → Apply / Regenerate; pending/applied status badges; ErrorAlert khi 503. `api.ts` thêm `getLatestAiPlan` (null trên 204) / `planAiTask` / `applyAiPlan`; `types/api.ts` thêm `AiPlanResponse`/`AiPlanSubtaskResponse`/`approveAiPlans?`. i18n `ai.*` en+vi (parity 100%). *(frontend commit)*
+- [x] **F: Landing copy cleanup** — `landing.features.ai.b3` "MCP server for your tools" → "REST API + webhooks for your tools" (en + vi); không còn reference MCP nào trong frontend. *(frontend commit)*
+- [x] **Docs + merge** — `docs/sprint35/plan.md`, AGENT_STATUS updated; verified `dotnet test` 378/378 + `npm run build` (tsc strict) + `npm test` 30/30 trước khi squash-merge.
+
+---
+
 ## 🔒 Multi-Agent Coordination Guidelines
 
 1. **Branch Prefixes:**
@@ -538,5 +556,5 @@ blockers/blocked-by toggle). Landed on main via PR #76.
 
 ---
 
-*DevFlow Architecture Team — Updated 2026-08-26 (Sprint 34 Complete ✅)*
+*DevFlow Architecture Team — Updated 2026-08-26 (Sprint 35 Complete ✅)*
 

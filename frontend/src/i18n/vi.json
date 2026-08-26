@@ -43,7 +43,7 @@
     "desc": "Một AI agent lập kế hoạch công việc và viết code, được kiểm soát bởi tri thức của đội bạn. Bật tự duyệt để có một luồng hoàn toàn tự động.",
     "b1": "Lập kế hoạch có kiểm soát tri thức",
     "b2": "Bật/tắt tự duyệt để tự chủ",
-    "b3": "MCP server cho các công cụ của bạn"
+    "b3": "REST API + webhooks cho các công cụ của bạn"
    },
    "wiki": {
     "title": "LLM-Wiki tích lũy",
@@ -702,6 +702,22 @@
   "today": "Hôm nay",
   "yesterday": "Hôm qua",
   "pageOf": "Trang {{current}} / {{total}}"
+ },
+ "ai": {
+  "aiPlanner": "AI Lập kế hoạch",
+  "askAiToPlan": "Nhờ AI lập kế hoạch",
+  "generating": "Đang tạo kế hoạch…",
+  "pending": "Chờ duyệt",
+  "applied": "Đã áp dụng",
+  "steps": "Các bước",
+  "proposedSubtasks": "Các subtask đề xuất",
+  "dod": "Định nghĩa Hoàn thành",
+  "allMet": "đạt hết",
+  "applyPlan": "Áp dụng kế hoạch",
+  "applying": "Đang áp dụng…",
+  "regenerate": "Tạo lại",
+  "planFailed": "Không tạo được kế hoạch. Hãy kiểm tra cấu hình AI.",
+  "applyFailed": "Không áp dụng được kế hoạch."
  },
  "taskDetail": {
   "customFields": "Trường tùy chỉnh",

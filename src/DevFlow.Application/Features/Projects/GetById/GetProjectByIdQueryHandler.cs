@@ -26,6 +26,7 @@ public sealed class GetProjectByIdQueryHandler(
             project.Description,
             project.Status.ToString(),
             project.Emoji,
-            project.CoverColor);
+            project.CoverColor,
+            project.ApproveAiPlans);
     }
 }

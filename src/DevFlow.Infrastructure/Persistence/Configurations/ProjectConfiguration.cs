@@ -28,6 +28,9 @@ internal sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
             .HasMaxLength(20)
             .IsRequired();
 
+        builder.Property(project => project.ApproveAiPlans)
+            .IsRequired();
+
         builder.HasIndex(project => new { project.WorkspaceId, project.Key })
             .IsUnique();
 

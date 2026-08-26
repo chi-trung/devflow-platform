@@ -21,6 +21,12 @@ public sealed class UpdateProjectCommandHandler(
         project.UpdateDetails(command.Name, command.Description);
         project.UpdateEmoji(command.Emoji);
         project.UpdateCoverColor(command.CoverColor);
+
+        if (command.ApproveAiPlans is not null)
+        {
+            project.SetApproveAiPlans(command.ApproveAiPlans.Value);
+        }
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

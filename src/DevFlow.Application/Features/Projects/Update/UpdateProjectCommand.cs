@@ -11,4 +11,5 @@ public sealed record UpdateProjectCommand(
     string Name,
     string? Description,
     string? Emoji = null,
-    string? CoverColor = null) : IRequest, IWorkspaceRequest;
+    string? CoverColor = null,
+    bool? ApproveAiPlans = null) : IRequest, IWorkspaceRequest;

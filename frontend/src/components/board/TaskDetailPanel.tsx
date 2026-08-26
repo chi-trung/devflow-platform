@@ -16,6 +16,7 @@ import type {
   TaskWatcherResponse,
   WorkspaceMemberResponse,
 } from "../../types/api";
+import { AiPlanPanel } from "../ai/AiPlanPanel";
 import { DependencySection } from "./DependencySection";
 import { TimeTrackingSection } from "./TimeTrackingSection";
 import { SubtaskSection } from "./SubtaskSection";
@@ -802,6 +803,13 @@ export function TaskDetailPanel({
             workspaceId={workspaceId}
             projectId={projectId}
             taskId={task.id}
+          />
+
+          <AiPlanPanel
+            workspaceId={workspaceId}
+            projectId={projectId}
+            taskId={task.id}
+            onChanged={onTaskChanged}
           />
 
           <section className="space-y-2">
