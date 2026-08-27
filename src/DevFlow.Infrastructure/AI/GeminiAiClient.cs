@@ -27,12 +27,12 @@ public sealed class GeminiAiClient : IAiClient
     /// backoff, then fall through to these. These are real, stable model IDs
     /// that accept the v1beta generateContent API.
     ///
-    /// Note: the 2.0 / 1.5 flash family has been largely sunset by Google and
-    /// now consistently returns 503 even when the API is healthy, so we lead
-    /// with the current 2.5 flash models (which share the v1beta contract).
+    /// Note: the 2.0 / 1.5 flash family has been fully sunset by Google and
+    /// returns 404 (model not found). The fallback must only reference
+    /// currently-serving models from the 2.5 line.
     /// </summary>
     private static readonly string[] FallbackModels =
-        ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-1.5-flash"];
+        ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
 
     /// <summary>Per-request budget. A plan (4000 tokens) needs ~16s, so 60s is safe.</summary>
     private static readonly TimeSpan PlanTimeout = TimeSpan.FromSeconds(60);
@@ -125,6 +125,7 @@ GenerateContentAsync(systemPrompt, userContext, _options.MaxTokens, ExecuteTimeo
         }
 
         var totalAttempts = models.Count * MaxAttemptsPerModel;
+        string? lastError = null;
         for (var attempt = 0; attempt < totalAttempts; attempt++)
         {
             var model = models[attempt / MaxAttemptsPerModel];
@@ -152,12 +153,12 @@ GenerateContentAsync(systemPrompt, userContext, _options.MaxTokens, ExecuteTimeo
             {
                 // Per-request budget hit — the model hung. Treat as transient and
                 // move to the next attempt; the shared budget is still intact.
-                _lastError = "The model timed out.";
+                lastError = "The model timed out.";
             }
             catch (GeminiOverloadedException ex)
             {
                 // 429/503 — transient overload. Retry, then move to the next model.
-                _lastError = ex.Message;
+                lastError = ex.Message;
             }
             // AiResponseTruncatedException is intentionally NOT caught here: a
             // truncated response means the model hit the same output-token
@@ -170,11 +171,9 @@ GenerateContentAsync(systemPrompt, userContext, _options.MaxTokens, ExecuteTimeo
         // Every model/attempt was exhausted (429/503 overload, per-request
         // budget hit, or invalid model id). Report the real cause so the user
         // sees why — most often the whole flash tier is overloaded right now.
-        var reason = _lastError ?? "The model is currently experiencing high demand.";
+        var reason = lastError ?? "The model is currently experiencing high demand.";
         throw new InvalidOperationException($"AI API error 503: {reason}");
     }
-
-    private string? _lastError;
 
     private async Task<string?> SendGenerateContentAsync(
         string baseUrl,
