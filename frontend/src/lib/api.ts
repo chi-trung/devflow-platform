@@ -1683,11 +1683,13 @@ export async function applyAiPlan(
 }
 
 // ── AI assistant (floating) ─────────────────────────────────────────────
-// POST .../workspaces/{workspaceId}/ai/execute?projectId=...
+// POST .../workspaces/{workspaceId}/ai/execute?projectId=...&sprintId=...&epicId=...
 //   body { prompt, pageContext } -> AiExecuteResponse
 // The assistant can create tasks/sprints/epics, set deadlines, assign,
 // etc. projectId is optional; the backend falls back to the workspace's
-// first project when the prompt does not name one.
+// first project when the prompt does not name one. sprintId/epicId are the
+// route-level context the user is viewing — the AI uses them to resolve
+// "this sprint" / "this epic".
 
 export interface AiExecuteInput {
   prompt: string;
@@ -1698,10 +1700,13 @@ export async function aiExecute(
   workspaceId: string,
   projectId: string | undefined,
   input: AiExecuteInput,
+  context?: { sprintId?: string | null; epicId?: string | null },
 ): Promise<AiExecuteResponse> {
-  const query = projectId
-    ? `?projectId=${encodeURIComponent(projectId)}`
-    : "";
+  const params = new URLSearchParams();
+  if (projectId) params.set("projectId", projectId);
+  if (context?.sprintId) params.set("sprintId", context.sprintId);
+  if (context?.epicId) params.set("epicId", context.epicId);
+  const query = params.toString() ? `?${params.toString()}` : "";
   return api<AiExecuteResponse>(
     `/workspaces/${workspaceId}/ai/execute${query}`,
     {

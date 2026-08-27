@@ -16,6 +16,7 @@ public class AiExecuteCommandHandlerTests
     private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly ISprintRepository _sprintRepository = Substitute.For<ISprintRepository>();
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
+    private readonly IEpicRepository _epicRepository = Substitute.For<IEpicRepository>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly IAiClient _aiClient = Substitute.For<IAiClient>();
     private readonly ISender _sender = Substitute.For<ISender>();
@@ -39,6 +40,7 @@ public class AiExecuteCommandHandlerTests
         _projectRepository,
         _sprintRepository,
         _taskItemRepository,
+        _epicRepository,
         _userRepository,
         _aiClient,
         _sender,
@@ -105,6 +107,40 @@ public class AiExecuteCommandHandlerTests
         Assert.Single(response.Actions);
         Assert.Equal("create_task", response.Actions[0].Type);
         Assert.Equal("success", response.Actions[0].Status);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldAddTaskToEpic_WhenModelReturnsAddToEpicAction()
+    {
+        // NOTE: use _project.Id (the real id on the stubbed Project), not the
+        // _projectId field — the two differ, and resolution matches on Id.
+        var epic = Epic.Create(_project.Id, "Auth Epic", null);
+        var task = TaskItem.Create(_project.Id, "Login screen", null, TaskItemPriority.High);
+
+        _epicRepository.GetForProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<Epic> { epic });
+        _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>())
+            .Returns(task);
+
+        _aiClient.ExecuteActionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(
+                "{\"summary\":\"Thêm task vào epic\"," +
+                "\"actions\":[" +
+                "{\"type\":\"add_to_epic\",\"title\":\"Thêm vào epic\",\"taskRef\":\"" + task.Id + "\",\"epicRef\":\"Auth Epic\"}" +
+                "]}");
+
+        var handler = BuildHandler();
+        var response = await handler.Handle(
+            new AiExecuteCommand(_workspaceId, _projectId, "thêm task login vào epic auth", "epics", EpicId: epic.Id),
+            CancellationToken.None);
+
+        Assert.Null(response.Error);
+        Assert.Single(response.Actions);
+        Assert.Equal("add_to_epic", response.Actions[0].Type);
+        Assert.Equal("success", response.Actions[0].Status);
+        Assert.Contains("added to epic", response.Actions[0].Message);
+        Assert.Equal(task.Id, response.Actions[0].EntityId);
+        Assert.Equal(task.EpicId, epic.Id);
     }
 
     [Fact]
