@@ -346,7 +346,7 @@ export function DashboardPage() {
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <TeamReportPanel workspaceId={selectedWsId} />
                   {selectedProjectId && (
-                    <div data-tour="sprint-health">
+                    <div data-tour="sprint-health" className="h-full">
                       <SprintHealthCard
                         workspaceId={selectedWsId}
                         projectId={selectedProjectId}
