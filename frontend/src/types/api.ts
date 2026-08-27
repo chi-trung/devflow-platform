@@ -95,6 +95,32 @@ export interface ExecutedAction {
   /** Present only on "pending" actions — the original contract to re-send on
    * Accept. Null for already-executed actions. */
   contract?: AiExecuteActionContract | null;
+  /** Structured failure detail, present only when the action failed with a
+   * classified error (e.g. a hierarchy violation). */
+  error?: AiActionErrorDetail | null;
+}
+
+/**
+ * Structured failure detail so the client can classify the error and offer a
+ * targeted recovery hint instead of a generic failure message.
+ */
+export interface AiActionErrorDetail {
+  /** Stable machine-readable code, e.g. "hierarchy_violation". */
+  code: string;
+  message: string;
+  parentId?: string | null;
+  actualType?: string | null;
+  requiredType?: string | null;
+  recoveryHint?: string | null;
+}
+
+/**
+ * A context-aware prompt suggestion returned by the AI suggest endpoint: an
+ * i18n key plus optional interpolation params (e.g. sprint/epic names, counts).
+ */
+export interface AiSuggestion {
+  key: string;
+  args?: Record<string, string> | null;
 }
 
 export interface AiExecuteResponse {

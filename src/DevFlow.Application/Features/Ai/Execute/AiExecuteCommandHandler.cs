@@ -176,6 +176,17 @@ public sealed class AiExecuteCommandHandler(
             {
                 result = Fail(action, ex.Message);
             }
+            catch (InvalidHierarchyException ex)
+            {
+                result = FailWithError(action, ex.Message,
+                    new AiActionErrorDetail(
+                        "hierarchy_violation",
+                        ex.Message,
+                        ex.ParentId,
+                        ex.ActualParentType,
+                        ex.RequiredParentType,
+                        ex.RecoveryHint));
+            }
             catch (Exception ex)
             {
                 result = Fail(action, ex.Message);
@@ -237,6 +248,22 @@ public sealed class AiExecuteCommandHandler(
             - Assignee must be one of the member names/emails listed in the context, or null.
             - Priorities must be one of Low, Medium, High, Critical.
             - dueDate must be ISO-8601. If the user says "tomorrow"/"next week", pick a concrete date and note it in the summary.
+
+            HIERARCHY (mandatory):
+            - The project hierarchy is EXACTLY three levels:
+              Epic -> Task -> Subtask. A subtask can NEVER contain children.
+            - Tasks appear in the context marked [TASK] (ParentTaskId = none) and
+              subtasks marked [SUBTASK] (ParentTaskId = the id of their parent task).
+              The context also lists each task's ParentTaskId.
+            - For create_subtask, parentTaskRef MUST reference a [TASK] entry — a
+              top-level task. NEVER use a [SUBTASK] as the parent. If the user
+              asks to "add a subtask to" a [SUBTASK], create the subtask under
+              that [SUBTASK]'s own top-level parent instead.
+            - If a [TASK] and a [SUBTASK] share the same name, only the [TASK]
+              can be a parent. Prefer referencing parents by id.
+            - Do not invent a parent. If no [TASK] matches the user's request,
+              create a top-level task first (create_task), then create the
+              subtask under it.
             - Do not echo the user's prompt back. Only output the JSON.
             """;
 
@@ -341,6 +368,11 @@ public sealed class AiExecuteCommandHandler(
         {
             foreach (var task in tasks)
             {
+                var isSubtask = task.ParentTaskId is not null;
+                var typeMarker = isSubtask ? " [SUBTASK]" : " [TASK]";
+                var parentRef = isSubtask
+                    ? $" | parentTaskId={task.ParentTaskId}"
+                    : string.Empty;
                 var sprint = task.SprintId is not null
                     ? $" | sprint={task.SprintId}"
                     : string.Empty;
@@ -350,7 +382,7 @@ public sealed class AiExecuteCommandHandler(
                 var assignee = task.AssigneeId is not null
                     ? $" | assignee={task.AssigneeId}"
                     : string.Empty;
-                context.AppendLine($"- {task.Id} | {task.Title} | {task.Status}{sprint}{epic}{assignee}");
+                context.AppendLine($"- {task.Id} | {task.Title} | {task.Status}{typeMarker}{parentRef}{sprint}{epic}{assignee}");
             }
         }
 
@@ -359,4 +391,10 @@ public sealed class AiExecuteCommandHandler(
 
     private static ExecutedAction Fail(AiExecuteActionContract action, string message) =>
         new(action.Type, action.Title ?? action.Type, null, "failed", message);
+
+    private static ExecutedAction FailWithError(
+        AiExecuteActionContract action,
+        string message,
+        AiActionErrorDetail error) =>
+        new(action.Type, action.Title ?? action.Type, null, "failed", message, Error: error);
 }

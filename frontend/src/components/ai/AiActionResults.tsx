@@ -143,6 +143,7 @@ export function AiActionResults({
             );
           }
 
+          const isFailedWithHint = action.status === "failed" && !!action.error?.recoveryHint;
           return (
             <div
               key={`${action.type}-${i}`}
@@ -162,6 +163,12 @@ export function AiActionResults({
                       : t("ai.actionStatusSkip")}
                 </span>{" "}
                 <span className="text-foreground">{action.message ?? action.label}</span>
+                {isFailedWithHint && (
+                  <p className="mt-0.5 flex items-start gap-1 text-xs text-amber-700 dark:text-amber-400">
+                    <AlertCircle className="mt-0.5 size-3 shrink-0" aria-hidden />
+                    <span>{action.error!.recoveryHint}</span>
+                  </p>
+                )}
               </div>
             </div>
           );
