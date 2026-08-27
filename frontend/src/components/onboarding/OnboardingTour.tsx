@@ -51,6 +51,23 @@ interface HighlightRect {
 
 const TOOLTIP_W = 320;
 
+/** True when `el`'s box intersects the current viewport. A translated-off-screen
+ * element (the mobile sidebar drawer) reports its layout size but sits outside
+ * these bounds, so this is the reliable way to tell "visible" from "hidden". */
+function isOnScreen(el: HTMLElement): boolean {
+  const r = el.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  return (
+    r.width > 0 &&
+    r.height > 0 &&
+    r.left >= -16 &&
+    r.right <= vw + 16 &&
+    r.top >= -16 &&
+    r.bottom <= vh + 16
+  );
+}
+
 /**
  * First-login onboarding tour — a step-driven spotlight that highlights real
  * dashboard elements with a teal box and walks the user through them.
@@ -100,9 +117,14 @@ export function OnboardingTour({
   }, [open, step]);
 
   // Scroll the target into view before measuring so the box lands on screen.
+  // Skipped for off-screen targets (the mobile sidebar drawer): smooth-scrolling
+  // toward a translated-out element just yanks the window for no benefit.
   useEffect(() => {
     if (!open || step === 0) return;
-    STEPS[step].target()?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const el = STEPS[step].target();
+    if (el && isOnScreen(el)) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, step]);
 
@@ -111,9 +133,25 @@ export function OnboardingTour({
     const target = STEPS[step].target();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+    // AppShell hides its sidebar below lg (1024px), so tour steps that anchor
+    // to sidebar elements (workspaces section, user menu) have no visible spot
+    // on mobile. Render those as centered text-only cards instead of chasing an
+    // off-screen element with a spotlight box.
+    const isMobile = vw < 1024;
 
     if (target) {
       const r = target.getBoundingClientRect();
+      // A translated-off-screen element (the mobile sidebar) still reports its
+      // layout size, so offsetWidth/offsetParent don't reveal it — check the
+      // rect against the viewport instead.
+      if (!isOnScreen(target)) {
+        // Hidden (mobile sidebar) or still scrolling into view: drop the
+        // highlight and float the card centered just below the top edge.
+        setRect(null);
+        setCardPos({ top: 60, left: 16 });
+        return;
+      }
+
       setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
 
       const spaceBelow = vh - r.bottom;
@@ -121,16 +159,20 @@ export function OnboardingTour({
       const placeBelow = spaceBelow > 220 || spaceBelow >= spaceAbove;
       const roomLeft = r.left - 16 >= TOOLTIP_W + 12;
 
-      if (STEPS[step].placeLeft && roomLeft) {
+      if (STEPS[step].placeLeft && roomLeft && !isMobile) {
         // Right-column target: put the card to the LEFT, vertically centered
         // on the highlight box, so it reads against empty margin instead of
-        // squatting under a half-visible card below.
+        // squatting under a half-visible card below. Clamped to the viewport
+        // so a very narrow screen can't push it off the left edge.
         setCardPos({
           top: Math.min(
             Math.max(12, r.top + r.height / 2 - 110),
             vh - 40,
           ),
-          left: r.left - TOOLTIP_W - 12,
+          left: Math.max(
+            16,
+            Math.min(r.left - TOOLTIP_W - 12, vw - TOOLTIP_W - 16),
+          ),
         });
       } else if (placeBelow) {
         setCardPos({
@@ -251,7 +293,7 @@ export function OnboardingTour({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="fixed z-[90] w-[calc(100vw-2rem)] max-w-xs rounded-xl border border-border bg-card p-5 shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise"
+        className="fixed z-[90] w-[calc(100vw-2rem)] max-w-sm touch-manipulation rounded-xl border border-border bg-card p-5 shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise"
         style={{
           top: cardPos?.top ?? 16,
           left: cardPos?.left ?? 16,
