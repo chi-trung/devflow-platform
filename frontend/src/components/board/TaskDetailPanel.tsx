@@ -585,7 +585,7 @@ export function TaskDetailPanel({
         className="absolute inset-0 cursor-default bg-foreground/20"
       />
 
-      <aside className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-border bg-surface shadow-[0_0_60px_rgba(0,0,0,0.5)]">
+      <aside className="absolute inset-y-0 right-0 flex w-full max-w-3xl flex-col border-l border-border bg-surface shadow-[0_0_60px_rgba(0,0,0,0.5)]">
         <header className="flex items-start justify-between gap-3 border-b border-border p-4">
           <input
             value={title}
@@ -627,376 +627,390 @@ export function TaskDetailPanel({
           </button>
         </header>
 
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-          {detailError && <ErrorAlert message={detailError} />}
-
-          <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1 text-sm font-medium">
-              {t("task.status")}
-              <select
-                value={status}
-                onChange={(event) =>
-                  setStatus(event.target.value as TaskItemResponse["status"])
-                }
-                className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
-              >
-                <option value="Idea">{t("board.idea")}</option>
-                <option value="Planning">{t("board.planning")}</option>
-                <option value="Approval">{t("board.approval")}</option>
-                <option value="Ready">{t("board.ready")}</option>
-                <option value="InProgress">{t("board.inProgress")}</option>
-                <option value="Review">{t("board.review")}</option>
-                <option value="Done">{t("board.done")}</option>
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-sm font-medium">
-              {t("task.priority")}
-              <select
-                value={priority}
-                onChange={(event) =>
-                  setPriority(event.target.value as TaskItemResponse["priority"])
-                }
-                className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
-              >
-                <option value="Low">{t("task.low")}</option>
-                <option value="Medium">{t("task.medium")}</option>
-                <option value="High">{t("task.high")}</option>
-                <option value="Critical">{t("task.critical")}</option>
-              </select>
-            </label>
-          </div>
-
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            {t("task.assignee")}
-            <select
-              value={assigneeId ?? ""}
-              onChange={(event) =>
-                setAssigneeId(event.target.value === "" ? null : event.target.value)
-              }
-              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
-            >
-              <option value="">{t("task.unassigned")}</option>
-              {members.map((member) => (
-                <option key={member.userId} value={member.userId}>
-                  {member.displayName || member.username}
-                  {member.role !== "Member" ? ` (${member.role})` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="flex flex-col gap-1 text-sm font-medium">
-            {t("task.watchers")}
-            {watchersLoading ? (
-              <p className="text-xs text-muted-foreground">{t("task.loading")}</p>
-            ) : watchers.length === 0 ? (
-              <p className="text-xs text-muted-foreground">{t("task.noWatchers")}</p>
-            ) : (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {watchers.map((watcher) => (
-                  <div
-                    key={watcher.userId}
-                    className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-card px-2 py-1 text-xs"
-                  >
-                    <Avatar
-                      name={watcher.displayName || watcher.username}
-                      id={watcher.userId}
-                      size="sm"
-                    />
-                    <span className="truncate font-medium text-foreground">
-                      {watcher.displayName || watcher.username}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            {t("task.sprint")}
-            <select
-              value={task.sprintId ?? ""}
-              onChange={(event) =>
-                void changeSprint(event.target.value === "" ? null : event.target.value)
-              }
-              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
-            >
-              <option value="">{t("task.noSprint")}</option>
-              {sprints.map((sprint) => (
-                <option key={sprint.id} value={sprint.id}>
-                  {sprint.name}
-                  {sprint.status === "Active" ? ` (${t("sprint.active")})` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {dirty && (
-            <Button onClick={() => void saveChanges()} disabled={saving}>
-              {saving ? t("task.saving") : t("task.saveChanges")}
-            </Button>
+        <div className="flex flex-1 flex-col overflow-y-auto">
+          {detailError && (
+            <div className="p-4 pb-0">
+              <ErrorAlert message={detailError} />
+            </div>
           )}
 
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            {t("task.dueDate")}
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(event) => setDueDate(event.target.value)}
-              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+          <div className="flex flex-1 flex-col lg:flex-row">
+          {/* ── Main column (description, advanced sections, comments) ── */}
+          <div className="flex min-w-0 flex-1 flex-col gap-4 p-4">
+            <label className="flex flex-col gap-1 text-sm font-medium">
+              {t("task.description")}
+              <textarea
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={3}
+                placeholder={t("task.addDetail")}
+                className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+              />
+            </label>
+
+            <DefinitionOfDoneField
+              value={definitionOfDone}
+              onChange={setDefinitionOfDone}
             />
-          </label>
 
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            {t("task.description")}
-            <textarea
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              rows={3}
-              placeholder={t("task.addDetail")}
-              className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            <DependencySection
+              workspaceId={workspaceId}
+              projectId={projectId}
+              task={task}
+              allTasks={allTasks}
+              onChanged={onTaskChanged}
             />
-          </label>
 
-          <DefinitionOfDoneField
-            value={definitionOfDone}
-            onChange={setDefinitionOfDone}
-          />
+            <SubtaskSection
+              workspaceId={workspaceId}
+              projectId={projectId}
+              task={task}
+              onChanged={onTaskChanged}
+            />
 
-          <DependencySection
-            workspaceId={workspaceId}
-            projectId={projectId}
-            task={task}
-            allTasks={allTasks}
-            onChanged={onTaskChanged}
-          />
+            <CustomFieldsSection
+              workspaceId={workspaceId}
+              projectId={projectId}
+              taskId={task.id}
+            />
 
-          <SubtaskSection
-            workspaceId={workspaceId}
-            projectId={projectId}
-            task={task}
-            onChanged={onTaskChanged}
-          />
+            <TimeTrackingSection
+              workspaceId={workspaceId}
+              projectId={projectId}
+              task={task}
+              members={members}
+              onChanged={onTaskChanged}
+            />
 
-          <CustomFieldsSection
-            workspaceId={workspaceId}
-            projectId={projectId}
-            taskId={task.id}
-          />
+            <TaskFieldsSection
+              workspaceId={workspaceId}
+              projectId={projectId}
+              taskId={task.id}
+            />
 
-          <TimeTrackingSection
-            workspaceId={workspaceId}
-            projectId={projectId}
-            task={task}
-            members={members}
-            onChanged={onTaskChanged}
-          />
+            <TaskPullRequests
+              workspaceId={workspaceId}
+              projectId={projectId}
+              taskId={task.id}
+            />
 
-          <TaskFieldsSection
-            workspaceId={workspaceId}
-            projectId={projectId}
-            taskId={task.id}
-          />
+            <AiPlanPanel
+              workspaceId={workspaceId}
+              projectId={projectId}
+              taskId={task.id}
+              onChanged={onTaskChanged}
+            />
 
-          <TaskPullRequests
-            workspaceId={workspaceId}
-            projectId={projectId}
-            taskId={task.id}
-          />
-
-          <AiPlanPanel
-            workspaceId={workspaceId}
-            projectId={projectId}
-            taskId={task.id}
-            onChanged={onTaskChanged}
-          />
-
-          <section className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium flex items-center gap-1.5">
-                <Paperclip className="size-4 text-muted-foreground" aria-hidden />
-                {t("task.attachments")}{" "}
+            {/* ── Comments ── */}
+            <section className="flex min-h-0 flex-1 flex-col">
+              <h3 className="mb-2 text-sm font-medium">
+                {t("task.comments")}{" "}
                 <span className="font-mono text-xs text-muted-foreground">
-                  ({attachments.length})
+                  ({comments.length})
                 </span>
               </h3>
-              <label className="cursor-pointer text-xs font-medium text-primary hover:underline">
-                {uploading ? t("task.uploading") : t("task.addFile")}
-                <input
-                  type="file"
-                  onChange={uploadFile}
-                  disabled={uploading}
-                  className="hidden"
-                />
+
+              {commentError && (
+                <div className="mb-2">
+                  <ErrorAlert message={commentError} />
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2">
+                {commentsLoading ? (
+                  <div className="space-y-2">
+                    {[0, 1, 2].map((i) => (
+                      <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                    ))}
+                  </div>
+                ) : comments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t("task.noComments")}
+                  </p>
+                ) : (
+                  comments.map((comment) => {
+                    const mine = currentUser?.id === comment.authorId;
+                    const author = members.find(
+                      (m) => m.userId === comment.authorId,
+                    );
+                    return (
+                      <article
+                        key={comment.id}
+                        className="rounded-lg border border-border bg-card p-3"
+                      >
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <span className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
+                            {mine ? (
+                              t("task.you")
+                            ) : author ? (
+                              <span className="flex items-center gap-1.5">
+                                <Avatar
+                                  name={author.displayName || author.username}
+                                  id={author.userId}
+                                />
+                                {author.displayName || author.username}
+                              </span>
+                            ) : (
+                              comment.authorId.slice(0, 8)
+                            )}
+                            {" · "}
+                            {new Date(comment.createdAtUtc).toLocaleString()}
+                          </span>
+                          {mine && (
+                            <button
+                              type="button"
+                              onClick={() => void deleteComment(comment)}
+                              aria-label={t("task.deleteComment")}
+                              className="text-xs text-muted-foreground hover:text-destructive"
+                            >
+                              {t("task.deleteComment")}
+                            </button>
+                          )}
+                        </div>
+                        <p className="whitespace-pre-wrap text-sm">
+                          {comment.content}
+                        </p>
+                      </article>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+          </div>
+
+          {/* ── Sidebar (status, fields, save, attachments) ── */}
+          <div className="flex flex-col gap-4 border-t border-border p-4 lg:w-72 lg:shrink-0 lg:border-l lg:border-t-0">
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1 text-sm font-medium">
+                {t("task.status")}
+                <select
+                  value={status}
+                  onChange={(event) =>
+                    setStatus(event.target.value as TaskItemResponse["status"])
+                  }
+                  className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+                >
+                  <option value="Idea">{t("board.idea")}</option>
+                  <option value="Planning">{t("board.planning")}</option>
+                  <option value="Approval">{t("board.approval")}</option>
+                  <option value="Ready">{t("board.ready")}</option>
+                  <option value="InProgress">{t("board.inProgress")}</option>
+                  <option value="Review">{t("board.review")}</option>
+                  <option value="Done">{t("board.done")}</option>
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1 text-sm font-medium">
+                {t("task.priority")}
+                <select
+                  value={priority}
+                  onChange={(event) =>
+                    setPriority(event.target.value as TaskItemResponse["priority"])
+                  }
+                  className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+                >
+                  <option value="Low">{t("task.low")}</option>
+                  <option value="Medium">{t("task.medium")}</option>
+                  <option value="High">{t("task.high")}</option>
+                  <option value="Critical">{t("task.critical")}</option>
+                </select>
               </label>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              {uploadQueue.map((item) => (
-                <div
-                  key={item.file.name + item.file.size}
-                  className="rounded-lg border border-border/60 bg-card p-2 text-xs"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate font-medium text-foreground">
-                      {item.file.name}
-                    </span>
-                    <span className="shrink-0 text-[10px] font-mono text-muted-foreground">
-                      {Math.round(item.file.size / 1024)} KB
-                    </span>
-                  </div>
-                  {item.error ? (
-                    <div className="mt-1 flex items-center gap-2">
-                      <p className="text-xs text-destructive">{item.error}</p>
-                      <button
-                        type="button"
-                        onClick={() => void retryUpload(item)}
-                        className="inline-flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        <RefreshCw className="size-3" aria-hidden />
-                        {t("task.retry")}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
-                      <div
-                        className="h-full bg-primary transition-all duration-150"
-                        style={{ width: `${Math.round(item.progress * 100)}%` }}
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
+            <label className="flex flex-col gap-1 text-sm font-medium">
+              {t("task.assignee")}
+              <select
+                value={assigneeId ?? ""}
+                onChange={(event) =>
+                  setAssigneeId(event.target.value === "" ? null : event.target.value)
+                }
+                className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+              >
+                <option value="">{t("task.unassigned")}</option>
+                {members.map((member) => (
+                  <option key={member.userId} value={member.userId}>
+                    {member.displayName || member.username}
+                    {member.role !== "Member" ? ` (${member.role})` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-              {attachmentsLoading ? (
-                <p className="text-xs text-muted-foreground">
-                  {t("task.loading")}
-                </p>
-              ) : attachments.length === 0 && uploadQueue.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  {t("task.noAttachments")}
-                </p>
-              ) : (
-                attachments.map((att) => (
-                  <div
-                    key={att.id}
-                    className="group flex items-center justify-between rounded-lg border border-border/60 bg-card p-2 text-xs"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <AttachmentRowThumb
-                        workspaceId={workspaceId}
-                        projectId={projectId}
-                        taskId={task.id}
-                        attachmentId={att.id}
-                        contentType={att.contentType}
-                      />
-                      <Paperclip className="size-3.5 text-muted-foreground shrink-0" />
-                      <span className="truncate font-medium text-foreground">
-                        {att.fileName}
-                      </span>
-                      <span className="shrink-0 text-[10px] font-mono text-muted-foreground">
-                        ({Math.round(att.fileSize / 1024)} KB)
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100">
-                      <button
-                        type="button"
-                        onClick={() => void downloadAttachment(att)}
-                        title={t("board.download")}
-                        className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-foreground"
-                      >
-                        <Download className="size-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void deleteAttachment(att)}
-                        title={t("common.delete")}
-                        className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-destructive"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
+            <label className="flex flex-col gap-1 text-sm font-medium">
+              {t("task.sprint")}
+              <select
+                value={task.sprintId ?? ""}
+                onChange={(event) =>
+                  void changeSprint(event.target.value === "" ? null : event.target.value)
+                }
+                className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+              >
+                <option value="">{t("task.noSprint")}</option>
+                {sprints.map((sprint) => (
+                  <option key={sprint.id} value={sprint.id}>
+                    {sprint.name}
+                    {sprint.status === "Active" ? ` (${t("sprint.active")})` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <section className="flex min-h-0 flex-1 flex-col">
-            <h3 className="mb-2 text-sm font-medium">
-              {t("task.comments")}{" "}
-              <span className="font-mono text-xs text-muted-foreground">
-                ({comments.length})
-              </span>
-            </h3>
+            <label className="flex flex-col gap-1 text-sm font-medium">
+              {t("task.dueDate")}
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(event) => setDueDate(event.target.value)}
+                className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+              />
+            </label>
 
-            {commentError && (
-              <div className="mb-2">
-                <ErrorAlert message={commentError} />
-              </div>
+            {dirty && (
+              <Button onClick={() => void saveChanges()} disabled={saving}>
+                {saving ? t("task.saving") : t("task.saveChanges")}
+              </Button>
             )}
 
-            <div className="flex flex-col gap-2">
-              {commentsLoading ? (
-                <div className="space-y-2">
-                  {[0, 1, 2].map((i) => (
-                    <Skeleton key={i} className="h-16 w-full rounded-lg" />
+            <div className="flex flex-col gap-1 text-sm font-medium">
+              {t("task.watchers")}
+              {watchersLoading ? (
+                <p className="text-xs text-muted-foreground">{t("task.loading")}</p>
+              ) : watchers.length === 0 ? (
+                <p className="text-xs text-muted-foreground">{t("task.noWatchers")}</p>
+              ) : (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {watchers.map((watcher) => (
+                    <div
+                      key={watcher.userId}
+                      className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-card px-2 py-1 text-xs"
+                    >
+                      <Avatar
+                        name={watcher.displayName || watcher.username}
+                        id={watcher.userId}
+                        size="sm"
+                      />
+                      <span className="truncate font-medium text-foreground">
+                        {watcher.displayName || watcher.username}
+                      </span>
+                    </div>
                   ))}
                 </div>
-              ) : comments.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  {t("task.noComments")}
-                </p>
-              ) : (
-                comments.map((comment) => {
-                  const mine = currentUser?.id === comment.authorId;
-                  const author = members.find(
-                    (m) => m.userId === comment.authorId,
-                  );
-                  return (
-                    <article
-                      key={comment.id}
-                      className="rounded-lg border border-border bg-card p-3"
-                    >
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <span className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
-                          {mine ? (
-                            t("task.you")
-                          ) : author ? (
-                            <span className="flex items-center gap-1.5">
-                              <Avatar
-                                name={author.displayName || author.username}
-                                id={author.userId}
-                              />
-                              {author.displayName || author.username}
-                            </span>
-                          ) : (
-                            comment.authorId.slice(0, 8)
-                          )}
-                          {" · "}
-                          {new Date(comment.createdAtUtc).toLocaleString()}
-                        </span>
-                        {mine && (
-                          <button
-                            type="button"
-                            onClick={() => void deleteComment(comment)}
-                            aria-label={t("task.deleteComment")}
-                            className="text-xs text-muted-foreground hover:text-destructive"
-                          >
-                            {t("task.deleteComment")}
-                          </button>
-                        )}
-                      </div>
-                      <p className="whitespace-pre-wrap text-sm">
-                        {comment.content}
-                      </p>
-                    </article>
-                  );
-                })
               )}
             </div>
-          </section>
+
+            {/* ── Attachments ── */}
+            <section className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium flex items-center gap-1.5">
+                  <Paperclip className="size-4 text-muted-foreground" aria-hidden />
+                  {t("task.attachments")}{" "}
+                  <span className="font-mono text-xs text-muted-foreground">
+                    ({attachments.length})
+                  </span>
+                </h3>
+                <label className="cursor-pointer text-xs font-medium text-primary hover:underline">
+                  {uploading ? t("task.uploading") : t("task.addFile")}
+                  <input
+                    type="file"
+                    onChange={uploadFile}
+                    disabled={uploading}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                {uploadQueue.map((item) => (
+                  <div
+                    key={item.file.name + item.file.size}
+                    className="rounded-lg border border-border/60 bg-card p-2 text-xs"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate font-medium text-foreground">
+                        {item.file.name}
+                      </span>
+                      <span className="shrink-0 text-[10px] font-mono text-muted-foreground">
+                        {Math.round(item.file.size / 1024)} KB
+                      </span>
+                    </div>
+                    {item.error ? (
+                      <div className="mt-1 flex items-center gap-2">
+                        <p className="text-xs text-destructive">{item.error}</p>
+                        <button
+                          type="button"
+                          onClick={() => void retryUpload(item)}
+                          className="inline-flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          <RefreshCw className="size-3" aria-hidden />
+                          {t("task.retry")}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
+                        <div
+                          className="h-full bg-primary transition-all duration-150"
+                          style={{ width: `${Math.round(item.progress * 100)}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {attachmentsLoading ? (
+                  <p className="text-xs text-muted-foreground">
+                    {t("task.loading")}
+                  </p>
+                ) : attachments.length === 0 && uploadQueue.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    {t("task.noAttachments")}
+                  </p>
+                ) : (
+                  attachments.map((att) => (
+                    <div
+                      key={att.id}
+                      className="group flex items-center justify-between rounded-lg border border-border/60 bg-card p-2 text-xs"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <AttachmentRowThumb
+                          workspaceId={workspaceId}
+                          projectId={projectId}
+                          taskId={task.id}
+                          attachmentId={att.id}
+                          contentType={att.contentType}
+                        />
+                        <Paperclip className="size-3.5 text-muted-foreground shrink-0" />
+                        <span className="truncate font-medium text-foreground">
+                          {att.fileName}
+                        </span>
+                        <span className="shrink-0 text-[10px] font-mono text-muted-foreground">
+                          ({Math.round(att.fileSize / 1024)} KB)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100">
+                        <button
+                          type="button"
+                          onClick={() => void downloadAttachment(att)}
+                          title={t("board.download")}
+                          className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-foreground"
+                        >
+                          <Download className="size-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void deleteAttachment(att)}
+                          title={t("common.delete")}
+                          className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-destructive"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+          </div>
+          </div>
         </div>
 
         <form
