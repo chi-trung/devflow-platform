@@ -24,9 +24,11 @@ public sealed class GeminiAiClient : IAiClient
     /// ("model currently experiencing high demand"). Google's flash tier has
     /// been overloaded intermittently; the sibling flash model usually still
     /// accepts requests, so we retry the primary model a few times with
-    /// backoff, then fall through to these.
+    /// backoff, then fall through to these. These are real, stable model IDs
+    /// that accept the v1beta generateContent API.
     /// </summary>
-    private static readonly string[] FallbackModels = ["gemini-3.6-flash", "gemini-flash-latest"];
+    private static readonly string[] FallbackModels =
+        ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"];
 
     /// <summary>Per-request budget. A plan (4000 tokens) needs ~16s, so 60s is safe.</summary>
     private static readonly TimeSpan PlanTimeout = TimeSpan.FromSeconds(60);
@@ -42,7 +44,7 @@ public sealed class GeminiAiClient : IAiClient
     private static readonly TimeSpan ExecuteTimeout = TimeSpan.FromSeconds(45);
 
     /// <summary>Number of attempts per model before moving to the next fallback.</summary>
-    private const int MaxAttemptsPerModel = 3;
+    private const int MaxAttemptsPerModel = 4;
 
     private readonly HttpClient _httpClient;
     private readonly AiOptions _options;
@@ -186,8 +188,17 @@ GenerateContentAsync(systemPrompt, userContext, _options.MaxTokens, ExecuteTimeo
                 throw new GeminiOverloadedException($"AI API error {(int)response.StatusCode}: {body}");
             }
 
-            // Other errors (auth 401, bad request 400, ...) are not transient —
-            // surface them immediately like before.
+            if ((int)response.StatusCode == 404 || (int)response.StatusCode == 400)
+            {
+                // Model not found / invalid request — the configured or fallback
+                // model ID may have been deprecated by Google. This is not a
+                // real user error: move to the next model in the fallback chain
+                // rather than surfacing a confusing 503/500.
+                throw new GeminiOverloadedException($"AI API error {(int)response.StatusCode}: {body}");
+            }
+
+            // Other errors (auth 401, ...) are not transient — surface them
+            // immediately like before.
             throw new InvalidOperationException($"AI API error {(int)response.StatusCode}: {body}");
         }
 

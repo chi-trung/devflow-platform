@@ -23,7 +23,7 @@ public sealed class AiOptions
 
     /// <summary>
     /// Model id. For "openai" any provider model name; for "gemini" e.g.
-    /// "gemini-3.6-flash" or "gemini-flash-latest".
+    /// "gemini-2.0-flash" or "gemini-1.5-flash".
     /// </summary>
     public string Model { get; init; } = string.Empty;
 
