@@ -34,12 +34,37 @@ public sealed class AiExecuteCommandHandler(
     ISender sender,
     IUnitOfWork unitOfWork) : IRequestHandler<AiExecuteCommand, AiExecuteResponse>
 {
+    private const string NoActionsMessage =
+        "The AI did not return any actions. Try rephrasing your request.";
+
     public async Task<AiExecuteResponse> Handle(
         AiExecuteCommand command,
         CancellationToken cancellationToken)
     {
-        var (systemPrompt, userContext) = await BuildPromptsAsync(command, cancellationToken);
+        var (systemPrompt, userContext) = await BuildPromptsAsync(command, cancellationToken, tight: false);
 
+        var response = await ExecuteOnceAsync(command, systemPrompt, userContext, cancellationToken);
+
+        if (response.Error == NoActionsMessage)
+        {
+            // The model either hit its output-token ceiling mid-JSON (truncated,
+            // so no actions parsed) or genuinely returned an empty list. Re-prompt
+            // once with a hard cap on the action count: a large batch request
+            // ("create 12 tasks…") then yields a useful partial result instead of
+            // an error. Never loop — one tight retry is enough.
+            var (tightPrompt, tightContext) = await BuildPromptsAsync(command, cancellationToken, tight: true);
+            response = await ExecuteOnceAsync(command, tightPrompt, tightContext, cancellationToken);
+        }
+
+        return response;
+    }
+
+    private async Task<AiExecuteResponse> ExecuteOnceAsync(
+        AiExecuteCommand command,
+        string systemPrompt,
+        string userContext,
+        CancellationToken cancellationToken)
+    {
         string? rawResponse;
         try
         {
@@ -61,6 +86,13 @@ public sealed class AiExecuteCommandHandler(
             // friendly message without a partial result.
             return new AiExecuteResponse(null, Array.Empty<ExecutedAction>(), ex.Message);
         }
+        catch (AiResponseTruncatedException)
+        {
+            // The model hit its output-token ceiling mid-JSON. The caller
+            // re-prompts with a tighter action cap instead of showing a
+            // truncated response as "no actions".
+            return new AiExecuteResponse(null, Array.Empty<ExecutedAction>(), NoActionsMessage);
+        }
 
         if (string.IsNullOrWhiteSpace(rawResponse))
         {
@@ -77,7 +109,7 @@ public sealed class AiExecuteCommandHandler(
             return new AiExecuteResponse(
                 contract.Summary,
                 Array.Empty<ExecutedAction>(),
-                "The AI did not return any actions. Try rephrasing your request.");
+                NoActionsMessage);
         }
 
         var actions = new List<ExecutedAction>(contract.Actions.Count);
@@ -469,7 +501,8 @@ public sealed class AiExecuteCommandHandler(
 
     private async Task<(string SystemPrompt, string UserContext)> BuildPromptsAsync(
         AiExecuteCommand command,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool tight)
     {
         var systemPrompt = """
             You are DevFlow's AI assistant. You turn the user's request into a
@@ -502,6 +535,23 @@ public sealed class AiExecuteCommandHandler(
             - dueDate must be ISO-8601. If the user says "tomorrow"/"next week", pick a concrete date and note it in the summary.
             - Do not echo the user's prompt back. Only output the JSON.
             """;
+
+        if (tight)
+        {
+            // Second pass: the first call produced no actions (usually because a
+            // large batch request hit the output-token ceiling mid-JSON). Force a
+            // small, complete action list that fits comfortably — the user gets a
+            // partial result instead of an error, and can run a follow-up prompt
+            // for the rest.
+            systemPrompt += """
+                IMPORTANT — output limit:
+                - You MUST output at most 3 actions, and absolutely nothing else.
+                - Prefer the 3 highest-priority changes that satisfy the request.
+                - Keep every title short (5 words or fewer). No descriptions.
+                - If the request lists more than 3 items, do the first 3 and say
+                  "and N more could not fit" in the summary.
+                """;
+        }
 
         var context = new StringBuilder();
         context.AppendLine($"User request: {command.Prompt}");

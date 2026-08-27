@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
 using Microsoft.Extensions.Options;
 
@@ -30,8 +31,15 @@ public sealed class GeminiAiClient : IAiClient
     /// <summary>Per-request budget. A plan (4000 tokens) needs ~16s, so 60s is safe.</summary>
     private static readonly TimeSpan PlanTimeout = TimeSpan.FromSeconds(60);
 
-    /// <summary>Action responses are short (1000 tokens); keep the assistant snappy.</summary>
-    private static readonly TimeSpan ExecuteTimeout = TimeSpan.FromSeconds(30);
+    /// <summary>
+    /// Action responses carry one JSON object per requested change (create task,
+    /// set deadline, assign...). A prompt asking for a batch of changes can
+    /// easily exceed 1000 tokens once each action has a title + description, so
+    /// we give the execute endpoint the same generous ceiling as planning. The
+    /// shared timeout stays short — 45s is plenty for even a 15-action batch and
+    /// still reads as snappy in the assistant.
+    /// </summary>
+    private static readonly TimeSpan ExecuteTimeout = TimeSpan.FromSeconds(45);
 
     /// <summary>Number of attempts per model before moving to the next fallback.</summary>
     private const int MaxAttemptsPerModel = 3;
@@ -61,7 +69,7 @@ public sealed class GeminiAiClient : IAiClient
         string systemPrompt,
         string userContext,
         CancellationToken cancellationToken = default) =>
-        GenerateContentAsync(systemPrompt, userContext, 1000, ExecuteTimeout, cancellationToken);
+        GenerateContentAsync(systemPrompt, userContext, _options.MaxTokens, ExecuteTimeout, cancellationToken);
 
     /// <summary>
     /// Sends the prompt to the configured model, retrying HTTP 429/503 with
@@ -122,6 +130,12 @@ public sealed class GeminiAiClient : IAiClient
             {
                 // 429/503 — transient overload. Retry, then move to the next model.
             }
+            // AiResponseTruncatedException is intentionally NOT caught here: a
+            // truncated response means the model hit the same output-token
+            // ceiling we gave it, so retrying the identical request (same
+            // maxOutputTokens) against a sibling model will truncate again.
+            // Let it propagate so the caller can re-prompt with a smaller scope
+            // instead of wasting the remaining attempts.
         }
 
         throw new InvalidOperationException(
@@ -180,17 +194,44 @@ public sealed class GeminiAiClient : IAiClient
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
         using var document = JsonDocument.Parse(responseBody);
-        if (document.RootElement.TryGetProperty("candidates", out var candidates) &&
-            candidates.GetArrayLength() > 0 &&
-            candidates[0].TryGetProperty("content", out var candidateContent) &&
-            candidateContent.TryGetProperty("parts", out var parts) &&
-            parts.GetArrayLength() > 0 &&
-            parts[0].TryGetProperty("text", out var text))
+        if (!document.RootElement.TryGetProperty("candidates", out var candidates) ||
+            candidates.GetArrayLength() == 0 ||
+            !candidates[0].TryGetProperty("content", out var candidateContent) ||
+            !candidateContent.TryGetProperty("parts", out var parts) ||
+            parts.GetArrayLength() == 0 ||
+            !parts[0].TryGetProperty("text", out var text))
         {
-            return text.GetString();
+            return null;
         }
 
-        return null;
+        var raw = text.GetString();
+        if (raw is null)
+        {
+            return null;
+        }
+
+        // MAX_TOKENS means the model ran out of output budget mid-response, so
+        // the JSON is guaranteed truncated. Rather than hand the caller a broken
+        // payload that parses to zero actions, throw a retryable signal. If the
+        // text happens to parse cleanly anyway (rare — the truncation cut at a
+        // valid boundary), let it through.
+        if (candidates[0].TryGetProperty("finishReason", out var finishReason) &&
+            finishReason.GetString() == "MAX_TOKENS")
+        {
+            try
+            {
+                using (JsonDocument.Parse(raw))
+                {
+                }
+            }
+            catch (JsonException)
+            {
+                throw new AiResponseTruncatedException(
+                    "The model ran out of output tokens and returned a truncated response.");
+            }
+        }
+
+        return raw;
     }
 
     /// <summary>Thrown when Gemini returns 429/503 (transient overload).</summary>

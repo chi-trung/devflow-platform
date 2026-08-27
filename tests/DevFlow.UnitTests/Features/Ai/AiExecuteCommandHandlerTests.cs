@@ -1,3 +1,4 @@
+using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Ai.Execute;
 using DevFlow.Application.Features.Tasks.Create;
@@ -104,5 +105,84 @@ public class AiExecuteCommandHandlerTests
         Assert.Single(response.Actions);
         Assert.Equal("create_task", response.Actions[0].Type);
         Assert.Equal("success", response.Actions[0].Status);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldRetryWithTightPrompt_WhenFirstCallTruncates()
+    {
+        // Large batch request → the model hits MAX_TOKENS mid-JSON, which the
+        // client surfaces as AiResponseTruncatedException. The handler re-prompts
+        // with a tight cap (≤3 actions) and returns a useful partial result.
+        _aiClient.ExecuteActionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(
+                _ => throw new AiResponseTruncatedException("truncated"),
+                _ => """
+                    {
+                      "summary": "Đã tạo 3 task đầu tiên, 9 task còn lại không đủ chỗ.",
+                      "actions": [
+                        { "type": "create_task", "title": "Login" },
+                        { "type": "create_task", "title": "Register" },
+                        { "type": "create_task", "title": "Logout" }
+                      ]
+                    }
+                    """);
+        _sender.Send(Arg.Any<IRequest<TaskItemCreatedResponse>>(), Arg.Any<CancellationToken>())
+            .Returns(new TaskItemCreatedResponse(Guid.NewGuid()));
+
+        var handler = BuildHandler();
+        var response = await handler.Handle(
+            new AiExecuteCommand(_workspaceId, _projectId, "tạo 12 task cho tính năng login", "board"),
+            CancellationToken.None);
+
+        Assert.Null(response.Error);
+        Assert.Equal(3, response.Actions.Count);
+        Assert.All(response.Actions, action => Assert.Equal("success", action.Status));
+        Assert.Contains("Login", response.Actions[0].Label);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldRetryWithTightPrompt_WhenFirstCallReturnsEmptyActions()
+    {
+        // The model returns valid JSON but an empty actions list. Retry once with
+        // a tight cap before giving up.
+        _aiClient.ExecuteActionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(
+                """{"summary":"(stub)","actions":[]}""",
+                """{"summary":"Đã tạo task","actions":[{"type":"create_task","title":"Login"}]}""");
+        _sender.Send(Arg.Any<IRequest<TaskItemCreatedResponse>>(), Arg.Any<CancellationToken>())
+            .Returns(new TaskItemCreatedResponse(Guid.NewGuid()));
+
+        var handler = BuildHandler();
+        var response = await handler.Handle(
+            new AiExecuteCommand(_workspaceId, _projectId, "tạo task login", "board"),
+            CancellationToken.None);
+
+        Assert.Null(response.Error);
+        Assert.Single(response.Actions);
+        Assert.Equal("create_task", response.Actions[0].Type);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldNotLoopForever_WhenBothAttemptsReturnEmpty()
+    {
+        // Both the initial call and the tight retry come back empty. The handler
+        // must stop after one retry and surface the friendly error, not loop.
+        _aiClient.ExecuteActionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(
+                """{"summary":"(stub)","actions":[]}""",
+                """{"summary":"(stub 2)","actions":[]}""");
+
+        var handler = BuildHandler();
+        var response = await handler.Handle(
+            new AiExecuteCommand(_workspaceId, _projectId, "tạo task login", "board"),
+            CancellationToken.None);
+
+        Assert.NotNull(response.Error);
+        Assert.Contains("did not return any actions", response.Error);
+        Assert.Empty(response.Actions);
+
+        // Exactly two provider calls happened (initial + one tight retry).
+        await _aiClient.Received(2).ExecuteActionAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 }
