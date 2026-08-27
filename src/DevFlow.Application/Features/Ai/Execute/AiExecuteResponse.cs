@@ -9,7 +9,8 @@ namespace DevFlow.Application.Features.Ai.Execute;
 public sealed record AiExecuteResponse(
     string? Summary,
     IReadOnlyList<ExecutedAction> Actions,
-    string? Error);
+    string? Error,
+    IReadOnlyList<string>? ReplyItems = null);
 
 public sealed record ExecutedAction(
     string Type,

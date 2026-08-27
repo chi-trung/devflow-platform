@@ -127,6 +127,9 @@ export interface AiExecuteResponse {
   summary: string | null;
   actions: ExecutedAction[];
   error: string | null;
+  /** Optional bullet points rendered as a list when the AI answer spans
+   *  several distinct points (e.g. "here are the open sprints: …"). */
+  replyItems?: string[] | null;
 }
 
 export interface SprintResponse {

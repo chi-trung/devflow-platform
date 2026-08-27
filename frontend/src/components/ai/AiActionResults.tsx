@@ -16,8 +16,11 @@ interface AiActionResultsProps {
   summary: string | null;
   actions: ExecutedAction[];
   error: string | null;
+  /** Optional bullet points rendered as a real list instead of a single
+   *  text paragraph. */
+  replyItems?: string[] | null;
   /** Called when the user accepts a pending action. Receives the action
-   * contract (from contract field) and its index in the actions array. */
+   *  contract (from contract field) and its index in the actions array. */
   onAccept?: (action: AiExecuteActionContract, index: number) => void;
   /** Called when the user rejects a pending action. */
   onReject?: (index: number) => void;
@@ -44,6 +47,7 @@ export function AiActionResults({
   summary,
   actions,
   error,
+  replyItems,
   onAccept,
   onReject,
   pendingAccepting,
@@ -72,11 +76,27 @@ export function AiActionResults({
 
   if (actions.length === 0) {
     // Conversational reply — the model answered a question instead of
-    // performing actions. Surface the summary text as a plain answer.
+    // performing actions. Surface the summary text as a plain answer, with
+    // `replyItems` rendered as a real bulleted list when the answer spans
+    // several distinct points.
     if (summary) {
+      const items = replyItems?.filter((item) => item.trim().length > 0) ?? [];
       return (
         <div className="rounded-lg border border-border bg-card p-3 text-sm text-foreground">
-          {summary}
+          <p className="whitespace-pre-line leading-relaxed">{summary}</p>
+          {items.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {items.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span
+                    aria-hidden
+                    className="mt-[0.55em] size-1.5 shrink-0 rounded-full bg-primary/60"
+                  />
+                  <span className="leading-relaxed">{item}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       );
     }

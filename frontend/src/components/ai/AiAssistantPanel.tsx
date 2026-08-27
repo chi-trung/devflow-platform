@@ -257,6 +257,7 @@ export function AiAssistantPanel({
                 summary={message.result?.summary ?? null}
                 actions={message.result?.actions ?? []}
                 error={message.result?.error ?? null}
+                replyItems={message.result?.replyItems ?? null}
                 onAccept={(action, actionIndex) => void handleAccept(action, actionIndex)}
                 onReject={handleReject}
                 pendingAccepting={pendingAccepting}

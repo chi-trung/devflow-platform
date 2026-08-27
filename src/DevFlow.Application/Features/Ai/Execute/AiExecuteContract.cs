@@ -22,6 +22,15 @@ public sealed class AiExecuteContract
     [JsonPropertyName("reply")]
     public string? Reply { get; set; }
 
+    /// <summary>
+    /// Optional bullet points for a conversational reply that lists multiple
+    /// distinct points (e.g. "here are the open sprints: …"). When non-empty the
+    /// assistant renders these as a real list instead of one long paragraph.
+    /// Each entry should be a short self-contained sentence.
+    /// </summary>
+    [JsonPropertyName("replyItems")]
+    public List<string> ReplyItems { get; set; } = new();
+
     [JsonPropertyName("actions")]
     public List<AiExecuteActionContract> Actions { get; set; } = new();
 

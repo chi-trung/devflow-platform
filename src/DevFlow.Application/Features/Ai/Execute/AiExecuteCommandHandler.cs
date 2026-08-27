@@ -97,10 +97,19 @@ public sealed class AiExecuteCommandHandler(
 
         // Conversational prompt (question, greeting, small talk) — the model
         // returned a `reply` instead of action items. Surface it as a plain text
-        // answer with no error.
+        // answer with no error. `replyItems` renders as a real bulleted list when
+        // the answer spans several distinct points.
         if (!string.IsNullOrWhiteSpace(contract.Reply))
         {
-            return new AiExecuteResponse(contract.Reply, Array.Empty<ExecutedAction>(), null);
+            var replyItems = contract.ReplyItems
+                .Select(item => item.Trim())
+                .Where(item => item.Length > 0)
+                .ToList();
+            return new AiExecuteResponse(
+                contract.Reply,
+                Array.Empty<ExecutedAction>(),
+                null,
+                replyItems.Count > 0 ? replyItems : null);
         }
 
         if (contract.Actions.Count == 0)
@@ -212,6 +221,7 @@ public sealed class AiExecuteCommandHandler(
             {
               "summary": "one short sentence describing what you did or will do",
               "reply": "optional plain-text answer when the user is NOT asking for an action",
+              "replyItems": "optional array of bullet points when the reply lists several distinct points",
               "actions": [
                 {
                   "type": "create_task|create_subtask|create_sprint|create_epic|create_project|create_workspace|set_due_date|set_priority|assign_task|assign_to_sprint|add_to_epic",
@@ -234,6 +244,12 @@ public sealed class AiExecuteCommandHandler(
               "what models do you use?", "hello", "who are you?"), set "reply" to
               a short, friendly answer in the user's language and leave "actions"
               empty. Do not invent actions for a prompt that asks for none.
+            - When your reply has several distinct points (e.g. listing sprints,
+              summarizing task status, comparing options), also fill "replyItems"
+              with one string per bullet point. Each item should be a short,
+              self-contained sentence. The UI renders these as a real bulleted list
+              so the user can scan them easily. For a short one-line answer leave
+              "replyItems" as an empty array.
             - The context lists the projects, sprints, epics and tasks the user
               can see. Reference them by their real id or an exact title substring
               from that list. Never invent an id or a task title.
