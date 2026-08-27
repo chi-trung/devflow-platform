@@ -104,6 +104,14 @@ public sealed class AiExecuteCommandHandler(
 
         var contract = AiExecuteContract.Parse(rawResponse);
 
+        // Conversational prompt (question, greeting, small talk) — the model
+        // returned a `reply` instead of action items. Surface it as a plain text
+        // answer with no error.
+        if (!string.IsNullOrWhiteSpace(contract.Reply))
+        {
+            return new AiExecuteResponse(contract.Reply, Array.Empty<ExecutedAction>(), null);
+        }
+
         if (contract.Actions.Count == 0)
         {
             return new AiExecuteResponse(
@@ -510,6 +518,7 @@ public sealed class AiExecuteCommandHandler(
             nothing else. Use exactly this shape:
             {
               "summary": "one short sentence describing what you did or will do",
+              "reply": "optional plain-text answer when the user is NOT asking for an action",
               "actions": [
                 {
                   "type": "create_task|create_subtask|create_sprint|create_epic|create_project|create_workspace|set_due_date|set_priority|assign_task|assign_to_sprint",
@@ -527,7 +536,11 @@ public sealed class AiExecuteCommandHandler(
             }
 
             Rules:
-            - Pick the fewest actions that satisfy the request. One action per logical change.
+            - If the user asks a question, greets you, or makes small talk (e.g.
+              "what models do you use?", "hello", "who are you?"), set "reply" to
+              a short, friendly answer in the user's language and leave "actions"
+              empty. Do not invent actions for a prompt that asks for none.
+            - Otherwise pick the fewest actions that satisfy the request. One action per logical change.
             - "title" for create_* actions is the new entity's name. For updates it is only informational.
             - For set_due_date / set_priority / assign_task / assign_to_sprint you MUST set taskRef to an existing task (id or title). Never invent an id; if no task matches, still emit the action and the system will report it as failed.
             - Assignee must be one of the member names/emails listed in the context, or null.

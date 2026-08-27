@@ -14,6 +14,14 @@ public sealed class AiExecuteContract
     [JsonPropertyName("summary")]
     public string? Summary { get; set; }
 
+    /// <summary>
+    /// Conversational reply for prompts that are not action requests — a
+    /// question, a greeting, small talk. When present, the assistant surfaces it
+    /// as a plain text answer instead of trying to execute actions.
+    /// </summary>
+    [JsonPropertyName("reply")]
+    public string? Reply { get; set; }
+
     [JsonPropertyName("actions")]
     public List<AiExecuteActionContract> Actions { get; set; } = new();
 

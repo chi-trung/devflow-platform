@@ -44,7 +44,18 @@ export function AiActionResults({
     );
   }
 
-  if (actions.length === 0) return null;
+  if (actions.length === 0) {
+    // Conversational reply — the model answered a question instead of
+    // performing actions. Surface the summary text as a plain answer.
+    if (summary) {
+      return (
+        <div className="rounded-lg border border-border bg-card p-3 text-sm text-foreground">
+          {summary}
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div className="space-y-3 rounded-lg border border-border bg-card p-3 text-sm">
