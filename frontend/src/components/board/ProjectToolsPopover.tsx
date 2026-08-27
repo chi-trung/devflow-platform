@@ -75,7 +75,11 @@ export function ProjectToolsPopover({
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
     }
-    function onScroll() {
+    function onScroll(event: Event) {
+      // Ignore scroll events originating from inside the popup (overflow-y-auto)
+      // so scrolling the tool list doesn't close it.
+      const target = event.target as Node;
+      if (dropdownRef.current?.contains(target)) return;
       setOpen(false);
     }
 
@@ -107,10 +111,48 @@ export function ProjectToolsPopover({
     if (closeTimer.current) window.clearTimeout(closeTimer.current);
     closeTimer.current = window.setTimeout(() => {
       // Only close if the pointer isn't over either surface. Checking the ref
-      // (not `open`) means a click-open stays pinned after the pointer leaves.
+      // (not `open`) means a click-open stays pinned while the pointer stays on
+      // the trigger or the popup.
       if (hovering.current === null) setOpen(false);
     }, HOVER_CLOSE_GRACE);
   }
+
+  // Which hover surface the pointer is currently over — trigger, the popup, or
+  // neither. Each rect is padded by a few px so the tiny gap between them is
+  // part of the hot zone: the pointer never "leaves" mid-travel. Tracking this
+  // via a global pointermove (instead of onMouseEnter/onMouseLeave on the DOM
+  // nodes) also avoids the mount-under-pointer race where the popup appears
+  // under the cursor and its mouseenter never fires.
+  function hotZone(x: number, y: number, pad = 6): "trigger" | "menu" | null {
+    const rect = (el: HTMLElement | null) => el?.getBoundingClientRect();
+    const t = rect(triggerRef.current);
+    const d = rect(dropdownRef.current);
+    const inside = (r: DOMRect | undefined) =>
+      r && x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad;
+    if (t && inside(t)) return "trigger";
+    if (d && inside(d)) return "menu";
+    return null;
+  }
+
+  // The keep-open/close driver. Runs for every pointer move while the popup is
+  // open; sets the hover ref (which the close timer reads) and cancels or arms
+  // the close timer based on where the pointer actually is.
+  useEffect(() => {
+    function onPointerMove(event: PointerEvent) {
+      const zone = hotZone(event.clientX, event.clientY);
+      if (zone) {
+        hovering.current = zone;
+        if (closeTimer.current) window.clearTimeout(closeTimer.current);
+      } else {
+        hovering.current = null;
+        scheduleClose();
+      }
+    }
+    window.addEventListener("pointermove", onPointerMove, true);
+    return () => window.removeEventListener("pointermove", onPointerMove, true);
+    // scheduleClose/hotZone are stable per render; only `open` gates this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function handleTriggerClick() {
     if (closeTimer.current) window.clearTimeout(closeTimer.current);
@@ -131,7 +173,9 @@ export function ProjectToolsPopover({
     return {
       position: "fixed",
       left,
-      top: rect.bottom + 8,
+      // Sits just below the trigger; the invisible bridge in the wrapper spans
+      // the tiny gap so the pointer never leaves the hot zone mid-travel.
+      top: rect.bottom + 4,
       zIndex: 80,
     };
   }
@@ -149,10 +193,8 @@ export function ProjectToolsPopover({
           hovering.current = "trigger";
           openOnHover();
         }}
-        onMouseLeave={() => {
-          hovering.current = null;
-          scheduleClose();
-        }}
+        // No onMouseLeave here: closing is driven by the global pointermove hot-zone
+        // tracker (armed while open), which survives the trigger→popup gap.
         className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-2 py-2 text-sm transition-all duration-200 active:scale-[0.98] sm:px-2.5 sm:py-1.5 ${
           open || activeSectionLabel
             ? "border-border-strong bg-elevated text-foreground"
@@ -184,10 +226,7 @@ export function ProjectToolsPopover({
               hovering.current = "menu";
               if (closeTimer.current) window.clearTimeout(closeTimer.current);
             }}
-            onMouseLeave={() => {
-              hovering.current = null;
-              scheduleClose();
-            }}
+            // No onMouseLeave: the global pointermove hot-zone tracker owns closing.
             style={getDropdownStyle()}
             className="rise max-h-[70vh] w-72 overflow-y-auto rounded-xl border border-border bg-card p-1.5 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
           >
