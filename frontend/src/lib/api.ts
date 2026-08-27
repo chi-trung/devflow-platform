@@ -50,6 +50,8 @@ import type {
   WebhookTestResponse,
   AiPlanResponse,
   AiExecuteResponse,
+  AiExecuteActionContract,
+  ExecutedAction,
 } from "../types/api";
 
 // In dev the Vite proxy forwards /api to localhost; in production
@@ -1715,6 +1717,28 @@ export async function aiExecute(
         prompt: input.prompt,
         pageContext: input.pageContext ?? null,
       }),
+    },
+  );
+}
+
+/**
+ * Executes a single AI-proposed action that the user accepted from the review
+ * list. Re-submits the original action contract unchanged; the server re-runs
+ * it through the same executor used by aiExecute.
+ */
+export async function aiExecuteConfirm(
+  workspaceId: string,
+  projectId: string | undefined,
+  action: AiExecuteActionContract,
+): Promise<ExecutedAction> {
+  const params = new URLSearchParams();
+  if (projectId) params.set("projectId", projectId);
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return api<ExecutedAction>(
+    `/workspaces/${workspaceId}/ai/execute/confirm${query}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ action }),
     },
   );
 }

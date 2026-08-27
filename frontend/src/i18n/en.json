@@ -744,7 +744,13 @@
   "actionStatusOk": "OK",
   "actionStatusFail": "Failed",
   "actionStatusSkip": "Skipped",
-  "actionCount": "{{count}}/{{total}} actions succeeded"
+  "actionCount": "{{count}}/{{total}} actions succeeded",
+  "actionPending": "Pending",
+  "actionPendingDesc": "Review this proposed change before applying it.",
+  "actionAccept": "Accept",
+  "actionReject": "Reject",
+  "actionConfirmFailed": "Failed to apply the action.",
+  "accepting": "Accepting…"
  },
  "timeTracking": {
   "timeTracking": "Time tracking",

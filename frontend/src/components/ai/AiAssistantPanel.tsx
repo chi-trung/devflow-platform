@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowUp, Sparkles, X } from "lucide-react";
-import { aiExecute } from "../../lib/api";
-import type { AiExecuteResponse } from "../../types/api";
+import { aiExecute, aiExecuteConfirm } from "../../lib/api";
+import type {
+  AiExecuteResponse,
+  AiExecuteActionContract,
+  ExecutedAction,
+} from "../../types/api";
 import { AiActionResults } from "./AiActionResults";
 import { AiSuggestedPrompts, type AiPageContext } from "./AiSuggestedPrompts";
 
@@ -17,6 +21,9 @@ interface AiAssistantPanelProps {
   sprintId?: string | null;
   epicId?: string | null;
   context: AiPageContext;
+  /** Called after AI actions have been executed (e.g. a task was created) so
+   * the parent page can refresh the board / list without a manual F5. */
+  onTaskChanged?: () => void;
 }
 
 interface ChatMessage {
@@ -33,11 +40,15 @@ export function AiAssistantPanel({
   sprintId,
   epicId,
   context,
+  onTaskChanged,
 }: AiAssistantPanelProps) {
   const { t } = useTranslation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
+  /** Index (within its message's actions) of the pending action currently
+   * being accepted — disables both buttons on that card while in flight. */
+  const [pendingAccepting, setPendingAccepting] = useState<number | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -81,6 +92,12 @@ export function AiAssistantPanel({
         { sprintId, epicId },
       );
       setMessages((prev) => [...prev, { role: "assistant", result }]);
+      // Mutation actions (set due date, assign…) execute immediately server-side,
+      // so let the parent board/list refresh right away. create_* actions stay
+      // pending until the user Accepts them (see Fix 3).
+      if (result.actions.some((a) => a.status === "success")) {
+        onTaskChanged?.();
+      }
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -98,6 +115,80 @@ export function AiAssistantPanel({
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   };
+
+  /** Replaces the action at `index` in the LAST assistant message with `next` —
+   * used to reflect the result of an accept/reject on the pending card. */
+  function replaceLastAction(index: number, next: ExecutedAction) {
+    setMessages((prev) => {
+      const copy = [...prev];
+      for (let i = copy.length - 1; i >= 0; i--) {
+        if (copy[i].role === "assistant" && copy[i].result) {
+          const actions = [...copy[i].result!.actions];
+          actions[index] = next;
+          copy[i] = {
+            ...copy[i],
+            result: { ...copy[i].result!, actions },
+          };
+          break;
+        }
+      }
+      return copy;
+    });
+  }
+
+  /** Runs a single accepted action through the confirm endpoint. The card
+   * stays disabled until the request settles; on failure the action stays
+   * pending so the user can retry. */
+  async function handleAccept(action: AiExecuteActionContract, index: number) {
+    if (loading || pendingAccepting !== null) return;
+    setPendingAccepting(index);
+    try {
+      const result = await aiExecuteConfirm(workspaceId, projectId, action);
+      replaceLastAction(index, result);
+      if (result.status === "success") {
+        onTaskChanged?.();
+      }
+    } catch {
+      replaceLastAction(index, {
+        type: action.type,
+        label: action.title ?? action.type,
+        entityId: null,
+        status: "failed",
+        message: t("ai.actionConfirmFailed"),
+        contract: action,
+      });
+    } finally {
+      setPendingAccepting(null);
+    }
+  }
+
+  /** Rejects a pending action — removes it from the review list locally
+   * (marking it skipped) so it is never executed. */
+  function handleReject(index: number) {
+    if (loading || pendingAccepting !== null) return;
+    setMessages((prev) => {
+      const copy = [...prev];
+      for (let i = copy.length - 1; i >= 0; i--) {
+        if (copy[i].role === "assistant" && copy[i].result) {
+          const actions = [...copy[i].result!.actions];
+          const current = actions[index];
+          if (!current || current.status !== "pending") break;
+          actions[index] = {
+            ...current,
+            status: "skipped",
+            message: current.message,
+            contract: null,
+          };
+          copy[i] = {
+            ...copy[i],
+            result: { ...copy[i].result!, actions },
+          };
+          break;
+        }
+      }
+      return copy;
+    });
+  }
 
   /**
    * Auto-grow the composer: reset to natural height, then expand up to the
@@ -166,6 +257,9 @@ export function AiAssistantPanel({
                 summary={message.result?.summary ?? null}
                 actions={message.result?.actions ?? []}
                 error={message.result?.error ?? null}
+                onAccept={(action, actionIndex) => void handleAccept(action, actionIndex)}
+                onReject={handleReject}
+                pendingAccepting={pendingAccepting}
               />
             </div>
           ),

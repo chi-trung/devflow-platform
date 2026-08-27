@@ -65,7 +65,26 @@ export interface AiPlanResponse {
   createdAtUtc: string;
 }
 
-export type AiActionStatus = "success" | "failed" | "skipped";
+export type AiActionStatus = "success" | "failed" | "skipped" | "pending";
+
+/**
+ * The full payload of a single AI-proposed action, echoed back on pending
+ * actions so the client can re-submit it (unchanged) to the confirm endpoint
+ * when the user presses Accept.
+ */
+export interface AiExecuteActionContract {
+  type: string;
+  title?: string | null;
+  description?: string | null;
+  priority?: string;
+  dueDate?: string | null;
+  assignee?: string | null;
+  taskRef?: string | null;
+  parentTaskRef?: string | null;
+  projectRef?: string | null;
+  sprintRef?: string | null;
+  epicRef?: string | null;
+}
 
 export interface ExecutedAction {
   type: string;
@@ -73,6 +92,9 @@ export interface ExecutedAction {
   entityId: string | null;
   status: AiActionStatus;
   message: string | null;
+  /** Present only on "pending" actions — the original contract to re-send on
+   * Accept. Null for already-executed actions. */
+  contract?: AiExecuteActionContract | null;
 }
 
 export interface AiExecuteResponse {
