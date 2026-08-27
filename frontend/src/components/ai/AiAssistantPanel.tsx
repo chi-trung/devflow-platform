@@ -273,7 +273,13 @@ export function AiAssistantPanel({
         )}
 
         {messages.length === 0 && !loading && (
-          <AiSuggestedPrompts context={context} onPick={send} />
+          <AiSuggestedPrompts
+            workspaceId={workspaceId}
+            projectId={projectId}
+            epicId={epicId}
+            context={context}
+            onPick={send}
+          />
         )}
       </div>
 

@@ -1,5 +1,6 @@
 using DevFlow.Api.Contracts.Ai;
 using DevFlow.Application.Features.Ai.Execute;
+using DevFlow.Application.Features.Ai.Suggest;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -41,6 +42,28 @@ public sealed class AiAssistantController(ISender sender) : ControllerBase
             cancellationToken);
 
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Returns context-aware prompt suggestions based on real project data
+    /// (current sprint, epics, unassigned tasks…). The frontend shows these as
+    /// chips when the assistant opens so the user has ready-made, grounded
+    /// prompts instead of generic static ones.
+    /// </summary>
+    [HttpPost("suggest")]
+    [ProducesResponseType(typeof(List<AiSuggestion>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Suggest(
+        Guid workspaceId,
+        [FromQuery] Guid? projectId,
+        [FromQuery] Guid? epicId,
+        AiSuggestRequest request,
+        CancellationToken cancellationToken)
+    {
+        var suggestions = await sender.Send(
+            new AiSuggestCommand(workspaceId, projectId, request.PageContext, epicId),
+            cancellationToken);
+
+        return Ok(suggestions);
     }
 
     /// <summary>

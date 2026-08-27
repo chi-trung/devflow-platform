@@ -52,6 +52,7 @@ import type {
   AiExecuteResponse,
   AiExecuteActionContract,
   ExecutedAction,
+  AiSuggestion,
 } from "../types/api";
 
 // In dev the Vite proxy forwards /api to localhost; in production
@@ -1717,6 +1718,30 @@ export async function aiExecute(
         prompt: input.prompt,
         pageContext: input.pageContext ?? null,
       }),
+    },
+  );
+}
+
+/**
+ * Fetches context-aware prompt suggestions based on real project data.
+ * Returns i18n keys + interpolation params so the UI renders them in the
+ * user's language.
+ */
+export async function aiSuggest(
+  workspaceId: string,
+  projectId: string | undefined,
+  pageContext: string | undefined,
+  epicId?: string | null,
+): Promise<AiSuggestion[]> {
+  const params = new URLSearchParams();
+  if (projectId) params.set("projectId", projectId);
+  if (epicId) params.set("epicId", epicId);
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return api<AiSuggestion[]>(
+    `/workspaces/${workspaceId}/ai/suggest${query}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ pageContext: pageContext ?? null }),
     },
   );
 }
