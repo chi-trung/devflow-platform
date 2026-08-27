@@ -46,6 +46,22 @@ public sealed class AiExecuteConfirmCommandHandler(
                 "failed",
                 ex.Message);
         }
+        catch (InvalidHierarchyException ex)
+        {
+            return new ExecutedAction(
+                command.Action.Type,
+                command.Action.Title ?? command.Action.Type,
+                null,
+                "failed",
+                ex.Message,
+                Error: new AiActionErrorDetail(
+                    "hierarchy_violation",
+                    ex.Message,
+                    ex.ParentId,
+                    ex.ActualParentType,
+                    ex.RequiredParentType,
+                    ex.RecoveryHint));
+        }
         catch (Exception ex)
         {
             return new ExecutedAction(

@@ -17,4 +17,18 @@ public sealed record ExecutedAction(
     Guid? EntityId,
     string Status,
     string? Message,
-    AiExecuteActionContract? Contract = null);
+    AiExecuteActionContract? Contract = null,
+    AiActionErrorDetail? Error = null);
+
+/// <summary>
+/// Structured failure detail on an action, so the client can classify the error
+/// (e.g. a hierarchy violation) and offer a targeted recovery action instead of
+/// a generic failure message. Only present when an action fails.
+/// </summary>
+public sealed record AiActionErrorDetail(
+    string Code,
+    string Message,
+    Guid? ParentId,
+    string? ActualType,
+    string? RequiredType,
+    string? RecoveryHint);

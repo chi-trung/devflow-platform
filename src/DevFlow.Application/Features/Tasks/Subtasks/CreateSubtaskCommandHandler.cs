@@ -33,7 +33,12 @@ public sealed class CreateSubtaskCommandHandler(
 
         if (parent.ParentTaskId is not null)
         {
-            throw new ConflictException("Subtasks cannot be nested more than one level deep.");
+            throw new InvalidHierarchyException(
+                parent.Id,
+                "Subtask",
+                "Task",
+                $"\"{parent.Title}\" is already a subtask — subtasks cannot be nested more than one level deep.",
+                $"Resolve the top-level task that contains \"{parent.Title}\" (task id {parent.ParentTaskId}) and create the subtask under it instead.");
         }
 
         var subtask = TaskItem.Create(

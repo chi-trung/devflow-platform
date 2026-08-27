@@ -77,7 +77,15 @@ public class SubtaskHandlerTests
         var command = new CreateSubtaskCommand(
             _workspaceId, _project.Id, child.Id, "Grandchild", null, TaskItemPriority.Low);
 
-        await Assert.ThrowsAsync<ConflictException>(() => handler.Handle(command, CancellationToken.None));
+        var ex = await Assert.ThrowsAsync<InvalidHierarchyException>(() => handler.Handle(command, CancellationToken.None));
+
+        // The structured detail lets the caller recover: which parent failed,
+        // what it actually is vs. what is required, and how to fix it.
+        Assert.Equal(child.Id, ex.ParentId);
+        Assert.Equal("Subtask", ex.ActualParentType);
+        Assert.Equal("Task", ex.RequiredParentType);
+        Assert.Contains(root.Id.ToString(), ex.RecoveryHint);
+        Assert.DoesNotContain("Grandchild", ex.RecoveryHint);
     }
 
     [Fact]

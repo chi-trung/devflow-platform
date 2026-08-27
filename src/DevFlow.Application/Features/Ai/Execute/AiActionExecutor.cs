@@ -153,7 +153,7 @@ public sealed class AiActionExecutor(
         CancellationToken cancellationToken)
     {
         var project = await ResolveProjectAsync(workspaceId, projectId, action.ProjectRef, cancellationToken);
-        var parent = await ResolveTaskAsync(workspaceId, project.Id, action.ParentTaskRef, cancellationToken);
+        var parent = await ResolveParentTaskAsync(workspaceId, project.Id, action.ParentTaskRef, cancellationToken);
 
         var response = await sender.Send(
             new CreateSubtaskCommand(
@@ -367,6 +367,76 @@ public sealed class AiActionExecutor(
         }
 
         throw new NotFoundException(nameof(TaskItem), taskRef ?? "(unnamed)");
+    }
+
+    /// <summary>
+    /// Resolves the parent for a create_subtask action. Only top-level tasks
+    /// (ParentTaskId == null) may be parents — the product hierarchy allows
+    /// exactly Epic → Task → Subtask, so a subtask can never carry children.
+    /// If a subtask title matches the requested parent, we fail fast with a
+    /// structured <see cref="InvalidHierarchyException"/> instead of letting
+    /// the backend guard reject it after the fact.
+    /// </summary>
+    private async Task<TaskItem> ResolveParentTaskAsync(
+        Guid workspaceId,
+        Guid projectId,
+        string? taskRef,
+        CancellationToken cancellationToken)
+    {
+        if (Guid.TryParse(taskRef, out var taskId))
+        {
+            var byId = await taskItemRepository.GetByIdAsync(taskId, cancellationToken);
+            if (byId is not null && byId.ProjectId == projectId)
+            {
+                EnsureCanHaveSubtasks(byId, taskRef);
+                return byId;
+            }
+        }
+
+        var tasks = await taskItemRepository.GetForProjectAsync(projectId, null, cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(taskRef))
+        {
+            // Prefer a top-level task whose title matches. If none, but a
+            // subtask title matches, reject with the hierarchy error — the AI
+            // likely picked the wrong entity because two items share a name.
+            var byTitle = tasks.FirstOrDefault(t =>
+                t.ParentTaskId is null
+                && t.Title.Contains(taskRef, StringComparison.OrdinalIgnoreCase));
+            if (byTitle is not null)
+            {
+                return byTitle;
+            }
+
+            var subtaskMatch = tasks.FirstOrDefault(t =>
+                t.ParentTaskId is not null
+                && t.Title.Contains(taskRef, StringComparison.OrdinalIgnoreCase));
+            if (subtaskMatch is not null)
+            {
+                EnsureCanHaveSubtasks(subtaskMatch, taskRef);
+            }
+        }
+
+        throw new NotFoundException(nameof(TaskItem), taskRef ?? "(unnamed)");
+    }
+
+    /// <summary>
+    /// Fails fast when the resolved parent is itself a subtask. Throws a
+    /// structured exception so the caller can surface the parent id, the
+    /// actual vs. required type, and a recovery hint (e.g. use the subtask's
+    /// own top-level parent) instead of a generic failure message.
+    /// </summary>
+    private static void EnsureCanHaveSubtasks(TaskItem parent, string? taskRef)
+    {
+        if (parent.ParentTaskId is not null)
+        {
+            throw new InvalidHierarchyException(
+                parent.Id,
+                "Subtask",
+                "Task",
+                $"\"{parent.Title}\" is already a subtask — subtasks cannot be nested more than one level deep.",
+                $"Resolve the top-level task that contains \"{parent.Title}\" (task id {parent.ParentTaskId}) and create the subtask under it instead.");
+        }
     }
 
     private async Task<Sprint> ResolveSprintAsync(
