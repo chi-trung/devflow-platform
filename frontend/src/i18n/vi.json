@@ -320,7 +320,14 @@
   "webhooks": "Webhooks",
   "github": "GitHub",
   "personal": "Cá nhân",
-  "myTasks": "Việc của tôi"
+  "myTasks": "Việc của tôi",
+  "tools": "Công cụ",
+  "toolsGroupManage": "Quản lý",
+  "toolsGroupConfigure": "Cấu hình",
+  "toolsGroupIntegrate": "Tích hợp",
+  "toolsGroupFind": "Tìm kiếm",
+  "collapse": "Thu gọn",
+  "expand": "Mở rộng"
  },
  "dashboard": {
   "title": "Workspaces",

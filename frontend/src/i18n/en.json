@@ -320,7 +320,14 @@
   "webhooks": "Webhooks",
   "github": "GitHub",
   "personal": "Personal",
-  "myTasks": "My Tasks"
+  "myTasks": "My Tasks",
+  "tools": "Tools",
+  "toolsGroupManage": "Manage",
+  "toolsGroupConfigure": "Configure",
+  "toolsGroupIntegrate": "Integrate",
+  "toolsGroupFind": "Find",
+  "collapse": "Collapse",
+  "expand": "Expand"
  },
  "dashboard": {
   "title": "Workspaces",

@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, NavLink, useParams, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import {
   ArrowLeft,
   Plus,
@@ -54,6 +59,7 @@ import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { EmptyState } from "../components/ui/EmptyState";
 import { EmptyBoardIllustration } from "../components/illustrations/EmptyStateIllustrations";
 import { Column } from "../components/board/Column";
+import { ProjectToolsPopover } from "../components/board/ProjectToolsPopover";
 import { CreateTaskForm } from "../components/board/CreateTaskForm";
 import { TaskDetailPanel } from "../components/board/TaskDetailPanel";
 import { SprintBar } from "../components/board/SprintBar";
@@ -153,6 +159,7 @@ export function BoardPage() {
   const { t } = useTranslation();
   const COLUMNS = getColumns(t);
   const { workspaceId = "", projectId = "" } = useParams();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: project } = useApi<ProjectResponse>(
@@ -778,6 +785,50 @@ export function BoardPage() {
     { to: `/workspaces/${workspaceId}/search`, icon: Search, label: t("search.title") },
   ];
 
+  // Group the tools popup into sections. itemKeys are the `to` paths so the
+  // popover can resolve which section the current route belongs to.
+  const activeToolPath = location.pathname;
+  const projectToolGroups = [
+    {
+      id: "manage",
+      title: t("nav.toolsGroupManage"),
+      itemKeys: [
+        `/workspaces/${workspaceId}/projects/${projectId}/sprints`,
+        `/workspaces/${workspaceId}/projects/${projectId}/reports`,
+        `/workspaces/${workspaceId}/projects/${projectId}/epics`,
+        `/workspaces/${workspaceId}/projects/${projectId}/milestones`,
+      ],
+    },
+    {
+      id: "configure",
+      title: t("nav.toolsGroupConfigure"),
+      itemKeys: [
+        `/workspaces/${workspaceId}/projects/${projectId}/knowledge`,
+        `/workspaces/${workspaceId}/projects/${projectId}/labels`,
+        `/workspaces/${workspaceId}/projects/${projectId}/fields`,
+        `/workspaces/${workspaceId}/projects/${projectId}/settings`,
+        `/workspaces/${workspaceId}/projects/${projectId}/templates`,
+      ],
+    },
+    {
+      id: "integrate",
+      title: t("nav.toolsGroupIntegrate"),
+      itemKeys: [
+        `/workspaces/${workspaceId}/webhooks`,
+        `/workspaces/${workspaceId}/projects/${projectId}/github`,
+        `/workspaces/${workspaceId}/projects/${projectId}/activities`,
+      ],
+    },
+    {
+      id: "find",
+      title: t("nav.toolsGroupFind"),
+      itemKeys: [
+        `/workspaces/${workspaceId}/search`,
+        "/saved-searches",
+      ],
+    },
+  ];
+
   return (
     <AppShell>
       <div className="flex h-full flex-col px-4 py-6 sm:px-6">
@@ -810,9 +861,9 @@ export function BoardPage() {
             </p>
           </div>
             <div className="flex w-full min-w-0 flex-col gap-2">
-            {/* Presence + project sub-nav share one line. On mobile the nav
-                scrolls horizontally (no wrapping) so the row never jumbles;
-                on desktop it fits and behaves like before. */}
+            {/* Presence + project tools trigger share one line; the full tool
+                list lives in the hover/click popover so the header stays
+                compact on every viewport. */}
             <div className="flex min-w-0 items-center gap-2">
               <div className="shrink-0">
                 <BoardPresence
@@ -821,27 +872,12 @@ export function BoardPage() {
                   totalOnline={presenceTotal}
                 />
               </div>
-              <nav
-                aria-label={t("board.projectNav")}
-                className="no-scrollbar -mx-1 flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto px-1 py-0.5 sm:flex-wrap sm:overflow-visible"
-              >
-                {projectNavLinks.map(({ to, icon: Icon, label }) => (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    className={({ isActive }) =>
-                      `inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-2 text-sm transition-all duration-200 active:scale-[0.98] sm:px-2.5 sm:py-1.5 ${
-                        isActive
-                          ? "border-border-strong bg-elevated text-foreground"
-                          : "border-border text-foreground hover:border-border-strong hover:bg-elevated"
-                      }`
-                    }
-                  >
-                    <Icon className="size-4 shrink-0" aria-hidden />
-                    <span className="hidden xs:inline sm:inline">{label}</span>
-                  </NavLink>
-                ))}
-              </nav>
+              <ProjectToolsPopover
+                items={projectNavLinks}
+                groups={projectToolGroups}
+                activeTo={activeToolPath}
+                triggerLabel={t("nav.tools")}
+              />
             </div>
             {/* Actions row — search + log + graph + help + create. Wraps
                 naturally, separate from the nav links so mobile stays tidy. */}
