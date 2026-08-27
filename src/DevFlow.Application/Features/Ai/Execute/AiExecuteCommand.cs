@@ -10,10 +10,15 @@ namespace DevFlow.Application.Features.Ai.Execute;
 /// actions (create task, set deadline, assign, …). The workspace is required
 /// (the current one from the route); the project is optional and the AI falls
 /// back to the first project in the workspace when the prompt does not name one.
+/// SprintId / EpicId are the route-level context the user is currently viewing —
+/// the AI uses them to ground refs ("this sprint", "the current epic") and to
+/// suggest context-appropriate actions.
 /// </summary>
 [RequireWorkspaceRole(WorkspaceRole.Member)]
 public sealed record AiExecuteCommand(
     Guid WorkspaceId,
     Guid? ProjectId,
     string Prompt,
-    string? PageContext) : IRequest<AiExecuteResponse>, IWorkspaceRequest;
+    string? PageContext,
+    Guid? SprintId = null,
+    Guid? EpicId = null) : IRequest<AiExecuteResponse>, IWorkspaceRequest;

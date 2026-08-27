@@ -31,11 +31,13 @@ public sealed class AiAssistantController(ISender sender) : ControllerBase
     public async Task<IActionResult> Execute(
         Guid workspaceId,
         [FromQuery] Guid? projectId,
+        [FromQuery] Guid? sprintId,
+        [FromQuery] Guid? epicId,
         AiExecuteRequest request,
         CancellationToken cancellationToken)
     {
         var response = await sender.Send(
-            new AiExecuteCommand(workspaceId, projectId, request.Prompt, request.PageContext),
+            new AiExecuteCommand(workspaceId, projectId, request.Prompt, request.PageContext, sprintId, epicId),
             cancellationToken);
 
         return Ok(response);

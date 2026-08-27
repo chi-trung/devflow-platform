@@ -7,6 +7,8 @@ import type { AiPageContext } from "./AiSuggestedPrompts";
 interface AiFloatingButtonProps {
   workspaceId: string;
   projectId?: string;
+  sprintId?: string | null;
+  epicId?: string | null;
   context?: AiPageContext;
 }
 
@@ -18,6 +20,8 @@ interface AiFloatingButtonProps {
 export function AiFloatingButton({
   workspaceId,
   projectId,
+  sprintId,
+  epicId,
   context = "workspace",
 }: AiFloatingButtonProps) {
   const { t } = useTranslation();
@@ -44,6 +48,8 @@ export function AiFloatingButton({
             onClose={() => setOpen(false)}
             workspaceId={workspaceId}
             projectId={projectId}
+            sprintId={sprintId}
+            epicId={epicId}
             context={context}
           />
         </div>

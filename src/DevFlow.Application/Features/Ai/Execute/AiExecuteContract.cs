@@ -87,4 +87,8 @@ public sealed class AiExecuteActionContract
     /// <summary>Existing sprint id or name (for assign_to_sprint).</summary>
     [JsonPropertyName("sprintRef")]
     public string? SprintRef { get; set; }
+
+    /// <summary>Existing epic id or name (for add_to_epic).</summary>
+    [JsonPropertyName("epicRef")]
+    public string? EpicRef { get; set; }
 }

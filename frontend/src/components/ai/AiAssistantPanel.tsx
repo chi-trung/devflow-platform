@@ -11,6 +11,8 @@ interface AiAssistantPanelProps {
   onClose: () => void;
   workspaceId: string;
   projectId: string | undefined;
+  sprintId?: string | null;
+  epicId?: string | null;
   context: AiPageContext;
 }
 
@@ -25,6 +27,8 @@ export function AiAssistantPanel({
   onClose,
   workspaceId,
   projectId,
+  sprintId,
+  epicId,
   context,
 }: AiAssistantPanelProps) {
   const { t } = useTranslation();
@@ -59,10 +63,15 @@ export function AiAssistantPanel({
     setLoading(true);
 
     try {
-      const result = await aiExecute(workspaceId, projectId, {
-        prompt,
-        pageContext: context,
-      });
+      const result = await aiExecute(
+        workspaceId,
+        projectId,
+        {
+          prompt,
+          pageContext: context,
+        },
+        { sprintId, epicId },
+      );
       setMessages((prev) => [...prev, { role: "assistant", result }]);
     } catch {
       setMessages((prev) => [

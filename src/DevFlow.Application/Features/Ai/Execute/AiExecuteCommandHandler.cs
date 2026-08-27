@@ -29,6 +29,7 @@ public sealed class AiExecuteCommandHandler(
     IProjectRepository projectRepository,
     ISprintRepository sprintRepository,
     ITaskItemRepository taskItemRepository,
+    IEpicRepository epicRepository,
     IUserRepository userRepository,
     IAiClient aiClient,
     ISender sender,
@@ -180,6 +181,9 @@ public sealed class AiExecuteCommandHandler(
 
             case "assign_to_sprint":
                 return await AssignToSprintAsync(workspaceId, projectId, action, cancellationToken);
+
+            case "add_to_epic":
+                return await AddToEpicAsync(workspaceId, projectId, action, cancellationToken);
 
             default:
                 return new ExecutedAction(action.Type, action.Title ?? action.Type, null, "skipped",
@@ -372,6 +376,25 @@ public sealed class AiExecuteCommandHandler(
         return Ok(action, "assign_to_sprint", task.Id, $"Task \"{task.Title}\" moved to sprint \"{sprint.Name}\".");
     }
 
+    private async Task<ExecutedAction> AddToEpicAsync(
+        Guid workspaceId,
+        Guid? projectId,
+        AiExecuteActionContract action,
+        CancellationToken cancellationToken)
+    {
+        var project = await ResolveProjectAsync(workspaceId, projectId, action.ProjectRef, cancellationToken);
+        var task = await ResolveTaskAsync(workspaceId, project.Id, action.TaskRef ?? action.Title, cancellationToken);
+        var epic = await ResolveEpicAsync(project.Id, action.EpicRef ?? action.Title, cancellationToken);
+
+        // Attach the task to the epic directly (mirrors the subtask handler):
+        // there is no dedicated "move to epic" command, and the task's EpicId is
+        // a plain FK on the aggregate.
+        task.AttachToEpic(epic.Id);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return Ok(action, "add_to_epic", task.Id, $"Task \"{task.Title}\" added to epic \"{epic.Name}\".");
+    }
+
     // ----- Name resolution helpers -------------------------------------------------
 
     private Project ResolveProjectOrDefault(IReadOnlyList<Project> projects, string? projectRef)
@@ -475,6 +498,35 @@ public sealed class AiExecuteCommandHandler(
         throw new NotFoundException(nameof(Sprint), sprintRef ?? "(unnamed)");
     }
 
+    private async Task<Epic> ResolveEpicAsync(
+        Guid projectId,
+        string? epicRef,
+        CancellationToken cancellationToken)
+    {
+        var epics = await epicRepository.GetForProjectAsync(projectId, cancellationToken);
+
+        if (Guid.TryParse(epicRef, out var epicId))
+        {
+            var byId = epics.FirstOrDefault(e => e.Id == epicId);
+            if (byId is not null)
+            {
+                return byId;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(epicRef))
+        {
+            var byName = epics.FirstOrDefault(e =>
+                e.Name.Contains(epicRef, StringComparison.OrdinalIgnoreCase));
+            if (byName is not null)
+            {
+                return byName;
+            }
+        }
+
+        throw new NotFoundException(nameof(Epic), epicRef ?? "(unnamed)");
+    }
+
     private async Task<Guid?> ResolveAssigneeAsync(
         Guid workspaceId,
         string? assigneeRef,
@@ -521,7 +573,7 @@ public sealed class AiExecuteCommandHandler(
               "reply": "optional plain-text answer when the user is NOT asking for an action",
               "actions": [
                 {
-                  "type": "create_task|create_subtask|create_sprint|create_epic|create_project|create_workspace|set_due_date|set_priority|assign_task|assign_to_sprint",
+                  "type": "create_task|create_subtask|create_sprint|create_epic|create_project|create_workspace|set_due_date|set_priority|assign_task|assign_to_sprint|add_to_epic",
                   "title": "human-readable entity or task name",
                   "description": "optional",
                   "priority": "Low|Medium|High|Critical",
@@ -530,7 +582,8 @@ public sealed class AiExecuteCommandHandler(
                   "taskRef": "existing task id or a title substring to match (required for set_due_date, set_priority, assign_task, assign_to_sprint)",
                   "parentTaskRef": "existing task id or title substring (only for create_subtask)",
                   "projectRef": "existing project id or name; omit to use the active project (only for actions that need a project)",
-                  "sprintRef": "existing sprint id or name (only for assign_to_sprint)"
+                  "sprintRef": "existing sprint id or name (only for assign_to_sprint)",
+                  "epicRef": "existing epic id or name (only for add_to_epic)"
                 }
               ]
             }
@@ -540,9 +593,17 @@ public sealed class AiExecuteCommandHandler(
               "what models do you use?", "hello", "who are you?"), set "reply" to
               a short, friendly answer in the user's language and leave "actions"
               empty. Do not invent actions for a prompt that asks for none.
+            - The context lists the projects, sprints, epics and tasks the user
+              can see. Reference them by their real id or an exact title substring
+              from that list. Never invent an id or a task title.
+            - "this sprint" / "the current sprint" means the sprint marked as
+              [CURRENT] in the context. "this epic" means the epic marked as
+              [CURRENT]. "this project" means the project the current page belongs
+              to (marked [ACTIVE]).
             - Otherwise pick the fewest actions that satisfy the request. One action per logical change.
             - "title" for create_* actions is the new entity's name. For updates it is only informational.
-            - For set_due_date / set_priority / assign_task / assign_to_sprint you MUST set taskRef to an existing task (id or title). Never invent an id; if no task matches, still emit the action and the system will report it as failed.
+            - For set_due_date / set_priority / assign_task / assign_to_sprint / add_to_epic you MUST set taskRef to an existing task (id or title from the context). Never invent an id; if no task matches, still emit the action and the system will report it as failed.
+            - For assign_to_sprint / add_to_epic you MUST set sprintRef / epicRef to an existing sprint or epic from the context.
             - Assignee must be one of the member names/emails listed in the context, or null.
             - Priorities must be one of Low, Medium, High, Critical.
             - dueDate must be ISO-8601. If the user says "tomorrow"/"next week", pick a concrete date and note it in the summary.
@@ -582,20 +643,49 @@ public sealed class AiExecuteCommandHandler(
             context.AppendLine("Projects in this workspace: (none)");
             context.AppendLine("Members in this workspace: (none known)");
             context.AppendLine("Sprints: (none)");
+            context.AppendLine("Tasks: (none)");
+            context.AppendLine("Epics: (none)");
             return (systemPrompt, context.ToString());
         }
+
+        // The project the user is currently viewing, if any. Marked [ACTIVE] so
+        // the model resolves "this project" / a bare task request to it.
+        Project? activeProject = null;
+        if (command.ProjectId is not null)
+        {
+            activeProject = projects.FirstOrDefault(p => p.Id == command.ProjectId.Value);
+        }
+        activeProject ??= projects[0];
 
         context.AppendLine("Projects in this workspace:");
         foreach (var project in projects)
         {
-            context.AppendLine($"- {project.Id} | {project.Name}");
+            var marker = project.Id == activeProject.Id ? " [ACTIVE]" : string.Empty;
+            context.AppendLine($"- {project.Id} | {project.Name}{marker}");
+
             var sprints = await sprintRepository.GetForProjectAsync(project.Id, cancellationToken);
             if (sprints.Count > 0)
             {
                 context.AppendLine("  Sprints:");
                 foreach (var sprint in sprints)
                 {
-                    context.AppendLine($"    - {sprint.Id} | {sprint.Name} ({sprint.Status})");
+                    var sprintMarker = sprint.Id == command.SprintId
+                        ? " [CURRENT]"
+                        : string.Empty;
+                    context.AppendLine($"    - {sprint.Id} | {sprint.Name} ({sprint.Status}){sprintMarker}");
+                }
+            }
+
+            var epics = await epicRepository.GetForProjectAsync(project.Id, cancellationToken);
+            if (epics.Count > 0)
+            {
+                context.AppendLine("  Epics:");
+                foreach (var epic in epics)
+                {
+                    var epicMarker = epic.Id == command.EpicId
+                        ? " [CURRENT]"
+                        : string.Empty;
+                    context.AppendLine($"    - {epic.Id} | {epic.Name}{epicMarker}");
                 }
             }
         }
@@ -606,6 +696,32 @@ public sealed class AiExecuteCommandHandler(
         foreach (var member in members)
         {
             context.AppendLine($"- {member.UserId} | {member.DisplayName} | {member.Username} | {member.Email} ({member.Role})");
+        }
+
+        // Existing tasks of the active project — the model needs real titles/ids
+        // to set refs (set_due_date, assign, add_to_epic, …) instead of guessing.
+        var tasks = await taskItemRepository.GetForProjectAsync(activeProject.Id, status: null, cancellationToken);
+        context.AppendLine();
+        context.AppendLine($"Tasks in \"{activeProject.Name}\":");
+        if (tasks.Count == 0)
+        {
+            context.AppendLine("(none)");
+        }
+        else
+        {
+            foreach (var task in tasks)
+            {
+                var sprint = task.SprintId is not null
+                    ? $" | sprint={task.SprintId}"
+                    : string.Empty;
+                var epic = task.EpicId is not null
+                    ? $" | epic={task.EpicId}"
+                    : string.Empty;
+                var assignee = task.AssigneeId is not null
+                    ? $" | assignee={task.AssigneeId}"
+                    : string.Empty;
+                context.AppendLine($"- {task.Id} | {task.Title} | {task.Status}{sprint}{epic}{assignee}");
+            }
         }
 
         return (systemPrompt, context.ToString());
