@@ -1,4 +1,5 @@
 using DevFlow.Application.Common.Authorization;
+using DevFlow.Application.Common.Behaviors;
 using DevFlow.Domain.Enums;
 using MediatR;
 
@@ -11,4 +12,4 @@ public sealed record CreateProjectCommand(
     string Key,
     string? Description,
     string? Emoji = null,
-    string? CoverColor = null) : IRequest<Guid>, IWorkspaceRequest;
+    string? CoverColor = null) : IRequest<Guid>, IWorkspaceRequest, IWorkspaceEvent;
