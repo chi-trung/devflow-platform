@@ -62,7 +62,11 @@ function KeyedWorkspacePage() {
 // open) means the user's first real action usually hits a warm instance.
 function BackendWarmer() {
   useEffect(() => {
-    const healthUrl = `${API_BASE}/health`;
+    // Use /api/v1/ping (dedicated keepalive probe, AllowAnonymous) rather than
+    // bare /health — bare /health is caught by ad-blocker/browser-extension
+    // blocklists (ERR_BLOCKED_BY_CLIENT), which this probe's fetch would
+    // silently swallow anyway. keepalive.ts uses the same endpoint.
+    const healthUrl = `${API_BASE}/api/v1/ping`;
 
     const ping = () => {
       fetch(healthUrl, { cache: "no-store" }).catch(() => {});
