@@ -58,6 +58,15 @@ public sealed class PlanTaskCommandHandler(
             throw new AiPlanningUnavailableException(
                 "AI request timed out. The model is busy right now — please try again.");
         }
+        catch (AiResponseTruncatedException)
+        {
+            // The model hit its output-token ceiling mid-plan and returned cut-off
+            // JSON. The plan shape is fixed, so there is no tighter re-prompt that
+            // would fit — surface a friendly 503 asking the user to retry with a
+            // more focused task instead of crashing with a 500.
+            throw new AiPlanningUnavailableException(
+                "The AI ran out of output and returned an incomplete plan. Please try again or narrow the task description.");
+        }
         catch (InvalidOperationException ex)
         {
             // The provider client surfaces API/auth errors as InvalidOperationException
