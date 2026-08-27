@@ -349,7 +349,10 @@ export function DashboardPage() {
                   />
                 </div>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  <TeamReportPanel workspaceId={selectedWsId} />
+                  <TeamReportPanel
+                    workspaceId={selectedWsId}
+                    projectId={selectedProjectId || undefined}
+                  />
                   {selectedProjectId && (
                     <div data-tour="sprint-health" className="h-full">
                       <SprintHealthCard

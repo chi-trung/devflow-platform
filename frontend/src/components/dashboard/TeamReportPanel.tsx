@@ -9,6 +9,10 @@ import type { TeamReportResponse } from "../../types/api";
 
 interface TeamReportPanelProps {
   workspaceId: string;
+  /** When provided, the "View reports" link points at that project's reports
+   *  page (the route requires a project segment — `/workspaces/:id/reports`
+   *  alone 404s). When absent the link is hidden. */
+  projectId?: string;
   className?: string;
 }
 
@@ -45,7 +49,7 @@ function formatMinutes(minutes: number): string {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
-export function TeamReportPanel({ workspaceId, className = "" }: TeamReportPanelProps) {
+export function TeamReportPanel({ workspaceId, projectId, className = "" }: TeamReportPanelProps) {
   const { t } = useTranslation();
   const [data, setData] = useState<TeamReportResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -146,15 +150,17 @@ export function TeamReportPanel({ workspaceId, className = "" }: TeamReportPanel
         </div>
       )}
 
-      <div className="mt-3 text-center">
-        <Link
-          to={`/workspaces/${workspaceId}/reports`}
-          className="inline-flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:underline"
-        >
-          {t("dashboard.viewReports")}
-          <ExternalLink className="size-3" aria-hidden />
-        </Link>
-      </div>
+      {projectId && (
+        <div className="mt-3 text-center">
+          <Link
+            to={`/workspaces/${workspaceId}/projects/${projectId}/reports`}
+            className="inline-flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:underline"
+          >
+            {t("dashboard.viewReports")}
+            <ExternalLink className="size-3" aria-hidden />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

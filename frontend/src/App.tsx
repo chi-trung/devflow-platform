@@ -1,9 +1,11 @@
-import { lazy, Suspense, useEffect } from "react";
-import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
+import { lazy, Suspense, useEffect, useMemo } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { RequireAuth } from "./auth/RequireAuth";
 import { ToastProvider } from "./components/ui/ToastProvider";
-import { API_BASE } from "./lib/api";
+import { API_BASE, api, pagedItems } from "./lib/api";
+import { useApi } from "./hooks/useApi";
+import type { ProjectResponse } from "./types/api";
 
 const LandingPage = lazy(() => import("./pages/LandingPage").then(m => ({ default: m.LandingPage })));
 const LoginPage = lazy(() => import("./pages/LoginPage").then(m => ({ default: m.LoginPage })));
@@ -54,6 +56,20 @@ function HomeRoute() {
 function KeyedWorkspacePage() {
   const { workspaceId } = useParams();
   return <WorkspacePage key={workspaceId} />;
+}
+
+// Legacy/typed-in URL `/workspaces/:id/reports` has no project segment, but the
+// reports route requires one. Load the workspace's projects and redirect to the
+// first project's reports (or the workspace page when there are none) instead
+// of falling through to the 404.
+function WorkspaceReportsRedirect() {
+  const { workspaceId = "" } = useParams();
+  const { data } = useApi<unknown>(() => api(`/workspaces/${workspaceId}/projects`), [
+    workspaceId,
+  ]);
+  const projects = useMemo(() => pagedItems<ProjectResponse>(data), [data]);
+  const first = projects[0];
+  return <Navigate to={first ? `/workspaces/${workspaceId}/projects/${first.id}/reports` : `/workspaces/${workspaceId}`} replace />;
 }
 
 // Wake the Render free-tier backend as early as possible. Render sleeps after
@@ -110,6 +126,10 @@ export default function App() {
                 <Route
                   path="/workspaces/:workspaceId/projects/:projectId/sprints"
                   element={<SprintPlanningPage />}
+                />
+                <Route
+                  path="/workspaces/:workspaceId/reports"
+                  element={<WorkspaceReportsRedirect />}
                 />
                 <Route
                   path="/workspaces/:workspaceId/projects/:projectId/reports"
