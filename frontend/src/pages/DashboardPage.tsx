@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Plus, ArrowUpRight, Boxes, CalendarRange } from "lucide-react";
@@ -6,6 +6,7 @@ import { useAuth } from "../auth/AuthContext";
 import { api, pagedItems } from "../lib/api";
 import { loadDashboard, type DashboardResult } from "../lib/dashboard";
 import { useApi } from "../hooks/useApi";
+import { useWorkspaceEvents } from "../hooks/useWorkspaceEvents";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
@@ -50,6 +51,10 @@ export function DashboardPage() {
     () => pagedItems<WorkspaceResponse>(workspacesRaw),
     [workspacesRaw],
   );
+
+  // Refresh workspace list when a workspace-level event arrives (e.g. a
+  // workspace created via AI on another page) — no F5 needed.
+  useWorkspaceEvents(undefined, useCallback(() => reload(), [reload]));
 
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");

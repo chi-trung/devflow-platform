@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { api, pagedItems } from "../lib/api";
 import { useApi } from "../hooks/useApi";
+import { useWorkspaceEvents } from "../hooks/useWorkspaceEvents";
 import { useAuth } from "../auth/AuthContext";
 import { Avatar } from "./ui/Avatar";
 import { Logo } from "./ui/Logo";
@@ -109,15 +110,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     void api(`/workspaces/${activeWorkspaceId}/dashboard`).catch(() => {});
   }, [activeWorkspaceId]);
 
-  const { data: workspacesRaw } = useApi<unknown>(
-    () => api("/workspaces"),
-    [],
-  );
+  const {
+    data: workspacesRaw,
+    reload: reloadWorkspaces,
+  } = useApi<unknown>(() => api("/workspaces"), []);
   const workspaces = useMemo(
     () => pagedItems<WorkspaceResponse>(workspacesRaw),
     [workspacesRaw],
   );
-  const { data: projectsRaw } = useApi<unknown>(
+
+  // Refresh the workspace sidebar when a workspace-level event arrives
+  // (e.g. a workspace created elsewhere or via AI) — no F5 needed.
+  const handleWorkspaceEvent = useCallback(() => {
+    reloadWorkspaces();
+  }, [reloadWorkspaces]);
+  useWorkspaceEvents(workspaceId, handleWorkspaceEvent);
+  const {
+    data: projectsRaw,
+    reload: reloadProjects,
+  } = useApi<unknown>(
     () =>
       workspaceId
         ? api(`/workspaces/${workspaceId}/projects`)
@@ -128,6 +139,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     () => pagedItems<ProjectResponse>(projectsRaw),
     [projectsRaw],
   );
+
+  // After AI executes actions, refresh the workspace/project sidebars so
+  // newly created entities appear without a manual F5.
+  const handleAiTaskChanged = useCallback(() => {
+    reloadWorkspaces();
+    reloadProjects();
+  }, [reloadWorkspaces, reloadProjects]);
 
   const onBoardRoute =
     /^\/workspaces\/[0-9a-f-]{36}\/projects\/[0-9a-f-]{36}$/i.test(
@@ -417,6 +435,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           workspaceId={workspaceId}
           projectId={projectId}
           context={pageContext}
+          onTaskChanged={handleAiTaskChanged}
         />
       )}
     </div>

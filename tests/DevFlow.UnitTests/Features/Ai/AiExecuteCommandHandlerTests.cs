@@ -41,10 +41,16 @@ public class AiExecuteCommandHandlerTests
         _sprintRepository,
         _taskItemRepository,
         _epicRepository,
-        _userRepository,
         _aiClient,
-        _sender,
-        _unitOfWork);
+        new AiActionExecutor(
+            _workspaceRepository,
+            _projectRepository,
+            _sprintRepository,
+            _taskItemRepository,
+            _epicRepository,
+            _userRepository,
+            _sender,
+            _unitOfWork));
 
     [Fact]
     public async Task Handle_ShouldReturnFriendlyError_WhenAiRequestTimesOut()
@@ -82,31 +88,81 @@ public class AiExecuteCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ShouldExecuteActions_WhenAiReturnsValidContract()
+    public async Task Handle_ShouldReturnPendingForCreateActions_AndExecuteMutations()
     {
+        // create_* actions are proposed to the user (pending). Mutation actions
+        // (set_due_date, set_priority, assign_task, assign_to_sprint, add_to_epic)
+        // execute immediately.
+        var task = TaskItem.Create(_project.Id, "Existing task", null, TaskItemPriority.Medium);
+        _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>())
+            .Returns(task);
+        _taskItemRepository.GetForProjectAsync(_project.Id, null, Arg.Any<CancellationToken>())
+            .Returns(new List<TaskItem> { task });
+
         _aiClient.ExecuteActionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns("""
                 {
-                  "summary": "Tạo task mới",
+                  "summary": "Tạo task và cập nhật deadline",
                   "actions": [
-                    { "type": "create_task", "title": "Login screen", "priority": "High" }
+                    { "type": "create_task", "title": "Login screen", "priority": "High" },
+                    { "type": "set_due_date", "title": "Set deadline", "taskRef": "Existing task", "dueDate": "2026-09-15" }
                   ]
                 }
                 """);
-        _sender.Send(Arg.Any<IRequest<TaskItemCreatedResponse>>(), Arg.Any<CancellationToken>())
-            .Returns(new TaskItemCreatedResponse(Guid.NewGuid()));
-        _sender.Send(Arg.Any<IRequest<TaskItemCreatedResponse>>(), Arg.Any<CancellationToken>())
-            .Returns(new TaskItemCreatedResponse(Guid.NewGuid()));
 
         var handler = BuildHandler();
         var response = await handler.Handle(
-            new AiExecuteCommand(_workspaceId, _projectId, "Tạo task login", "board"),
+            new AiExecuteCommand(_workspaceId, _projectId, "Tạo task login và set deadline cho task cũ", "board"),
             CancellationToken.None);
 
-        Assert.NotNull(response.Summary);
-        Assert.Single(response.Actions);
+        Assert.Null(response.Error);
+        Assert.Equal(2, response.Actions.Count);
+
+        // create_task → pending
         Assert.Equal("create_task", response.Actions[0].Type);
-        Assert.Equal("success", response.Actions[0].Status);
+        Assert.Equal("pending", response.Actions[0].Status);
+        Assert.Null(response.Actions[0].EntityId);
+        Assert.NotNull(response.Actions[0].Contract);
+
+        // set_due_date → success (mutation executes immediately)
+        Assert.Equal("set_due_date", response.Actions[1].Type);
+        Assert.Equal("success", response.Actions[1].Status);
+        Assert.NotNull(response.Actions[1].EntityId);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldDeferMutation_WhenTargetTaskIsPending()
+    {
+        // A mutation that references a task the model also proposed to create
+        // cannot run — the target does not exist yet. Both are returned as
+        // "pending" so the user can accept the create first.
+        _aiClient.ExecuteActionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns("""
+                {
+                  "summary": "Tạo task và assign",
+                  "actions": [
+                    { "type": "create_task", "title": "Login screen", "priority": "High" },
+                    { "type": "assign_task", "title": "Assign login", "taskRef": "Login screen", "assignee": "Nguyen Van A" }
+                  ]
+                }
+                """);
+
+        var handler = BuildHandler();
+        var response = await handler.Handle(
+            new AiExecuteCommand(_workspaceId, _projectId, "Tạo task login và assign cho Nguyễn Văn A", "board"),
+            CancellationToken.None);
+
+        Assert.Null(response.Error);
+        Assert.Equal(2, response.Actions.Count);
+
+        // create_task → pending
+        Assert.Equal("create_task", response.Actions[0].Type);
+        Assert.Equal("pending", response.Actions[0].Status);
+
+        // assign_task → pending (deferred, target task not yet created)
+        Assert.Equal("assign_task", response.Actions[1].Type);
+        Assert.Equal("pending", response.Actions[1].Status);
+        Assert.Contains("Waiting for", response.Actions[1].Message);
     }
 
     [Fact]
@@ -191,8 +247,6 @@ public class AiExecuteCommandHandlerTests
                       ]
                     }
                     """);
-        _sender.Send(Arg.Any<IRequest<TaskItemCreatedResponse>>(), Arg.Any<CancellationToken>())
-            .Returns(new TaskItemCreatedResponse(Guid.NewGuid()));
 
         var handler = BuildHandler();
         var response = await handler.Handle(
@@ -201,7 +255,8 @@ public class AiExecuteCommandHandlerTests
 
         Assert.Null(response.Error);
         Assert.Equal(3, response.Actions.Count);
-        Assert.All(response.Actions, action => Assert.Equal("success", action.Status));
+        // create_* actions are now proposed as pending, not executed immediately
+        Assert.All(response.Actions, action => Assert.Equal("pending", action.Status));
         Assert.Contains("Login", response.Actions[0].Label);
     }
 
@@ -214,8 +269,6 @@ public class AiExecuteCommandHandlerTests
             .Returns(
                 """{"summary":"(stub)","actions":[]}""",
                 """{"summary":"Đã tạo task","actions":[{"type":"create_task","title":"Login"}]}""");
-        _sender.Send(Arg.Any<IRequest<TaskItemCreatedResponse>>(), Arg.Any<CancellationToken>())
-            .Returns(new TaskItemCreatedResponse(Guid.NewGuid()));
 
         var handler = BuildHandler();
         var response = await handler.Handle(
@@ -225,6 +278,8 @@ public class AiExecuteCommandHandlerTests
         Assert.Null(response.Error);
         Assert.Single(response.Actions);
         Assert.Equal("create_task", response.Actions[0].Type);
+        // create_* actions are now proposed as pending
+        Assert.Equal("pending", response.Actions[0].Status);
     }
 
     [Fact]

@@ -740,7 +740,13 @@
   "actionStatusOk": "Thành công",
   "actionStatusFail": "Thất bại",
   "actionStatusSkip": "Bỏ qua",
-  "actionCount": "{{count}}/{{total}} hành động thành công"
+  "actionCount": "{{count}}/{{total}} hành động thành công",
+  "actionPending": "Chờ xác nhận",
+  "actionPendingDesc": "Xem lại đề xuất này trước khi thực hiện.",
+  "actionAccept": "Chấp nhận",
+  "actionReject": "Từ chối",
+  "actionConfirmFailed": "Không áp dụng được hành động này.",
+  "accepting": "Đang chấp nhận…"
  },
  "taskDetail": {
   "customFields": "Trường tùy chỉnh",

@@ -16,4 +16,5 @@ public sealed record ExecutedAction(
     string Label,
     Guid? EntityId,
     string Status,
-    string? Message);
+    string? Message,
+    AiExecuteActionContract? Contract = null);

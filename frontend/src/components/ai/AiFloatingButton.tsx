@@ -10,6 +10,8 @@ interface AiFloatingButtonProps {
   sprintId?: string | null;
   epicId?: string | null;
   context?: AiPageContext;
+  /** Called after AI actions execute so the current page can refresh. */
+  onTaskChanged?: () => void;
 }
 
 /**
@@ -23,6 +25,7 @@ export function AiFloatingButton({
   sprintId,
   epicId,
   context = "workspace",
+  onTaskChanged,
 }: AiFloatingButtonProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -51,6 +54,7 @@ export function AiFloatingButton({
             sprintId={sprintId}
             epicId={epicId}
             context={context}
+            onTaskChanged={onTaskChanged}
           />
         </div>
       )}

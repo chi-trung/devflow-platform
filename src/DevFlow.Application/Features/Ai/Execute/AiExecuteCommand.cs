@@ -21,4 +21,4 @@ public sealed record AiExecuteCommand(
     string Prompt,
     string? PageContext,
     Guid? SprintId = null,
-    Guid? EpicId = null) : IRequest<AiExecuteResponse>, IWorkspaceRequest;
+    Guid? EpicId = null) : IRequest<AiExecuteResponse>, IWorkspaceRequest, IWorkspaceEvent;

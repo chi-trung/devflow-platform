@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, FolderKanban, Users, Trash2, X, RotateCcw, Pencil } from "lucide-react";
@@ -7,6 +7,7 @@ import { EmojiTile, coverGradient } from "../components/ui/EmojiCover";
 import { EmojiPicker, CoverColorPicker } from "../components/ui/EmojiPickers";
 import { EmptyBoardIllustration } from "../components/illustrations/EmptyStateIllustrations";
 import { useApi } from "../hooks/useApi";
+import { useWorkspaceEvents } from "../hooks/useWorkspaceEvents";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ui/ToastProvider";
 import { AppShell } from "../components/AppShell";
@@ -73,6 +74,13 @@ export function WorkspacePage() {
     () => pagedItems<ProjectResponse>(projectsRaw),
     [projectsRaw],
   );
+
+  // Refresh the project list when a workspace-level event arrives (e.g. a
+  // project created via AI) so it appears without a manual F5.
+  const handleWorkspaceEvent = useCallback(() => {
+    reload();
+  }, [reload]);
+  useWorkspaceEvents(workspaceId, handleWorkspaceEvent);
 
   const [stats, setStats] = useState<Record<string, { total: number; done: number }>>({});
 

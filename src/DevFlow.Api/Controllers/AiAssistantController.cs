@@ -42,4 +42,28 @@ public sealed class AiAssistantController(ISender sender) : ControllerBase
 
         return Ok(response);
     }
+
+    /// <summary>
+    /// Executes a single AI-proposed action that the user accepted from the
+    /// review list. The action was originally returned as "pending" by
+    /// <see cref="Execute"/>; confirming re-runs it through the same shared
+    /// executor so the result is identical to direct execution.
+    /// </summary>
+    [HttpPost("execute/confirm")]
+    [ProducesResponseType(typeof(ExecutedAction), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Confirm(
+        Guid workspaceId,
+        [FromQuery] Guid? projectId,
+        AiExecuteConfirmRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new AiExecuteConfirmCommand(workspaceId, projectId, request.Action),
+            cancellationToken);
+
+        return Ok(result);
+    }
 }

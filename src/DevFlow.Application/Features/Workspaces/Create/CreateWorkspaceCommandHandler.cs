@@ -24,6 +24,10 @@ public sealed class CreateWorkspaceCommandHandler(
         await workspaceRepository.AddAsync(workspace, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        // Feed the generated id back so the realtime behavior can broadcast the
+        // workspace-event to the new workspace's group.
+        command.WorkspaceId = workspace.Id;
+
         return workspace.Id;
     }
 }

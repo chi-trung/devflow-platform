@@ -4,8 +4,8 @@ using MediatR;
 namespace DevFlow.Application.Common.Behaviors;
 
 /// <summary>
-/// After a project-scoped command succeeds, notifies realtime subscribers
-/// so open boards can refresh.
+/// After a project- or workspace-scoped command succeeds, notifies realtime
+/// subscribers so open boards and lists can refresh.
 /// </summary>
 public sealed class RealtimeBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
@@ -24,10 +24,20 @@ public sealed class RealtimeBehavior<TRequest, TResponse> : IPipelineBehavior<TR
     {
         var response = await next();
 
+        // A command may implement both (e.g. creating a project mutates the
+        // workspace it belongs to), so check each independently.
         if (request is IProjectEvent projectEvent)
         {
             await notifier.NotifyProjectAsync(
                 projectEvent.ProjectId,
+                typeof(TRequest).Name,
+                cancellationToken);
+        }
+
+        if (request is IWorkspaceEvent workspaceEvent)
+        {
+            await notifier.NotifyWorkspaceAsync(
+                workspaceEvent.WorkspaceId,
                 typeof(TRequest).Name,
                 cancellationToken);
         }
