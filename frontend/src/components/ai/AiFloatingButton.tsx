@@ -32,20 +32,22 @@ export function AiFloatingButton({
 
   return (
     <>
-      <button
-        type="button"
-        aria-label={t("ai.assistantOpen")}
-        aria-expanded={open}
-        onClick={() => setOpen((prev) => !prev)}
-        className="group fixed bottom-6 right-6 z-50 flex size-13 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_8px_30px_rgba(0,0,0,0.35)] transition-transform duration-150 hover:scale-105 active:scale-95"
-        style={{ width: "3.25rem", height: "3.25rem" }}
-      >
-        <Sparkles className="size-6 transition-transform duration-300 group-hover:rotate-12" aria-hidden />
-        <span className="pointer-events-none absolute inset-0 animate-ping rounded-full bg-primary/30 [animation-duration:2.5s]" aria-hidden />
-      </button>
+      {!open && (
+        <button
+          type="button"
+          aria-label={t("ai.assistantOpen")}
+          aria-expanded={open}
+          onClick={() => setOpen(true)}
+          className="group fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-6 z-50 flex size-13 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_8px_30px_rgba(0,0,0,0.35)] transition-transform duration-150 hover:scale-105 active:scale-95 lg:bottom-6"
+          style={{ width: "3.25rem", height: "3.25rem" }}
+        >
+          <Sparkles className="size-6 transition-transform duration-300 group-hover:rotate-12" aria-hidden />
+          <span className="pointer-events-none absolute inset-0 animate-ping rounded-full bg-primary/30 [animation-duration:2.5s]" aria-hidden />
+        </button>
+      )}
 
       {open && (
-        <div className="fixed bottom-24 right-6 z-50">
+        <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-6 z-50 lg:bottom-24">
           <AiAssistantPanel
             open={open}
             onClose={() => setOpen(false)}
