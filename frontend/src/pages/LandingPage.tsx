@@ -76,14 +76,14 @@ export function LandingPage() {
             </a>
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle className="hidden w-auto lg:inline-flex" />
-            <Link to="/login">
+            <Link to="/login" className="whitespace-nowrap">
               <Button variant="ghost" size="sm">
                 {t("landing.nav.login")}
               </Button>
             </Link>
-            <Link to="/register">
+            <Link to="/register" className="whitespace-nowrap">
               <Button size="sm">{t("landing.nav.signup")}</Button>
             </Link>
           </div>
@@ -111,14 +111,18 @@ export function LandingPage() {
               {t("landing.heroSubtitle")}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link to="/register">
-                <Button size="md" className="gap-2 px-6 py-2.5 text-base">
+              <Link to="/register" className="whitespace-nowrap">
+                <Button size="md" className="gap-2 px-5 py-2.5 text-sm sm:px-6 sm:text-base">
                   {t("landing.ctaStart")}
                   <ArrowRight className="size-4" aria-hidden />
                 </Button>
               </Link>
-              <Link to="/login">
-                <Button variant="outline" size="md" className="px-6 py-2.5 text-base">
+              <Link to="/login" className="whitespace-nowrap">
+                <Button
+                  variant="outline"
+                  size="md"
+                  className="px-5 py-2.5 text-sm sm:px-6 sm:text-base"
+                >
                   {t("landing.ctaViewLogin")}
                 </Button>
               </Link>
