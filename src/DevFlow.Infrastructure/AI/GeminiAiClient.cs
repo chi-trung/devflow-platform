@@ -20,19 +20,16 @@ public sealed class GeminiAiClient : IAiClient
     private const string DefaultBaseUrl = "https://generativelanguage.googleapis.com/v1beta";
 
     /// <summary>
-    /// Alternative models tried when the configured model returns HTTP 429/503
-    /// ("model currently experiencing high demand"). Google's flash tier has
-    /// been overloaded intermittently; the sibling flash model usually still
-    /// accepts requests, so we retry the primary model a few times with
-    /// backoff, then fall through to these. These are real, stable model IDs
-    /// that accept the v1beta generateContent API.
+    /// Alternative models tried when the configured model returns HTTP 429/503.
+    /// Google's flash tier has been overloaded intermittently; the sibling
+    /// flash model usually still accepts requests, so we retry the primary
+    /// model a few times with backoff, then fall through to these.
     ///
-    /// Note: the 2.0 / 1.5 flash family has been fully sunset by Google and
-    /// returns 404 (model not found). The fallback must only reference
-    /// currently-serving models from the 2.5 line.
+    /// Note: 2.5-flash-lite is no longer available to new API keys; the
+    /// current recommended model for new users is gemini-3.5-flash-lite.
     /// </summary>
     private static readonly string[] FallbackModels =
-        ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+        ["gemini-2.5-flash", "gemini-3.5-flash-lite"];
 
     /// <summary>Per-request budget. A plan (4000 tokens) needs ~16s, so 60s is safe.</summary>
     private static readonly TimeSpan PlanTimeout = TimeSpan.FromSeconds(60);
