@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
         services.AddScoped<Features.Ai.AiPlanApplier>();
+        services.AddScoped<Features.Ai.Execute.AiActionExecutor>();
 
         return services;
     }
