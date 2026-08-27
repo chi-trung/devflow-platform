@@ -69,6 +69,9 @@ interface LogoProps extends BrandMarkProps {
   label?: string;
   /** When set, wraps the whole logo in a link. */
   to?: string;
+  /** Hide the wordmark below the given Tailwind breakpoint (e.g. "sm") so
+   *  narrow screens only show the brand tile, freeing room for nav buttons. */
+  wordmarkHideBelow?: "sm" | "md" | "lg";
 }
 
 /** Icon + wordmark lockup. */
@@ -77,12 +80,17 @@ export function Logo({
   className = "",
   label = "DevFlow",
   to,
+  wordmarkHideBelow,
 }: LogoProps) {
   const mark = <BrandMark size={size} />;
   const wordmark = (
     <span
       className={`font-display font-semibold tracking-tight ${
         size === "lg" ? "text-lg" : size === "sm" ? "text-sm" : "text-base"
+      } ${
+        wordmarkHideBelow
+          ? `hidden ${wordmarkHideBelow}:inline`
+          : ""
       }`}
     >
       {label}

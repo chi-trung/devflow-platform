@@ -52,8 +52,8 @@ export function LandingPage() {
     <div className="flex min-h-dvh flex-col bg-background text-foreground overflow-x-hidden">
       {/* ─── Sticky header ─── */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Logo to="/" size="md" />
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+          <Logo to="/" size="md" wordmarkHideBelow="sm" />
 
           <nav className="hidden items-center gap-8 lg:flex" aria-label={t("landing.nav.features")}>
             <a
@@ -76,15 +76,17 @@ export function LandingPage() {
             </a>
           </nav>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <ThemeToggle className="hidden w-auto lg:inline-flex" />
-            <Link to="/login" className="whitespace-nowrap">
+            <Link to="/login" className="sm:whitespace-nowrap">
               <Button variant="ghost" size="sm">
                 {t("landing.nav.login")}
               </Button>
             </Link>
-            <Link to="/register" className="whitespace-nowrap">
-              <Button size="sm">{t("landing.nav.signup")}</Button>
+            <Link to="/register" className="sm:whitespace-nowrap">
+              <Button size="sm" className="px-2 sm:px-2.5">
+                {t("landing.nav.signup")}
+              </Button>
             </Link>
           </div>
         </div>
@@ -111,13 +113,13 @@ export function LandingPage() {
               {t("landing.heroSubtitle")}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link to="/register" className="whitespace-nowrap">
+              <Link to="/register" className="sm:whitespace-nowrap">
                 <Button size="md" className="gap-2 px-5 py-2.5 text-sm sm:px-6 sm:text-base">
                   {t("landing.ctaStart")}
                   <ArrowRight className="size-4" aria-hidden />
                 </Button>
               </Link>
-              <Link to="/login" className="whitespace-nowrap">
+              <Link to="/login" className="sm:whitespace-nowrap">
                 <Button
                   variant="outline"
                   size="md"
