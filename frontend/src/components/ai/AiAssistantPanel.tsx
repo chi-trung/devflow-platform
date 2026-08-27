@@ -6,6 +6,9 @@ import type { AiExecuteResponse } from "../../types/api";
 import { AiActionResults } from "./AiActionResults";
 import { AiSuggestedPrompts, type AiPageContext } from "./AiSuggestedPrompts";
 
+/** Max textarea height before it starts scrolling internally. */
+const MAX_COMPOSER_ROWS = 5;
+
 interface AiAssistantPanelProps {
   open: boolean;
   onClose: () => void;
@@ -35,7 +38,7 @@ export function AiAssistantPanel({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,7 +46,10 @@ export function AiAssistantPanel({
       setMessages([]);
       setDraft("");
       // Let the panel mount before focusing so the animation does not swallow it.
-      requestAnimationFrame(() => inputRef.current?.focus());
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+        autoGrowComposer();
+      });
     }
   }, [open]);
 
@@ -60,6 +66,8 @@ export function AiAssistantPanel({
 
     setMessages((prev) => [...prev, { role: "user", prompt }]);
     setDraft("");
+    // Reset the composer to one line now that the draft is cleared.
+    if (inputRef.current) inputRef.current.style.height = "auto";
     setLoading(true);
 
     try {
@@ -90,6 +98,20 @@ export function AiAssistantPanel({
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   };
+
+  /**
+   * Auto-grow the composer: reset to natural height, then expand up to the
+   * max, so long prompts wrap onto new lines instead of scrolling sideways.
+   * The textarea scrolls internally once it exceeds MAX_COMPOSER_ROWS.
+   */
+  function autoGrowComposer() {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    // text-sm line-height is 1.25rem (20px); 5 rows ≈ 100px + py-2 padding.
+    const maxPx = MAX_COMPOSER_ROWS * 20 + 16;
+    el.style.height = `${Math.min(el.scrollHeight, maxPx)}px`;
+  }
 
   if (!open) return null;
 
@@ -162,16 +184,25 @@ export function AiAssistantPanel({
       </div>
 
       <footer className="border-t border-border p-3">
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 focus-within:border-primary/50">
-          <input
+        <div className="flex items-end gap-2 rounded-xl border border-border bg-card px-3 py-2 focus-within:border-primary/50">
+          <textarea
             ref={inputRef}
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            rows={1}
+            onChange={(event) => {
+              setDraft(event.target.value);
+              autoGrowComposer();
+            }}
             onKeyDown={(event) => {
-              if (event.key === "Enter") void send(draft);
+              // Enter sends, Shift+Enter inserts a newline.
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                void send(draft);
+              }
             }}
             placeholder={t("ai.assistantPlaceholder")}
-            className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            aria-label={t("ai.assistantPlaceholder")}
+            className="max-h-[120px] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent py-1.5 text-sm leading-5 text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
           <button
             type="button"
