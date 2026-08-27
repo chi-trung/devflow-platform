@@ -53,6 +53,11 @@ public sealed class PlanTaskCommandHandler(
         {
             rawResponse = await aiClient.PlanTaskAsync(systemPrompt, userContext, cancellationToken);
         }
+        catch (OperationCanceledException)
+        {
+            throw new AiPlanningUnavailableException(
+                "AI request timed out. The model is busy right now — please try again.");
+        }
         catch (InvalidOperationException ex)
         {
             // The provider client surfaces API/auth errors as InvalidOperationException
