@@ -108,6 +108,35 @@ public class AiExecuteCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_ShouldReturnReply_WhenModelReturnsConversationalReply()
+    {
+        // A question / greeting is not an action request — the model returns a
+        // "reply" field instead of actions. The handler must surface it as a plain
+        // text answer with no error and no "no actions" retry.
+        _aiClient.ExecuteActionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns("""
+                {
+                  "summary": "",
+                  "reply": "Mình đang dùng Gemini 2.0 Flash để xử lý prompt của bạn.",
+                  "actions": []
+                }
+                """);
+
+        var handler = BuildHandler();
+        var response = await handler.Handle(
+            new AiExecuteCommand(_workspaceId, _projectId, "bạn đang sử dụng models gì vậy?", "board"),
+            CancellationToken.None);
+
+        Assert.Null(response.Error);
+        Assert.Empty(response.Actions);
+        Assert.Contains("Gemini 2.0 Flash", response.Summary);
+
+        // Reply is returned immediately — no tight retry, so exactly one call.
+        await _aiClient.Received(1).ExecuteActionAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Handle_ShouldRetryWithTightPrompt_WhenFirstCallTruncates()
     {
         // Large batch request → the model hits MAX_TOKENS mid-JSON, which the
