@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, fireEvent, act } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, fireEvent, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 
 // AppShell depends on AuthContext + useApi + i18n. Mock the heavy parts; the
-// peek/collapse logic lives purely in AppShell so a light DOM check suffices.
+// collapse logic lives purely in AppShell so a light DOM check suffices.
 vi.mock("../auth/AuthContext", () => ({
   useAuth: () => ({
     status: "authenticated",
@@ -68,55 +68,58 @@ function renderShell(path = "/workspaces/ws1", collapsedPref = false) {
   );
 }
 
-describe("AppShell sidebar hover-expand", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
+describe("AppShell sidebar collapse", () => {
   it("collapses to the 64px rail when the preference is set", () => {
     const { container } = renderShell("/workspaces/ws1", true);
     const aside = container.querySelector("aside");
     expect(aside?.className).toContain("lg:w-16");
   });
 
-  it("hovering the rail expands it (peek) without saving the pref", () => {
+  it("expands to full width when the toggle is clicked", () => {
     const { container } = renderShell("/workspaces/ws1", true);
     const aside = container.querySelector("aside");
+    const toggle = screen.getByRole("button", { name: "nav.expand" });
     expect(aside?.className).toContain("lg:w-16");
 
-    // Peek: hover the aside -> rail expands to w-60
-    fireEvent.mouseEnter(aside!);
+    fireEvent.click(toggle);
     expect(aside?.className).toContain("lg:w-60");
-    // The pinned pref is untouched while peeking.
+    expect(localStorage.getItem("devflow.sidebarCollapsed")).toBe("0");
+  });
+
+  it("collapses when the toggle is clicked again", () => {
+    const { container } = renderShell("/workspaces/ws1", false);
+    const aside = container.querySelector("aside");
+    const toggle = screen.getByRole("button", { name: "nav.collapse" });
+    expect(aside?.className).toContain("lg:w-60");
+
+    fireEvent.click(toggle);
+    expect(aside?.className).toContain("lg:w-16");
     expect(localStorage.getItem("devflow.sidebarCollapsed")).toBe("1");
   });
 
-  it("leaving the rail collapses it back after the grace period", () => {
-    const { container } = renderShell("/workspaces/ws1", true);
-    const aside = container.querySelector("aside");
-    fireEvent.mouseEnter(aside!);
-    expect(aside?.className).toContain("lg:w-60");
+  it("persists the collapsed state across renders", () => {
+    const { container } = renderShell("/workspaces/ws1", false);
+    const toggle = screen.getByRole("button", { name: "nav.collapse" });
+    fireEvent.click(toggle);
+    expect(container.querySelector("aside")?.className).toContain("lg:w-16");
 
-    fireEvent.mouseLeave(aside!);
-    // Still expanded within the 250ms grace.
-    expect(aside?.className).toContain("lg:w-60");
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
-    expect(aside?.className).toContain("lg:w-16");
+    // Re-render with a new shell (simulates page reload) — preference still "1"
+    const { container: c2 } = renderShell("/workspaces/ws1", true);
+    expect(c2.querySelector("aside")?.className).toContain("lg:w-16");
   });
 
-  it("does not peek when the sidebar is pinned open", () => {
-    const { container } = renderShell("/workspaces/ws1", false);
-    const aside = container.querySelector("aside");
-    expect(aside?.className).toContain("lg:w-60");
-    fireEvent.mouseEnter(aside!);
-    fireEvent.mouseLeave(aside!);
-    vi.advanceTimersByTime(300);
-    // No change — not collapsed, so hover does nothing.
-    expect(aside?.className).toContain("lg:w-60");
+  it("swaps the account trigger to icon-only when collapsed (no name overflow)", () => {
+    // Collapsed: the sidebar UserMenu renders compact (avatar initials + long
+    // username/email hidden) so a long Gmail address can't stick out of the
+    // 64px rail. The username "alice" and email "a@b.c" must be absent.
+    renderShell("/workspaces/ws1", true);
+    expect(screen.queryByText("alice")).toBeNull();
+    expect(screen.queryByText("a@b.c")).toBeNull();
+
+    // Expanded: the full trigger returns — the mock user's initials "A" avatar
+    // plus username/email are rendered again.
+    renderShell("/workspaces/ws1", false);
+    expect(screen.getByText("alice")).toBeTruthy();
+    expect(screen.getByText("a@b.c")).toBeTruthy();
   });
 });

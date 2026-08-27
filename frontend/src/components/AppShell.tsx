@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -57,34 +57,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [collapsed]);
 
-  // "Mở ra / mở vô": while collapsed, hovering the 64px rail temporarily expands
-  // it (labels + pin toggle) without touching the saved state. Leaving the rail
-  // (after a short grace) collapses it back. A click on the toggle still pins.
-  const [peeking, setPeeking] = useState(false);
-  const peekTimer = useRef<number | null>(null);
-  // Effectively expanded = pinned open OR being hover-peeked. Layout follows
-  // `railCollapsed` (the collapsed styles only apply when truly a 64px rail, not
-  // while hovering it open); the toggle button reads `collapsed` because it
-  // reflects the *pinned* state.
-  const railCollapsed = collapsed && !peeking;
-
-  function handleAsideMouseEnter() {
-    if (!collapsed) return;
-    if (peekTimer.current) window.clearTimeout(peekTimer.current);
-    setPeeking(true);
-  }
-  function handleAsideMouseLeave() {
-    if (!collapsed) return;
-    if (peekTimer.current) window.clearTimeout(peekTimer.current);
-    // Short grace so a quick trip to the pin toggle (or a portal popup) doesn't
-    // collapse mid-motion.
-    peekTimer.current = window.setTimeout(() => setPeeking(false), 250);
-  }
-  useEffect(() => {
-    return () => {
-      if (peekTimer.current) window.clearTimeout(peekTimer.current);
-    };
-  }, []);
+  // The sidebar collapses to a 64px icon rail and expands via the explicit
+  // toggle button — click-based only, no hover behavior. Collapsed state is the
+  // pinned state; every layout branch reads `railCollapsed`.
+  const railCollapsed = collapsed;
 
   const workspaceId = location.pathname.match(
     /^\/workspaces\/([0-9a-f-]{36})/i,
@@ -266,8 +242,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-dvh overflow-hidden">
       <aside
-        onMouseEnter={handleAsideMouseEnter}
-        onMouseLeave={handleAsideMouseLeave}
         className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface transition-transform duration-300 ease-out lg:static lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
           railCollapsed ? "lg:w-16" : "lg:w-60"
         } ${
@@ -435,7 +409,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 workspaceId={workspaceId}
                 direction="up"
               />
-              <UserMenu direction="up" />
+              {/* In the 64px rail the full avatar + name + chevron trigger overflows
+                  (long Gmail addresses). Collapse it to the icon-only form. */}
+              <UserMenu direction="up" compact={railCollapsed} />
             </div>
           )}
           <button
