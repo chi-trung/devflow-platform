@@ -38,13 +38,22 @@ public sealed class GeminiAiClient : IAiClient
     /// set deadline, assign...). A prompt asking for a batch of changes can
     /// easily exceed 1000 tokens once each action has a title + description, so
     /// we give the execute endpoint the same generous ceiling as planning. The
-    /// shared timeout stays short — 45s is plenty for even a 15-action batch and
-    /// still reads as snappy in the assistant.
+    /// shared timeout stays modest — 60s covers a slow model without reading as
+    /// frozen in the assistant.
     /// </summary>
-    private static readonly TimeSpan ExecuteTimeout = TimeSpan.FromSeconds(45);
+    private static readonly TimeSpan ExecuteTimeout = TimeSpan.FromSeconds(60);
+
+    /// <summary>
+    /// Per-request budget. One hung HTTP call must not be able to consume the
+    /// whole shared timeout (below); a request that exceeds its own budget is
+    /// abandoned and the next model/attempt takes over. 35s is generous enough
+    /// for a large batch (15+ actions, ~16s of generation) but bounds a single
+    /// stuck call well inside the shared budget.
+    /// </summary>
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(35);
 
     /// <summary>Number of attempts per model before moving to the next fallback.</summary>
-    private const int MaxAttemptsPerModel = 4;
+    private const int MaxAttemptsPerModel = 2;
 
     private readonly HttpClient _httpClient;
     private readonly AiOptions _options;
@@ -118,15 +127,27 @@ GenerateContentAsync(systemPrompt, userContext, _options.MaxTokens, ExecuteTimeo
 
             if (attempt > 0)
             {
-                // Exponential backoff: 1s, 2s, 4s... capped so the total stays
-                // within the timeout budget above.
-                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, Math.Min(attempt, 3) - 1)), cts.Token);
+                // Exponential backoff: 1s, 2s, 3s... capped so the total stays
+                // well inside the shared timeout budget and leaves room for the
+                // fallback models to actually run.
+                var backoffSeconds = Math.Min(3, Math.Pow(2, attempt - 1));
+                await Task.Delay(TimeSpan.FromSeconds(backoffSeconds), cts.Token);
             }
 
             try
             {
+                // Each request gets its own strict budget so a hung (not just
+                // slow) model is abandoned quickly and the next attempt takes
+                // over instead of eating the entire shared timeout.
+                using var requestCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token);
+                requestCts.CancelAfter(RequestTimeout);
                 return await SendGenerateContentAsync(
-                    baseUrl, model, systemPrompt, userContext, maxOutputTokens, cts.Token);
+                    baseUrl, model, systemPrompt, userContext, maxOutputTokens, requestCts.Token);
+            }
+            catch (OperationCanceledException) when (!cts.IsCancellationRequested)
+            {
+                // Per-request budget hit — the model hung. Treat as transient and
+                // move to the next attempt; the shared budget is still intact.
             }
             catch (GeminiOverloadedException)
             {
