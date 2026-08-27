@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -56,6 +56,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       localStorage.setItem(SIDEBAR_KEY, collapsed ? "1" : "0");
     } catch {}
   }, [collapsed]);
+
+  // "Mở ra / mở vô": while collapsed, hovering the 64px rail temporarily expands
+  // it (labels + pin toggle) without touching the saved state. Leaving the rail
+  // (after a short grace) collapses it back. A click on the toggle still pins.
+  const [peeking, setPeeking] = useState(false);
+  const peekTimer = useRef<number | null>(null);
+  // Effectively expanded = pinned open OR being hover-peeked. Layout follows
+  // `railCollapsed` (the collapsed styles only apply when truly a 64px rail, not
+  // while hovering it open); the toggle button reads `collapsed` because it
+  // reflects the *pinned* state.
+  const railCollapsed = collapsed && !peeking;
+
+  function handleAsideMouseEnter() {
+    if (!collapsed) return;
+    if (peekTimer.current) window.clearTimeout(peekTimer.current);
+    setPeeking(true);
+  }
+  function handleAsideMouseLeave() {
+    if (!collapsed) return;
+    if (peekTimer.current) window.clearTimeout(peekTimer.current);
+    // Short grace so a quick trip to the pin toggle (or a portal popup) doesn't
+    // collapse mid-motion.
+    peekTimer.current = window.setTimeout(() => setPeeking(false), 250);
+  }
+  useEffect(() => {
+    return () => {
+      if (peekTimer.current) window.clearTimeout(peekTimer.current);
+    };
+  }, []);
 
   const workspaceId = location.pathname.match(
     /^\/workspaces\/([0-9a-f-]{36})/i,
@@ -237,8 +266,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-dvh overflow-hidden">
       <aside
+        onMouseEnter={handleAsideMouseEnter}
+        onMouseLeave={handleAsideMouseLeave}
         className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface transition-transform duration-300 ease-out lg:static lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
-          collapsed ? "lg:w-16" : "lg:w-60"
+          railCollapsed ? "lg:w-16" : "lg:w-60"
         } ${
           drawerOpen
             ? "translate-x-0 shadow-[0_24px_80px_rgba(0,0,0,0.7)] lg:shadow-none"
@@ -246,14 +277,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }`}
         style={{ overflow: 'visible' }}
       >
-        <div className={`flex items-center justify-between pr-2 ${collapsed ? "lg:justify-center lg:pr-0" : ""}`}>
+        <div className={`flex items-center justify-between pr-2 ${railCollapsed ? "lg:justify-center lg:pr-0" : ""}`}>
           <Link
             to="/"
             className="px-4 py-4"
             aria-label="DevFlow home"
             title="DevFlow"
           >
-            {collapsed ? <BrandMark size="md" /> : <Logo />}
+            {railCollapsed ? <BrandMark size="md" /> : <Logo />}
           </Link>
           <button
             type="button"
@@ -265,20 +296,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        <nav className={`flex-1 overflow-y-auto px-3 pb-4 ${collapsed ? "space-y-4 lg:space-y-2" : "space-y-6"}`}>
+        <nav className={`flex-1 overflow-y-auto px-3 pb-4 ${railCollapsed ? "space-y-4 lg:space-y-2" : "space-y-6"}`}>
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
             title={t("nav.search")}
             aria-label={t("nav.searchPlaceholder")}
             className={`flex w-full cursor-pointer items-center gap-2 rounded-lg border border-border bg-card text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground ${
-              collapsed
+              railCollapsed
                 ? "justify-center px-0 py-2 lg:w-auto lg:justify-center lg:px-0"
                 : "px-2.5 py-1.5"
             }`}
           >
             <Search className="size-3.5" aria-hidden />
-            {!collapsed && (
+            {!railCollapsed && (
               <>
                 <span className="flex-1 text-left">{t("nav.searchPlaceholder")}</span>
                 <kbd className="rounded border border-border bg-surface px-1 py-0.5 font-mono text-[10px]">
@@ -289,7 +320,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
 
           <section data-tour="sidebar-workspaces">
-            <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${collapsed ? "hidden lg:hidden" : ""}`}>
+            <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "hidden lg:hidden" : ""}`}>
               {t("nav.workspaces")}
             </h2>
             <ul className="space-y-0.5">
@@ -300,9 +331,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <Link
                       to={`/workspaces/${workspace.id}`}
                       aria-current={active ? "page" : undefined}
-                      title={collapsed ? workspace.name : undefined}
+                      title={railCollapsed ? workspace.name : undefined}
                       className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors duration-150 ${
-                        collapsed ? "lg:justify-center lg:px-0" : ""
+                        railCollapsed ? "lg:justify-center lg:px-0" : ""
                       } ${
                         active
                           ? "bg-elevated font-semibold text-foreground"
@@ -314,13 +345,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       ) : (
                         <Avatar name={workspace.name} id={workspace.id} />
                       )}
-                      <span className={`truncate ${collapsed ? "hidden lg:hidden" : ""}`}>{workspace.name}</span>
+                      <span className={`truncate ${railCollapsed ? "hidden lg:hidden" : ""}`}>{workspace.name}</span>
                     </Link>
                   </li>
                 );
               })}
               {!workspaces && (
-                <li className={`space-y-1.5 px-2 py-1 ${collapsed ? "hidden lg:hidden" : ""}`}>
+                <li className={`space-y-1.5 px-2 py-1 ${railCollapsed ? "hidden lg:hidden" : ""}`}>
                   <div className="skeleton h-6 w-full" />
                   <div className="skeleton h-6 w-4/5" />
                 </li>
@@ -330,7 +361,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {workspaceId && (
             <section>
-              <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${collapsed ? "hidden lg:hidden" : ""}`}>
+              <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "hidden lg:hidden" : ""}`}>
                 {t("nav.projects")}
               </h2>
               <ul className="space-y-0.5">
@@ -338,13 +369,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <li key={project.id}>
                     <Link
                       to={`/workspaces/${workspaceId}/projects/${project.id}`}
-                      title={collapsed ? project.name : undefined}
+                      title={railCollapsed ? project.name : undefined}
                       className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated/60 hover:text-foreground ${
-                        collapsed ? "lg:justify-center lg:px-0" : ""
+                        railCollapsed ? "lg:justify-center lg:px-0" : ""
                       }`}
                     >
                       <EmojiTile emoji={project.emoji} size="sm" />
-                      <span className={`truncate ${collapsed ? "hidden lg:hidden" : ""}`}>{project.name}</span>
+                      <span className={`truncate ${railCollapsed ? "hidden lg:hidden" : ""}`}>{project.name}</span>
                     </Link>
                   </li>
                 ))}
@@ -354,16 +385,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {workspaceId && (
             <section>
-              <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${collapsed ? "hidden lg:hidden" : ""}`}>
+              <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "hidden lg:hidden" : ""}`}>
                 {t("nav.personal")}
               </h2>
               <ul className="space-y-0.5">
                 <li>
                   <Link
                     to={`/workspaces/${workspaceId}/my-tasks`}
-                    title={collapsed ? t("nav.myTasks") : undefined}
+                    title={railCollapsed ? t("nav.myTasks") : undefined}
                     className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors duration-150 ${
-                      collapsed ? "lg:justify-center lg:px-0" : ""
+                      railCollapsed ? "lg:justify-center lg:px-0" : ""
                     } ${
                       location.pathname.endsWith("/my-tasks")
                         ? "bg-elevated font-semibold text-foreground"
@@ -371,7 +402,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     }`}
                   >
                     <ListTodo className="size-4" aria-hidden />
-                    <span className={`${collapsed ? "hidden lg:hidden" : ""}`}>{t("nav.myTasks")}</span>
+                    <span className={`${railCollapsed ? "hidden lg:hidden" : ""}`}>{t("nav.myTasks")}</span>
                   </Link>
                 </li>
               </ul>
@@ -381,31 +412,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <section>
             <Link
               to="/"
-              title={collapsed ? t("nav.newWorkspace") : undefined}
+              title={railCollapsed ? t("nav.newWorkspace") : undefined}
               className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated/60 hover:text-foreground ${
-                collapsed ? "lg:justify-center lg:px-0" : ""
+                railCollapsed ? "lg:justify-center lg:px-0" : ""
               }`}
             >
               <Plus className="size-4" aria-hidden />
-              <span className={`${collapsed ? "hidden lg:hidden" : ""}`}>{t("nav.newWorkspace")}</span>
+              <span className={`${railCollapsed ? "hidden lg:hidden" : ""}`}>{t("nav.newWorkspace")}</span>
             </Link>
           </section>
 
-          <button
-            type="button"
-            aria-label={collapsed ? t("nav.expand") : t("nav.collapse")}
-            title={collapsed ? t("nav.expand") : t("nav.collapse")}
-            onClick={() => setCollapsed((v) => !v)}
-            className="hidden cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground lg:flex"
-          >
-            {collapsed ? <PanelLeftOpen className="size-4 shrink-0" aria-hidden /> : <PanelLeftClose className="size-4 shrink-0" aria-hidden />}
-            <span className={`${collapsed ? "hidden lg:hidden" : ""}`}>{collapsed ? t("nav.expand") : t("nav.collapse")}</span>
-          </button>
-        </nav>
+          </nav>
 
         <div
           data-tour="sidebar-bottom"
-          className={`relative shrink-0 border-t border-border px-3 py-2.5 ${collapsed ? "lg:flex lg:justify-center" : ""}`}
+          className={`relative shrink-0 border-t border-border px-3 py-2.5 ${railCollapsed ? "lg:flex lg:justify-center" : ""}`}
         >
           {currentUser && (
             <div className="flex items-center gap-1.5">
@@ -417,6 +438,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <UserMenu direction="up" />
             </div>
           )}
+          <button
+            type="button"
+            aria-label={collapsed ? t("nav.expand") : t("nav.collapse")}
+            title={collapsed ? t("nav.expand") : t("nav.collapse")}
+            onClick={() => setCollapsed((v) => !v)}
+            className="hidden w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground lg:flex"
+          >
+            {collapsed ? <PanelLeftOpen className="size-4 shrink-0" aria-hidden /> : <PanelLeftClose className="size-4 shrink-0" aria-hidden />}
+            <span className={`${railCollapsed ? "hidden lg:hidden" : ""}`}>{collapsed ? t("nav.expand") : t("nav.collapse")}</span>
+          </button>
         </div>
       </aside>
 
