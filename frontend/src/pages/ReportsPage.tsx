@@ -192,6 +192,10 @@ export function ReportsPage() {
               <div className="xl:col-span-1">
                 <ErrorAlert message={velocityError} />
               </div>
+            ) : velocity && velocity.sprints.length === 0 ? (
+              <div className="xl:col-span-2">
+                <VelocityChart data={velocity} />
+              </div>
             ) : velocity ? (
               <VelocityChart data={velocity} />
             ) : null}
