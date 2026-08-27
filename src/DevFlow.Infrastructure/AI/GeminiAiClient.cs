@@ -69,7 +69,7 @@ public sealed class GeminiAiClient : IAiClient
         string systemPrompt,
         string userContext,
         CancellationToken cancellationToken = default) =>
-        GenerateContentAsync(systemPrompt, userContext, _options.MaxTokens, ExecuteTimeout, cancellationToken);
+GenerateContentAsync(systemPrompt, userContext, _options.MaxTokens, ExecuteTimeout, cancellationToken);
 
     /// <summary>
     /// Sends the prompt to the configured model, retrying HTTP 429/503 with
