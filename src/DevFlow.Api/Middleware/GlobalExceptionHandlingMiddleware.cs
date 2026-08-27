@@ -86,6 +86,7 @@ public sealed class GlobalExceptionHandlingMiddleware
             ForbiddenAccessException => (StatusCodes.Status403Forbidden, "Forbidden"),
             UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
             AiPlanningUnavailableException => (StatusCodes.Status503ServiceUnavailable, "AI planner unavailable"),
+            TaskCanceledException or OperationCanceledException => (StatusCodes.Status503ServiceUnavailable, "AI request timed out"),
             BadHttpRequestException badRequest => (badRequest.StatusCode, "Request too large"),
             _ => (StatusCodes.Status500InternalServerError, "Internal server error")
         };

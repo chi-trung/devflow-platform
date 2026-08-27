@@ -18,6 +18,24 @@ public sealed class GeminiAiClient : IAiClient
 {
     private const string DefaultBaseUrl = "https://generativelanguage.googleapis.com/v1beta";
 
+    /// <summary>
+    /// Alternative models tried when the configured model returns HTTP 429/503
+    /// ("model currently experiencing high demand"). Google's flash tier has
+    /// been overloaded intermittently; the sibling flash model usually still
+    /// accepts requests, so we retry the primary model a few times with
+    /// backoff, then fall through to these.
+    /// </summary>
+    private static readonly string[] FallbackModels = ["gemini-3.6-flash", "gemini-flash-latest"];
+
+    /// <summary>Per-request budget. A plan (4000 tokens) needs ~16s, so 60s is safe.</summary>
+    private static readonly TimeSpan PlanTimeout = TimeSpan.FromSeconds(60);
+
+    /// <summary>Action responses are short (1000 tokens); keep the assistant snappy.</summary>
+    private static readonly TimeSpan ExecuteTimeout = TimeSpan.FromSeconds(30);
+
+    /// <summary>Number of attempts per model before moving to the next fallback.</summary>
+    private const int MaxAttemptsPerModel = 3;
+
     private readonly HttpClient _httpClient;
     private readonly AiOptions _options;
 
@@ -33,15 +51,38 @@ public sealed class GeminiAiClient : IAiClient
         !string.IsNullOrWhiteSpace(_options.ApiKey) &&
         !string.IsNullOrWhiteSpace(_options.Model);
 
-    public async Task<string?> PlanTaskAsync(
+    public Task<string?> PlanTaskAsync(
         string systemPrompt,
         string userContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        GenerateContentAsync(systemPrompt, userContext, _options.MaxTokens, PlanTimeout, cancellationToken);
+
+    public Task<string?> ExecuteActionAsync(
+        string systemPrompt,
+        string userContext,
+        CancellationToken cancellationToken = default) =>
+        GenerateContentAsync(systemPrompt, userContext, 1000, ExecuteTimeout, cancellationToken);
+
+    /// <summary>
+    /// Sends the prompt to the configured model, retrying HTTP 429/503 with
+    /// exponential backoff and falling back to sibling models when the primary
+    /// one is overloaded. All retries share a single timeout budget so a
+    /// degraded model cannot hang the request for minutes.
+    /// </summary>
+    private async Task<string?> GenerateContentAsync(
+        string systemPrompt,
+        string userContext,
+        int maxOutputTokens,
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
     {
         if (!IsConfigured)
         {
             return null;
         }
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(timeout);
 
         // Assemble the generateContent URL. Default to the Google Generative
         // Language API; a custom BaseUrl (LiteLLM-style Gemini gateway) can
@@ -49,7 +90,53 @@ public sealed class GeminiAiClient : IAiClient
         var baseUrl = string.IsNullOrWhiteSpace(_options.BaseUrl)
             ? DefaultBaseUrl
             : _options.BaseUrl.TrimEnd('/');
-        var url = $"{baseUrl}/models/{_options.Model}:generateContent";
+
+        // Try the configured model first, then any fallback that is different.
+        var models = new List<string> { _options.Model };
+        foreach (var fallback in FallbackModels)
+        {
+            if (!models.Contains(fallback, StringComparer.OrdinalIgnoreCase))
+            {
+                models.Add(fallback);
+            }
+        }
+
+        var totalAttempts = models.Count * MaxAttemptsPerModel;
+        for (var attempt = 0; attempt < totalAttempts; attempt++)
+        {
+            var model = models[attempt / MaxAttemptsPerModel];
+
+            if (attempt > 0)
+            {
+                // Exponential backoff: 1s, 2s, 4s... capped so the total stays
+                // within the timeout budget above.
+                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, Math.Min(attempt, 3) - 1)), cts.Token);
+            }
+
+            try
+            {
+                return await SendGenerateContentAsync(
+                    baseUrl, model, systemPrompt, userContext, maxOutputTokens, cts.Token);
+            }
+            catch (GeminiOverloadedException)
+            {
+                // 429/503 — transient overload. Retry, then move to the next model.
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"AI API error 503: The model is currently experiencing high demand. Please try again later.");
+    }
+
+    private async Task<string?> SendGenerateContentAsync(
+        string baseUrl,
+        string model,
+        string systemPrompt,
+        string userContext,
+        int maxOutputTokens,
+        CancellationToken cancellationToken)
+    {
+        var url = $"{baseUrl}/models/{model}:generateContent";
 
         var payload = new
         {
@@ -60,7 +147,7 @@ public sealed class GeminiAiClient : IAiClient
             generationConfig = new
             {
                 temperature = 0.3,
-                maxOutputTokens = _options.MaxTokens,
+                maxOutputTokens,
                 responseMimeType = "application/json",
             },
         };
@@ -73,114 +160,39 @@ public sealed class GeminiAiClient : IAiClient
         // is the documented best practice and avoids leaking the key in URLs.
         request.Headers.Add("X-goog-api-key", _options.ApiKey);
 
-        try
-        {
-            var response = await _httpClient.SendAsync(request, cancellationToken);
+        var response = await _httpClient.SendAsync(request, cancellationToken);
 
-            if (!response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            if ((int)response.StatusCode == 429 || (int)response.StatusCode == 503)
             {
-                var body = await response.Content.ReadAsStringAsync(cancellationToken);
-                throw new InvalidOperationException($"AI API error {(int)response.StatusCode}: {body}");
+                // Overload / rate-limit — the caller retries with backoff and
+                // eventually a fallback model.
+                throw new GeminiOverloadedException($"AI API error {(int)response.StatusCode}: {body}");
             }
 
-            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            // Other errors (auth 401, bad request 400, ...) are not transient —
+            // surface them immediately like before.
+            throw new InvalidOperationException($"AI API error {(int)response.StatusCode}: {body}");
+        }
 
-            using var document = JsonDocument.Parse(responseBody);
-            if (document.RootElement.TryGetProperty("candidates", out var candidates) &&
-                candidates.GetArrayLength() > 0 &&
-                candidates[0].TryGetProperty("content", out var candidateContent) &&
-                candidateContent.TryGetProperty("parts", out var parts) &&
-                parts.GetArrayLength() > 0 &&
-                parts[0].TryGetProperty("text", out var text))
-            {
-                return text.GetString();
-            }
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            return null;
-        }
-        catch (OperationCanceledException)
+        using var document = JsonDocument.Parse(responseBody);
+        if (document.RootElement.TryGetProperty("candidates", out var candidates) &&
+            candidates.GetArrayLength() > 0 &&
+            candidates[0].TryGetProperty("content", out var candidateContent) &&
+            candidateContent.TryGetProperty("parts", out var parts) &&
+            parts.GetArrayLength() > 0 &&
+            parts[0].TryGetProperty("text", out var text))
         {
-            throw;
+            return text.GetString();
         }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"AI request failed: {ex.Message}", ex);
-        }
+
+        return null;
     }
 
-    public async Task<string?> ExecuteActionAsync(
-        string systemPrompt,
-        string userContext,
-        CancellationToken cancellationToken = default)
-    {
-        if (!IsConfigured)
-        {
-            return null;
-        }
-
-        var baseUrl = string.IsNullOrWhiteSpace(_options.BaseUrl)
-            ? DefaultBaseUrl
-            : _options.BaseUrl.TrimEnd('/');
-        var url = $"{baseUrl}/models/{_options.Model}:generateContent";
-
-        // Use a tighter token budget for quick action responses.
-        var payload = new
-        {
-            contents = new[]
-            {
-                new { role = "user", parts = new[] { new { text = systemPrompt + "\n\n" + userContext } } },
-            },
-            generationConfig = new
-            {
-                temperature = 0.3,
-                maxOutputTokens = 1000,
-                responseMimeType = "application/json",
-            },
-        };
-
-        var json = JsonSerializer.Serialize(payload);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
-        request.Headers.Add("X-goog-api-key", _options.ApiKey);
-
-        try
-        {
-            // Use a CancellationTokenSource with 30-second timeout so the
-            // assistant feels responsive even if the LLM is slow.
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            cts.CancelAfter(TimeSpan.FromSeconds(30));
-
-            var response = await _httpClient.SendAsync(request, cts.Token);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync(cancellationToken);
-                throw new InvalidOperationException($"AI API error {(int)response.StatusCode}: {body}");
-            }
-
-            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-
-            using var document = JsonDocument.Parse(responseBody);
-            if (document.RootElement.TryGetProperty("candidates", out var candidates) &&
-                candidates.GetArrayLength() > 0 &&
-                candidates[0].TryGetProperty("content", out var candidateContent) &&
-                candidateContent.TryGetProperty("parts", out var parts) &&
-                parts.GetArrayLength() > 0 &&
-                parts[0].TryGetProperty("text", out var text))
-            {
-                return text.GetString();
-            }
-
-            return null;
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"AI request failed: {ex.Message}", ex);
-        }
-    }
+    /// <summary>Thrown when Gemini returns 429/503 (transient overload).</summary>
+    private sealed class GeminiOverloadedException(string message) : Exception(message);
 }

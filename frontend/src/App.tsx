@@ -1,8 +1,9 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { RequireAuth } from "./auth/RequireAuth";
 import { ToastProvider } from "./components/ui/ToastProvider";
+import { API_BASE } from "./lib/api";
 
 const LandingPage = lazy(() => import("./pages/LandingPage").then(m => ({ default: m.LandingPage })));
 const LoginPage = lazy(() => import("./pages/LoginPage").then(m => ({ default: m.LoginPage })));
@@ -55,10 +56,34 @@ function KeyedWorkspacePage() {
   return <WorkspacePage key={workspaceId} />;
 }
 
+// Wake the Render free-tier backend as early as possible. Render sleeps after
+// ~15 min idle; the first request to a cold instance can take 30-60s. Firing a
+// cheap health probe on every page load (and at an interval while the tab is
+// open) means the user's first real action usually hits a warm instance.
+function BackendWarmer() {
+  useEffect(() => {
+    const healthUrl = `${API_BASE}/health`;
+
+    const ping = () => {
+      fetch(healthUrl, { cache: "no-store" }).catch(() => {});
+    };
+
+    ping();
+    const interval = window.setInterval(() => {
+      if (!document.hidden) ping();
+    }, 60_000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <BackendWarmer />
         <ToastProvider>
           <Suspense fallback={<LoadingFallback />}>
             <Routes>

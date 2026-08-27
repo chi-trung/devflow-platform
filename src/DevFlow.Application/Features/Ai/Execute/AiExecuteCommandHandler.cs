@@ -45,9 +45,19 @@ public sealed class AiExecuteCommandHandler(
         {
             rawResponse = await aiClient.ExecuteActionAsync(systemPrompt, userContext, cancellationToken);
         }
+        catch (OperationCanceledException)
+        {
+            // The provider timed out (the client enforces its own per-request
+            // budget). Return a friendly message instead of surfacing the
+            // cancellation as a 500.
+            return new AiExecuteResponse(
+                null,
+                Array.Empty<ExecutedAction>(),
+                "AI request timed out. The model is busy right now — please try again.");
+        }
         catch (InvalidOperationException ex)
         {
-            // Provider-level failure (network, auth, timeout). Surface it as a
+            // Provider-level failure (network, auth, 503 overload). Surface it as a
             // friendly message without a partial result.
             return new AiExecuteResponse(null, Array.Empty<ExecutedAction>(), ex.Message);
         }
