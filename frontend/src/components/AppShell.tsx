@@ -254,11 +254,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className={`flex items-center justify-between pr-2 ${railCollapsed ? "lg:justify-center lg:pr-0" : ""}`}>
           <Link
             to="/"
-            className="px-4 py-4"
+            className={`px-4 py-4 ${railCollapsed ? "lg:px-0" : ""}`}
             aria-label="DevFlow home"
             title="DevFlow"
           >
-            {railCollapsed ? <BrandMark size="md" /> : <Logo />}
+            <Logo className={`${railCollapsed ? "lg:hidden" : ""}`} />
+            <span className={railCollapsed ? "hidden lg:inline" : "hidden"}>
+              <BrandMark size="md" />
+            </span>
           </Link>
           <button
             type="button"
@@ -270,31 +273,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        <nav className={`flex-1 overflow-y-auto px-3 pb-4 ${railCollapsed ? "space-y-4 lg:space-y-2" : "space-y-6"}`}>
+        <nav className={`flex-1 space-y-6 overflow-y-auto px-3 pb-4 ${railCollapsed ? "lg:space-y-2 lg:px-1.5" : ""}`}>
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
             title={t("nav.search")}
             aria-label={t("nav.searchPlaceholder")}
-            className={`flex w-full cursor-pointer items-center gap-2 rounded-lg border border-border bg-card text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground ${
-              railCollapsed
-                ? "justify-center px-0 py-2 lg:w-auto lg:justify-center lg:px-0"
-                : "px-2.5 py-1.5"
+            className={`flex w-full cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground ${
+              railCollapsed ? "lg:justify-center lg:px-0 lg:py-2" : ""
             }`}
           >
             <Search className="size-3.5" aria-hidden />
-            {!railCollapsed && (
-              <>
-                <span className="flex-1 text-left">{t("nav.searchPlaceholder")}</span>
-                <kbd className="rounded border border-border bg-surface px-1 py-0.5 font-mono text-[10px]">
-                  ⌃K
-                </kbd>
-              </>
-            )}
+            <span className={`flex-1 text-left ${railCollapsed ? "lg:hidden" : ""}`}>
+              {t("nav.searchPlaceholder")}
+            </span>
+            <kbd className={`rounded border border-border bg-surface px-1 py-0.5 font-mono text-[10px] ${railCollapsed ? "lg:hidden" : ""}`}>
+              ⌃K
+            </kbd>
           </button>
 
           <section data-tour="sidebar-workspaces">
-            <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "hidden lg:hidden" : ""}`}>
+            <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "lg:hidden" : ""}`}>
               {t("nav.workspaces")}
             </h2>
             <ul className="space-y-0.5">
@@ -307,7 +306,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       aria-current={active ? "page" : undefined}
                       title={railCollapsed ? workspace.name : undefined}
                       className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors duration-150 ${
-                        railCollapsed ? "lg:justify-center lg:px-0" : ""
+                        railCollapsed ? "lg:justify-center" : ""
                       } ${
                         active
                           ? "bg-elevated font-semibold text-foreground"
@@ -319,13 +318,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       ) : (
                         <Avatar name={workspace.name} id={workspace.id} />
                       )}
-                      <span className={`truncate ${railCollapsed ? "hidden lg:hidden" : ""}`}>{workspace.name}</span>
+                      <span className={`truncate ${railCollapsed ? "lg:hidden" : ""}`}>{workspace.name}</span>
                     </Link>
                   </li>
                 );
               })}
               {!workspaces && (
-                <li className={`space-y-1.5 px-2 py-1 ${railCollapsed ? "hidden lg:hidden" : ""}`}>
+                <li className={`space-y-1.5 px-2 py-1 ${railCollapsed ? "lg:hidden" : ""}`}>
                   <div className="skeleton h-6 w-full" />
                   <div className="skeleton h-6 w-4/5" />
                 </li>
@@ -335,7 +334,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {workspaceId && (
             <section>
-              <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "hidden lg:hidden" : ""}`}>
+              <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "lg:hidden" : ""}`}>
                 {t("nav.projects")}
               </h2>
               <ul className="space-y-0.5">
@@ -345,11 +344,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       to={`/workspaces/${workspaceId}/projects/${project.id}`}
                       title={railCollapsed ? project.name : undefined}
                       className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated/60 hover:text-foreground ${
-                        railCollapsed ? "lg:justify-center lg:px-0" : ""
+                        railCollapsed ? "lg:justify-center" : ""
                       }`}
                     >
                       <EmojiTile emoji={project.emoji} size="sm" />
-                      <span className={`truncate ${railCollapsed ? "hidden lg:hidden" : ""}`}>{project.name}</span>
+                      <span className={`truncate ${railCollapsed ? "lg:hidden" : ""}`}>{project.name}</span>
                     </Link>
                   </li>
                 ))}
@@ -359,7 +358,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {workspaceId && (
             <section>
-              <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "hidden lg:hidden" : ""}`}>
+              <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "lg:hidden" : ""}`}>
                 {t("nav.personal")}
               </h2>
               <ul className="space-y-0.5">
@@ -368,7 +367,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     to={`/workspaces/${workspaceId}/my-tasks`}
                     title={railCollapsed ? t("nav.myTasks") : undefined}
                     className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors duration-150 ${
-                      railCollapsed ? "lg:justify-center lg:px-0" : ""
+                      railCollapsed ? "lg:justify-center" : ""
                     } ${
                       location.pathname.endsWith("/my-tasks")
                         ? "bg-elevated font-semibold text-foreground"
@@ -376,7 +375,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     }`}
                   >
                     <ListTodo className="size-4" aria-hidden />
-                    <span className={`${railCollapsed ? "hidden lg:hidden" : ""}`}>{t("nav.myTasks")}</span>
+                    <span className={`${railCollapsed ? "lg:hidden" : ""}`}>{t("nav.myTasks")}</span>
                   </Link>
                 </li>
               </ul>
@@ -388,11 +387,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               to="/"
               title={railCollapsed ? t("nav.newWorkspace") : undefined}
               className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated/60 hover:text-foreground ${
-                railCollapsed ? "lg:justify-center lg:px-0" : ""
+                railCollapsed ? "lg:justify-center" : ""
               }`}
             >
               <Plus className="size-4" aria-hidden />
-              <span className={`${railCollapsed ? "hidden lg:hidden" : ""}`}>{t("nav.newWorkspace")}</span>
+              <span className={`${railCollapsed ? "lg:hidden" : ""}`}>{t("nav.newWorkspace")}</span>
             </Link>
           </section>
 
@@ -400,10 +399,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <div
           data-tour="sidebar-bottom"
-          className={`relative shrink-0 border-t border-border px-3 py-2.5 ${railCollapsed ? "lg:flex lg:justify-center" : ""}`}
+          className={`relative shrink-0 border-t border-border py-2.5 ${railCollapsed ? "lg:px-1.5" : "px-3"}`}
         >
           {currentUser && (
-            <div className="flex items-center gap-1.5">
+            <div className={`flex items-center gap-1.5 ${railCollapsed ? "lg:justify-center" : ""}`}>
               <ApiStatusDot />
               <NotificationsPanel
                 workspaceId={workspaceId}
@@ -419,7 +418,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             aria-label={collapsed ? t("nav.expand") : t("nav.collapse")}
             title={collapsed ? t("nav.expand") : t("nav.collapse")}
             onClick={() => setCollapsed((v) => !v)}
-            className="hidden w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground lg:flex"
+            className={`hidden w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground lg:flex ${
+              railCollapsed ? "lg:justify-center" : ""
+            }`}
           >
             {collapsed ? <PanelLeftOpen className="size-4 shrink-0" aria-hidden /> : <PanelLeftClose className="size-4 shrink-0" aria-hidden />}
             <span className={`${railCollapsed ? "hidden lg:hidden" : ""}`}>{collapsed ? t("nav.expand") : t("nav.collapse")}</span>
