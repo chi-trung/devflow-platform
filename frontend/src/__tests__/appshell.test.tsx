@@ -69,17 +69,17 @@ function renderShell(path = "/workspaces/ws1", collapsedPref = false) {
 }
 
 describe("AppShell sidebar collapse", () => {
-  it("collapses to the 64px rail when the preference is set", () => {
+  it("collapses to the icon rail when the preference is set", () => {
     const { container } = renderShell("/workspaces/ws1", true);
     const aside = container.querySelector("aside");
-    expect(aside?.className).toContain("lg:w-16");
+    expect(aside?.className).toContain("lg:w-[72px]");
   });
 
   it("expands to full width when the toggle is clicked", () => {
     const { container } = renderShell("/workspaces/ws1", true);
     const aside = container.querySelector("aside");
     const toggle = screen.getByRole("button", { name: "nav.expand" });
-    expect(aside?.className).toContain("lg:w-16");
+    expect(aside?.className).toContain("lg:w-[72px]");
 
     fireEvent.click(toggle);
     expect(aside?.className).toContain("lg:w-60");
@@ -93,7 +93,7 @@ describe("AppShell sidebar collapse", () => {
     expect(aside?.className).toContain("lg:w-60");
 
     fireEvent.click(toggle);
-    expect(aside?.className).toContain("lg:w-16");
+    expect(aside?.className).toContain("lg:w-[72px]");
     expect(localStorage.getItem("devflow.sidebarCollapsed")).toBe("1");
   });
 
@@ -101,17 +101,17 @@ describe("AppShell sidebar collapse", () => {
     const { container } = renderShell("/workspaces/ws1", false);
     const toggle = screen.getByRole("button", { name: "nav.collapse" });
     fireEvent.click(toggle);
-    expect(container.querySelector("aside")?.className).toContain("lg:w-16");
+    expect(container.querySelector("aside")?.className).toContain("lg:w-[72px]");
 
     // Re-render with a new shell (simulates page reload) — preference still "1"
     const { container: c2 } = renderShell("/workspaces/ws1", true);
-    expect(c2.querySelector("aside")?.className).toContain("lg:w-16");
+    expect(c2.querySelector("aside")?.className).toContain("lg:w-[72px]");
   });
 
   it("swaps the account trigger to icon-only when collapsed (no name overflow)", () => {
     // Collapsed: the sidebar UserMenu renders compact (avatar initials + long
     // username/email hidden) so a long Gmail address can't stick out of the
-    // 64px rail. The username "alice" and email "a@b.c" must be absent.
+    // narrow rail. The username "alice" and email "a@b.c" must be absent.
     renderShell("/workspaces/ws1", true);
     expect(screen.queryByText("alice")).toBeNull();
     expect(screen.queryByText("a@b.c")).toBeNull();

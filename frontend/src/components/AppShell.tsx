@@ -57,7 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [collapsed]);
 
-  // The sidebar collapses to a 64px icon rail and expands via the explicit
+  // The sidebar collapses to a 72px icon rail and expands via the explicit
   // toggle button — click-based only, no hover behavior. Collapsed state is the
   // pinned state; every layout branch reads `railCollapsed`.
   const railCollapsed = collapsed;
@@ -243,7 +243,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex h-dvh overflow-hidden">
       <aside
         className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface transition-transform duration-300 ease-out lg:static lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
-          railCollapsed ? "lg:w-16" : "lg:w-60"
+          railCollapsed ? "lg:w-[72px]" : "lg:w-60"
         } ${
           drawerOpen
             ? "translate-x-0 shadow-[0_24px_80px_rgba(0,0,0,0.7)] lg:shadow-none"
@@ -273,7 +273,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        <nav className={`flex-1 space-y-6 overflow-y-auto px-3 pb-4 ${railCollapsed ? "lg:space-y-2 lg:px-1.5" : ""}`}>
+        <nav className={`flex-1 space-y-6 overflow-y-auto px-3 pb-4 ${railCollapsed ? "lg:space-y-2 lg:px-2" : ""}`}>
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
@@ -399,7 +399,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <div
           data-tour="sidebar-bottom"
-          className={`relative shrink-0 border-t border-border py-2.5 ${railCollapsed ? "lg:px-1.5" : "px-3"}`}
+          className={`relative shrink-0 border-t border-border py-2.5 ${railCollapsed ? "lg:px-2" : "px-3"}`}
         >
           {currentUser && (
             <div className={`flex items-center gap-1.5 ${railCollapsed ? "lg:justify-center" : ""}`}>
