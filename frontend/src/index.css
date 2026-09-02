@@ -4,6 +4,9 @@
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", "Manrope", ui-sans-serif, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* Weight notes: Manrope 800 is dropped from the Google Fonts URL to shrink
+     the CSS payload (nothing uses font-black / font-extrabold). If a display
+     weight is needed later, re-add wght@800 there. */
 
   --color-background: #0a0e14;
   --color-surface: #0e131b;

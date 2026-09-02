@@ -26,16 +26,24 @@ export function ScreenshotShowcase() {
         </div>
 
         <BrowserFrame className="mx-auto max-w-5xl">
-          {/* Dashboard screenshot — mobile + desktop composite */}
+          {/* Dashboard screenshot — mobile + desktop composite. WebP is ~61KB
+              vs the original PNG at 1.2MB; the <picture> element lets the
+              browser pick the best format it supports. The PNG fallback is a
+              downscaled 1400px version (208KB) rather than the full 1869px
+              original (1.2MB). */}
           <div className="overflow-hidden rounded-lg border border-border">
-            <img
-              src="/landing.png"
-              alt={t("landing.showcase.alt")}
-              width={1869}
-              height={842}
-              className="block h-auto w-full"
-              loading="lazy"
-            />
+            <picture>
+              <source srcSet="/landing.webp" type="image/webp" />
+              <source srcSet="/landing-opt.png" type="image/png" />
+              <img
+                src="/landing-opt.png"
+                alt={t("landing.showcase.alt")}
+                width={1869}
+                height={842}
+                className="block h-auto w-full"
+                loading="lazy"
+              />
+            </picture>
           </div>
         </BrowserFrame>
       </div>

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
@@ -8,6 +9,7 @@ import { HeroFlowDiagram } from "../components/landing/HeroFlowDiagram";
 import { IntelligenceSection } from "../components/landing/IntelligenceSection";
 import { FeatureBrowserFrame } from "../components/landing/FeatureBrowserFrame";
 import { ScreenshotShowcase } from "../components/landing/ScreenshotShowcase";
+import { API_BASE } from "../lib/api";
 
 const HOW_STEPS = [
   { key: "step1", icon: "01" },
@@ -47,6 +49,13 @@ function FooterColumn({
 
 export function LandingPage() {
   const { t } = useTranslation();
+
+  // Warm the Render backend as early as possible — the landing page is the
+  // first page most visitors hit, so firing a ping here means the instance
+  // is already awake by the time they log in, avoiding a 30-60s cold start.
+  useEffect(() => {
+    fetch(`${API_BASE}/api/v1/ping`, { cache: "no-store" }).catch(() => {});
+  }, []);
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground overflow-x-hidden">
