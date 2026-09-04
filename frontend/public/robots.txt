@@ -1,0 +1,6 @@
+# DevFlow — https://devflow-platform-kappa.vercel.app
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://devflow-platform-kappa.vercel.app/sitemap.xml

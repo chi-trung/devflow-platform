@@ -100,7 +100,7 @@ export function Logo({
   let inner: ReactNode;
   if (to) {
     inner = (
-      <LinkShell to={to} size={size}>
+      <LinkShell to={to} size={size} label={label}>
         {mark}
         {wordmark}
       </LinkShell>
@@ -119,16 +119,22 @@ export function Logo({
 function LinkShell({
   to,
   size,
+  label,
   children,
 }: {
   to: string;
   size: BrandMarkProps["size"];
+  label: string;
   children: ReactNode;
 }) {
   const compact = size === "sm" ? "gap-1.5" : "gap-2";
   return (
     <Link
       to={to}
+      // When the wordmark is hidden on narrow screens the link would
+      // otherwise contain only the aria-hidden brand mark — no discernible
+      // name. The label keeps it accessible in every variant.
+      aria-label={label}
       className={`inline-flex items-center ${compact} text-foreground transition-colors duration-150 hover:text-primary`}
     >
       {children}

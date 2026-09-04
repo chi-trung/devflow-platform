@@ -37,9 +37,11 @@ function FooterColumn({
 }) {
   return (
     <div className="flex flex-col gap-2.5">
-      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      {/* h3 keeps the outline sequential (h2 sections → h3 columns); h4 here
+          failed Lighthouse heading-order because the footer follows an h2. */}
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {title}
-      </h4>
+      </h3>
       {links.map((link) => (
         <FooterLink key={link.href} {...link} />
       ))}

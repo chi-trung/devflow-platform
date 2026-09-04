@@ -1,0 +1,9 @@
+# DevFlow
+
+> DevFlow is an AI-native project management platform: structured 7-stage flows, an AI agent that plans and implements gated by your team's knowledge, and a wiki that compounds with every release.
+
+- [Features](https://devflow-platform-kappa.vercel.app/#features): structured flows, AI agent, kanban board, releases, orgs & teams
+- [Pricing](https://devflow-platform-kappa.vercel.app/#pricing): free tier, no credit card required
+- [Docs / REST API (Swagger)](https://devflow-api-vd5h.onrender.com/swagger): full REST API reference for personal access tokens and integrations
+- [Log in](https://devflow-platform-kappa.vercel.app/login): existing workspace members
+- [Get started free](https://devflow-platform-kappa.vercel.app/register): create a workspace in minutes
