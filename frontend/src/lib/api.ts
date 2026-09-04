@@ -525,8 +525,12 @@ export function getBurndown(
   startDate: string,
   endDate: string,
 ): Promise<BurndownResponse> {
+  // Backend binds DateOnly query params — a raw ISO timestamp ("...T00:00:00+00:00")
+  // would 400 (and the "+" offset would decode as a space). Normalize defensively
+  // so callers passing either a date or a full timestamp both work.
+  const dateOnly = (v: string) => v.slice(0, 10);
   return api<BurndownResponse>(
-    `/workspaces/${workspaceId}/projects/${projectId}/reporting/burndown?startDate=${startDate}&endDate=${endDate}`,
+    `/workspaces/${workspaceId}/projects/${projectId}/reporting/burndown?startDate=${dateOnly(startDate)}&endDate=${dateOnly(endDate)}`,
   );
 }
 

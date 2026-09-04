@@ -29,8 +29,12 @@ export function SprintHealthCard({ workspaceId, projectId, className = "" }: Spr
         const active = sprints.find((s) => s.status === "Active");
         setSprint(active ?? null);
         if (active && active.startDateUtc && active.endDateUtc) {
+          // The burndown endpoint binds DateOnly query params. Sprint dates are
+          // full ISO timestamps ("2026-09-04T00:00:00+00:00") — interpolated
+          // raw, the "+" offset becomes a space server-side and binding 400s.
+          // Send the yyyy-mm-dd portion only.
           return api<BurndownResponse>(
-            `/workspaces/${workspaceId}/projects/${projectId}/reporting/burndown?startDate=${active.startDateUtc}&endDate=${active.endDateUtc}`,
+            `/workspaces/${workspaceId}/projects/${projectId}/reporting/burndown?startDate=${active.startDateUtc.slice(0, 10)}&endDate=${active.endDateUtc.slice(0, 10)}`,
           );
         }
       })
