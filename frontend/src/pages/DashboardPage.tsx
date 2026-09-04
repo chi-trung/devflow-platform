@@ -60,6 +60,16 @@ export function DashboardPage() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedWsId, setSelectedWsId] = useState("");
 
+  // Default workspace selection is derived during render (React's "adjust
+  // state when props change" pattern) instead of in an effect: an effect ran
+  // one paint late, the Overview section mounted a frame after the workspace
+  // grid and shoved the grid below the fold — the largest CLS contributor on
+  // cold load. Setting state during render re-renders before commit, so the
+  // selection and everything gated on it land in the same paint.
+  if (workspaces.length > 0 && !workspaces.some((w) => w.id === selectedWsId)) {
+    setSelectedWsId(workspaces[0].id);
+  }
+
   // First-login onboarding tour. Auto-opens once (localStorage flag) after the
   // dashboard data has rendered; can be reopened from the greeting row.
   const [tourOpen, setTourOpen] = useState(false);
@@ -108,15 +118,6 @@ export function DashboardPage() {
       }),
     [],
   );
-
-  useEffect(() => {
-    const ws = pagedItems<WorkspaceResponse>(workspacesRaw);
-    if (ws.length > 0) {
-      setSelectedWsId((current) =>
-        ws.some((w) => w.id === current) ? current : ws[0].id,
-      );
-    }
-  }, [workspacesRaw]);
 
   useEffect(() => {
     if (!selectedWsId) return;
@@ -184,87 +185,82 @@ export function DashboardPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-5xl px-6 py-10">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          {selectedWsId && workspaces.length > 0 ? (
-            <>
-              <div>
-                <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                  {t("dashboard.dashboard")}
-                </p>
-                <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">
-                  {greeting}
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {t("dashboard.today", { date: todayDate })}
-                </p>
-              </div>
-              {/* Fixed-height row: the selects/buttons that appear once data
-                  lands occupy exactly this much space, so the header never
-                  grows underneath the user (CLS driver on cold load). */}
-              <div className="flex h-[38px] flex-wrap items-center gap-2">
-                {projects.length > 0 && (
-                  <select
-                    data-tour="project-select"
-                    aria-label={t("dashboard.project")}
-                    value={selectedProjectId}
-                    onChange={(event) => setSelectedProjectId(event.target.value)}
-                    className="cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                  >
-                    {projects.map((project) => (
-                      <option key={project.id} value={project.id}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
+        <div className="mb-8 flex flex-col gap-4">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                {t("dashboard.dashboard")}
+              </p>
+              <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">
+                {selectedWsId && workspaces.length > 0
+                  ? greeting
+                  : t("dashboard.title")}
+              </h1>
+              {/* Same 3-line height in both branches so the greeting block
+                  never grows when the workspace list lands. */}
+              <p className="mt-1 text-sm text-muted-foreground">
+                {selectedWsId && workspaces.length > 0 ? (
+                  t("dashboard.today", { date: todayDate })
+                ) : (
+                  <span className="invisible">
+                    {t("dashboard.today", { date: todayDate })}
+                  </span>
                 )}
-                <select
-                  data-tour="workspace-select"
-                  aria-label={t("dashboard.workspace")}
-                  value={selectedWsId}
-                  onChange={(event) => setSelectedWsId(event.target.value)}
-                  className="cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                >
-                  {workspaces.map((workspace) => (
-                    <option key={workspace.id} value={workspace.id}>
-                      {workspace.name}
-                    </option>
-                  ))}
-                </select>
-                {!creating && (
-                  <Button
-                    data-tour="new-workspace"
-                    onClick={() => setCreating(true)}
-                  >
-                    <Plus className="size-4" aria-hidden />
-                    {t("dashboard.newWorkspace")}
-                  </Button>
-                )}
-                <TourReopenButton onOpen={() => setTourOpen(true)} />
-              </div>
-            </>
-          ) : (
-            <>
-              <div>
-                <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                  {t("dashboard.dashboard")}
-                </p>
-                <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">
-                  {t("dashboard.title")}
-                </h1>
-                {/* Same 3-line height as the loaded branch above so the header
-                    row doesn't grow when workspaces arrive. */}
-                <p className="invisible mt-1 text-sm">
-                  {t("dashboard.today", { date: todayDate })}
-                </p>
-              </div>
-              {!creating && (
-                <Button onClick={() => setCreating(true)}>
-                  <Plus className="size-4" aria-hidden />
-                  {t("dashboard.newWorkspace")}
-                </Button>
-              )}
-            </>
-          )}
+              </p>
+            </div>
+          </div>
+          {/* The actions row always occupies its own 38px line — on a max-w-5xl
+              layout the selects + button never fit beside the greeting anyway,
+              so making that wrap explicit (instead of flex-wrap dependent)
+              means the row appears without moving anything below it (CLS).
+              Nowrap + touch scroll on overflow: wrapping would grow the row
+              on narrow screens (overflowing its fixed height). Desktop fits
+              within max-w-5xl so the mouse wheel never hits the scroll row. */}
+          <div className="no-scrollbar flex h-[38px] items-center gap-2 overflow-x-auto">
+            {selectedWsId && projects.length > 0 && (
+              <select
+                data-tour="project-select"
+                aria-label={t("dashboard.project")}
+                value={selectedProjectId}
+                onChange={(event) => setSelectedProjectId(event.target.value)}
+                className="shrink-0 cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {selectedWsId && workspaces.length > 0 && (
+              <select
+                data-tour="workspace-select"
+                aria-label={t("dashboard.workspace")}
+                value={selectedWsId}
+                onChange={(event) => setSelectedWsId(event.target.value)}
+                className="shrink-0 cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                {workspaces.map((workspace) => (
+                  <option key={workspace.id} value={workspace.id}>
+                    {workspace.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {!creating && (
+              <Button
+                data-tour="new-workspace"
+                className="shrink-0"
+                onClick={() => setCreating(true)}
+              >
+                <Plus className="size-4" aria-hidden />
+                {t("dashboard.newWorkspace")}
+              </Button>
+            )}
+            {selectedWsId && workspaces.length > 0 && (
+              <TourReopenButton onOpen={() => setTourOpen(true)} />
+            )}
+          </div>
         </div>
 
         {creating && (
@@ -316,16 +312,17 @@ export function DashboardPage() {
 
             {dashboardLoading ? (
               <div className="space-y-4">
-                {/* Skeleton heights match the loaded cards (h-28 stats, ~324px
-                    chart cards) so the section doesn't grow when data lands. */}
+                {/* Skeleton heights match the loaded cards (h-28 stats,
+                    366px chart row — measured on production) so the section
+                    doesn't grow when data lands. */}
                 <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
                   {[0, 1, 2, 3].map((i) => (
                     <Skeleton key={i} className="h-28" />
                   ))}
                 </div>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  <Skeleton className="h-[324px]" />
-                  <Skeleton className="h-[324px]" />
+                  <Skeleton className="h-[366px]" />
+                  <Skeleton className="h-[366px]" />
                 </div>
               </div>
             ) : dashboardError ? (
