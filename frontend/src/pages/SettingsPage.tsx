@@ -12,11 +12,8 @@ import {
 import {
   getNotificationPreferences,
   updateNotificationPreferences,
-  updateSettings,
-  type AppSettings,
 } from "../lib/api";
 import type { NotificationPreferencesResponse } from "../types/api";
-import type { Theme } from "../lib/theme";
 import { useAuth } from "../auth/AuthContext";
 import { useToast } from "../components/ui/ToastProvider";
 import { AppShell } from "../components/AppShell";
@@ -24,7 +21,6 @@ import { Avatar } from "../components/ui/Avatar";
 import { Button } from "../components/ui/Button";
 import { ThemeToggle } from "../components/ui/ThemeToggle";
 import { ConfirmDialog } from "../components/ConfirmDialog";
-import { WebhooksSection } from "../components/settings/WebhooksSection";
 import { PATSection } from "../components/settings/PATSection";
 
 function Switch({
@@ -214,18 +210,7 @@ export function SettingsPage() {
     });
   }
 
-  function saveSettings(patch: Partial<AppSettings>, emailPref: boolean) {
-    void updateSettings({
-      theme: document.documentElement.classList.contains("light")
-        ? "light"
-        : "dark",
-      emailNotifications: emailPref,
-      ...patch,
-    });
-  }
-
-  function handleThemeChange(_next: Theme) {
-    saveSettings({}, emailNotifications);
+  function handleThemeChange() {
     push(t("settings.appearanceUpdated"));
   }
 
@@ -299,7 +284,7 @@ export function SettingsPage() {
                 {t("settings.themeDesc")}
               </p>
             </div>
-            <ThemeToggle onThemeChange={handleThemeChange} />
+            <ThemeToggle onThemeChange={() => handleThemeChange()} />
           </div>
         </section>
 
@@ -372,8 +357,6 @@ export function SettingsPage() {
             </div>
           </div>
         </section>
-
-        <WebhooksSection />
 
         <section
           aria-label={t("settings.dangerZone")}

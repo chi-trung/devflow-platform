@@ -335,7 +335,7 @@ export function CommandPalette({
       label: `@${user.username} · ${user.displayName}`,
       group: t("commandPalette.tasksGroup"),
       keywords: "user member",
-      run: () => {},
+      run: () => navigate("/profile"),
     }));
 
     const others = localMatches.filter((command) => command.group !== t("nav.projects"));

@@ -13,10 +13,6 @@ import { VelocityChart } from "../components/reporting/VelocityChart";
 import { CycleLeadTimeChart } from "../components/reporting/CycleLeadTimeChart";
 import { VelocityTrendChart } from "../components/reporting/VelocityTrendChart";
 import { TeamReportCards } from "../components/reporting/TeamReportCards";
-import { TeamPerformancePanel } from "../components/dashboard/TeamPerformancePanel";
-import { GitHubIntegrationCard } from "../components/github/GitHubIntegrationCard";
-import { TemplatesCard } from "../components/templates/TemplatesCard";
-import { CustomFieldsCard } from "../components/fields/CustomFieldsCard";
 import type {
   ProjectResponse,
   WorkspaceMemberResponse,
@@ -224,22 +220,6 @@ export function ReportsPage() {
           ) : team ? (
             <TeamReportCards data={team} members={members ?? []} />
           ) : null}
-
-          <TeamPerformancePanel workspaceId={workspaceId} projectId={projectId} />
-
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-            <GitHubIntegrationCard workspaceId={workspaceId} projectId={projectId} />
-            <TemplatesCard
-              workspaceId={workspaceId}
-              projectId={projectId}
-              onChanged={() => undefined}
-            />
-            <CustomFieldsCard
-              workspaceId={workspaceId}
-              projectId={projectId}
-              onChanged={() => undefined}
-            />
-          </div>
 
           {!burndownLoading && !velocityLoading && !teamLoading && (
             <p className="flex items-center gap-1.5 pb-2 text-xs text-muted-foreground">

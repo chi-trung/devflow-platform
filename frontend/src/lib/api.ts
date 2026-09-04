@@ -492,20 +492,6 @@ export async function importTasks(
   );
 }
 
-export interface AppSettings {
-  theme: string;
-  emailNotifications: boolean;
-}
-
-export async function updateSettings(input: AppSettings): Promise<void> {
-  try {
-    localStorage.setItem("devflow.settings", JSON.stringify(input));
-    if (input.emailNotifications !== undefined) {
-      localStorage.setItem("devflow.settings.email", String(input.emailNotifications));
-    }
-  } catch {}
-}
-
 export function getDashboard(workspaceId: string): Promise<DashboardData> {
   return api<DashboardData>(`/workspaces/${workspaceId}/dashboard`);
 }
