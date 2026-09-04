@@ -330,7 +330,11 @@ export function DashboardPage() {
                   <Skeleton className="h-[366px]" />
                   <Skeleton className="h-[366px]" />
                 </div>
-                {selectedProjectId && <Skeleton className="h-[267px]" />}
+                {/* Unconditional: selectedProjectId resolves from a separate
+                    projects fetch; gating this skeleton on it made the slot
+                    appear mid-load (+267px shift). The rare workspace with no
+                    projects shrinks instead — acceptable, far less common. */}
+                <Skeleton className="h-[267px]" />
                 <Skeleton className="h-[150px]" />
               </div>
             ) : dashboardError ? (
