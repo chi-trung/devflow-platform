@@ -345,5 +345,101 @@ test.describe("DevFlow E2E", () => {
         { waitForSelector: "main" },
       );
     });
+
+    test("Knowledge page", async ({ page }) => {
+      await assertPageLoads(
+        page,
+        `/workspaces/${workspaceId}/projects/${projectId}/knowledge`,
+        { waitForSelector: "main" },
+      );
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Knowledge CRUD
+  // -----------------------------------------------------------------------
+
+  test.describe("Knowledge page", () => {
+    test("create, edit, and delete a knowledge entry", async ({ page }) => {
+      const title = `E2E ADR ${Date.now()}`;
+      const updatedTitle = `${title} (edited)`;
+
+      await page.goto(
+        `/workspaces/${workspaceId}/projects/${projectId}/knowledge`,
+        { waitUntil: "networkidle" },
+      );
+      await expect(page.getByRole("heading", { name: "Knowledge" })).toBeVisible({
+        timeout: 10_000,
+      });
+
+      // Create
+      await page.getByRole("button", { name: "New Entry" }).click();
+      await page.getByPlaceholder("e.g. Why we chose Postgres").fill(title);
+      await page
+        .getByPlaceholder("Context, decision, and how to apply it…")
+        .fill("We chose Postgres because row-level locking fits our workload.");
+      await page.getByRole("button", { name: "Create" }).click();
+
+      // It should appear in the Active section
+      const card = page.locator("li", { hasText: title }).first();
+      await expect(card).toBeVisible({ timeout: 10_000 });
+
+      // Edit (also clears a drift flag on the server)
+      await card.hover();
+      await card.getByRole("button", { name: "Edit Entry" }).click();
+      await page
+        .getByPlaceholder("e.g. Why we chose Postgres")
+        .fill(updatedTitle);
+      await page.getByRole("button", { name: "Save" }).click();
+      await expect(
+        page.locator("li", { hasText: updatedTitle }).first(),
+      ).toBeVisible({ timeout: 10_000 });
+
+      // Delete
+      const editedCard = page
+        .locator("li", { hasText: updatedTitle })
+        .first();
+      await editedCard.hover();
+      await editedCard.getByRole("button", { name: "Delete entry" }).click();
+      await page.getByRole("button", { name: "Delete" }).last().click();
+      await expect(
+        page.locator("li", { hasText: updatedTitle }),
+      ).toHaveCount(0, { timeout: 10_000 });
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Notifications filters
+  // -----------------------------------------------------------------------
+
+  test.describe("Notifications page", () => {
+    test("filter tabs render and switch without errors", async ({ page }) => {
+      const logs = watchPage(page);
+      await page.goto("/notifications", { waitUntil: "networkidle" });
+      await expect(
+        page.getByRole("heading", { name: "Notifications" }),
+      ).toBeVisible({ timeout: 10_000 });
+
+      // The mentions filter is now server-side — switch tabs and confirm the
+      // list re-renders without console errors or failed API calls.
+      for (const tab of ["Unread", "Read", "Mentions", "All"]) {
+        await page.getByRole("button", { name: tab, exact: true }).click();
+        await page.waitForTimeout(600);
+        await expect(
+          page.getByRole("heading", { name: "Notifications" }),
+        ).toBeVisible();
+      }
+
+      const bad = logs.filter(
+        (l) =>
+          !(
+            l.type === "api-4xx" &&
+            (l.message.includes("/hubs/") ||
+              l.message.includes("/auth/me") ||
+              l.message.includes("404"))
+          ),
+      );
+      expect(bad).toEqual([]);
+    });
   });
 });
