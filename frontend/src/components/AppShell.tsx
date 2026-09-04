@@ -74,6 +74,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // pinned state; every layout branch reads `railCollapsed`.
   const railCollapsed = collapsed;
 
+  // Collapsed-rail design system (A33): every clickable becomes a centered
+  // 36px square cell so icons, emoji tiles and the avatar share one optical
+  // grid instead of the old mixed-size leftovers.
+  const railCell = railCollapsed
+    ? "lg:mx-auto lg:flex lg:h-9 lg:w-9 lg:items-center lg:justify-center lg:p-0"
+    : "";
+  // 20px icons read better inside the 36px cells than the 16px defaults.
+  const railIcon = railCollapsed ? "lg:size-5" : "";
+  // Hairline between nav groups replaces the hidden section headings.
+  const railDivider = railCollapsed
+    ? "lg:border-t lg:border-border/60 lg:pt-3"
+    : "";
+
   const workspaceId = location.pathname.match(
     /^\/workspaces\/([0-9a-f-]{36})/i,
   )?.[1];
@@ -358,13 +371,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className={`flex items-center justify-between pr-2 ${railCollapsed ? "lg:justify-center lg:pr-0" : ""}`}>
           <Link
             to="/"
-            className={`px-4 py-4 ${railCollapsed ? "lg:px-0" : ""}`}
+            className={`flex items-center px-4 py-4 ${railCollapsed ? "lg:h-14 lg:justify-center lg:px-0 lg:py-0" : ""}`}
             aria-label="DevFlow home"
             title="DevFlow"
           >
             <Logo className={`${railCollapsed ? "lg:hidden" : ""}`} />
             <span className={railCollapsed ? "hidden lg:inline" : "hidden"}>
-              <BrandMark size="md" />
+              <BrandMark size="lg" />
             </span>
           </Link>
           <button
@@ -377,17 +390,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        <nav className={`flex-1 space-y-6 overflow-y-auto px-3 pb-4 ${railCollapsed ? "lg:space-y-2 lg:px-2" : ""}`}>
+        <nav className={`flex-1 space-y-6 overflow-y-auto px-3 pb-4 ${railCollapsed ? "lg:space-y-3 lg:px-2" : ""}`}>
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
             title={t("nav.search")}
             aria-label={t("nav.searchPlaceholder")}
-            className={`flex w-full cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground ${
-              railCollapsed ? "lg:justify-center lg:px-0 lg:py-2" : ""
-            }`}
+            className={`flex w-full cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground ${railCell}`}
           >
-            <Search className="size-3.5" aria-hidden />
+            <Search className={`size-3.5 ${railIcon}`} aria-hidden />
             <span className={`flex-1 text-left ${railCollapsed ? "lg:hidden" : ""}`}>
               {t("nav.searchPlaceholder")}
             </span>
@@ -396,11 +407,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </kbd>
           </button>
 
-          <section data-tour="sidebar-workspaces">
+          <section data-tour="sidebar-workspaces" className={railDivider}>
             <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "lg:hidden" : ""}`}>
               {t("nav.workspaces")}
             </h2>
-            <ul className="space-y-0.5">
+            <ul className="space-y-1">
               {(workspaces ?? []).map((workspace) => {
                 const active = workspace.id === workspaceId;
                 return (
@@ -409,18 +420,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       to={`/workspaces/${workspace.id}`}
                       aria-current={active ? "page" : undefined}
                       title={railCollapsed ? workspace.name : undefined}
-                      className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors duration-150 ${
-                        railCollapsed ? "lg:justify-center" : ""
-                      } ${
+                      className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors duration-150 ${railCell} ${
                         active
                           ? "bg-elevated font-semibold text-foreground"
                           : "text-muted-foreground hover:bg-elevated/60 hover:text-foreground"
                       }`}
                     >
                       {workspace.emoji ? (
-                        <EmojiTile emoji={workspace.emoji} size="sm" />
+                        <EmojiTile
+                          emoji={workspace.emoji}
+                          size="sm"
+                          className={railCollapsed ? "lg:size-8 lg:text-lg" : ""}
+                        />
                       ) : (
-                        <Avatar name={workspace.name} id={workspace.id} />
+                        <Avatar
+                          name={workspace.name}
+                          id={workspace.id}
+                          className={railCollapsed ? "lg:size-8 lg:text-xs" : ""}
+                        />
                       )}
                       <span className={`truncate ${railCollapsed ? "lg:hidden" : ""}`}>{workspace.name}</span>
                     </Link>
@@ -437,21 +454,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </section>
 
           {workspaceId && (
-            <section>
+            <section className={railDivider}>
               <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "lg:hidden" : ""}`}>
                 {t("nav.projects")}
               </h2>
-              <ul className="space-y-0.5">
+              <ul className="space-y-1">
                 {(projects ?? []).map((project) => (
                   <li key={project.id}>
                     <Link
                       to={`/workspaces/${workspaceId}/projects/${project.id}`}
                       title={railCollapsed ? project.name : undefined}
-                      className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated/60 hover:text-foreground ${
-                        railCollapsed ? "lg:justify-center" : ""
-                      }`}
+                      className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated/60 hover:text-foreground ${railCell}`}
                     >
-                      <EmojiTile emoji={project.emoji} size="sm" />
+                      <EmojiTile
+                        emoji={project.emoji}
+                        size="sm"
+                        className={railCollapsed ? "lg:size-8 lg:text-lg" : ""}
+                      />
                       <span className={`truncate ${railCollapsed ? "lg:hidden" : ""}`}>{project.name}</span>
                     </Link>
                   </li>
@@ -461,11 +480,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
 
           {workspaceId && projectId && (
-            <section>
+            <section className={railDivider}>
               <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "lg:hidden" : ""}`}>
                 {t("nav.projectNav")}
               </h2>
-              <ul className="space-y-0.5">
+              <ul className="space-y-1">
                 {projectNavItems.map(({ to, icon: Icon, label, match }) => {
                   const active = match.test(location.pathname);
                   return (
@@ -474,15 +493,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         to={to}
                         aria-current={active ? "page" : undefined}
                         title={railCollapsed ? label : undefined}
-                        className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors duration-150 ${
-                          railCollapsed ? "lg:justify-center" : ""
-                        } ${
+                        className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors duration-150 ${railCell} ${
                           active
                             ? "bg-elevated font-semibold text-foreground"
                             : "text-muted-foreground hover:bg-elevated/60 hover:text-foreground"
                         }`}
                       >
-                        <Icon className="size-4 shrink-0" aria-hidden />
+                        <Icon className={`size-4 shrink-0 ${railIcon}`} aria-hidden />
                         <span className={`truncate ${railCollapsed ? "lg:hidden" : ""}`}>{label}</span>
                       </Link>
                     </li>
@@ -493,24 +510,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
 
           {workspaceId && (
-            <section>
+            <section className={railDivider}>
               <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "lg:hidden" : ""}`}>
                 {t("nav.personal")}
               </h2>
-              <ul className="space-y-0.5">
+              <ul className="space-y-1">
                 <li>
                   <Link
                     to={`/workspaces/${workspaceId}/my-tasks`}
                     title={railCollapsed ? t("nav.myTasks") : undefined}
-                    className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors duration-150 ${
-                      railCollapsed ? "lg:justify-center" : ""
-                    } ${
+                    className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors duration-150 ${railCell} ${
                       location.pathname.endsWith("/my-tasks")
                         ? "bg-elevated font-semibold text-foreground"
                         : "text-muted-foreground hover:bg-elevated/60 hover:text-foreground"
                     }`}
                   >
-                    <ListTodo className="size-4" aria-hidden />
+                    <ListTodo className={`size-4 ${railIcon}`} aria-hidden />
                     <span className={`${railCollapsed ? "lg:hidden" : ""}`}>{t("nav.myTasks")}</span>
                   </Link>
                 </li>
@@ -518,15 +533,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </section>
           )}
 
-          <section>
+          <section className={railDivider}>
             <Link
               to="/"
               title={railCollapsed ? t("nav.newWorkspace") : undefined}
-              className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated/60 hover:text-foreground ${
-                railCollapsed ? "lg:justify-center" : ""
-              }`}
+              className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated/60 hover:text-foreground ${railCell}`}
             >
-              <Plus className="size-4" aria-hidden />
+              <Plus className={`size-4 ${railIcon}`} aria-hidden />
               <span className={`${railCollapsed ? "lg:hidden" : ""}`}>{t("nav.newWorkspace")}</span>
             </Link>
           </section>
@@ -538,15 +551,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           className={`relative shrink-0 border-t border-border py-2.5 ${railCollapsed ? "lg:px-2" : "px-3"}`}
         >
           {currentUser && (
-            <div className={`flex items-center gap-1.5 ${railCollapsed ? "lg:justify-center" : ""}`}>
-              <ApiStatusDot />
+            <div className={`flex items-center gap-1.5 ${railCollapsed ? "lg:flex-col lg:gap-2" : ""}`}>
+              <ApiStatusDot className={railCollapsed ? "lg:hidden" : ""} />
               <NotificationsPanel
                 workspaceId={workspaceId}
                 direction="up"
+                triggerClassName={railCell}
               />
-              {/* In the 64px rail the full avatar + name + chevron trigger overflows
-                  (long Gmail addresses). Collapse it to the icon-only form. */}
-              <UserMenu direction="up" compact={railCollapsed} />
+              {/* In the 72px rail the full avatar + name + chevron trigger overflows
+                  (long Gmail addresses). Collapse it to the avatar-only form, with
+                  the API warmth dot hung off its corner. */}
+              <UserMenu
+                direction="up"
+                compact={railCollapsed}
+                icon={
+                  railCollapsed ? (
+                    <span className="relative inline-flex">
+                      <Avatar
+                        name={currentUser.username}
+                        id={currentUser.id}
+                        className="size-8 text-xs"
+                      />
+                      <ApiStatusDot className="absolute -right-0.5 -bottom-0.5 ring-2 ring-surface" />
+                    </span>
+                  ) : undefined
+                }
+                triggerClassName={railCell}
+              />
             </div>
           )}
           <button
@@ -554,11 +585,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             aria-label={collapsed ? t("nav.expand") : t("nav.collapse")}
             title={collapsed ? t("nav.expand") : t("nav.collapse")}
             onClick={() => setCollapsed((v) => !v)}
-            className={`hidden w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground lg:flex ${
-              railCollapsed ? "lg:justify-center" : ""
-            }`}
+            className={`hidden w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground lg:flex ${railCell}`}
           >
-            {collapsed ? <PanelLeftOpen className="size-4 shrink-0" aria-hidden /> : <PanelLeftClose className="size-4 shrink-0" aria-hidden />}
+            {collapsed ? <PanelLeftOpen className={`size-4 shrink-0 ${railIcon}`} aria-hidden /> : <PanelLeftClose className={`size-4 shrink-0 ${railIcon}`} aria-hidden />}
             <span className={`${railCollapsed ? "hidden lg:hidden" : ""}`}>{collapsed ? t("nav.expand") : t("nav.collapse")}</span>
           </button>
         </div>

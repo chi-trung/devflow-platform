@@ -12,7 +12,12 @@ const DOT_COLOR: Record<ApiWarmth, string> = {
   offline: "bg-destructive",
 };
 
-export function ApiStatusDot() {
+interface ApiStatusDotProps {
+  /** Extra positioning classes (e.g. hung off the avatar corner in the rail). */
+  className?: string;
+}
+
+export function ApiStatusDot({ className = "" }: ApiStatusDotProps) {
   const [warmth, setWarmth] = useState<ApiWarmth>(getApiWarmth);
 
   useEffect(() => startApiKeepalive(), []);
@@ -29,7 +34,7 @@ export function ApiStatusDot() {
             ? "API is waking up…"
             : "You are offline"
       }
-      className={`size-2 shrink-0 rounded-full ${DOT_COLOR[warmth]}`}
+      className={`size-2 shrink-0 rounded-full ${DOT_COLOR[warmth]} ${className}`}
     />
   );
 }

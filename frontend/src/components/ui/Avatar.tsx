@@ -20,9 +20,16 @@ interface AvatarProps {
   size?: "sm" | "md";
   /** When true, renders a green presence dot at the bottom-right corner. */
   online?: boolean;
+  className?: string;
 }
 
-export function Avatar({ name, id, size = "sm", online = false }: AvatarProps) {
+export function Avatar({
+  name,
+  id,
+  size = "sm",
+  online = false,
+  className = "",
+}: AvatarProps) {
   const initials = name
     .split(/[\s_-]+/)
     .filter(Boolean)
@@ -39,7 +46,7 @@ export function Avatar({ name, id, size = "sm", online = false }: AvatarProps) {
     <span className="relative inline-flex shrink-0">
       <span
         aria-hidden
-        className={`flex select-none items-center justify-center rounded-lg font-display font-semibold ${tone} ${sizeClasses}`}
+        className={`flex select-none items-center justify-center rounded-lg font-display font-semibold ${tone} ${sizeClasses} ${className}`}
       >
         {initials || "?"}
       </span>

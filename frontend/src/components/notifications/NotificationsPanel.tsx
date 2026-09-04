@@ -15,11 +15,14 @@ type NotificationFilter = "all" | "unread" | "read" | "mentions";
 interface NotificationsPanelProps {
   workspaceId?: string | null;
   direction?: "up" | "down";
+  /** Extra classes on the bell trigger (e.g. matching rail hit-area). */
+  triggerClassName?: string;
 }
 
 export function NotificationsPanel({
   workspaceId,
   direction = "down",
+  triggerClassName = "",
 }: NotificationsPanelProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -132,7 +135,7 @@ export function NotificationsPanel({
         }}
         aria-label={`${t("notification.notifications")}${unreadCount > 0 ? ` ${t("notification.unreadSuffix", { count: unreadCount })}` : ""}`}
         aria-expanded={open}
-        className="relative rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
+        className={`relative rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground ${triggerClassName}`}
       >
         <Bell className="size-4" aria-hidden />
         {unreadCount > 0 && (

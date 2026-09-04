@@ -9,9 +9,18 @@ import { Avatar } from "../ui/Avatar";
 interface UserMenuProps {
   direction?: "up" | "down";
   compact?: boolean;
+  /** Extra classes on the trigger (e.g. matching rail hit-area). */
+  triggerClassName?: string;
+  /** Optional trigger content for the compact (icon-only) form. */
+  icon?: React.ReactNode;
 }
 
-export function UserMenu({ direction = "down", compact = false }: UserMenuProps) {
+export function UserMenu({
+  direction = "down",
+  compact = false,
+  triggerClassName = "",
+  icon,
+}: UserMenuProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -80,12 +89,12 @@ export function UserMenu({ direction = "down", compact = false }: UserMenuProps)
         aria-expanded={open}
         className={
           compact
-            ? "flex items-center gap-1 rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
-            : "flex min-w-0 items-center gap-2 rounded-lg px-1 py-1 text-left transition-colors duration-150 hover:bg-elevated"
+            ? `flex items-center gap-1 rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground ${triggerClassName}`
+            : `flex min-w-0 items-center gap-2 rounded-lg px-1 py-1 text-left transition-colors duration-150 hover:bg-elevated ${triggerClassName}`
         }
       >
         {compact ? (
-          <CircleUserRound className="size-4" aria-hidden />
+          icon ?? <CircleUserRound className="size-4" aria-hidden />
         ) : (
           <>
             <Avatar
