@@ -70,10 +70,10 @@ function DefinitionOfDoneField({
   return (
     <label className="flex flex-col gap-1 text-sm font-medium">
       <span className="inline-flex items-center gap-1.5">
-        {t("task.definitionOfDone")}
+        {t("board.definitionOfDone")}
         {allMet && (
           <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-500">
-            {t("task.dodMet")}
+            {t("board.dodMet")}
           </span>
         )}
       </span>
@@ -81,7 +81,7 @@ function DefinitionOfDoneField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         rows={3}
-        placeholder={`- [ ] ${t("task.dodPlaceholder")}`}
+        placeholder={`- [ ] ${t("board.dodPlaceholder")}`}
         className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
       />
       {/* Rendered checklist preview */}

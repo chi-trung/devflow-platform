@@ -443,6 +443,8 @@
   "bulkAssignMember": "Bulk assign member",
   "deleteTasksConfirm_one": "Delete {{count}} task?",
   "deleteTasksConfirm_other": "Delete {{count}} tasks?",
+  "selectAllColumn": "Select all tasks in {{title}}",
+  "updateSprintFailed": "Failed to update sprint.",
   "deletedTasksCount_one": "Deleted {{count}} task",
   "deletedTasksCount_other": "Deleted {{count}} tasks",
   "movedTasksCount_one": "Moved {{count}} task",
@@ -948,6 +950,7 @@
   "prStatusLabel": "Status",
   "prAuthorLabel": "Author",
   "prAuthorPlaceholder": "Author username",
+  "linkedPrs": "Linked pull requests",
   "addPrFailed": "Failed to add pull request.",
   "deletePrFailed": "Failed to delete pull request.",
   "loadFailed": "Failed to load GitHub integration.",
@@ -1180,7 +1183,8 @@
   "cleanupTitle": "Clean up read notifications?",
   "cleanupMessage": "This will permanently remove all notifications you have already read.",
   "cleanupConfirm": "Clean up",
-  "settings": "Notification settings"
+  "settings": "Notification settings",
+  "loadFailed": "Failed to load notifications."
  },
  "notificationPage": {
   "filterAll": "All",
@@ -1431,7 +1435,10 @@
   "member": "Member",
   "retry": "Retry",
   "done": "Done",
-  "saving": "Saving…"
+  "saving": "Saving…",
+  "close": "Close",
+  "edit": "Edit",
+  "refresh": "Refresh"
  },
  "graph": {
   "aria": "Dependency graph",
@@ -1684,6 +1691,7 @@
   "dlqTitle": "Dead Letter Queue",
   "dlqDescription": "Webhook messages that failed permanently after all retries. Inspect and replay them.",
   "dlqEmpty": "No dead-lettered messages",
+  "dlqEmptyDescription": "Messages that fail delivery repeatedly land here so you can inspect and re-queue them.",
   "dlqLoadFailed": "Failed to load dead-letter queue",
   "type": "Type",
   "error": "Error",
@@ -1708,6 +1716,7 @@
   "title": "Project members",
   "description": "Manage who has access to this project.",
   "empty": "No members yet",
+  "emptyDescription": "Invite workspace members to collaborate on this project.",
   "addTitle": "Add project member",
   "addLabel": "Member",
   "addPlaceholder": "Search workspace members…",

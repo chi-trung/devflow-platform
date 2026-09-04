@@ -23,8 +23,8 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label={t("emojiPicker.label")}
-        title={t("emojiPicker.label")}
+        aria-label={t("ui.emojiPicker.label")}
+        title={t("ui.emojiPicker.label")}
         className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-border bg-surface text-xl transition-colors duration-150 hover:border-border-strong"
       >
         {value ?? "🙂"}
@@ -65,7 +65,7 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
                 className="mt-2 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border px-2 py-1.5 text-xs text-muted-foreground transition-colors duration-150 hover:text-destructive"
               >
                 <X className="size-3" aria-hidden />
-                {t("emojiPicker.clear")}
+                {t("ui.emojiPicker.clear")}
               </button>
             )}
           </div>
@@ -84,7 +84,7 @@ export function CoverColorPicker({ value, onChange }: CoverColorPickerProps) {
   const { t } = useTranslation();
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground">{t("coverColor.label")}</span>
+      <span className="text-xs text-muted-foreground">{t("ui.coverColor.label")}</span>
       <div className="flex items-center gap-1.5">
         {COVER_COLOR_KEYS.map((key) => {
           const gradient = COVER_GRADIENTS[key];
@@ -94,7 +94,7 @@ export function CoverColorPicker({ value, onChange }: CoverColorPickerProps) {
               key={key}
               type="button"
               onClick={() => onChange(active ? null : key)}
-              aria-label={`${t("coverColor.label")} ${key}`}
+              aria-label={`${t("ui.coverColor.label")} ${key}`}
               title={key}
               className={`h-6 w-6 cursor-pointer rounded-full bg-gradient-to-br ${gradient} transition-transform duration-150 hover:scale-110 ${
                 active ? "ring-2 ring-primary ring-offset-2 ring-offset-card" : ""
@@ -106,7 +106,7 @@ export function CoverColorPicker({ value, onChange }: CoverColorPickerProps) {
           <button
             type="button"
             onClick={() => onChange(null)}
-            aria-label={t("emojiPicker.clear")}
+            aria-label={t("ui.emojiPicker.clear")}
             className="cursor-pointer rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-destructive"
           >
             <X className="size-3.5" aria-hidden />

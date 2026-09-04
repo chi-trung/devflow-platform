@@ -515,7 +515,7 @@ export function WorkspacePage() {
                 </Field>
                 <div className="flex flex-wrap items-center gap-6">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{t("emojiPicker.label")}</span>
+                    <span className="text-xs text-muted-foreground">{t("ui.emojiPicker.label")}</span>
                     <EmojiPicker value={emoji} onChange={setEmoji} />
                   </div>
                   <CoverColorPicker value={coverColor} onChange={setCoverColor} />
@@ -914,7 +914,7 @@ export function WorkspacePage() {
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{t("emojiPicker.label")}</span>
+              <span className="text-xs text-muted-foreground">{t("ui.emojiPicker.label")}</span>
               <EmojiPicker value={editEmoji} onChange={setEditEmoji} />
             </div>
             <CoverColorPicker value={editCoverColor} onChange={setEditCoverColor} />
@@ -961,7 +961,7 @@ export function WorkspacePage() {
             </Field>
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{t("emojiPicker.label")}</span>
+            <span className="text-xs text-muted-foreground">{t("ui.emojiPicker.label")}</span>
             <EmojiPicker value={wsEditEmoji} onChange={setWsEditEmoji} />
           </div>
         </Dialog>

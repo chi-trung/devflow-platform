@@ -443,6 +443,8 @@
   "bulkAssignMember": "Gán thành viên hàng loạt",
   "deleteTasksConfirm_one": "Xóa {{count}} task?",
   "deleteTasksConfirm_other": "Xóa {{count}} task?",
+  "selectAllColumn": "Chọn tất cả task trong {{title}}",
+  "updateSprintFailed": "Cập nhật sprint thất bại.",
   "deletedTasksCount_one": "Đã xóa {{count}} task",
   "deletedTasksCount_other": "Đã xóa {{count}} task",
   "movedTasksCount_one": "Đã chuyển {{count}} task",
@@ -948,6 +950,7 @@
   "prStatusLabel": "Trạng thái",
   "prAuthorLabel": "Tác giả",
   "prAuthorPlaceholder": "Tên người dùng tác giả",
+  "linkedPrs": "Pull request đã liên kết",
   "addPrFailed": "Không thể thêm pull request.",
   "deletePrFailed": "Không thể xóa pull request.",
   "loadFailed": "Không tải được tích hợp GitHub.",
@@ -1180,7 +1183,8 @@
   "cleanupTitle": "Dọn dẹp thông báo đã đọc?",
   "cleanupMessage": "Thao tác này sẽ xóa vĩnh viễn tất cả thông báo bạn đã đọc.",
   "cleanupConfirm": "Dọn dẹp",
-  "settings": "Cài đặt thông báo"
+  "settings": "Cài đặt thông báo",
+  "loadFailed": "Tải thông báo thất bại."
  },
  "notificationPage": {
   "filterAll": "Tất cả",
@@ -1431,7 +1435,10 @@
   "member": "Thành viên",
   "retry": "Thử lại",
   "done": "Xong",
-  "saving": "Đang lưu…"
+  "saving": "Đang lưu…",
+  "close": "Đóng",
+  "edit": "Sửa",
+  "refresh": "Làm mới"
  },
  "graph": {
   "aria": "Biểu đồ phụ thuộc",
@@ -1684,6 +1691,7 @@
   "dlqTitle": "Hàng đợi thư chết (DLQ)",
   "dlqDescription": "Tin nhắn webhook thất bại vĩnh viễn sau khi đã thử lại hết lần. Kiểm tra và phát lại chúng.",
   "dlqEmpty": "Không có tin nhắn nào trong hàng đợi thư chết",
+  "dlqEmptyDescription": "Tin nhắn gửi thất bại nhiều lần sẽ nằm ở đây để bạn xem lại và gửi lại.",
   "dlqLoadFailed": "Không tải được hàng đợi thư chết",
   "type": "Loại",
   "error": "Lỗi",
@@ -1707,6 +1715,7 @@
  "projectMember": {
   "title": "Thành viên dự án",
   "description": "Quản lý ai có quyền truy cập vào dự án này.",
+  "emptyDescription": "Mời thành viên workspace cùng cộng tác trên dự án này.",
   "empty": "Chưa có thành viên nào",
   "addTitle": "Thêm thành viên dự án",
   "addLabel": "Thành viên",

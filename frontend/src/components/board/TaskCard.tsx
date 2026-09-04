@@ -214,11 +214,11 @@ export function TaskCard({
         )}
         {dodMet && (
           <span
-            title={t("task.dodMet")}
+            title={t("board.dodMet")}
             className="flex items-center gap-1 rounded-md bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-500"
           >
             <Check className="size-3" aria-hidden />
-            {t("task.dodMet")}
+            {t("board.dodMet")}
           </span>
         )}
         {(customFields ?? [])

@@ -95,7 +95,7 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
             type="button"
             onClick={() => void handleUnlink()}
             disabled={busy}
-            title={t("github.unlinkRepoTitle")}
+            title={t("github.unlinkTitle")}
             className="ml-auto inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors duration-150 hover:border-destructive hover:text-destructive disabled:opacity-40"
           >
             <Unlink className="size-3" aria-hidden />
@@ -112,7 +112,7 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
             value={repoUrl}
             onChange={(event) => setRepoUrl(event.target.value)}
             placeholder="https://github.com/org/repo"
-            aria-label={t("github.repoUrlAria")}
+            aria-label={t("github.repoUrlLabel")}
             className="min-w-0 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
           />
           <button
@@ -121,7 +121,7 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
             className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium transition-colors duration-150 hover:border-primary disabled:opacity-40"
           >
             <Link2 className="size-3.5" aria-hidden />
-            {busy ? "…" : t("github.linkRepo")}
+            {busy ? "…" : t("github.link")}
           </button>
         </form>
       ) : (
@@ -138,10 +138,10 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
           <div className="flex flex-col gap-1">
             <p className="flex items-center gap-1.5 pt-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               <GitPullRequest className="size-3" aria-hidden />
-              {t("github.pullRequests", { count: prs.length })}
+              {t("github.linkedPrs", { count: prs.length })}
             </p>
             {prs.length === 0 ? (
-              <p className="text-xs text-muted-foreground">{t("github.noPrs")}</p>
+              <p className="text-xs text-muted-foreground">{t("github.emptyPrs")}</p>
             ) : (
               prs.slice(0, 6).map((pr) => (
                 <a

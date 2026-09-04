@@ -306,11 +306,6 @@ export function ActivitiesPage() {
                             <span className="text-muted-foreground"> {activity.action} </span>
                             <span className="text-foreground">{activity.target}</span>
                           </p>
-                          {activity.taskItemId && (
-                            <p className="mt-1 truncate text-xs text-muted-foreground">
-                              Task: {activity.taskItemId}
-                            </p>
-                          )}
                         </div>
                         <time className="shrink-0 text-xs text-muted-foreground">
                           {formatDate(activity.createdAtUtc)}

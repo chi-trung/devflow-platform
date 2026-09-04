@@ -898,7 +898,7 @@ export function BoardPage() {
                 className="px-2 sm:px-3"
               >
                 <Network className="size-4" aria-hidden />
-                <span className="hidden xs:inline sm:inline">{t("reports.burndown")}</span>
+                <span className="hidden xs:inline sm:inline">{t("board.dependencyGraph")}</span>
               </Button>
               <button
                 type="button"

@@ -440,7 +440,7 @@ export function WebhooksPage() {
               <EmptyState
                 icon={<Globe className="size-8 text-muted-foreground" aria-hidden />}
                 title={t("outbox.dlqEmpty")}
-                description={t("outbox.dlqDescription")}
+                description={t("outbox.dlqEmptyDescription")}
               />
             ) : (
               <ul className="flex flex-col gap-2">

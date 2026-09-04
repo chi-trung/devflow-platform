@@ -127,7 +127,7 @@ export function TemplatesPage() {
                 {t("template.title")}
               </h1>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                {t("template.description")}
+                {t("template.emptyDescription")}
               </p>
             </div>
             {!creating && (
@@ -158,7 +158,7 @@ export function TemplatesPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-medium">
-                  {t("template.nameLabel")}
+                  {t("template.name")}
                 </label>
                 <input
                   type="text"
