@@ -862,6 +862,8 @@
   "exportTabAria": "Export tab",
   "exportDescription": "Download the project's tasks for offline analysis.",
   "exportRangeHint": "Exports respect your filters on the board, not the date range above.",
+  "exportCsvDesc": "Spreadsheet-ready rows of every task.",
+  "exportJsonDesc": "Full structured backup of task data.",
   "cycleTimeP50": "Cycle P50",
   "cycleTimeP90": "Cycle P90",
   "leadTimeP50": "Lead P50",

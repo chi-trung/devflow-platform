@@ -9,6 +9,7 @@ import { Input } from "../components/ui/Input";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
+import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { useToast } from "../components/ui/ToastProvider";
 import { KnowledgeEntryCard } from "../components/knowledge/KnowledgeEntryCard";
 import { api, createKnowledgeEntry, deleteKnowledgeEntry, getKnowledgeEntries, supersedeKnowledgeEntry, updateKnowledgeEntry } from "../lib/api";
@@ -193,9 +194,7 @@ export function KnowledgePage() {
 
         {error && (
           <div className="mb-4">
-            <div className="rounded-xl border border-border bg-surface p-4 text-sm text-destructive">
-              {error}
-            </div>
+            <ErrorAlert message={error} />
           </div>
         )}
 
@@ -332,8 +331,12 @@ export function KnowledgePage() {
             {/* Active entries */}
             {activeEntries.length > 0 && (
               <div>
-                <h2 className="mb-3 font-display text-sm font-semibold text-muted-foreground">
+                <h2 className="mb-3 flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {t("knowledge.activeEntries")}
+                  <span className="rounded-full bg-elevated px-1.5 py-0.5 font-mono text-[10px]">
+                    {activeEntries.length}
+                  </span>
+                  <span className="h-px flex-1 bg-border" />
                 </h2>
                 <ul className="flex flex-col gap-3">
                   {activeEntries.map((entry) => (
@@ -353,8 +356,12 @@ export function KnowledgePage() {
             {/* Retired entries */}
             {retiredEntries.length > 0 && (
               <div>
-                <h2 className="mb-3 font-display text-sm font-semibold text-muted-foreground">
-                  {t("knowledge.retiredEntries")} ({retiredEntries.length})
+                <h2 className="mb-3 flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("knowledge.retiredEntries")}
+                  <span className="rounded-full bg-elevated px-1.5 py-0.5 font-mono text-[10px]">
+                    {retiredEntries.length}
+                  </span>
+                  <span className="h-px flex-1 bg-border" />
                 </h2>
                 <ul className="flex flex-col gap-3">
                   {retiredEntries.map((entry) => (

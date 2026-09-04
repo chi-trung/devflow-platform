@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Plus, Pencil, Trash2, GripVertical, List, Flag, Link2, X } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, Flag, List, Link2, X, Zap } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
@@ -8,6 +8,7 @@ import { Badge } from "../components/ui/Badge";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
+import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { useToast } from "../components/ui/ToastProvider";
 import { EpicRoadmap } from "../components/epic/EpicRoadmap";
 import {
@@ -277,9 +278,7 @@ export function EpicsPage() {
 
         {error && (
           <div className="mb-4">
-            <div className="rounded-xl border border-border bg-surface p-4 text-sm text-destructive">
-              {error}
-            </div>
+            <ErrorAlert message={error} />
           </div>
         )}
 
@@ -415,15 +414,14 @@ export function EpicsPage() {
               return (
                 <li
                   key={epic.id}
-                  className="group rounded-xl border border-border bg-card p-4 transition-colors duration-200 hover:border-border-strong"
+                  className="group rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <GripVertical
-                          className="size-4 text-muted-foreground"
-                          aria-hidden
-                        />
+                        <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                          <Zap className="size-3.5" aria-hidden />
+                        </span>
                         <h3 className="truncate text-sm font-semibold">
                           {epic.name}
                         </h3>

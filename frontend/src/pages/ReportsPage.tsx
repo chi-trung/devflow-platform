@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Download, FileJson, FileSpreadsheet, LineChart } from "lucide-react";
+import {
+  ArrowDownToLine,
+  ArrowLeft,
+  CalendarRange,
+  Download,
+  FileJson,
+  FileSpreadsheet,
+} from "lucide-react";
 import { api, exportTasks, getBurndown, getTeamReport, getVelocity, getCycleLeadTime, getVelocityHistory } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { useToast } from "../components/ui/ToastProvider";
@@ -114,17 +121,42 @@ export function ReportsPage() {
           {t("board.projects")}
         </Link>
 
-        <div className="mb-5">
-          <h1 className="font-display text-2xl font-semibold tracking-tight">
-            {project ? (
-              t("reports.titleWithName", { name: project.name })
-            ) : (
-              <Skeleton className="h-8 w-56" />
-            )}
-          </h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {t("reports.description")}
-          </p>
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <div>
+            <h1 className="font-display text-2xl font-semibold tracking-tight">
+              {project ? (
+                t("reports.titleWithName", { name: project.name })
+              ) : (
+                <Skeleton className="h-8 w-56" />
+              )}
+            </h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {t("reports.description")}
+            </p>
+          </div>
+
+          {tab === "charts" && (
+            <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors duration-200 focus-within:border-primary">
+              <CalendarRange className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+              <input
+                type="date"
+                value={from}
+                max={to || undefined}
+                onChange={(event) => setFrom(event.target.value)}
+                aria-label={t("reports.burndownStartDate")}
+                className="bg-transparent focus:outline-none"
+              />
+              <span className="text-muted-foreground">→</span>
+              <input
+                type="date"
+                value={to}
+                min={from || undefined}
+                onChange={(event) => setTo(event.target.value)}
+                aria-label={t("reports.burndownEndDate")}
+                className="bg-transparent focus:outline-none"
+              />
+            </label>
+          )}
         </div>
 
         <div
@@ -149,30 +181,6 @@ export function ReportsPage() {
               {label}
             </button>
           ))}
-          <div className="ml-auto flex items-center pb-1.5">
-            {tab === "charts" && (
-              <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors duration-200 focus-within:border-primary">
-                <LineChart className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-                <input
-                  type="date"
-                  value={from}
-                  max={to || undefined}
-                  onChange={(event) => setFrom(event.target.value)}
-                  aria-label={t("reports.burndownStartDate")}
-                  className="bg-transparent focus:outline-none"
-                />
-                <span className="text-muted-foreground">→</span>
-                <input
-                  type="date"
-                  value={to}
-                  min={from || undefined}
-                  onChange={(event) => setTo(event.target.value)}
-                  aria-label={t("reports.burndownEndDate")}
-                  className="bg-transparent focus:outline-none"
-                />
-              </label>
-            )}
-          </div>
         </div>
 
         {rangeError && (
@@ -182,38 +190,46 @@ export function ReportsPage() {
         )}
 
         {tab === "charts" && (
-          <div className="flex flex-col gap-4">
-            {burndownLoading ? (
-              <Skeleton className="h-72" />
-            ) : burndownError ? (
-              <ErrorAlert message={burndownError} />
-            ) : burndown ? (
-              <BurndownChartApi data={burndown} />
-            ) : null}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="lg:col-span-2">
+              {burndownLoading ? (
+                <Skeleton className="h-72" />
+              ) : burndownError ? (
+                <ErrorAlert message={burndownError} />
+              ) : burndown ? (
+                <BurndownChartApi data={burndown} />
+              ) : null}
+            </div>
 
-            {velocityLoading ? (
-              <Skeleton className="h-64" />
-            ) : velocityError ? (
-              <ErrorAlert message={velocityError} />
-            ) : velocity ? (
-              <VelocityChart data={velocity} />
-            ) : null}
+            <div>
+              {velocityLoading ? (
+                <Skeleton className="h-64" />
+              ) : velocityError ? (
+                <ErrorAlert message={velocityError} />
+              ) : velocity ? (
+                <VelocityChart data={velocity} />
+              ) : null}
+            </div>
 
-            {cycleLeadLoading ? (
-              <Skeleton className="h-72" />
-            ) : cycleLeadError ? (
-              <ErrorAlert message={cycleLeadError} />
-            ) : cycleLead ? (
-              <CycleLeadTimeChart data={cycleLead} />
-            ) : null}
+            <div>
+              {velocityHistoryLoading ? (
+                <Skeleton className="h-64" />
+              ) : velocityHistoryError ? (
+                <ErrorAlert message={velocityHistoryError} />
+              ) : velocityHistory ? (
+                <VelocityTrendChart data={velocityHistory} />
+              ) : null}
+            </div>
 
-            {velocityHistoryLoading ? (
-              <Skeleton className="h-72" />
-            ) : velocityHistoryError ? (
-              <ErrorAlert message={velocityHistoryError} />
-            ) : velocityHistory ? (
-              <VelocityTrendChart data={velocityHistory} />
-            ) : null}
+            <div className="lg:col-span-2">
+              {cycleLeadLoading ? (
+                <Skeleton className="h-72" />
+              ) : cycleLeadError ? (
+                <ErrorAlert message={cycleLeadError} />
+              ) : cycleLead ? (
+                <CycleLeadTimeChart data={cycleLead} />
+              ) : null}
+            </div>
           </div>
         )}
 
@@ -230,35 +246,70 @@ export function ReportsPage() {
         )}
 
         {tab === "export" && (
-          <div className="flex flex-col gap-4">
-            <p className="text-sm text-muted-foreground">
-              {t("reports.exportDescription")}
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-start gap-3">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Download className="size-4" aria-hidden />
+              </span>
+              <div>
+                <h3 className="font-display text-sm font-semibold">
+                  {t("reports.export")}
+                </h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {t("reports.exportDescription")}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={() => void handleExport("csv")}
                 disabled={exporting !== null}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] disabled:opacity-40"
+                className="group flex flex-col items-start gap-2 rounded-lg border border-border bg-surface p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 disabled:pointer-events-none disabled:opacity-50"
               >
-                <FileSpreadsheet className="size-4" aria-hidden />
-                {exporting === "csv" ? "…" : "CSV"}
+                <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                  <FileSpreadsheet className="size-4" aria-hidden />
+                </span>
+                <span className="flex w-full items-center justify-between">
+                  <span className="font-display text-sm font-semibold">CSV</span>
+                  <ArrowDownToLine
+                    className={`size-3.5 text-muted-foreground transition-opacity duration-150 ${
+                      exporting === "csv" ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    }`}
+                    aria-hidden
+                  />
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {t("reports.exportCsvDesc")}
+                </span>
               </button>
+
               <button
                 type="button"
                 onClick={() => void handleExport("json")}
                 disabled={exporting !== null}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-foreground transition-all duration-200 hover:border-border-strong hover:bg-elevated active:scale-[0.98] disabled:opacity-40"
+                className="group flex flex-col items-start gap-2 rounded-lg border border-border bg-surface p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 disabled:pointer-events-none disabled:opacity-50"
               >
-                <FileJson className="size-4" aria-hidden />
-                {exporting === "json" ? "…" : "JSON"}
+                <span className="flex size-8 items-center justify-center rounded-lg bg-sky-500/10 text-sky-500">
+                  <FileJson className="size-4" aria-hidden />
+                </span>
+                <span className="flex w-full items-center justify-between">
+                  <span className="font-display text-sm font-semibold">JSON</span>
+                  <ArrowDownToLine
+                    className={`size-3.5 text-muted-foreground transition-opacity duration-150 ${
+                      exporting === "json" ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    }`}
+                    aria-hidden
+                  />
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {t("reports.exportJsonDesc")}
+                </span>
               </button>
-              <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
-                <Download className="size-3" aria-hidden />
-                export
-              </span>
             </div>
-            <p className="text-xs text-muted-foreground">
+
+            <p className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
               {t("reports.exportRangeHint")}
             </p>
           </div>

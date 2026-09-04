@@ -190,6 +190,7 @@ export function NotificationsPage() {
     { key: "all", label: t("notificationPage.filterAll") },
     { key: "unread", label: t("notificationPage.filterUnread") },
     { key: "read", label: t("notificationPage.filterRead") },
+    { key: "mentions", label: t("notificationPage.filterMentions") },
   ];
 
   return (
@@ -217,7 +218,7 @@ export function NotificationsPage() {
               <Button
                 variant="outline"
                 onClick={handleMarkAllRead}
-                disabled={unreadVisibleCount === 0}
+                disabled={loading || unreadVisibleCount === 0}
               >
                 <CheckCheck className="size-4" aria-hidden />
                 {t("notification.markAllRead")}
@@ -225,7 +226,7 @@ export function NotificationsPage() {
               <Button
                 variant="ghost"
                 onClick={() => setPendingBulkDelete(true)}
-                disabled={notifications.filter((n) => n.isRead).length === 0}
+                disabled={loading || notifications.filter((n) => n.isRead).length === 0}
               >
                 <Trash2 className="size-4" aria-hidden />
                 {t("notificationPage.deleteAllRead")}

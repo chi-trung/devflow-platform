@@ -862,6 +862,8 @@
   "exportTabAria": "Tab xuất dữ liệu",
   "exportDescription": "Tải danh sách task của dự án để phân tích offline.",
   "exportRangeHint": "File xuất theo bộ lọc trên board, không theo khoảng ngày ở trên.",
+  "exportCsvDesc": "Bảng tính gồm mọi task của dự án.",
+  "exportJsonDesc": "Bản sao dữ liệu task đầy đủ, có cấu trúc.",
   "cycleTimeP50": "Cycle P50",
   "cycleTimeP90": "Cycle P90",
   "leadTimeP50": "Lead P50",
