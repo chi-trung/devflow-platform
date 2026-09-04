@@ -94,12 +94,27 @@ export function SettingsPage() {
   const location = useLocation();
   const [confirmSignOut, setConfirmSignOut] = useState(false);
 
-  // Scroll to notification prefs section when navigating from /settings#notifications
+  type SettingsTab = "general" | "notifications" | "security";
+  const [tab, setTab] = useState<SettingsTab>(
+    location.hash === "#notifications" ? "notifications" : "general",
+  );
+  const SETTINGS_TABS: { id: SettingsTab; label: string }[] = [
+    { id: "general", label: t("settings.tabGeneral") },
+    { id: "notifications", label: t("settings.notifications") },
+    { id: "security", label: t("settings.tabSecurity") },
+  ];
+
+  // Deep link /settings#notifications: switch to the notifications tab (the
+  // section only exists there) and scroll to it once it has rendered.
   useEffect(() => {
-    if (location.hash === "#notifications") {
-      const el = document.getElementById("notifications");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    if (location.hash !== "#notifications") return;
+    setTab("notifications");
+    const frame = requestAnimationFrame(() => {
+      document
+        .getElementById("notifications")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
   }, [location.hash]);
 
   useEffect(() => {
@@ -233,157 +248,190 @@ export function SettingsPage() {
           </p>
         </header>
 
-        <section
-          aria-label={t("settings.account")}
-          className="rounded-xl border border-border bg-surface p-5"
+        <div
+          role="tablist"
+          aria-label={t("settings.title")}
+          className="flex flex-wrap gap-1 border-b border-border"
         >
-          <div className="mb-4 flex items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <UserRound className="size-4" aria-hidden />
-            </span>
-            <h2 className="font-display font-semibold">{t("settings.account")}</h2>
-            <Link
-              to="/profile"
-              className="ml-auto text-sm font-medium text-primary underline-offset-2 hover:underline"
+          {SETTINGS_TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={tab === id}
+              onClick={() => setTab(id)}
+              className={`-mb-px cursor-pointer border-b-2 px-3 py-2 text-sm transition-colors duration-150 ${
+                tab === id
+                  ? "border-primary font-semibold text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
             >
-              {t("settings.editProfile")}
-            </Link>
-          </div>
-          <div className="flex items-center gap-3.5">
-            <Avatar
-              name={currentUser?.username ?? "?"}
-              id={currentUser?.id}
-              size="md"
-            />
-            <div className="min-w-0 leading-tight">
-              <p className="truncate text-sm font-medium">
-                {currentUser?.displayName || currentUser?.username}
-              </p>
-              <p className="truncate font-mono text-[11px] text-muted-foreground">
-                {currentUser?.email}
-              </p>
-            </div>
-          </div>
-        </section>
+              {label}
+            </button>
+          ))}
+        </div>
 
-        <section
-          aria-label={t("settings.appearance")}
-          className="rounded-xl border border-border bg-surface p-5"
-        >
-          <div className="mb-4 flex items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Palette className="size-4" aria-hidden />
-            </span>
-            <h2 className="font-display font-semibold">{t("settings.appearance")}</h2>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium">{t("settings.colorTheme")}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {t("settings.themeDesc")}
-              </p>
-            </div>
-            <ThemeToggle onThemeChange={() => handleThemeChange()} />
-          </div>
-        </section>
-
-        <LanguageSection />
-
-        <PATSection />
-
-        <section
-          id="notifications"
-          aria-label={t("settings.notifications")}
-          className="rounded-xl border border-border bg-surface p-5"
-        >
-          <div className="mb-4 flex items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <BellRing className="size-4" aria-hidden />
-            </span>
-            <h2 className="font-display font-semibold">{t("settings.notifications")}</h2>
-          </div>
-
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium">{t("settings.emailNotifications")}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {t("settings.emailDesc")}
-              </p>
-            </div>
-            <Switch
-              checked={emailNotifications}
-              disabled={prefsLoading}
-              onChange={handleMasterEmailToggle}
-              label={t("settings.emailNotifications")}
-            />
-          </div>
-
-          {emailNotifications && prefs && (
-            <div className="rise mt-4 flex flex-col gap-3 rounded-lg border border-border bg-card p-3.5">
-              {EMAIL_EVENTS.map((event) => (
-                <EmailEventRow
-                  key={event.key}
-                  label={event.label}
-                  hint={event.hint}
-                  checked={prefs[event.key]}
-                  onChange={(value) => handlePrefToggle(event.key, value)}
+        {tab === "general" && (
+          <div className="flex flex-col gap-4">
+            <section
+              aria-label={t("settings.account")}
+              className="rounded-xl border border-border bg-surface p-5"
+            >
+              <div className="mb-4 flex items-center gap-2.5">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <UserRound className="size-4" aria-hidden />
+                </span>
+                <h2 className="font-display font-semibold">{t("settings.account")}</h2>
+                <Link
+                  to="/profile"
+                  className="ml-auto text-sm font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  {t("settings.editProfile")}
+                </Link>
+              </div>
+              <div className="flex items-center gap-3.5">
+                <Avatar
+                  name={currentUser?.username ?? "?"}
+                  id={currentUser?.id}
+                  size="md"
                 />
-              ))}
-              <p className="font-mono text-[10px] text-muted-foreground">
-                {t("settings.syncedToAccount")}
-              </p>
-            </div>
-          )}
+                <div className="min-w-0 leading-tight">
+                  <p className="truncate text-sm font-medium">
+                    {currentUser?.displayName || currentUser?.username}
+                  </p>
+                  <p className="truncate font-mono text-[11px] text-muted-foreground">
+                    {currentUser?.email}
+                  </p>
+                </div>
+              </div>
+            </section>
 
-          <div className="mt-5">
-            <p className="mb-2 text-sm font-medium">{t("settings.inAppNotifications")}</p>
-            <p className="mb-3 text-xs text-muted-foreground">
-              {t("settings.inAppDesc")}
-            </p>
-            <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3.5">
-              {IN_APP_EVENTS.map((event) => (
-                <EmailEventRow
-                  key={event.key}
-                  label={event.label}
-                  hint={event.hint}
-                  checked={prefs ? prefs[event.key] : true}
-                  onChange={(value) => handlePrefToggle(event.key, value)}
-                />
-              ))}
-              <p className="font-mono text-[10px] text-muted-foreground">
-                {t("settings.syncedToAccount")}
-              </p>
-            </div>
-          </div>
-        </section>
+            <section
+              aria-label={t("settings.appearance")}
+              className="rounded-xl border border-border bg-surface p-5"
+            >
+              <div className="mb-4 flex items-center gap-2.5">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Palette className="size-4" aria-hidden />
+                </span>
+                <h2 className="font-display font-semibold">{t("settings.appearance")}</h2>
+              </div>
 
-        <section
-          aria-label={t("settings.dangerZone")}
-          className="rounded-xl border border-destructive/30 bg-destructive/5 p-5"
-        >
-          <div className="mb-4 flex items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
-              <TriangleAlert className="size-4" aria-hidden />
-            </span>
-            <h2 className="font-display font-semibold text-destructive">
-              {t("settings.dangerZone")}
-            </h2>
-          </div>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">{t("settings.colorTheme")}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {t("settings.themeDesc")}
+                  </p>
+                </div>
+                <ThemeToggle onThemeChange={() => handleThemeChange()} />
+              </div>
+            </section>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium">{t("settings.signOut")}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {t("settings.signOutDesc")}
-              </p>
-            </div>
-            <Button variant="danger" onClick={() => setConfirmSignOut(true)}>
-              <LogOut className="size-4" aria-hidden />
-              {t("settings.signOut")}
-            </Button>
+            <LanguageSection />
           </div>
-        </section>
+        )}
+
+        {tab === "notifications" && (
+          <section
+            id="notifications"
+            aria-label={t("settings.notifications")}
+            className="rounded-xl border border-border bg-surface p-5"
+          >
+            <div className="mb-4 flex items-center gap-2.5">
+              <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <BellRing className="size-4" aria-hidden />
+              </span>
+              <h2 className="font-display font-semibold">{t("settings.notifications")}</h2>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">{t("settings.emailNotifications")}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {t("settings.emailDesc")}
+                </p>
+              </div>
+              <Switch
+                checked={emailNotifications}
+                disabled={prefsLoading}
+                onChange={handleMasterEmailToggle}
+                label={t("settings.emailNotifications")}
+              />
+            </div>
+
+            {emailNotifications && prefs && (
+              <div className="rise mt-4 flex flex-col gap-3 rounded-lg border border-border bg-card p-3.5">
+                {EMAIL_EVENTS.map((event) => (
+                  <EmailEventRow
+                    key={event.key}
+                    label={event.label}
+                    hint={event.hint}
+                    checked={prefs[event.key]}
+                    onChange={(value) => handlePrefToggle(event.key, value)}
+                  />
+                ))}
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  {t("settings.syncedToAccount")}
+                </p>
+              </div>
+            )}
+
+            <div className="mt-5">
+              <p className="mb-2 text-sm font-medium">{t("settings.inAppNotifications")}</p>
+              <p className="mb-3 text-xs text-muted-foreground">
+                {t("settings.inAppDesc")}
+              </p>
+              <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3.5">
+                {IN_APP_EVENTS.map((event) => (
+                  <EmailEventRow
+                    key={event.key}
+                    label={event.label}
+                    hint={event.hint}
+                    checked={prefs ? prefs[event.key] : true}
+                    onChange={(value) => handlePrefToggle(event.key, value)}
+                  />
+                ))}
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  {t("settings.syncedToAccount")}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {tab === "security" && (
+          <div className="flex flex-col gap-4">
+            <PATSection />
+
+            <section
+              aria-label={t("settings.dangerZone")}
+              className="rounded-xl border border-destructive/30 bg-destructive/5 p-5"
+            >
+              <div className="mb-4 flex items-center gap-2.5">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+                  <TriangleAlert className="size-4" aria-hidden />
+                </span>
+                <h2 className="font-display font-semibold text-destructive">
+                  {t("settings.dangerZone")}
+                </h2>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">{t("settings.signOut")}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {t("settings.signOutDesc")}
+                  </p>
+                </div>
+                <Button variant="danger" onClick={() => setConfirmSignOut(true)}>
+                  <LogOut className="size-4" aria-hidden />
+                  {t("settings.signOut")}
+                </Button>
+              </div>
+            </section>
+          </div>
+        )}
       </div>
 
       {confirmSignOut && (

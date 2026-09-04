@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Link,
-  useLocation,
   useParams,
   useSearchParams,
 } from "react-router-dom";
@@ -12,23 +11,10 @@ import {
   SquareKanban,
   Search,
   History,
-  CalendarRange,
-  BarChart3,
   Network,
   Keyboard,
   X,
   Upload,
-  List,
-  Bookmark,
-  Tag,
-  Settings2,
-  FileText,
-  Webhook,
-  Github,
-  Activity,
-  Users,
-  Milestone as MilestoneIcon,
-  BookOpen,
 } from "lucide-react";
 import {
   api,
@@ -59,7 +45,6 @@ import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { EmptyState } from "../components/ui/EmptyState";
 import { EmptyBoardIllustration } from "../components/illustrations/EmptyStateIllustrations";
 import { Column } from "../components/board/Column";
-import { ProjectToolsPopover } from "../components/board/ProjectToolsPopover";
 import { CreateTaskForm } from "../components/board/CreateTaskForm";
 import { TaskDetailPanel } from "../components/board/TaskDetailPanel";
 import { SprintBar } from "../components/board/SprintBar";
@@ -159,7 +144,6 @@ export function BoardPage() {
   const { t } = useTranslation();
   const COLUMNS = getColumns(t);
   const { workspaceId = "", projectId = "" } = useParams();
-  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: project } = useApi<ProjectResponse>(
@@ -724,111 +708,6 @@ export function BoardPage() {
     }
   }
 
-  const projectNavLinks = [
-    {
-      to: `/workspaces/${workspaceId}/projects/${projectId}/sprints`,
-      icon: CalendarRange,
-      label: t("nav.sprints"),
-    },
-    {
-      to: `/workspaces/${workspaceId}/projects/${projectId}/reports`,
-      icon: BarChart3,
-      label: t("nav.reports"),
-    },
-    {
-      to: `/workspaces/${workspaceId}/projects/${projectId}/epics`,
-      icon: List,
-      label: t("epic.title"),
-    },
-    {
-      to: `/workspaces/${workspaceId}/projects/${projectId}/milestones`,
-      icon: MilestoneIcon,
-      label: t("milestone.title"),
-    },
-    {
-      to: `/workspaces/${workspaceId}/projects/${projectId}/knowledge`,
-      icon: BookOpen,
-      label: t("knowledge.title"),
-    },
-    { to: "/saved-searches", icon: Bookmark, label: t("savedSearch.title") },
-    {
-      to: `/workspaces/${workspaceId}/projects/${projectId}/labels`,
-      icon: Tag,
-      label: t("label.title"),
-    },
-    {
-      to: `/workspaces/${workspaceId}/projects/${projectId}/fields`,
-      icon: Settings2,
-      label: t("customField.title"),
-    },
-    {
-      to: `/workspaces/${workspaceId}/projects/${projectId}/settings`,
-      icon: Users,
-      label: t("projectMember.title"),
-    },
-    {
-      to: `/workspaces/${workspaceId}/projects/${projectId}/templates`,
-      icon: FileText,
-      label: t("template.title"),
-    },
-    { to: `/workspaces/${workspaceId}/webhooks`, icon: Webhook, label: t("webhook.title") },
-    {
-      to: `/workspaces/${workspaceId}/projects/${projectId}/github`,
-      icon: Github,
-      label: t("github.title"),
-    },
-    {
-      to: `/workspaces/${workspaceId}/projects/${projectId}/activities`,
-      icon: Activity,
-      label: t("activity.title"),
-    },
-    { to: `/workspaces/${workspaceId}/search`, icon: Search, label: t("search.title") },
-  ];
-
-  // Group the tools popup into sections. itemKeys are the `to` paths so the
-  // popover can resolve which section the current route belongs to.
-  const activeToolPath = location.pathname;
-  const projectToolGroups = [
-    {
-      id: "manage",
-      title: t("nav.toolsGroupManage"),
-      itemKeys: [
-        `/workspaces/${workspaceId}/projects/${projectId}/sprints`,
-        `/workspaces/${workspaceId}/projects/${projectId}/reports`,
-        `/workspaces/${workspaceId}/projects/${projectId}/epics`,
-        `/workspaces/${workspaceId}/projects/${projectId}/milestones`,
-      ],
-    },
-    {
-      id: "configure",
-      title: t("nav.toolsGroupConfigure"),
-      itemKeys: [
-        `/workspaces/${workspaceId}/projects/${projectId}/knowledge`,
-        `/workspaces/${workspaceId}/projects/${projectId}/labels`,
-        `/workspaces/${workspaceId}/projects/${projectId}/fields`,
-        `/workspaces/${workspaceId}/projects/${projectId}/settings`,
-        `/workspaces/${workspaceId}/projects/${projectId}/templates`,
-      ],
-    },
-    {
-      id: "integrate",
-      title: t("nav.toolsGroupIntegrate"),
-      itemKeys: [
-        `/workspaces/${workspaceId}/webhooks`,
-        `/workspaces/${workspaceId}/projects/${projectId}/github`,
-        `/workspaces/${workspaceId}/projects/${projectId}/activities`,
-      ],
-    },
-    {
-      id: "find",
-      title: t("nav.toolsGroupFind"),
-      itemKeys: [
-        `/workspaces/${workspaceId}/search`,
-        "/saved-searches",
-      ],
-    },
-  ];
-
   return (
     <AppShell>
       <div className="flex h-full flex-col px-4 py-6 sm:px-6">
@@ -872,12 +751,6 @@ export function BoardPage() {
                   totalOnline={presenceTotal}
                 />
               </div>
-              <ProjectToolsPopover
-                items={projectNavLinks}
-                groups={projectToolGroups}
-                activeTo={activeToolPath}
-                triggerLabel={t("nav.tools")}
-              />
             </div>
             {/* Actions row — search + log + graph + help + create. Wraps
                 naturally, separate from the nav links so mobile stays tidy. */}

@@ -206,14 +206,6 @@ export function SavedSearchesPage() {
             icon={<Search className="size-8 text-muted-foreground" aria-hidden />}
             title={t("savedSearch.emptyTitle")}
             description={t("savedSearch.emptyDescription")}
-            action={
-              !creating && (
-                <Button className="mt-2" onClick={() => setCreating(true)}>
-                  <Plus className="size-4" aria-hidden />
-                  {t("savedSearch.create")}
-                </Button>
-              )
-            }
           />
         ) : (
           <ul className="flex flex-col gap-3">

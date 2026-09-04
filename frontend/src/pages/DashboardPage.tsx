@@ -23,11 +23,8 @@ import {
   TourReopenButton,
 } from "../components/onboarding/OnboardingTour";
 import { StatsCards } from "../components/dashboard/StatsCards";
-import { CumulativeFlow } from "../components/dashboard/CumulativeFlow";
 import { TaskDistribution } from "../components/dashboard/TaskDistribution";
 import { ActivityFeed } from "../components/dashboard/ActivityFeed";
-import { DashboardCycleLeadChart } from "../components/dashboard/DashboardCycleLeadChart";
-import { TeamReportPanel } from "../components/dashboard/TeamReportPanel";
 import { SprintHealthCard } from "../components/dashboard/SprintHealthCard";
 import type { ProjectResponse, WorkspaceResponse } from "../types/api";
 
@@ -333,14 +330,6 @@ export function DashboardPage() {
                 <div data-tour="stats">
                   <StatsCards data={dashboard.data} className="mb-4" />
                 </div>
-                {selectedProjectId && (
-                  <DashboardCycleLeadChart
-                    workspaceId={selectedWsId}
-                    projectId={selectedProjectId}
-                    className="mb-4"
-                  />
-                )}
-                <CumulativeFlow data={dashboard.data} className="mb-4" />
                 <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <TaskDistribution data={dashboard.data} />
                   <ActivityFeed
@@ -348,20 +337,14 @@ export function DashboardPage() {
                     workspaceId={selectedWsId}
                   />
                 </div>
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  <TeamReportPanel
-                    workspaceId={selectedWsId}
-                    projectId={selectedProjectId || undefined}
-                  />
-                  {selectedProjectId && (
-                    <div data-tour="sprint-health" className="h-full">
-                      <SprintHealthCard
-                        workspaceId={selectedWsId}
-                        projectId={selectedProjectId}
-                      />
-                    </div>
-                  )}
-                </div>
+                {selectedProjectId && (
+                  <div className="mb-4">
+                    <SprintHealthCard
+                      workspaceId={selectedWsId}
+                      projectId={selectedProjectId}
+                    />
+                  </div>
+                )}
                 {dashboard.data.upcomingDeadlines.length > 0 ? (
                   <section aria-label={t("dashboard.upcomingDeadlines")} className="mt-4 rounded-xl border border-border bg-card p-5">
                     <h2 className="mb-3 inline-flex items-center gap-1.5 font-display font-semibold">

@@ -21,9 +21,21 @@ import { DependencySection } from "./DependencySection";
 import { TimeTrackingSection } from "./TimeTrackingSection";
 import { SubtaskSection } from "./SubtaskSection";
 import { CustomFieldsSection } from "./CustomFieldsSection";
-import { TaskFieldsSection } from "../fields/TaskFieldsSection";
 import { TaskPullRequests } from "../github/TaskPullRequests";
+import { CollapsibleSection } from "./CollapsibleSection";
 import type { CurrentUser } from "../../auth/AuthContext";
+
+/** Small inline hint for the collapsed DoD row: checked/total items. */
+function DoDMeta({ value }: { value: string }) {
+  const items = value.split("\n").filter((l) => /^- \[.\]/.test(l));
+  if (items.length === 0) return null;
+  const checked = items.filter((l) => /^- \[x\]/i.test(l)).length;
+  return (
+    <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+      {checked}/{items.length}
+    </span>
+  );
+}
 
 interface TaskDetailPanelProps {
   task: TaskItemResponse;
@@ -648,58 +660,70 @@ export function TaskDetailPanel({
               />
             </label>
 
-            <DefinitionOfDoneField
-              value={definitionOfDone}
-              onChange={setDefinitionOfDone}
-            />
+            {/* Advanced sections collapse to one-line rows so description +
+                comments stay the visual anchors of the panel. Bodies render
+                lazily (see CollapsibleSection) so collapsed sections don't
+                fetch their data. */}
+            <CollapsibleSection title={t("board.definitionOfDone")} hint={<DoDMeta value={definitionOfDone} />}>
+              <DefinitionOfDoneField
+                value={definitionOfDone}
+                onChange={setDefinitionOfDone}
+              />
+            </CollapsibleSection>
 
-            <DependencySection
-              workspaceId={workspaceId}
-              projectId={projectId}
-              task={task}
-              allTasks={allTasks}
-              onChanged={onTaskChanged}
-            />
+            <CollapsibleSection title={t("dependency.blockedBy")}>
+              <DependencySection
+                workspaceId={workspaceId}
+                projectId={projectId}
+                task={task}
+                allTasks={allTasks}
+                onChanged={onTaskChanged}
+              />
+            </CollapsibleSection>
 
-            <SubtaskSection
-              workspaceId={workspaceId}
-              projectId={projectId}
-              task={task}
-              onChanged={onTaskChanged}
-            />
+            <CollapsibleSection title={t("subtask.subtasks")}>
+              <SubtaskSection
+                workspaceId={workspaceId}
+                projectId={projectId}
+                task={task}
+                onChanged={onTaskChanged}
+              />
+            </CollapsibleSection>
 
-            <CustomFieldsSection
-              workspaceId={workspaceId}
-              projectId={projectId}
-              taskId={task.id}
-            />
+            <CollapsibleSection title={t("taskDetail.customFields")}>
+              <CustomFieldsSection
+                workspaceId={workspaceId}
+                projectId={projectId}
+                taskId={task.id}
+              />
+            </CollapsibleSection>
 
-            <TimeTrackingSection
-              workspaceId={workspaceId}
-              projectId={projectId}
-              task={task}
-              members={members}
-              onChanged={onTaskChanged}
-            />
+            <CollapsibleSection title={t("timeTracking.timeTracking")}>
+              <TimeTrackingSection
+                workspaceId={workspaceId}
+                projectId={projectId}
+                task={task}
+                members={members}
+                onChanged={onTaskChanged}
+              />
+            </CollapsibleSection>
 
-            <TaskFieldsSection
-              workspaceId={workspaceId}
-              projectId={projectId}
-              taskId={task.id}
-            />
+            <CollapsibleSection title={t("github.linkedPrs")}>
+              <TaskPullRequests
+                workspaceId={workspaceId}
+                projectId={projectId}
+                taskId={task.id}
+              />
+            </CollapsibleSection>
 
-            <TaskPullRequests
-              workspaceId={workspaceId}
-              projectId={projectId}
-              taskId={task.id}
-            />
-
-            <AiPlanPanel
-              workspaceId={workspaceId}
-              projectId={projectId}
-              taskId={task.id}
-              onChanged={onTaskChanged}
-            />
+            <CollapsibleSection title={t("ai.aiPlanner")}>
+              <AiPlanPanel
+                workspaceId={workspaceId}
+                projectId={projectId}
+                taskId={task.id}
+                onChanged={onTaskChanged}
+              />
+            </CollapsibleSection>
 
             {/* ── Comments ── */}
             <section className="flex min-h-0 flex-1 flex-col">

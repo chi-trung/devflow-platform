@@ -2,16 +2,28 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
+  Activity,
+  BarChart3,
+  Bookmark,
+  BookOpen,
   CalendarRange,
   CircleUserRound,
+  FileText,
+  Github,
   House,
   KanbanSquare,
+  List,
   ListTodo,
   Menu,
+  Milestone as MilestoneIcon,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
   Search,
+  Settings2,
+  Tag,
+  Users,
+  Webhook as WebhookIcon,
   X,
 } from "lucide-react";
 import { api, pagedItems } from "../lib/api";
@@ -175,6 +187,98 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       location.pathname,
     );
   const onSprintsRoute = /\/sprints$/i.test(location.pathname);
+
+  // Primary project navigation, shown in the sidebar while a project route is
+  // active. These were previously reachable only through a hidden popover on
+  // the board header — the single biggest "feature feels missing" complaint.
+  const projectNavItems = projectId
+    ? [
+        {
+          to: `/workspaces/${workspaceId}/projects/${projectId}/sprints`,
+          icon: CalendarRange,
+          label: t("nav.sprints"),
+          match: /\/sprints$/i,
+        },
+        {
+          to: `/workspaces/${workspaceId}/projects/${projectId}/reports`,
+          icon: BarChart3,
+          label: t("nav.reports"),
+          match: /\/reports$/i,
+        },
+        {
+          to: `/workspaces/${workspaceId}/projects/${projectId}/epics`,
+          icon: List,
+          label: t("nav.epics"),
+          match: /\/epics$/i,
+        },
+        {
+          to: `/workspaces/${workspaceId}/projects/${projectId}/milestones`,
+          icon: MilestoneIcon,
+          label: t("nav.milestones"),
+          match: /\/milestones$/i,
+        },
+        {
+          to: `/workspaces/${workspaceId}/projects/${projectId}/knowledge`,
+          icon: BookOpen,
+          label: t("nav.knowledge"),
+          match: /\/knowledge$/i,
+        },
+        {
+          to: `/workspaces/${workspaceId}/projects/${projectId}/labels`,
+          icon: Tag,
+          label: t("nav.labels"),
+          match: /\/labels$/i,
+        },
+        {
+          to: `/workspaces/${workspaceId}/projects/${projectId}/templates`,
+          icon: FileText,
+          label: t("nav.templates"),
+          match: /\/templates$/i,
+        },
+        {
+          to: `/workspaces/${workspaceId}/projects/${projectId}/fields`,
+          icon: Settings2,
+          label: t("nav.customFields"),
+          match: /\/fields$/i,
+        },
+        {
+          to: `/workspaces/${workspaceId}/projects/${projectId}/github`,
+          icon: Github,
+          label: t("nav.github"),
+          match: /\/github$/i,
+        },
+        {
+          to: `/workspaces/${workspaceId}/projects/${projectId}/activities`,
+          icon: Activity,
+          label: t("activity.title"),
+          match: /\/activities$/i,
+        },
+        {
+          to: `/workspaces/${workspaceId}/projects/${projectId}/settings`,
+          icon: Users,
+          label: t("projectMember.title"),
+          match: /\/projects\/[0-9a-f-]{36}\/settings$/i,
+        },
+        {
+          to: `/workspaces/${workspaceId}/webhooks`,
+          icon: WebhookIcon,
+          label: t("nav.webhooks"),
+          match: /\/webhooks$/i,
+        },
+        {
+          to: `/workspaces/${workspaceId}/search`,
+          icon: Search,
+          label: t("nav.search"),
+          match: /\/search$/i,
+        },
+        {
+          to: "/saved-searches",
+          icon: Bookmark,
+          label: t("savedSearch.title"),
+          match: /^\/saved-searches$/i,
+        },
+      ]
+    : [];
 
   const mobileNavItems = [
     {
@@ -352,6 +456,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </Link>
                   </li>
                 ))}
+              </ul>
+            </section>
+          )}
+
+          {workspaceId && projectId && (
+            <section>
+              <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "lg:hidden" : ""}`}>
+                {t("board.projects")}
+              </h2>
+              <ul className="space-y-0.5">
+                {projectNavItems.map(({ to, icon: Icon, label, match }) => {
+                  const active = match.test(location.pathname);
+                  return (
+                    <li key={to}>
+                      <Link
+                        to={to}
+                        aria-current={active ? "page" : undefined}
+                        title={railCollapsed ? label : undefined}
+                        className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors duration-150 ${
+                          railCollapsed ? "lg:justify-center" : ""
+                        } ${
+                          active
+                            ? "bg-elevated font-semibold text-foreground"
+                            : "text-muted-foreground hover:bg-elevated/60 hover:text-foreground"
+                        }`}
+                      >
+                        <Icon className="size-4 shrink-0" aria-hidden />
+                        <span className={`truncate ${railCollapsed ? "lg:hidden" : ""}`}>{label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           )}
