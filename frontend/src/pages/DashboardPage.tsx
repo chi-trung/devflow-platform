@@ -310,13 +310,17 @@ export function DashboardPage() {
               </h2>
             </div>
 
-            {dashboardLoading ? (
+            {dashboardLoading || !dashboard ? (
               <div className="space-y-4">
                 {/* Skeleton heights match the loaded cards (h-28 stats,
-                    366px chart row, 170px sprint health, 150px deadlines —
+                    366px chart row, 267px sprint health, 150px deadlines —
                     measured on production) so the section doesn't grow when
-                    data lands. Sprint health only reserves space when a
-                    project is selected, mirroring the loaded branch. */}
+                    data lands. Rendered when `!dashboard` too: useApi's first
+                    run has one frame with loading=false, data=null (the
+                    fetcher promise hasn't been awaited yet) — without this,
+                    an empty Overview paints and the skeletons then shove the
+                    workspace grid down. Sprint health only reserves space
+                    when a project is selected, mirroring the loaded branch. */}
                 <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
                   {[0, 1, 2, 3].map((i) => (
                     <Skeleton key={i} className="h-28" />
@@ -326,7 +330,7 @@ export function DashboardPage() {
                   <Skeleton className="h-[366px]" />
                   <Skeleton className="h-[366px]" />
                 </div>
-                {selectedProjectId && <Skeleton className="h-[170px]" />}
+                {selectedProjectId && <Skeleton className="h-[267px]" />}
                 <Skeleton className="h-[150px]" />
               </div>
             ) : dashboardError ? (

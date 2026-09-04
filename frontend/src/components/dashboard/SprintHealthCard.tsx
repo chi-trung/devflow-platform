@@ -49,12 +49,15 @@ export function SprintHealthCard({ workspaceId, projectId, className = "" }: Spr
   }, [workspaceId, projectId]);
 
   if (loading) {
-    return <Skeleton className={`h-full ${className}`} />;
+    return <Skeleton className={`h-full min-h-[267px] ${className}`} />;
   }
 
   if (!sprint) {
     return (
-      <div className={`flex flex-col justify-center rounded-xl border border-border bg-card p-5 h-full ${className}`}>
+      // min-h matches the skeleton reserved in DashboardPage's loading branch
+      // so "No active sprint" (taller than the active-sprint card) doesn't
+      // grow the section after data lands (CLS).
+      <div className={`flex h-full min-h-[267px] flex-col justify-center rounded-xl border border-border bg-card p-5 ${className}`}>
         <EmptyState
           icon={<Timer className="size-8 text-muted-foreground/40" aria-hidden />}
           title={t("dashboard.noActiveSprint")}
