@@ -54,6 +54,9 @@ public sealed class PersonalAccessTokenRepository(
         if (token is not null)
         {
             token.MarkUsed(DateTimeOffset.UtcNow);
+            // Persisted here (not by the caller) so the auth handler can stamp
+            // usage without enlisting the request's unit of work.
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
     }
 }

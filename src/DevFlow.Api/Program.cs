@@ -39,16 +39,20 @@ builder.Services
         options.DefaultScheme = "HubOrBearer";
         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     })
-    .AddPolicyScheme("HubOrBearer", "Hub ticket or Bearer", options =>
+    .AddPolicyScheme("HubOrBearer", "Hub ticket, PAT, or Bearer", options =>
     {
         options.ForwardDefaultSelector = context =>
             HubTicketAuthenticationHandler.PresentsTicket(context)
                 ? HubTicketAuthenticationHandler.SchemeName
-                : JwtBearerDefaults.AuthenticationScheme;
+                : PatAuthenticationHandler.PresentsPat(context)
+                    ? PatAuthenticationHandler.SchemeName
+                    : JwtBearerDefaults.AuthenticationScheme;
     })
     .AddJwtBearer()
     .AddScheme<HubTicketAuthenticationOptions, HubTicketAuthenticationHandler>(
-        HubTicketAuthenticationHandler.SchemeName, _ => { });
+        HubTicketAuthenticationHandler.SchemeName, _ => { })
+    .AddScheme<PatAuthenticationOptions, PatAuthenticationHandler>(
+        PatAuthenticationHandler.SchemeName, _ => { });
 
 // One-time hub tickets: SignalR WebSockets cannot send an Authorization
 // header, so instead of putting the long-lived JWT in the query string
@@ -224,7 +228,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter your JWT access token."
+        Description = "Enter your JWT access token, or a personal access token (df_...)."
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement

@@ -151,4 +151,44 @@ public class KnowledgeHandlerTests
             new SupersedeKnowledgeEntryCommand(_workspaceId, _project.Id, oldEntry.Id, otherProjectEntry.Id),
             CancellationToken.None));
     }
+
+    [Fact]
+    public void FlagDrift_ShouldSetNeedsReview_WithReasonAndTimestamp()
+    {
+        var entry = KnowledgeEntry.Create(_project.Id, "Deploy runbook", null, KnowledgeType.Runbook);
+
+        entry.FlagDrift("Task reopened.");
+
+        Assert.True(entry.NeedsReview);
+        Assert.Equal("Task reopened.", entry.DriftReason);
+        Assert.NotNull(entry.DriftedAtUtc);
+    }
+
+    [Fact]
+    public void FlagDrift_ShouldNotFlagRetiredEntries()
+    {
+        var entry = KnowledgeEntry.Create(_project.Id, "Old decision", null, KnowledgeType.Adr);
+        entry.MarkSupersededBy(Guid.NewGuid());
+
+        entry.FlagDrift("Task reopened.");
+
+        Assert.False(entry.NeedsReview);
+    }
+
+    [Fact]
+    public async Task Update_ShouldClearDriftFlag()
+    {
+        var entry = KnowledgeEntry.Create(_project.Id, "Deploy runbook", null, KnowledgeType.Runbook);
+        entry.FlagDrift("Task reopened.");
+        _knowledgeRepository.GetByIdAsync(entry.Id, Arg.Any<CancellationToken>()).Returns(entry);
+
+        var handler = new UpdateKnowledgeEntryCommandHandler(_projectRepository, _knowledgeRepository, _unitOfWork);
+        await handler.Handle(
+            new UpdateKnowledgeEntryCommand(_workspaceId, _project.Id, entry.Id, "Refreshed", null, KnowledgeType.Runbook, null, KnowledgeStatus.Accepted),
+            CancellationToken.None);
+
+        Assert.False(entry.NeedsReview);
+        Assert.Null(entry.DriftReason);
+        Assert.Null(entry.DriftedAtUtc);
+    }
 }

@@ -147,6 +147,49 @@ public class TaskItemHandlerTests
     }
 
     [Fact]
+    public async Task Update_ShouldFlagDrift_WhenShippedTaskIsReopened()
+    {
+        var task = Domain.Entities.TaskItem.Create(_project.Id, "Shipped feature", null, TaskItemPriority.Low);
+        task.ChangeStatus(TaskItemStatus.Done);
+        _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>()).Returns(task);
+
+        var capturedEntry = KnowledgeEntry.CaptureFromTask(_project.Id, task.Id, "Shipped feature", null, KnowledgeType.Runbook, "auto-captured");
+        _knowledgeRepository.GetForTaskAsync(task.Id, Arg.Any<CancellationToken>())
+            .Returns(new[] { capturedEntry });
+
+        var handler = new UpdateTaskItemCommandHandler(
+            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork);
+        var command = new UpdateTaskItemCommand(
+            _workspaceId, _project.Id, task.Id, "Shipped feature", null,
+            TaskItemStatus.InProgress, TaskItemPriority.Low, null, null);
+
+        await handler.Handle(command, CancellationToken.None);
+
+        Assert.True(capturedEntry.NeedsReview);
+        Assert.Contains("reopened", capturedEntry.DriftReason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Update_ShouldNotFlagDrift_WhenTaskWasNeverDone()
+    {
+        var task = Domain.Entities.TaskItem.Create(_project.Id, "Regular task", null, TaskItemPriority.Low);
+        task.ChangeStatus(TaskItemStatus.InProgress);
+        _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>()).Returns(task);
+
+        var handler = new UpdateTaskItemCommandHandler(
+            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork);
+        var command = new UpdateTaskItemCommand(
+            _workspaceId, _project.Id, task.Id, "Regular task", null,
+            TaskItemStatus.Review, TaskItemPriority.Low, null, null);
+
+        await handler.Handle(command, CancellationToken.None);
+
+        await _knowledgeRepository.DidNotReceive().GetForTaskAsync(
+            Arg.Any<Guid>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Update_ShouldLogStatusChangeAndAssignment()
     {
         var assigneeId = Guid.NewGuid();
