@@ -26,3 +26,5 @@ public sealed record OAuthConfigResponse(
     bool GoogleEnabled,
     string GoogleClientId,
     string GoogleRedirectUri);
+
+public sealed record HubTicketResponse(string Ticket);

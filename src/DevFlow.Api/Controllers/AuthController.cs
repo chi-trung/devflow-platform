@@ -12,7 +12,8 @@ namespace DevFlow.Api.Controllers;
 [Route("api/v1/auth")]
 public sealed class AuthController(
     ISender sender,
-    IUserContext userContext) : ControllerBase
+    IUserContext userContext,
+    Auth.HubTicketStore hubTicketStore) : ControllerBase
 {
     [HttpPost("register")]
     [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status201Created)]
@@ -73,6 +74,22 @@ public sealed class AuthController(
         await sender.Send(new Application.Features.Auth.Logout.LogoutCommand(request.RefreshToken), cancellationToken);
 
         return NoContent();
+    }
+
+    /// <summary>
+    /// Exchanges the bearer JWT for a one-time, 90s hub ticket used to
+    /// connect to SignalR hubs. Keeps the long-lived access token out of the
+    /// WebSocket query string (proxies log query strings; a burned ticket is
+    /// worthless after the handshake).
+    /// </summary>
+    [Authorize]
+    [HttpPost("hub-ticket")]
+    [ProducesResponseType(typeof(HubTicketResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public IActionResult CreateHubTicket()
+    {
+        var ticket = hubTicketStore.Issue(userContext.UserId.ToString());
+        return Ok(new HubTicketResponse(ticket));
     }
 
     [Authorize]

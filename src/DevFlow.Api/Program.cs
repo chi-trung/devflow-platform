@@ -32,18 +32,46 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer();
+    .AddAuthentication(options =>
+    {
+        // Dispatcher: hub-ticket requests authenticate via the one-time
+        // ticket handler; everything else keeps the standard bearer flow.
+        options.DefaultScheme = "HubOrBearer";
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddPolicyScheme("HubOrBearer", "Hub ticket or Bearer", options =>
+    {
+        options.ForwardDefaultSelector = context =>
+            HubTicketAuthenticationHandler.PresentsTicket(context)
+                ? HubTicketAuthenticationHandler.SchemeName
+                : JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer()
+    .AddScheme<HubTicketAuthenticationOptions, HubTicketAuthenticationHandler>(
+        HubTicketAuthenticationHandler.SchemeName, _ => { });
+
+// One-time hub tickets: SignalR WebSockets cannot send an Authorization
+// header, so instead of putting the long-lived JWT in the query string
+// (which proxies log), the client POSTs /auth/hub-ticket with its bearer
+// token and connects with the returned single-use, 90s ticket.
+builder.Services.AddSingleton<HubTicketStore>();
+
+// SignalR's default provider reads "nameidentifier"; DevFlow JWTs carry
+// "sub" (MapInboundClaims=false), so without this Context.UserIdentifier
+// is null and per-user notification groups never match.
+builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, SubUserIdProvider>();
 
 builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
     .Configure<IOptions<JwtSettings>>((bearer, jwtSettings) =>
     {
         bearer.MapInboundClaims = false;
 
+        // Legacy path kept for one deploy window: hub requests carrying the
+        // old "access_token" query parameter still authenticate via JWT.
+        // Frontend now sends one-time hub tickets instead ("hub_ticket"),
+        // handled by HubTicketAuthenticationHandler.
         bearer.Events = new JwtBearerEvents
         {
-            // SignalR WebSockets cannot send an Authorization header,
-            // so the access token arrives via the query string.
             OnMessageReceived = context =>
             {
                 var accessToken = context.Request.Query["access_token"];

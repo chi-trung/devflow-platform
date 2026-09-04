@@ -182,6 +182,33 @@ export async function refreshSession(): Promise<boolean> {
   return refreshInFlight;
 }
 
+// ── One-time hub tickets ─────────────────────────────────────────────
+// SignalR WebSockets cannot send an Authorization header, so the connection
+// credential would otherwise ride in the query string — which proxies log.
+// Instead the client exchanges its bearer JWT for a single-use, 90s ticket
+// via a normal header-authenticated POST and puts only that in the query.
+let hubTicketInFlight: Promise<string | null> | null = null;
+
+/**
+ * Fetch a fresh one-time hub ticket. Coalesced per call burst; returns null
+ * when the exchange fails (caller falls back to the legacy access_token).
+ */
+export async function fetchHubTicket(): Promise<string | null> {
+  try {
+    hubTicketInFlight ??= api<{ ticket: string }>("/auth/hub-ticket", {
+      method: "POST",
+    })
+      .then((data) => data.ticket)
+      .catch(() => null)
+      .finally(() => {
+        hubTicketInFlight = null;
+      });
+    return await hubTicketInFlight;
+  } catch {
+    return null;
+  }
+}
+
 async function parseProblemDetails(response: Response): Promise<ApiError> {
   let title = `Request failed (${response.status})`;
   let fieldErrors: FieldErrors = {};

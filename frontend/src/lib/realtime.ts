@@ -1,10 +1,15 @@
 import * as signalR from "@microsoft/signalr";
-import { API_BASE, tokens } from "./api";
+import { API_BASE, fetchHubTicket, tokens } from "./api";
 
 // Keepalive below typical proxy idle timeouts (Render/Vercel edge) so
 // idle WebSockets are not dropped mid-session.
+//
+// The token sent here is a one-time, 90s hub ticket (not the long-lived
+// JWT): accessTokenFactory runs on every (re)connect and negotiates, so it
+// fetches a fresh ticket each time. If the exchange fails the legacy JWT is
+// sent instead — the backend still accepts it during the deploy window.
 const HUB_OPTIONS = {
-  accessTokenFactory: () => tokens.access ?? "",
+  accessTokenFactory: async () => (await fetchHubTicket()) ?? tokens.access ?? "",
   keepAliveIntervalInMilliseconds: 15_000,
   serverTimeoutInMilliseconds: 60_000,
 };

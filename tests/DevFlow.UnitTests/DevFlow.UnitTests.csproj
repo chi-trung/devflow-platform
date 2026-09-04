@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\src\DevFlow.Domain\DevFlow.Domain.csproj" />
     <ProjectReference Include="..\..\src\DevFlow.Application\DevFlow.Application.csproj" />
     <ProjectReference Include="..\..\src\DevFlow.Infrastructure\DevFlow.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\DevFlow.Api\DevFlow.Api.csproj" />
   </ItemGroup>
 
 </Project>
