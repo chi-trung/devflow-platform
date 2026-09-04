@@ -298,6 +298,11 @@ if (rateLimitEnabled)
 
 app.UseAuthentication();
 
+// PAT scope gate: read-only personal access tokens get 403 on writes.
+// Must sit after UseAuthentication (needs the PAT principal's scopes) and
+// before UseAuthorization.
+app.UseMiddleware<PatScopeMiddleware>();
+
 app.UseAuthorization();
 
 app.MapControllers();

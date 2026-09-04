@@ -1781,6 +1781,7 @@
   "expiryLabel": "Hết hạn",
   "scopeReadTasks": "Đọc công việc",
   "scopeWriteTasks": "Ghi công việc",
+  "scopeTasks": "Tự động hoá công việc",
   "scopeReadProjects": "Đọc dự án",
   "scopeAdminWorkspace": "Quản trị workspace",
   "createdTitle": "Token đã được tạo",

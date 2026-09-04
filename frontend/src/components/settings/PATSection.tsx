@@ -14,7 +14,7 @@ import { useToast } from "../ui/ToastProvider";
 const PAT_SCOPES = [
   { value: "read", labelKey: "pat.scopeReadTasks" },
   { value: "write", labelKey: "pat.scopeWriteTasks" },
-  { value: "tasks", labelKey: "pat.scopeWriteTasks" },
+  { value: "tasks", labelKey: "pat.scopeTasks" },
   { value: "admin", labelKey: "pat.scopeAdminWorkspace" },
 ] as const;
 

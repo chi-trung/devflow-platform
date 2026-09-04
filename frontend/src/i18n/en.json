@@ -1781,6 +1781,7 @@
   "expiryLabel": "Expires at",
   "scopeReadTasks": "Read tasks",
   "scopeWriteTasks": "Write tasks",
+  "scopeTasks": "Task automation",
   "scopeReadProjects": "Read projects",
   "scopeAdminWorkspace": "Admin workspace",
   "createdTitle": "Token created",
