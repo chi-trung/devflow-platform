@@ -1771,6 +1771,8 @@
   "title": "Personal Access Tokens",
   "generate": "Generate Token",
   "none": "No personal access tokens yet.",
+  "docsHint": "Use your tokens against the live REST API — try them in the",
+  "docsLink": "API docs (Swagger)",
   "nameRequired": "Token name is required.",
   "scopeRequired": "Select at least one scope.",
   "expiryRequired": "Expiry date is required.",

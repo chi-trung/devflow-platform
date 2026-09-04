@@ -281,11 +281,16 @@ app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 app.UseSerilogRequestLogging();
 
-if (app.Environment.IsDevelopment())
+// Swagger serves in every environment: the landing promises a REST API, and
+// PAT holders need live docs they can try tokens against. It is read-only
+// documentation — no secrets are exposed beyond what an authenticated call
+// would return anyway.
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    options.DocumentTitle = "DevFlow API";
+    options.EnablePersistAuthorization();
+});
 
 app.UseHttpsRedirection();
 

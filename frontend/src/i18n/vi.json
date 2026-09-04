@@ -1771,6 +1771,8 @@
   "title": "Personal Access Tokens",
   "generate": "Tạo token",
   "none": "Chưa có personal access token nào.",
+  "docsHint": "Dùng token của bạn với REST API trực tiếp — thử ngay trong",
+  "docsLink": "Tài liệu API (Swagger)",
   "nameRequired": "Tên token là bắt buộc.",
   "scopeRequired": "Chọn ít nhất một quyền.",
   "expiryRequired": "Ngày hết hạn là bắt buộc.",

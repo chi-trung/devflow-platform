@@ -4,6 +4,7 @@ import { Key, Plus, Trash2, X } from "lucide-react";
 import { Button } from "../ui/Button";
 import { ConfirmDialog } from "../ConfirmDialog";
 import {
+  API_BASE,
   createPat,
   deletePat,
   listPats,
@@ -136,6 +137,18 @@ export function PATSection() {
           {t("pat.generate")}
         </Button>
       </div>
+
+      <p className="mb-4 text-xs text-muted-foreground">
+        {t("pat.docsHint")}{" "}
+        <a
+          href={`${API_BASE}/swagger`}
+          target="_blank"
+          rel="noreferrer"
+          className="font-medium text-primary underline-offset-2 hover:underline"
+        >
+          {t("pat.docsLink")}
+        </a>
+      </p>
 
       {loading ? (
         <div className="space-y-2 pt-3">
