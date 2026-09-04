@@ -313,8 +313,10 @@ export function DashboardPage() {
             {dashboardLoading ? (
               <div className="space-y-4">
                 {/* Skeleton heights match the loaded cards (h-28 stats,
-                    366px chart row — measured on production) so the section
-                    doesn't grow when data lands. */}
+                    366px chart row, 170px sprint health, 150px deadlines —
+                    measured on production) so the section doesn't grow when
+                    data lands. Sprint health only reserves space when a
+                    project is selected, mirroring the loaded branch. */}
                 <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
                   {[0, 1, 2, 3].map((i) => (
                     <Skeleton key={i} className="h-28" />
@@ -324,6 +326,8 @@ export function DashboardPage() {
                   <Skeleton className="h-[366px]" />
                   <Skeleton className="h-[366px]" />
                 </div>
+                {selectedProjectId && <Skeleton className="h-[170px]" />}
+                <Skeleton className="h-[150px]" />
               </div>
             ) : dashboardError ? (
               <div className="space-y-2">
