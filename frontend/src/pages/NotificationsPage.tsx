@@ -89,22 +89,14 @@ export function NotificationsPage() {
       setLoading(true);
       setError(null);
       try {
-        const unreadOnly = filterTab === "unread";
         const data: PagedResult<NotificationResponse> = await getNotifications({
           page: pageNum,
           pageSize: PAGE_SIZE,
-          unreadOnly,
+          unreadOnly: filterTab === "unread",
+          readOnly: filterTab === "read",
+          mentionsOnly: filterTab === "mentions",
         });
-        const rows = data.items.map(fromApi);
-        if (filterTab === "read") {
-          setNotifications(rows.filter((n) => n.isRead));
-        } else if (filterTab === "unread") {
-          setNotifications(rows.filter((n) => !n.isRead));
-        } else if (filterTab === "mentions") {
-          setNotifications(rows.filter((n) => n.type?.toLowerCase() === "mention"));
-        } else {
-          setNotifications(rows);
-        }
+        setNotifications(data.items.map(fromApi));
         setTotalCount(data.totalCount);
       } catch (err) {
         setError(err instanceof Error ? err.message : t("notification.loadFailed"));

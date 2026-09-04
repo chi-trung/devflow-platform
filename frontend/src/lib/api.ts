@@ -391,6 +391,8 @@ export interface GetNotificationsParams {
   page?: number;
   pageSize?: number;
   unreadOnly?: boolean;
+  readOnly?: boolean;
+  mentionsOnly?: boolean;
 }
 
 export function getNotifications(
@@ -400,6 +402,8 @@ export function getNotifications(
   if (params.page) search.set("page", String(params.page));
   if (params.pageSize) search.set("pageSize", String(params.pageSize));
   if (params.unreadOnly) search.set("unreadOnly", "true");
+  if (params.readOnly) search.set("readOnly", "true");
+  if (params.mentionsOnly) search.set("mentionsOnly", "true");
   const qs = search.toString();
   return api<PagedResult<NotificationResponse>>(
     `/notifications${qs ? `?${qs}` : ""}`,

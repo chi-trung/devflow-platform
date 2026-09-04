@@ -54,7 +54,6 @@ export function KnowledgePage() {
   // Supersede state
   const [superseding, setSuperseding] = useState<KnowledgeEntryResponse | null>(null);
   const [supersedeTargetId, setSupersedeTargetId] = useState("");
-
   // Delete state
   const [pendingDelete, setPendingDelete] = useState<KnowledgeEntryResponse | null>(null);
 
@@ -87,6 +86,11 @@ export function KnowledgePage() {
 
   const activeEntries = entries.filter((e) => e.status !== "Superseded" && e.status !== "Deprecated");
   const retiredEntries = entries.filter((e) => e.status === "Superseded" || e.status === "Deprecated");
+
+  // Supersede candidates: other active entries in the project to pick as the replacement.
+  const supersedeCandidates = superseding
+    ? activeEntries.filter((e) => e.id !== superseding.id)
+    : [];
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -287,12 +291,27 @@ export function KnowledgePage() {
             </p>
             <div>
               <label className="mb-1 block text-sm font-medium">{t("knowledge.supersedeEntryId")}</label>
-              <Input
-                type="text"
-                value={supersedeTargetId}
-                onChange={(e) => setSupersedeTargetId(e.target.value)}
-                placeholder={t("knowledge.supersedePlaceholder")}
-              />
+              {supersedeCandidates.length > 0 ? (
+                <select
+                  value={supersedeTargetId}
+                  onChange={(e) => setSupersedeTargetId(e.target.value)}
+                  className="w-full cursor-pointer rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                >
+                  <option value="">{t("knowledge.supersedeSelectPlaceholder")}</option>
+                  {supersedeCandidates.map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>
+                      {candidate.title} · {t(`knowledge.type.${candidate.type}`)}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  type="text"
+                  value={supersedeTargetId}
+                  onChange={(e) => setSupersedeTargetId(e.target.value)}
+                  placeholder={t("knowledge.supersedePlaceholder")}
+                />
+              )}
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="ghost" onClick={() => setSuperseding(null)}>

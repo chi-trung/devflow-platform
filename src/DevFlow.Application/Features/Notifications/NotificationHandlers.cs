@@ -26,7 +26,11 @@ public sealed class GetNotificationsHandler(
 
         var filtered = query.UnreadOnly
             ? allNotifications.Where(n => !n.IsRead).ToList()
-            : allNotifications.ToList();
+            : query.ReadOnly
+                ? allNotifications.Where(n => n.IsRead).ToList()
+                : query.MentionsOnly
+                    ? allNotifications.Where(n => n.Type.Equals("mention", StringComparison.OrdinalIgnoreCase)).ToList()
+                    : allNotifications.ToList();
 
         var totalCount = filtered.Count;
         var skip = (page - 1) * pageSize;

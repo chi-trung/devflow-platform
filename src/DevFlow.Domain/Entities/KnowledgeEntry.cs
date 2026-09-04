@@ -56,6 +56,13 @@ public class KnowledgeEntry : BaseEntity, IAuditableEntity
 
     public Guid? SupersededById { get; private set; }
 
+    /// <summary>Set when the source task changed after this entry was captured — the content may be stale.</summary>
+    public bool NeedsReview { get; private set; }
+
+    public DateTimeOffset? DriftedAtUtc { get; private set; }
+
+    public string? DriftReason { get; private set; }
+
     public Guid? CreatedBy { get; private set; }
 
     public DateTimeOffset CreatedAtUtc { get; set; }
@@ -142,5 +149,29 @@ public class KnowledgeEntry : BaseEntity, IAuditableEntity
     public void SetWeight(decimal weight)
     {
         Weight = Math.Clamp(weight, 0m, 1m);
+    }
+
+    /// <summary>
+    /// Flags this entry for review because its source task moved on after the
+    /// entry was captured — the documented decision may no longer hold.
+    /// </summary>
+    public void FlagDrift(string reason)
+    {
+        if (Status is KnowledgeStatus.Superseded or KnowledgeStatus.Deprecated)
+        {
+            return;
+        }
+
+        NeedsReview = true;
+        DriftedAtUtc = DateTimeOffset.UtcNow;
+        DriftReason = string.IsNullOrWhiteSpace(reason) ? "Source task changed" : reason.Trim();
+    }
+
+    /// <summary>Clears the drift flag after a human reviews and refreshes the content.</summary>
+    public void ClearDrift()
+    {
+        NeedsReview = false;
+        DriftedAtUtc = null;
+        DriftReason = null;
     }
 }

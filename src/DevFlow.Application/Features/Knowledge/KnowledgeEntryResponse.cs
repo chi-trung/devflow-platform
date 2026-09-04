@@ -11,5 +11,8 @@ public sealed record KnowledgeEntryResponse(
     decimal Weight,
     string? Tags,
     Guid? SupersededById,
+    bool NeedsReview,
+    string? DriftReason,
+    DateTimeOffset? DriftedAtUtc,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? UpdatedAtUtc);

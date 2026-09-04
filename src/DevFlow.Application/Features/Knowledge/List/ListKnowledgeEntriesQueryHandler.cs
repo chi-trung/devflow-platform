@@ -41,6 +41,9 @@ public sealed class ListKnowledgeEntriesQueryHandler(
             entry.Weight,
             entry.Tags,
             entry.SupersededById,
+            entry.NeedsReview,
+            entry.DriftReason,
+            entry.DriftedAtUtc,
             entry.CreatedAtUtc,
             entry.UpdatedAtUtc);
     }

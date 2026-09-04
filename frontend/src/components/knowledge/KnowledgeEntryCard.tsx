@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { BookOpen, FileCode2, Workflow, Link2, Pencil, Trash2, GitBranch } from "lucide-react";
+import { BookOpen, FileCode2, Workflow, Link2, Pencil, Trash2, GitBranch, TriangleAlert } from "lucide-react";
 import { Badge } from "../ui/Badge";
 import type { KnowledgeEntryResponse, KnowledgeStatus, KnowledgeType } from "../../types/api";
 
@@ -51,7 +51,23 @@ export function KnowledgeEntryCard({
               {t(`knowledge.status.${entry.status}`)}
             </Badge>
             <Badge tone="neutral">{t(TYPE_META[entry.type]?.labelKey ?? "knowledge.type.Runbook")}</Badge>
+            {entry.needsReview && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400"
+                title={entry.driftReason ?? t("knowledge.driftTitle")}
+              >
+                <TriangleAlert className="size-3" aria-hidden />
+                {t("knowledge.needsReview")}
+              </span>
+            )}
           </div>
+
+          {entry.needsReview && entry.driftReason && (
+            <p className="mt-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-600 dark:text-amber-400">
+              <TriangleAlert className="mr-1 inline size-3 align-[-1px]" aria-hidden />
+              {entry.driftReason}
+            </p>
+          )}
 
           {entry.body && (
             <p className="mt-1.5 line-clamp-3 whitespace-pre-line text-sm text-muted-foreground">

@@ -28,6 +28,15 @@ public sealed class KnowledgeRepository(DevFlowDbContext dbContext) : IKnowledge
         return entries;
     }
 
+    public async Task<IReadOnlyList<KnowledgeEntry>> GetForTaskAsync(Guid taskId, CancellationToken cancellationToken = default)
+    {
+        var entries = await dbContext.KnowledgeEntries
+            .Where(k => k.TaskId == taskId)
+            .ToListAsync(cancellationToken);
+
+        return entries;
+    }
+
     public Task RemoveAsync(KnowledgeEntry entry, CancellationToken cancellationToken = default)
     {
         dbContext.KnowledgeEntries.Remove(entry);

@@ -92,6 +92,16 @@ public sealed class UpdateTaskItemCommandHandler(
                     tags: "auto-captured");
                 await knowledgeRepository.AddAsync(draftEntry, cancellationToken);
             }
+            // Drift warning: when a task that already shipped is reopened or moves
+            // backwards, any knowledge captured from it may no longer be accurate.
+            else if (oldStatus == TaskItemStatus.Done)
+            {
+                var capturedEntries = await knowledgeRepository.GetForTaskAsync(task.Id, cancellationToken);
+                foreach (var entry in capturedEntries)
+                {
+                    entry.FlagDrift($"Task \"{task.Title}\" reopened after shipping (now {task.Status}).");
+                }
+            }
         }
 
         if (command.AssigneeId != oldAssigneeId)

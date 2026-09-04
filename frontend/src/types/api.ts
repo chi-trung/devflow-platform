@@ -611,6 +611,9 @@ export interface KnowledgeEntryResponse {
   weight: number;
   tags: string | null;
   supersededById: string | null;
+  needsReview: boolean;
+  driftReason: string | null;
+  driftedAtUtc: string | null;
   createdAtUtc: string;
   updatedAtUtc: string | null;
 }

@@ -1421,13 +1421,16 @@
   "supersede": "Thay thế",
   "supersedeTitle": "Thay thế mục",
   "supersedeMessage": "Đánh dấu \"{{title}}\" là đã được thay thế bởi mục khác. Mục cũ sẽ giảm trọng số.",
-  "supersedeEntryId": "ID mục thay thế",
+  "supersedeEntryId": "Mục thay thế",
   "supersedePlaceholder": "Dán ID của mục sẽ thay thế mục này",
+  "supersedeSelectPlaceholder": "Chọn mục sẽ thay thế mục này",
   "supersededBy": "Đã được thay thế bởi mục khác",
   "supersededLink": "Đã thay thế",
   "superseded": "Đã thay thế mục",
   "capturedFromTask": "Được tự động ghi lại khi tác vụ hoàn thành",
-  "autoCaptured": "Tự động ghi lại"
+  "autoCaptured": "Tự động ghi lại",
+  "needsReview": "Cần rà soát",
+  "driftTitle": "Task nguồn đã thay đổi sau khi mục này được ghi lại"
  },
  "common": {
   "save": "Lưu",

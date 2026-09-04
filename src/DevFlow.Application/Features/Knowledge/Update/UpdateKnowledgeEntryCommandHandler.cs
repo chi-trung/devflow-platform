@@ -29,6 +29,8 @@ public sealed class UpdateKnowledgeEntryCommandHandler(
 
         entry.UpdateDetails(command.Title, command.Body, command.Type, command.Tags);
         entry.UpdateStatus(command.Status);
+        // Editing an entry counts as the human review that resolves a drift warning.
+        entry.ClearDrift();
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }

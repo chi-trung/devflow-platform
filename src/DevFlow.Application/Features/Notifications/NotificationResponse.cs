@@ -18,7 +18,9 @@ public sealed record NotificationResponse(
 public sealed record GetNotificationsQuery(
     int Page,
     int PageSize,
-    bool UnreadOnly) : IRequest<PagedResult<NotificationResponse>>;
+    bool UnreadOnly,
+    bool ReadOnly = false,
+    bool MentionsOnly = false) : IRequest<PagedResult<NotificationResponse>>;
 
 public sealed record GetUnreadCountQuery(Guid UserId, Guid? WorkspaceId = null) : IRequest<UnreadCountResponse>;
 

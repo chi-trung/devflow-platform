@@ -14,10 +14,16 @@ public sealed class NotificationsController(ISender sender, IUserContext userCon
 {
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<NotificationResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetNotifications([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] bool unreadOnly = false, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetNotifications(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] bool unreadOnly = false,
+        [FromQuery] bool readOnly = false,
+        [FromQuery] bool mentionsOnly = false,
+        CancellationToken cancellationToken = default)
     {
         var result = await sender.Send(
-            new GetNotificationsQuery(page, pageSize, unreadOnly),
+            new GetNotificationsQuery(page, pageSize, unreadOnly, readOnly, mentionsOnly),
             cancellationToken);
 
         Response.Headers.Append("X-Total-Count", result.TotalCount.ToString());

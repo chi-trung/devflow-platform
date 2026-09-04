@@ -10,5 +10,7 @@ public interface IKnowledgeRepository
 
     Task<IReadOnlyList<KnowledgeEntry>> GetForProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<KnowledgeEntry>> GetForTaskAsync(Guid taskId, CancellationToken cancellationToken = default);
+
     Task RemoveAsync(KnowledgeEntry entry, CancellationToken cancellationToken = default);
 }
