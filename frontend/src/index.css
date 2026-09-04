@@ -1,5 +1,68 @@
 @import "tailwindcss";
 
+/* ── Self-hosted fonts ────────────────────────────────────────────────────
+   Same-origin woff2 (latin + vietnamese subsets, variable weight) preloaded
+   from index.html. Self-hosting removes the fonts.googleapis.com/gstatic
+   round-trip that used to land mid-paint and shift text when the web font
+   swapped in (the biggest CLS contributor on the app shell). */
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/manrope-viet.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1,
+    U+01AF-01B0, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/manrope-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/space-grotesk-viet.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1,
+    U+01AF-01B0, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/space-grotesk-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-viet.woff2") format("woff2");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1,
+    U+01AF-01B0, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
 @theme {
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", "Manrope", ui-sans-serif, sans-serif;
@@ -86,12 +149,16 @@ body {
   }
 }
 
-@keyframes shimmer {
+/* Shimmer runs on a compositor-friendly transform instead of
+   background-position-x: animating background position repaints the element
+   every frame (Lighthouse "non-composited animation" + layout-shift
+   contributor), while a pseudo-element translate happens on the GPU thread. */
+@keyframes shimmer-slide {
   from {
-    background-position: 200% 0;
+    transform: translateX(-100%);
   }
   to {
-    background-position: -200% 0;
+    transform: translateX(100%);
   }
 }
 
@@ -145,15 +212,25 @@ body {
 }
 
 .skeleton {
+  position: relative;
+  overflow: hidden;
   border-radius: 0.5rem;
+  background: var(--color-card);
+}
+
+/* The moving highlight is a child pseudo-element so the animation only touches
+   transform (GPU-composited) — never the element's background or layout. */
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
   background: linear-gradient(
     100deg,
-    var(--color-card) 40%,
-    var(--color-elevated) 50%,
-    var(--color-card) 60%
+    transparent 40%,
+    color-mix(in oklab, var(--color-elevated) 85%, transparent) 50%,
+    transparent 60%
   );
-  background-size: 200% 100%;
-  animation: shimmer 1.4s linear infinite;
+  animation: shimmer-slide 1.4s linear infinite;
 }
 
 /* ── Landing page hero animations ─────────────────────────────────────── */

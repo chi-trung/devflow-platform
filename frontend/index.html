@@ -76,26 +76,34 @@
       property="og:description"
       content="Plan sprints, run your kanban board, and ship faster."
     />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://devflow-api-vd5h.onrender.com" />
     <link rel="dns-prefetch" href="https://devflow-api-vd5h.onrender.com" />
-    <!-- Web fonts load asynchronously: the media="print" trick lets the browser
-         paint with system fallback fonts immediately and swaps to Manrope /
-         Space Grotesk / JetBrains Mono when the stylesheet arrives, instead of
-         holding first paint hostage to a fonts.googleapis.com round-trip. -->
+    <!-- Fonts are self-hosted same-origin (see @font-face in index.css).
+         Preloading the latin subsets here means the web fonts are usually in
+         memory before first paint — no cross-origin round-trip mid-load, and
+         the font swap no longer shifts text (the old CLS driver). The smaller
+         vietnamese subsets load on demand from the stylesheet. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-      media="print"
-      onload="this.media='all'"
+      rel="preload"
+      href="/fonts/manrope-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
-    <noscript>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet"
-      />
-    </noscript>
+    <link
+      rel="preload"
+      href="/fonts/space-grotesk-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/jetbrains-mono-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <title>DevFlow — ship in flow</title>
   </head>
   <body>

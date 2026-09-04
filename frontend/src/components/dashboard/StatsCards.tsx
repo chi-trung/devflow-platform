@@ -70,7 +70,7 @@ export function StatsCards({ data, className = "" }: StatsCardsProps) {
       {cards.map(({ key, label, value, sub, icon: Icon, chip, valueClass }) => (
         <div
           key={key}
-          className="hover-lift rounded-xl border border-border bg-card p-4 hover:border-border-strong"
+          className="hover-lift h-28 rounded-xl border border-border bg-card p-4 hover:border-border-strong"
         >
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-muted-foreground">

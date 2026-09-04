@@ -198,7 +198,10 @@ export function DashboardPage() {
                   {t("dashboard.today", { date: todayDate })}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              {/* Fixed-height row: the selects/buttons that appear once data
+                  lands occupy exactly this much space, so the header never
+                  grows underneath the user (CLS driver on cold load). */}
+              <div className="flex h-[38px] flex-wrap items-center gap-2">
                 {projects.length > 0 && (
                   <select
                     data-tour="project-select"
@@ -248,6 +251,11 @@ export function DashboardPage() {
                 <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">
                   {t("dashboard.title")}
                 </h1>
+                {/* Same 3-line height as the loaded branch above so the header
+                    row doesn't grow when workspaces arrive. */}
+                <p className="invisible mt-1 text-sm">
+                  {t("dashboard.today", { date: todayDate })}
+                </p>
               </div>
               {!creating && (
                 <Button onClick={() => setCreating(true)}>
@@ -308,14 +316,16 @@ export function DashboardPage() {
 
             {dashboardLoading ? (
               <div className="space-y-4">
+                {/* Skeleton heights match the loaded cards (h-28 stats, ~324px
+                    chart cards) so the section doesn't grow when data lands. */}
                 <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
                   {[0, 1, 2, 3].map((i) => (
                     <Skeleton key={i} className="h-28" />
                   ))}
                 </div>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  <Skeleton className="h-72" />
-                  <Skeleton className="h-72" />
+                  <Skeleton className="h-[324px]" />
+                  <Skeleton className="h-[324px]" />
                 </div>
               </div>
             ) : dashboardError ? (
