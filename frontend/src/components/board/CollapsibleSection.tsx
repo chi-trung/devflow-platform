@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from "react";
-import { useTranslation } from "react-i18next";
 import { ChevronDown } from "lucide-react";
 
 interface CollapsibleSectionProps {
@@ -25,7 +24,6 @@ export function CollapsibleSection({
   children,
   defaultOpen = false,
 }: CollapsibleSectionProps) {
-  const { t } = useTranslation();
   const [open, setOpen] = useState(defaultOpen);
 
   return (
@@ -49,7 +47,6 @@ export function CollapsibleSection({
       {open && (
         <div className="border-t border-border px-3.5 py-3">{children}</div>
       )}
-      {!open && <span className="sr-only">{t("common.done")}</span>}
     </section>
   );
 }
