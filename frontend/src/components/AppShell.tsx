@@ -463,7 +463,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {workspaceId && projectId && (
             <section>
               <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "lg:hidden" : ""}`}>
-                {t("board.projects")}
+                {t("nav.projectNav")}
               </h2>
               <ul className="space-y-0.5">
                 {projectNavItems.map(({ to, icon: Icon, label, match }) => {

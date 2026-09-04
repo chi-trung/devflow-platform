@@ -187,23 +187,15 @@ export async function refreshSession(): Promise<boolean> {
 // credential would otherwise ride in the query string — which proxies log.
 // Instead the client exchanges its bearer JWT for a single-use, 90s ticket
 // via a normal header-authenticated POST and puts only that in the query.
-let hubTicketInFlight: Promise<string | null> | null = null;
-
-/**
- * Fetch a fresh one-time hub ticket. Coalesced per call burst; returns null
- * when the exchange fails (caller falls back to the legacy access_token).
- */
+//
+// Deliberately NOT coalesced: each hub connection (projects, notifications)
+// negotiates with its own ticket — sharing one across two parallel
+// handshakes burns it on the first and 401s the second (single-use).
 export async function fetchHubTicket(): Promise<string | null> {
   try {
-    hubTicketInFlight ??= api<{ ticket: string }>("/auth/hub-ticket", {
-      method: "POST",
-    })
-      .then((data) => data.ticket)
-      .catch(() => null)
-      .finally(() => {
-        hubTicketInFlight = null;
-      });
-    return await hubTicketInFlight;
+    return (
+      await api<{ ticket: string }>("/auth/hub-ticket", { method: "POST" })
+    ).ticket;
   } catch {
     return null;
   }
