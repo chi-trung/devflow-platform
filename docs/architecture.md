@@ -117,5 +117,5 @@ build+test on every push/PR.
 |---|---|---|
 | Frontend | Vercel | auto-deploy on push to `main` |
 | Backend | Render | `deploy-render.yml` webhook workflow |
-| Database backups | GitHub Actions | `backup.yml` (nightly, `pg_dump` of the Render Postgres via the `BACKUP_DATABASE_URL` secret; dump uploaded as a private artifact, 30-day retention) |
+| Database backups | GitHub Actions | `backup.yml` (nightly, `pg_dump` of the Supabase Postgres via the `BACKUP_DATABASE_URL` secret — Session pooler URL; dump uploaded as a private artifact, 30-day retention) |
 | Keep-alive | GitHub Actions | `keep-alive.yml` (pings Render free tier) |

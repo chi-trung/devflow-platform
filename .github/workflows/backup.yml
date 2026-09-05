@@ -1,14 +1,18 @@
 name: Database Backup
 
-# Nightly logical backup of the production Postgres (Render), dumped with a
-# version-matched pg_dump (postgres:17 image — matches the server major; the
-# runner's apt postgresql-client is older and fails with a version mismatch).
+# Nightly logical backup of the production Postgres (Supabase), dumped with
+# a pg_dump new enough for any supported server major (postgres:17 image; the
+# runner's apt postgresql-client is older and can hit a version mismatch).
 # The dump is uploaded as a private workflow artifact (30-day retention);
 # artifact retention IS the pruning mechanism, so there is no KEEP_COUNT.
 #
-# Requires the repo secret BACKUP_DATABASE_URL — the External Database URL
-# from Render Dashboard → Postgres instance → Connections. Without it the
-# job fails fast with a clear message instead of silently dumping nothing.
+# Requires the repo secret BACKUP_DATABASE_URL — the **Session pooler**
+# connection string from Supabase (Connect → Session pooler, port 5432,
+# host aws-0-<region>.pooler.supabase.com). Do NOT use the direct
+# db.<ref>.supabase.co endpoint: it is IPv6-only and GitHub-hosted runners
+# are IPv4-only, so pg_dump cannot reach it. The transaction pooler (port
+# 6543) is also unsuitable for pg_dump. Without the secret the job fails
+# fast with a clear message instead of silently dumping nothing.
 
 on:
   schedule:
@@ -30,7 +34,7 @@ jobs:
           BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
         run: |
           if [[ -z "$BACKUP_DATABASE_URL" ]]; then
-            echo "::error::BACKUP_DATABASE_URL is not set. Add it under repo Settings → Secrets and variables → Actions, using the External Database URL from Render (Postgres → Connections)."
+            echo "::error::BACKUP_DATABASE_URL is not set. Add it under repo Settings → Secrets and variables → Actions, using the Session pooler connection string from Supabase (Connect → Session pooler)."
             exit 1
           fi
 
