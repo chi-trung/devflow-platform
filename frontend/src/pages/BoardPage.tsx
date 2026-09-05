@@ -21,6 +21,7 @@ import {
   bulkAssignTasks,
   bulkDeleteTasks,
   bulkMoveTasks,
+  getProjectDependencyGraph,
   getProjectTaskFieldValues,
   pagedItems,
   reorderTasks,
@@ -61,6 +62,7 @@ import type {
   CustomFieldValueResponse,
   EpicResponse,
   LabelResponse,
+  ProjectDependencyGraphResponse,
   ProjectResponse,
   SprintResponse,
   TaskItemResponse,
@@ -179,6 +181,20 @@ export function BoardPage() {
     [workspaceId, projectId],
   );
 
+  // Project-wide dependency graph — the task list response has no isBlocked
+  // field, so "blocked" badges/filters derive from these unresolved edges.
+  const { data: depGraph, reload: reloadDepGraph } = useApi<ProjectDependencyGraphResponse>(
+    () => getProjectDependencyGraph(workspaceId, projectId),
+    [workspaceId, projectId],
+  );
+  const blockedTaskIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const edge of depGraph?.edges ?? []) {
+      if (!edge.isCyclic) ids.add(edge.fromTaskId);
+    }
+    return ids;
+  }, [depGraph]);
+
   const {
     data: tasksRaw,
     error,
@@ -262,12 +278,6 @@ export function BoardPage() {
   }, [project?.name]);
 
   const parsedSearch = parseSearchQuery(search);
-  const operatorLabelId =
-    parsedSearch.label
-      ? (labels ?? []).find((label) =>
-          label.name.toLowerCase().includes(parsedSearch.label),
-        )?.id ?? "no-match"
-      : "";
   const operatorAssigneeId =
     parsedSearch.assignee === ""
       ? ""
@@ -297,9 +307,6 @@ export function BoardPage() {
       if (assigneeFilter === "none") return !task.assigneeId;
       return task.assigneeId === assigneeFilter;
     })
-    .filter((task) =>
-      labelFilter ? (task.labelIds ?? []).includes(labelFilter) : true,
-    )
     .filter((task) => {
       if (!dueFrom && !dueTo) return true;
       if (!task.dueDateUtc) return false;
@@ -308,7 +315,9 @@ export function BoardPage() {
       if (dueTo && due > new Date(`${dueTo}T23:59:59`).getTime()) return false;
       return true;
     })
-    .filter((task) => (blockedOnly ? !!task.isBlocked : true))
+    // Blocked state is derived from the dependency graph (unresolved edges) —
+    // the task list response has no isBlocked field.
+    .filter((task) => (blockedOnly ? blockedTaskIds.has(task.id) : true))
     .filter((task) =>
       parsedSearch.status ? task.status === parsedSearch.status : true,
     )
@@ -318,10 +327,7 @@ export function BoardPage() {
     .filter((task) =>
       operatorAssigneeId ? task.assigneeId === operatorAssigneeId : true,
     )
-    .filter((task) =>
-      operatorLabelId ? (task.labelIds ?? []).includes(operatorLabelId) : true,
-    )
-    .filter((task) => (parsedSearch.blockedOnly ? !!task.isBlocked : true))
+    .filter((task) => (parsedSearch.blockedOnly ? blockedTaskIds.has(task.id) : true))
     .filter((task) =>
       parsedSearch.text
         ? task.title.toLowerCase().includes(parsedSearch.text.toLowerCase())
@@ -580,7 +586,7 @@ export function BoardPage() {
     const task = tasks.find((t) => t.id === taskId);
     if (!task || (!beforeTaskId && task.status === status)) return;
 
-    if (task.isBlocked && task.status !== status) {
+    if (blockedTaskIds.has(taskId) && task.status !== status) {
       const message = t("board.blockedMoveDetail", { title: task.title });
       setBoardError(message);
       push(t("task.blocked"), "error");
@@ -940,6 +946,7 @@ export function BoardPage() {
                     epics={epics ?? []}
                     swimlaneMode={swimlaneMode}
                     customFieldsByTaskId={customFieldsByTaskId ?? undefined}
+                    blockedTaskIds={blockedTaskIds}
                     onDropTask={(taskId, next, beforeId) =>
                       void moveTask(taskId, next, beforeId)
                     }
@@ -1085,6 +1092,7 @@ export function BoardPage() {
           onDependencyChanged={() => {
             reload();
             reloadActivities();
+            reloadDepGraph();
           }}
         />
       )}

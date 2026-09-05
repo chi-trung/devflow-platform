@@ -1,8 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useState, type FormEvent } from "react";
-import { Check, Clock, Link2, Hash, ListChecks, Plus, X } from "lucide-react";
+import { Check, Link2, Hash, Plus, X } from "lucide-react";
 import type { TaskItemResponse, WorkspaceMemberResponse, CustomFieldValueResponse } from "../../types/api";
-import { formatMinutes } from "../../lib/format";
 import { Avatar } from "../ui/Avatar";
 import { EstimationModal } from "../estimation/EstimationModal";
 import { api } from "../../lib/api";
@@ -27,6 +26,9 @@ interface TaskCardProps {
   members: WorkspaceMemberResponse[];
   /** Pre-fetched custom-field values for this task (from the project-wide batch). */
   customFieldValues?: CustomFieldValueResponse[];
+  /** Derived from the project dependency graph (unresolved blockers) — the
+   * task list response has no isBlocked field. */
+  isBlocked?: boolean;
   onDelete: (task: TaskItemResponse) => void;
   onSelect: (taskId: string) => void;
   selectionMode?: boolean;
@@ -41,6 +43,7 @@ export function TaskCard({
   task,
   members,
   customFieldValues,
+  isBlocked = false,
   onDelete,
   onSelect,
   selectionMode = false,
@@ -188,28 +191,13 @@ export function TaskCard({
             })}
           </time>
         )}
-        {task.isBlocked && (
+        {isBlocked && (
           <span
             title={t("task.blockedByDependencies")}
             className="flex items-center gap-1 rounded-md bg-destructive/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-destructive"
           >
             <Link2 className="size-3" aria-hidden />
             {t("task.blocked")}
-          </span>
-        )}
-        {(task.totalLoggedMinutes ?? 0) > 0 && (
-          <span className="flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
-            <Clock className="size-3" aria-hidden />
-            {formatMinutes(task.totalLoggedMinutes ?? 0)}
-          </span>
-        )}
-        {(task.subtaskCount ?? 0) > 0 && (
-          <span
-            title={t("subtask.nestedCount", { count: task.subtaskCount })}
-            className="flex items-center gap-1 rounded-md bg-muted-foreground/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground"
-          >
-            <ListChecks className="size-3" aria-hidden />
-            {task.subtaskCount}
           </span>
         )}
         {dodMet && (

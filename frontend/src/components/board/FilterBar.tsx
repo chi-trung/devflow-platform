@@ -139,21 +139,10 @@ export function FilterBar({
         <option value="Low">{t("task.low")}</option>
       </select>
 
-      {labels.length > 0 && (
-        <select
-          aria-label={t("filter.filterByLabel")}
-          value={current.label}
-          onChange={(event) => onChange({ label: event.target.value })}
-          className={inputClass}
-        >
-          <option value="">{t("filter.anyLabel")}</option>
-          {labels.map((label) => (
-            <option key={label.id} value={label.id}>
-              {label.name}
-            </option>
-          ))}
-        </select>
-      )}
+      {/* Label filter UI hidden: the tasks list response has no labelIds, so
+          filtering by label client-side is impossible until the API exposes
+          per-task labels (assign/remove endpoints exist, list enrichment
+          doesn't). Restore with the real labelIds field. */}
 
       <span className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1.5 sm:gap-y-2">
         <label className="flex items-center gap-1.5 text-xs text-muted-foreground">

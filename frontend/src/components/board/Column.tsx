@@ -17,6 +17,8 @@ interface ColumnProps {
   epics?: EpicResponse[];
   swimlaneMode?: "none" | "assignee" | "epic";
   customFieldsByTaskId?: ReadonlyMap<string, CustomFieldValueResponse[]>;
+  /** Ids of tasks with unresolved blockers, from the project dependency graph. */
+  blockedTaskIds?: ReadonlySet<string>;
   onDropTask: (
     taskId: string,
     status: TaskItemResponse["status"],
@@ -54,6 +56,7 @@ export function Column({
   epics = [],
   swimlaneMode = "none",
   customFieldsByTaskId,
+  blockedTaskIds,
   onDropTask,
   onDelete,
   onSelect,
@@ -153,6 +156,7 @@ export function Column({
         task={task}
         members={members}
         customFieldValues={customFieldsByTaskId?.get(task.id)}
+        isBlocked={blockedTaskIds?.has(task.id) ?? false}
         onDelete={onDelete}
         onSelect={onSelect}
         selectionMode={selectionMode}

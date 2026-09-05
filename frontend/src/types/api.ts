@@ -157,14 +157,15 @@ export interface TaskItemResponse {
   epicId: string | null;
   dueDateUtc: string | null;
   completedAtUtc: string | null;
-  isBlocked?: boolean;
-  estimateMinutes?: number | null;
-  totalLoggedMinutes?: number;
-  labelIds?: string[];
   position?: number;
   storyPoints?: number | null;
-  /** Number of completed child subtasks, when the backend includes it. */
-  subtaskCount?: number;
+  /**
+   * Backend note: the task list does NOT include isBlocked/labelIds/
+   * estimateMinutes/totalLoggedMinutes/subtaskCount — those TS fields never
+   * existed on TaskItemResponse. Blocked state lives in the per-task
+   * /dependencies response; per-task labels in the assign/remove endpoints;
+   * logged time in /time-entries. */
+
   /** Attachment summary for card thumbnails (B32.2). */
   attachmentSummary?: {
     count: number;

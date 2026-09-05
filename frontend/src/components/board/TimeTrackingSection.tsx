@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Clock, Play, Square, Trash2, TriangleAlert } from "lucide-react";
 import {
-  api,
   deleteTimeEntry,
   getTimeEntries,
   logTimeEntry,
+  setTaskEstimation,
 } from "../../lib/api";
 import { formatMinutes } from "../../lib/format";
 import { useToast } from "../ui/ToastProvider";
@@ -36,8 +36,12 @@ export function TimeTrackingSection({
   const [extraMinutes, setExtraMinutes] = useState("");
   const [entryDescription, setEntryDescription] = useState("");
   const [logging, setLogging] = useState(false);
-  const [estimateHours, setEstimateHours] = useState(
-    task.estimateMinutes != null ? String(task.estimateMinutes / 60) : "",
+
+  // Story-point estimate — the only persistable estimate the backend offers
+  // (PUT /tasks/{id}/estimation). The old "estimateMinutes" UI PATCHed a field
+  // the backend silently drops, so saves never persisted.
+  const [estimatePoints, setEstimatePoints] = useState(
+    task.storyPoints != null ? String(task.storyPoints) : "",
   );
   const [savingEstimate, setSavingEstimate] = useState(false);
 
@@ -69,9 +73,9 @@ export function TimeTrackingSection({
   }, [task.id, workspaceId, projectId]);
 
   useEffect(() => {
-    if (task.estimateMinutes == null) return;
-    setEstimateHours(String(task.estimateMinutes / 60));
-  }, [task.estimateMinutes]);
+    if (task.storyPoints == null) return;
+    setEstimatePoints(String(task.storyPoints));
+  }, [task.storyPoints]);
 
   useEffect(() => {
     if (!timerRunning) return;
@@ -96,34 +100,22 @@ export function TimeTrackingSection({
   }
 
   async function saveEstimate() {
-    const trimmed = estimateHours.trim();
-    let minutes: number | null = null;
+    const trimmed = estimatePoints.trim();
+    let points: number | null = null;
     if (trimmed !== "") {
       const parsed = parseFloat(trimmed);
       if (!Number.isFinite(parsed) || parsed < 0) {
         setError(t("timeTracking.estimateMustBeNumber"));
         return;
       }
-      minutes = Math.round(parsed * 60);
+      points = Math.round(parsed);
     }
     setSavingEstimate(true);
     setError(null);
     try {
-      await api(
-        `/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({
-            title: task.title,
-            description: task.description,
-            status: task.status,
-            priority: task.priority,
-            assigneeId: task.assigneeId,
-            dueDateUtc: task.dueDateUtc,
-            estimateMinutes: minutes,
-          }),
-        },
-      );
+      // Persists via the real estimation endpoint (story points). The old
+      // PATCH-with-estimateMinutes path was silently dropped by the backend.
+      await setTaskEstimation(workspaceId, projectId, task.id, points);
       onChanged();
       push(t("timeTracking.estimateSaved"));
     } catch (err) {
@@ -177,13 +169,11 @@ export function TimeTrackingSection({
   }
 
   const loggedTotal =
-    entries?.reduce((sum, entry) => sum + entry.minutes, 0) ??
-    task.totalLoggedMinutes ??
-    0;
-  const estimate = task.estimateMinutes ?? null;
+    entries?.reduce((sum, entry) => sum + entry.minutes, 0) ?? 0;
+  const estimate = task.storyPoints ?? null;
   const percent =
-    estimate && estimate > 0 ? Math.min(100, Math.round((loggedTotal / estimate) * 100)) : 0;
-  const overBudget = estimate != null && loggedTotal > estimate;
+    estimate && estimate > 0 ? Math.min(100, Math.round((loggedTotal / (estimate * 60)) * 100)) : 0;
+  const overBudget = estimate != null && loggedTotal > estimate * 60;
 
   return (
     <section className="space-y-2">
@@ -220,18 +210,18 @@ export function TimeTrackingSection({
 
       <div className="flex items-center gap-2">
         <label className="flex flex-1 items-center gap-1.5 text-xs text-muted-foreground">
-          {t("timeTracking.estimateHours")}
+          {t("timeTracking.estimatePoints")}
           <input
             type="number"
             min={0}
-            step={0.5}
-            value={estimateHours}
-            onChange={(event) => setEstimateHours(event.target.value)}
+            step={1}
+            value={estimatePoints}
+            onChange={(event) => setEstimatePoints(event.target.value)}
             placeholder="—"
             className="w-16 rounded-md border border-border bg-surface px-1.5 py-1 text-sm focus:border-primary focus:outline-none"
           />
         </label>
-        {estimateHours !== (task.estimateMinutes != null ? String(task.estimateMinutes / 60) : "") && (
+        {estimatePoints !== (task.storyPoints != null ? String(task.storyPoints) : "") && (
           <button
             type="button"
             onClick={() => void saveEstimate()}
@@ -268,7 +258,7 @@ export function TimeTrackingSection({
         <p className="flex items-start gap-1.5 rounded-lg border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
           <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           {t("timeTracking.overEstimate", {
-            time: formatMinutes(loggedTotal - (estimate ?? 0)),
+            time: formatMinutes(loggedTotal - (estimate ?? 0) * 60),
           })}
         </p>
       )}

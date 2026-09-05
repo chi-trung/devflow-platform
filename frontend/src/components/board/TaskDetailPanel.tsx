@@ -531,7 +531,9 @@ export function TaskDetailPanel({
         title: task.title,
         description: task.description,
         priority: task.priority,
-        estimateMinutes: task.estimateMinutes ?? null,
+        // TaskItemResponse carries no estimateMinutes (never did) — the
+        // closest persisted analog is story points.
+        estimateMinutes: task.storyPoints ?? null,
       });
       push(t("task.savedAsTemplate"));
     } catch (err) {
