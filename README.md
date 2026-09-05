@@ -21,7 +21,7 @@ Built as a long-term learning project with a strong focus on architecture, testi
 | Architecture | Clean Architecture, CQRS + MediatR |
 | Database | PostgreSQL + EF Core |
 | Auth | JWT access tokens + rotating refresh tokens |
-| Testing | xUnit (333 unit tests) |
+| Testing | xUnit (436 unit tests) |
 | DevOps | Docker Compose, GitHub Actions |
 
 **Frontend**
