@@ -37,7 +37,7 @@ export function VelocityChart({ data, className = "" }: VelocityChartProps) {
   const barW = Math.min(26, slot * 0.32);
 
   const y = (value: number) => PAD_T + plotH * (1 - value / maxTasks);
-  const avgY = y(maxTasks * (data.averageCompletionRate / 100));
+  const avgY = y(maxTasks * data.averageCompletionRate);
 
   const tickStep = Math.max(1, Math.ceil(maxTasks / 4));
   const ticks: number[] = [];
@@ -51,7 +51,7 @@ export function VelocityChart({ data, className = "" }: VelocityChartProps) {
           <BarChart3 className="size-4 text-primary" aria-hidden />
           {t("reports.sprintVelocity")}
           <span className="ml-1 font-mono text-[11px] font-normal text-muted-foreground">
-            {t("reports.avgCompletion", { pct: Math.round(data.averageCompletionRate) })}
+            {t("reports.avgCompletion", { pct: Math.round(data.averageCompletionRate * 100) })}
           </span>
         </h3>
         <div className="ml-auto flex items-center gap-4 font-mono text-[11px] text-muted-foreground">
@@ -122,7 +122,7 @@ export function VelocityChart({ data, className = "" }: VelocityChartProps) {
                 rx="3"
                 fill="var(--color-primary)"
               >
-                <title>{t("reports.completedPoint", { name: sprint.sprintName, done: sprint.completedTasks, total: sprint.totalTasks, pct: Math.round(sprint.completionPercent) })}</title>
+                <title>{t("reports.completedPoint", { name: sprint.sprintName, done: sprint.completedTasks, total: sprint.totalTasks, pct: Math.round(sprint.completionRate * 100) })}</title>
               </rect>
               <text
                 x={cx}
@@ -145,7 +145,7 @@ export function VelocityChart({ data, className = "" }: VelocityChartProps) {
                 fontFamily="var(--font-mono)"
                 opacity="0.8"
               >
-                {Math.round(sprint.completionPercent)}%
+                {Math.round(sprint.completionRate * 100)}%
               </text>
             </g>
           );

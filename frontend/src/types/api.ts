@@ -421,15 +421,15 @@ export interface BurndownResponse {
 export interface SprintVelocity {
   sprintId: string;
   sprintName: string;
-  totalTasks: number;
   completedTasks: number;
-  totalStoryPoints: number;
-  completedStoryPoints: number;
-  completionPercent: number;
+  totalTasks: number;
+  /** Completion as a fraction 0–1 (backend rounds to 2 decimals) — NOT a percent. */
+  completionRate: number;
 }
 
 export interface VelocityResponse {
   sprints: SprintVelocity[];
+  /** Completion as a fraction 0–1 — NOT a percent. */
   averageCompletionRate: number;
 }
 
