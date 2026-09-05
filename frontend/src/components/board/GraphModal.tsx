@@ -235,6 +235,7 @@ export function GraphModal({
         assigneeId: node.assigneeId,
         sprintId: null,
         epicId: null,
+        parentTaskId: null,
         dueDateUtc: null,
         completedAtUtc: null,
       });

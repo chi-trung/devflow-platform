@@ -155,6 +155,7 @@ export interface TaskItemResponse {
   assigneeId: string | null;
   sprintId: string | null;
   epicId: string | null;
+  parentTaskId: string | null;
   dueDateUtc: string | null;
   completedAtUtc: string | null;
   position?: number;

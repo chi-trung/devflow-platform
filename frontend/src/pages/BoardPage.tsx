@@ -664,6 +664,7 @@ export function BoardPage() {
       assigneeId: null,
       sprintId: null,
       epicId: null,
+      parentTaskId: null,
       dueDateUtc: input.dueDateUtc,
       completedAtUtc: null,
       position: tasks.length,
