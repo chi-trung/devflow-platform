@@ -85,3 +85,9 @@ AGENT_STATUS.md
 IMPLEMENTATION_PLAN.md
 .local/
 docs/sprint*/
+
+# AI agent tooling (local only)
+.agents/
+.claude/skills/
+.config/
+skills-lock.json

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Parallel Agents"
-  short_description: "Structure and edit a codebase so parallel agents stop conflicting"
-  default_prompt: "Use $parallel-agents to keep this change from colliding with parallel work."
