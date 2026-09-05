@@ -90,6 +90,8 @@ npm run dev                   # http://localhost:3000, proxies /api to :5217
 
 ## Documentation
 
+- [Development guide](docs/development.md) — setup, testing, migrations, conventions
+- [Architecture](docs/architecture.md) — solution layout, CQRS pipeline, data flow
 - [API guide](docs/api.md) — REST API, auth, and production endpoints
 - [Design system](design-system/devflow/MASTER.md) — tokens, colors, typography
 - [Agent guidelines](AGENTS.md) — how AI agents coordinate on this repo
