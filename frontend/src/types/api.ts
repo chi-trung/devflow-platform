@@ -240,6 +240,9 @@ export interface ActivityResponsePage {
   totalCount: number;
   page: number;
   pageSize: number;
+  /** Same server-computed fields as PagedResult. */
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
 }
 
 export interface TaskAttachmentResponse {
@@ -297,6 +300,9 @@ export interface PagedResult<T> {
   page: number;
   pageSize: number;
   totalPages: number;
+  /** Computed server-side (PagedResult.HasPreviousPage/HasNextPage). */
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
 }
 
 export interface SearchTaskResult {
