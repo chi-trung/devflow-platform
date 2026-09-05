@@ -41,13 +41,21 @@ public sealed class RedisCacheService(IConnectionMultiplexer connectionMultiplex
     public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
     {
         var serialized = JsonSerializer.Serialize(value);
-        await database.StringSetAsync(key, serialized, expiration);
+        // StackExchange.Redis 2.13 replaced the TimeSpan? overload with Expiration
+        // (implicit conversion from TimeSpan; Default when no TTL was given).
+        await database.StringSetAsync(
+            key,
+            serialized,
+            expiration is { } ttl ? (Expiration)ttl : Expiration.Default);
     }
 
     public async Task SetAsync<T>(string key, T value, IEnumerable<string>? tags = null, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
     {
         var serialized = JsonSerializer.Serialize(value);
-        await database.StringSetAsync(key, serialized, expiration);
+        await database.StringSetAsync(
+            key,
+            serialized,
+            expiration is { } ttl ? (Expiration)ttl : Expiration.Default);
 
         if (tags is not null)
         {
