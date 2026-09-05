@@ -52,7 +52,7 @@ public class NotificationBehaviorGatingTests
         var behavior = CreateBehavior();
         var command = CreateCommand(_recipientId);
 
-        await behavior.Handle(command, () => Task.FromResult(Unit.Value), CancellationToken.None);
+        await behavior.Handle(command, (_) => Task.FromResult(Unit.Value), CancellationToken.None);
 
         await _notificationRepository.Received(1).AddAsync(Arg.Any<Notification>(), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -68,7 +68,7 @@ public class NotificationBehaviorGatingTests
         var behavior = CreateBehavior();
         var command = CreateCommand(_recipientId);
 
-        await behavior.Handle(command, () => Task.FromResult(Unit.Value), CancellationToken.None);
+        await behavior.Handle(command, (_) => Task.FromResult(Unit.Value), CancellationToken.None);
 
         await _notificationRepository.DidNotReceive().AddAsync(Arg.Any<Notification>(), Arg.Any<CancellationToken>());
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -82,7 +82,7 @@ public class NotificationBehaviorGatingTests
         var behavior = CreateBehavior();
         var command = CreateCommand(_recipientId);
 
-        await behavior.Handle(command, () => Task.FromResult(Unit.Value), CancellationToken.None);
+        await behavior.Handle(command, (_) => Task.FromResult(Unit.Value), CancellationToken.None);
 
         await _notificationRepository.Received(1).AddAsync(Arg.Any<Notification>(), Arg.Any<CancellationToken>());
     }
@@ -96,7 +96,7 @@ public class NotificationBehaviorGatingTests
         var behavior = CreateBehavior();
         var command = CreateCommand(_actorId);
 
-        await behavior.Handle(command, () => Task.FromResult(Unit.Value), CancellationToken.None);
+        await behavior.Handle(command, (_) => Task.FromResult(Unit.Value), CancellationToken.None);
 
         await _notificationRepository.DidNotReceive().AddAsync(Arg.Any<Notification>(), Arg.Any<CancellationToken>());
     }
@@ -115,7 +115,7 @@ public class NotificationBehaviorGatingTests
         var command = new CreateCommentCommand(
             Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "nice work", AssigneeId: _recipientId);
 
-        await behavior.Handle(command, () => Task.FromResult(new CommentResponse(Guid.NewGuid(), Guid.NewGuid(), _actorId, "nice work", DateTimeOffset.UtcNow)), CancellationToken.None);
+        await behavior.Handle(command, (_) => Task.FromResult(new CommentResponse(Guid.NewGuid(), Guid.NewGuid(), _actorId, "nice work", DateTimeOffset.UtcNow)), CancellationToken.None);
 
         await _notificationRepository.DidNotReceive().AddAsync(Arg.Any<Notification>(), Arg.Any<CancellationToken>());
     }
@@ -133,7 +133,7 @@ public class NotificationBehaviorGatingTests
 
         var command = new UpdateMemberRoleCommand(Guid.NewGuid(), _recipientId, WorkspaceRole.Admin);
 
-        await behavior.Handle(command, () => Task.FromResult(Unit.Value), CancellationToken.None);
+        await behavior.Handle(command, (_) => Task.FromResult(Unit.Value), CancellationToken.None);
 
         await _notificationRepository.DidNotReceive().AddAsync(Arg.Any<Notification>(), Arg.Any<CancellationToken>());
     }
@@ -151,7 +151,7 @@ public class NotificationBehaviorGatingTests
 
         var command = new RemoveMemberCommand(Guid.NewGuid(), _recipientId);
 
-        await behavior.Handle(command, () => Task.FromResult(Unit.Value), CancellationToken.None);
+        await behavior.Handle(command, (_) => Task.FromResult(Unit.Value), CancellationToken.None);
 
         await _notificationRepository.Received(1).AddAsync(
             Arg.Is<Notification>(n => n.Type == "RemovedFromWorkspace"),

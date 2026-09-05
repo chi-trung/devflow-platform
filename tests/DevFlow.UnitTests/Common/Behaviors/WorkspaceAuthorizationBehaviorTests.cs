@@ -34,7 +34,7 @@ public class WorkspaceAuthorizationBehaviorTests
         var request = new AdminOnlyRequest(Guid.NewGuid());
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
-            behavior.Handle(request, () => Task.FromResult(PipelineResult), CancellationToken.None));
+            behavior.Handle(request, (_) => Task.FromResult(PipelineResult), CancellationToken.None));
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class WorkspaceAuthorizationBehaviorTests
         var request = new AdminOnlyRequest(Guid.NewGuid());
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
-            behavior.Handle(request, () => Task.FromResult(PipelineResult), CancellationToken.None));
+            behavior.Handle(request, (_) => Task.FromResult(PipelineResult), CancellationToken.None));
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public class WorkspaceAuthorizationBehaviorTests
         var behavior = CreateBehavior<AdminOnlyRequest>();
         var request = new AdminOnlyRequest(Guid.NewGuid());
 
-        var result = await behavior.Handle(request, () => Task.FromResult(PipelineResult), CancellationToken.None);
+        var result = await behavior.Handle(request, (_) => Task.FromResult(PipelineResult), CancellationToken.None);
 
         Assert.Equal(PipelineResult, result);
     }
@@ -73,7 +73,7 @@ public class WorkspaceAuthorizationBehaviorTests
         var behavior = CreateBehavior<AdminOnlyRequest>();
         var request = new AdminOnlyRequest(Guid.NewGuid());
 
-        var result = await behavior.Handle(request, () => Task.FromResult(PipelineResult), CancellationToken.None);
+        var result = await behavior.Handle(request, (_) => Task.FromResult(PipelineResult), CancellationToken.None);
 
         Assert.Equal(PipelineResult, result);
     }
@@ -87,7 +87,7 @@ public class WorkspaceAuthorizationBehaviorTests
         var behavior = CreateBehavior<AnyMemberRequest>();
         var request = new AnyMemberRequest(Guid.NewGuid());
 
-        var result = await behavior.Handle(request, () => Task.FromResult(PipelineResult), CancellationToken.None);
+        var result = await behavior.Handle(request, (_) => Task.FromResult(PipelineResult), CancellationToken.None);
 
         Assert.Equal(PipelineResult, result);
     }
@@ -99,7 +99,7 @@ public class WorkspaceAuthorizationBehaviorTests
 
         var result = await behavior.Handle(
             new PlainRequest(),
-            () => Task.FromResult(PipelineResult),
+            (_) => Task.FromResult(PipelineResult),
             CancellationToken.None);
 
         Assert.Equal(PipelineResult, result);

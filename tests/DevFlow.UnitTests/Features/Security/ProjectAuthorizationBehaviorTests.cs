@@ -35,7 +35,7 @@ public class ProjectAuthorizationBehaviorTests
         var behavior = CreateBehavior<AddProjectMemberCommand>();
         var request = new AddProjectMemberCommand(_workspaceId, _projectId, Guid.NewGuid(), ProjectRole.Member);
 
-        var result = await behavior.Handle(request, () => Task.FromResult("handled"), CancellationToken.None);
+        var result = await behavior.Handle(request, (_) => Task.FromResult("handled"), CancellationToken.None);
 
         Assert.Equal("handled", result);
     }
@@ -50,7 +50,7 @@ public class ProjectAuthorizationBehaviorTests
         var request = new AddProjectMemberCommand(_workspaceId, _projectId, Guid.NewGuid(), ProjectRole.Member);
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
-            behavior.Handle(request, () => Task.FromResult("handled"), CancellationToken.None));
+            behavior.Handle(request, (_) => Task.FromResult("handled"), CancellationToken.None));
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class ProjectAuthorizationBehaviorTests
         var behavior = CreateBehavior<AddProjectMemberCommand>();
         var request = new AddProjectMemberCommand(_workspaceId, _projectId, Guid.NewGuid(), ProjectRole.Member);
 
-        var result = await behavior.Handle(request, () => Task.FromResult("handled"), CancellationToken.None);
+        var result = await behavior.Handle(request, (_) => Task.FromResult("handled"), CancellationToken.None);
 
         Assert.Equal("handled", result);
     }
@@ -81,7 +81,7 @@ public class ProjectAuthorizationBehaviorTests
         var request = new AddProjectMemberCommand(_workspaceId, _projectId, Guid.NewGuid(), ProjectRole.Member);
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
-            behavior.Handle(request, () => Task.FromResult("handled"), CancellationToken.None));
+            behavior.Handle(request, (_) => Task.FromResult("handled"), CancellationToken.None));
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class ProjectAuthorizationBehaviorTests
         var behavior = CreateBehavior<ListProjectMembersQuery>();
         var request = new ListProjectMembersQuery(_workspaceId, _projectId);
 
-        var result = await behavior.Handle(request, () => Task.FromResult("handled"), CancellationToken.None);
+        var result = await behavior.Handle(request, (_) => Task.FromResult("handled"), CancellationToken.None);
 
         Assert.Equal("handled", result);
     }

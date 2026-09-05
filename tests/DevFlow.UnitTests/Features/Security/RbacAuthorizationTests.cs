@@ -48,7 +48,7 @@ public class RbacAuthorizationTests
     {
         return await behavior.Handle(
             request,
-            () => Task.FromResult("handled"),
+            (_) => Task.FromResult("handled"),
             CancellationToken.None);
     }
 
@@ -80,7 +80,7 @@ public class RbacAuthorizationTests
         var request = new ImportProjectBackupCommand(Guid.NewGuid(), Guid.NewGuid(), "{}");
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
-            behavior.Handle(request, () => Task.FromResult("handled"), CancellationToken.None));
+            behavior.Handle(request, (_) => Task.FromResult("handled"), CancellationToken.None));
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public class RbacAuthorizationTests
         var behavior = CreateBehavior<ImportProjectBackupCommand>();
         var request = new ImportProjectBackupCommand(Guid.NewGuid(), Guid.NewGuid(), "{}");
 
-        var result = await behavior.Handle(request, () => Task.FromResult("handled"), CancellationToken.None);
+        var result = await behavior.Handle(request, (_) => Task.FromResult("handled"), CancellationToken.None);
 
         Assert.Equal("handled", result);
     }
@@ -109,7 +109,7 @@ public class RbacAuthorizationTests
         var request = new ExportProjectBackupQuery(Guid.NewGuid(), Guid.NewGuid(), "json");
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
-            behavior.Handle(request, () => Task.FromResult("handled"), CancellationToken.None));
+            behavior.Handle(request, (_) => Task.FromResult("handled"), CancellationToken.None));
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public class RbacAuthorizationTests
         var behavior = CreateBehavior<ExportProjectBackupQuery>();
         var request = new ExportProjectBackupQuery(Guid.NewGuid(), Guid.NewGuid(), "json");
 
-        var result = await behavior.Handle(request, () => Task.FromResult("handled"), CancellationToken.None);
+        var result = await behavior.Handle(request, (_) => Task.FromResult("handled"), CancellationToken.None);
 
         Assert.Equal("handled", result);
     }
@@ -138,7 +138,7 @@ public class RbacAuthorizationTests
         var request = new DeleteEpicCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
-            behavior.Handle(request, () => Task.FromResult("handled"), CancellationToken.None));
+            behavior.Handle(request, (_) => Task.FromResult("handled"), CancellationToken.None));
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public class RbacAuthorizationTests
         var behavior = CreateBehavior<DeleteEpicCommand>();
         var request = new DeleteEpicCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
 
-        var result = await behavior.Handle(request, () => Task.FromResult("handled"), CancellationToken.None);
+        var result = await behavior.Handle(request, (_) => Task.FromResult("handled"), CancellationToken.None);
 
         Assert.Equal("handled", result);
     }
