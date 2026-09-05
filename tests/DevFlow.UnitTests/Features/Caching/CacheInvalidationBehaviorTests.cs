@@ -22,7 +22,7 @@ public class CacheInvalidationBehaviorTests
         var command = new CreateTaskItemCommand(
             Guid.NewGuid(), projectId, "Test", null, TaskItemPriority.Medium, null);
 
-        await behavior.Handle(command, Next, CancellationToken.None);
+        await behavior.Handle(command, (_ => Next()), CancellationToken.None);
 
         await _cache.Received(1).RemoveByTagAsync($"project:{projectId}");
     }
@@ -34,7 +34,7 @@ public class CacheInvalidationBehaviorTests
 
         Task<string> Next() => Task.FromResult("ok");
 
-        await behavior.Handle("ping", Next, CancellationToken.None);
+        await behavior.Handle("ping", (_ => Next()), CancellationToken.None);
 
         await _cache.DidNotReceive().RemoveByTagAsync(Arg.Any<string>());
     }
