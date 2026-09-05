@@ -38,28 +38,37 @@ Built as a long-term learning project with a strong focus on architecture, testi
 ### Core
 - JWT auth with silent refresh — page reloads keep you signed in
 - Workspaces with role-based access (Owner / Admin / Member) enforced server-side
-- Projects with keys, archive lifecycle
-- Kanban board: drag cards between Backlog → In Progress → In Review → Done
+- Projects with keys, archive lifecycle, and project-level member RBAC
+- Kanban board: drag cards between Backlog → In Progress → In Review → Done, with assignee/epic swimlanes
 - Realtime boards via SignalR — changes made by teammates appear instantly
-- Task detail panel with comments thread
+- Task detail panel with comments thread, watchers, and attachments
 - Sprints API with single-active-sprint invariant per project
 - Declarative authorization via pipeline behavior (`[RequireWorkspaceRole]`)
 
 ### Task Intelligence
-- **Task Dependencies** — Block tasks with blockers, prevent status change
-- **Time Tracking** — Log time on tasks, estimate vs actual
-- **Labels** — Color-coded labels for task categorization
+- **Task Dependencies** — block tasks with blockers (project-wide dependency graph, blocked-state badges on the board), plus epic-to-epic dependencies
+- **AI Agent** — real LLM planning (provider-agnostic: OpenAI, LiteLLM, Ollama, …) with knowledge-gated prompts and per-project self-approval
+- **Time Tracking** — log time on tasks, story-point estimates vs actual
+- **Labels & Custom Fields** — color-coded labels, typed custom fields (text/number/date/select)
+- **Task Templates & Bulk Operations** — reusable templates, import/export (JSON/CSV/XLSX)
 
 ### Collaboration
-- **Notifications** — In-app notifications with real-time updates
-- **Activity Log** — Track all changes across projects
-- **Comments** — Threaded discussions on tasks
-- **Search** — Global search (Ctrl+K) across tasks and projects
+- **Notifications** — in-app + email preferences, real-time updates
+- **Activity Log** — track all changes across projects
+- **Knowledge Base** — ADR / Pattern / Runbook entries with lifecycle, auto-captured when tasks ship
+- **Search** — global search (Ctrl+K) across tasks, projects, epics, labels, users, comments; saved searches
+- **GitHub Integration** — repo linking, PR tracking, webhooks with dead-letter queue (admin inspect/replay)
+
+### Analytics
+- **Burndown Charts** — sprint progress at a glance
+- **Velocity Metrics** — completion rates across sprints
+- **Team Report** — per-member stats, cycle/lead-time percentiles
 
 ### UI/UX
-- **Dark/Light Theme** — Toggle with persistent preference
-- **Mobile Navigation** — Responsive sidebar with bottom bar
-- **Settings** — Profile, appearance, notification preferences
+- **Dark/Light Theme** — toggle with persistent preference
+- **Mobile Navigation** — responsive sidebar with bottom bar
+- **Settings** — profile, appearance, notification preferences
+- **Workspace/Project Branding** — emoji logos, project cover gradients
 
 ## Quick Start
 
@@ -79,81 +88,31 @@ npm install
 npm run dev                   # http://localhost:3000, proxies /api to :5217
 ```
 
+## Documentation
+
+- [API guide](docs/api.md) — REST API, auth, and production endpoints
+- [Design system](design-system/devflow/MASTER.md) — tokens, colors, typography
+- [Agent guidelines](AGENTS.md) — how AI agents coordinate on this repo
+
 ## Roadmap
 
 - [x] Solution setup with Clean Architecture
 - [x] Docker Compose (Postgres + Redis)
 - [x] Health checks, structured logging (Serilog)
-- [x] Authentication (JWT + Refresh Token)
-- [x] Role-Based Authorization
-- [x] Workspace / Project / Sprint
-- [x] Kanban Board & Tasks
-- [x] Comments
-- [x] Realtime updates (SignalR)
-- [x] Notifications & Activity Log
-- [x] File Upload
+- [x] Authentication (JWT + Refresh Token), Google OAuth
+- [x] Role-Based Authorization (workspace + project level)
+- [x] Workspace / Project / Sprint / Kanban Board & Tasks
+- [x] Comments, Realtime updates (SignalR), Notifications & Activity Log
+- [x] File & Attachment Upload (size + type safety)
 - [x] Redis caching layer
 - [x] Integration tests with Testcontainers
-- [x] Sprint planning UI
-- [x] Task Dependencies
-- [x] Time Tracking
-- [x] Labels
-- [x] Notifications
-- [x] Activity Log
-- [x] Search
-- [x] Settings
-- [x] Mobile Navigation
-- [x] Burndown Charts
-- [x] Velocity Metrics
-- [x] GitHub Integration
-- [x] Email Notifications
-- [x] Bulk Operations
-- [x] Task Templates
-- [x] Custom Fields
-- [x] Attachment Upload (size + type safety)
+- [x] Sprint planning UI, Burndown Charts, Velocity Metrics
+- [x] Task Dependencies, Time Tracking, Labels, Custom Fields
+- [x] GitHub Integration, Email Notifications
+- [x] Bulk Operations, Task Templates, Import/Export
 - [x] Webhook Dead-Letter Queue (admin retry)
-- [x] Project Import / Export
-- [x] Google OAuth
-- [x] Saved Searches
-- [x] My Tasks (cross-project)
-
-### Sprint 30
-- [x] Watcher list UI (who is watching a task) — backend `GET /tasks/{id}/watchers` + frontend panel
-- [x] Webhook DLQ admin UI (inspect + replay) — Admin-gated on Webhooks page
-- [x] Integration test expansion (project → sprint → task flow) — shared DB collection fixture
-- [x] EmptyState component adoption in top pages (Activities, Board, CustomFields, GitHub, MyTasks)
-
-### Sprint 31
-- [x] Project-level member management / RBAC — `ProjectMember` entity + member CRUD endpoints + Manager-gated UI
-- [x] Outbox DLQ admin batch — Replay-all / Purge buttons on Webhooks page
-- [x] Epic-to-epic dependencies — backend CQRS + frontend "Blocked by" section
-- [x] EmptyState adoption across remaining pages (dashboard cards, epics, webhooks, import/export, ...)
-- [x] Project authorization guard (`ProjectAuthorizationBehavior`) — project-scoped RBAC pipeline
-
-### Sprint 32 — Visual Identity & Product Polish (De-AI-fy)
-- [x] Dashboard time-of-day greeting + reusable `Logo`/`BrandMark` brand mark
-- [x] Workspace emoji + Project emoji/coverColor — additive nullable fields + pickers
-- [x] `TaskItemResponse.AttachmentSummary` — count + up to 3 image previews (batch query)
-- [x] EmptyState illustration system — 6 theme-aware SVG scenes applied across pages
-- [x] AuthLayout hero illustration (kanban scene) + `Logo` adoption
-- [x] Emoji logo UI — sidebar, command palette, workspace header, project cards
-- [x] Project cover gradients — palette-keyed banners on cards + board header
-- [x] Micro-animations — hover-lift, fade-in, rise utilities
-- [x] Avatar presence dots on the board (from `usePresence`)
-- [x] Attachment image thumbnails on task cards + detail panel (fetch→blob→objectURL)
-
-### Sprint 33 — Compounding Knowledge Base (Wiki / ADR / Runbook + Auto-Capture)
-- [x] `KnowledgeEntry` entity — ADR/Pattern/Runbook types, lifecycle (Draft→Proposed→Accepted→Superseded→Deprecated), weighted contribution (0–1)
-- [x] Full CRUD + Supersede API (`KnowledgeController`) + auto-capture Draft Runbook when a task ships
-- [x] Knowledge page + entry cards + create/edit/supersede UI + `nav.knowledge`
-
-### Sprint 34 — Board Swimlanes
-- [x] Column-level grouping by assignee or epic — vertical lane headers + per-lane counts
-- [x] Swimlane toggle in board toolbar (None / Assignee / Epic)
-
-### Sprint 35 — AI Agent (Real LLM Planning + Self-Approval)
-- [x] Provider-agnostic `IAiClient` — bring your own API key + base URL (OpenAI, LiteLLM, Ollama, …)
-- [x] Knowledge-gated planning prompt — weighted `KnowledgeEntry` top-12 context
-- [x] Per-project self-approval toggle — auto-apply or review-before-apply
-- [x] `AiPlanPanel` in TaskDetailPanel — ask AI to plan, view steps/subtasks/DoD, apply or regenerate
-- [x] Landing copy alignment: MCP claim → "REST API + webhooks"
+- [x] Saved Searches, My Tasks (cross-project)
+- [x] Board Swimlanes (assignee / epic)
+- [x] Knowledge Base (Wiki / ADR / Runbook + auto-capture)
+- [x] AI Agent (real LLM planning + self-approval)
+- [ ] Public roadmap / changelog page

@@ -79,3 +79,9 @@ pw-out.json
 
 # Claude Code session artifacts
 .claude-screenshots/
+
+# Local working notes (sprint plans, agent status, PR drafts) — never commit
+AGENT_STATUS.md
+IMPLEMENTATION_PLAN.md
+.local/
+docs/sprint*/
