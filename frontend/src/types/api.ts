@@ -527,6 +527,10 @@ export interface NotificationPreferencesResponse {
   emailOnAssignment: boolean;
   emailOnMention: boolean;
   emailOnSprintStarted: boolean;
+  /** Backend sends and expects these — omitting them on PUT resets them to false. */
+  inAppOnAssignment: boolean;
+  inAppOnMention: boolean;
+  inAppOnSprintStarted: boolean;
   emailOnStatusChanged: boolean;
   inAppOnStatusChanged: boolean;
   emailOnCommentAdded: boolean;

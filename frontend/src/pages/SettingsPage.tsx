@@ -129,6 +129,9 @@ export function SettingsPage() {
             emailOnAssignment: true,
             emailOnMention: true,
             emailOnSprintStarted: true,
+            inAppOnAssignment: true,
+            inAppOnMention: true,
+            inAppOnSprintStarted: true,
             emailOnStatusChanged: true,
             inAppOnStatusChanged: true,
             emailOnCommentAdded: true,
@@ -172,6 +175,9 @@ export function SettingsPage() {
     label: string;
     hint: string;
   }[] = [
+    { key: "inAppOnAssignment", label: t("settings.assignedToMe"), hint: t("settings.assignedHint") },
+    { key: "inAppOnMention", label: t("settings.imMentioned"), hint: t("settings.mentionedHint") },
+    { key: "inAppOnSprintStarted", label: t("settings.sprintStarted"), hint: t("settings.sprintStartedHint") },
     { key: "inAppOnStatusChanged", label: t("settings.inAppOnStatusChanged"), hint: t("settings.inAppOnStatusChangedHint") },
     { key: "inAppOnCommentAdded", label: t("settings.inAppOnCommentAdded"), hint: t("settings.inAppOnCommentAddedHint") },
     { key: "inAppOnRoleChanged", label: t("settings.inAppOnRoleChanged"), hint: t("settings.inAppOnRoleChangedHint") },
