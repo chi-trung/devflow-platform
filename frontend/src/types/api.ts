@@ -339,6 +339,14 @@ export interface SearchCommentResult {
   projectKey: string;
 }
 
+export interface SearchCustomFieldResult {
+  taskId: string;
+  taskTitle: string;
+  projectKey: string;
+  fieldName: string;
+  value: string | null;
+}
+
 /** Pagination metadata for every search result group. */
 export interface SearchPagination {
   page: number;
@@ -349,6 +357,7 @@ export interface SearchPagination {
   totalLabels: number;
   totalUsers: number;
   totalComments: number;
+  totalCustomFields: number;
 }
 
 export interface SearchResponse {
@@ -358,6 +367,7 @@ export interface SearchResponse {
   labels: SearchLabelResult[];
   users: SearchUserResult[];
   comments: SearchCommentResult[];
+  customFields: SearchCustomFieldResult[];
   pagination: SearchPagination;
 }
 
