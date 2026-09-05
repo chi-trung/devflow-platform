@@ -16,6 +16,7 @@ function emptyDashboard(): DashboardData {
     overdueCount: 0,
     recentActivity: [],
     upcomingDeadlines: [],
+    projectStats: [],
   };
 }
 
@@ -83,6 +84,16 @@ function deriveFromSlices(slices: ProjectSlice[]): DashboardData {
     for (const activity of activities.slice(0, 40)) {
       data.recentActivity.push({ ...activity, projectId: project.id });
     }
+
+    data.projectStats.push({
+      projectId: project.id,
+      projectName: project.name,
+      projectKey: project.key,
+      totalTasks: tasks.length,
+      doneTasks: tasks.filter((task) => task.status === "Done").length,
+      inProgressTasks: tasks.filter((task) => task.status === "InProgress")
+        .length,
+    });
   }
 
   data.upcomingDeadlines.sort(

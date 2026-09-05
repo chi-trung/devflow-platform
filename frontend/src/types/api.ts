@@ -401,6 +401,15 @@ export interface DashboardActivityItem extends ActivityResponse {
   projectId?: string | null;
 }
 
+export interface DashboardProjectStat {
+  projectId: string;
+  projectName: string;
+  projectKey: string;
+  totalTasks: number;
+  doneTasks: number;
+  inProgressTasks: number;
+}
+
 export interface DashboardData {
   totalTasks: number;
   tasksByStatus: Record<TaskStatus, number>;
@@ -408,6 +417,8 @@ export interface DashboardData {
   overdueCount?: number | null;
   recentActivity: DashboardActivityItem[];
   upcomingDeadlines: DashboardDeadlineTask[];
+  /** Per-project rollup the backend includes; currently unused by the UI. */
+  projectStats: DashboardProjectStat[];
 }
 
 export interface LabelResponse {
