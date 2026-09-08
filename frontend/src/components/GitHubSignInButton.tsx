@@ -32,7 +32,7 @@ export function GitHubSignInButton() {
   useEffect(() => {
     let cancelled = false;
     void getOAuthConfig().then((config) => {
-      if (!cancelled && config?.githubEnabled) setEnabled(true);
+      if (!cancelled && config?.gitHubEnabled) setEnabled(true);
     });
     return () => {
       cancelled = true;
@@ -71,7 +71,7 @@ export function GitHubSignInButton() {
   const handleClick = useCallback(async () => {
     setError(null);
     const config = await getOAuthConfig();
-    if (!config?.githubEnabled) {
+    if (!config?.gitHubEnabled) {
       setError(t("auth.githubNotConfigured"));
       return;
     }

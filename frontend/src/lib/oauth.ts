@@ -5,9 +5,11 @@ export interface OAuthConfig {
   googleEnabled: boolean;
   googleClientId: string;
   googleRedirectUri: string;
-  githubEnabled: boolean;
-  githubClientId: string;
-  githubRedirectUri: string;
+  // System.Text.Json's camelCase policy only lowercases the first letter, so
+  // GitHubEnabled serializes as "gitHubEnabled" — probed live from /auth/oauth/config.
+  gitHubEnabled: boolean;
+  gitHubClientId: string;
+  gitHubRedirectUri: string;
 }
 
 let cachedConfig: OAuthConfig | null = null;
@@ -94,7 +96,7 @@ export async function buildGoogleAuthUrl(config: OAuthConfig): Promise<string> {
 export async function buildGitHubAuthUrl(config: OAuthConfig): Promise<string> {
   const state = await randomVerifier();
 
-  const redirectUri = config.githubRedirectUri || window.location.origin;
+  const redirectUri = config.gitHubRedirectUri || window.location.origin;
 
   keepRedirectPath();
   setPendingProvider("github");
@@ -104,7 +106,7 @@ export async function buildGitHubAuthUrl(config: OAuthConfig): Promise<string> {
   } catch {}
 
   const params = new URLSearchParams({
-    client_id: config.githubClientId,
+    client_id: config.gitHubClientId,
     redirect_uri: redirectUri,
     response_type: "code",
     scope: "read:user user:email repo",
