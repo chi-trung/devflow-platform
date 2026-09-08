@@ -20,6 +20,11 @@ internal sealed class SocialLoginConfiguration : IEntityTypeConfiguration<Social
             .HasMaxLength(255)
             .IsRequired();
 
+        // OAuth access token from the provider (GitHub only today; null for
+        // Google). Refreshed on each sign-in.
+        builder.Property(login => login.AccessToken)
+            .HasMaxLength(255);
+
         // Fast lookup: "find the user with this provider + subject"
         builder.HasIndex(login => new { login.Provider, login.Subject })
             .IsUnique();

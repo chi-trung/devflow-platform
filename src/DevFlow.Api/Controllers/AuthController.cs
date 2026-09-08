@@ -171,12 +171,17 @@ public sealed class AuthController(
     public IActionResult GetOAuthConfig(IOptions<DevFlow.Infrastructure.Authentication.OAuthSettings> options)
     {
         var settings = options.Value;
-        var enabled = !string.IsNullOrWhiteSpace(settings.GoogleClientId)
+        var googleEnabled = !string.IsNullOrWhiteSpace(settings.GoogleClientId)
             && !string.IsNullOrWhiteSpace(settings.GoogleClientSecret);
+        var githubEnabled = !string.IsNullOrWhiteSpace(settings.GitHubClientId)
+            && !string.IsNullOrWhiteSpace(settings.GitHubClientSecret);
 
         return Ok(new OAuthConfigResponse(
-            enabled,
+            googleEnabled,
             settings.GoogleClientId,
-            settings.GoogleRedirectUri));
+            settings.GoogleRedirectUri,
+            githubEnabled,
+            settings.GitHubClientId,
+            settings.GitHubRedirectUri));
     }
 }

@@ -11,7 +11,7 @@ public sealed record OAuthExchangeCommand(
     string CodeVerifier) : IRequest<LoginResponse>;
 
 public sealed class OAuthExchangeCommandHandler(
-    IExternalIdentityProvider identityProvider,
+    IEnumerable<IExternalIdentityProvider> identityProviders,
     IUserRepository userRepository,
     ISocialLoginRepository socialLoginRepository,
     IRefreshTokenRepository refreshTokenRepository,
@@ -23,6 +23,10 @@ public sealed class OAuthExchangeCommandHandler(
         CancellationToken cancellationToken)
     {
         var provider = command.Provider.Trim().ToLowerInvariant();
+        var identityProvider = identityProviders.FirstOrDefault(p =>
+            string.Equals(p.Provider, provider, StringComparison.OrdinalIgnoreCase))
+            ?? throw new UnauthorizedAccessException($"Unsupported OAuth provider: {provider}.");
+
         var identity = await identityProvider.GetProfileAsync(
             provider,
             command.Code,
@@ -60,8 +64,14 @@ public sealed class OAuthExchangeCommandHandler(
             }
 
             await socialLoginRepository.AddAsync(
-                SocialLogin.Create(user.Id, provider, identity.Subject),
+                SocialLogin.Create(user.Id, provider, identity.Subject, identity.AccessToken),
                 cancellationToken);
+        }
+        else
+        {
+            // Refresh the stored provider token on re-login — GitHub issues a
+            // fresh token per authorization and doesn't rotate.
+            login!.UpdateAccessToken(identity.AccessToken);
         }
 
         // 3. Issue the normal DevFlow session tokens.

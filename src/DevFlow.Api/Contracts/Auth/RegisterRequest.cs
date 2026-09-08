@@ -25,6 +25,9 @@ public sealed record OAuthExchangeRequest(string Provider, string Code, string C
 public sealed record OAuthConfigResponse(
     bool GoogleEnabled,
     string GoogleClientId,
-    string GoogleRedirectUri);
+    string GoogleRedirectUri,
+    bool GitHubEnabled,
+    string GitHubClientId,
+    string GitHubRedirectUri);
 
 public sealed record HubTicketResponse(string Ticket);

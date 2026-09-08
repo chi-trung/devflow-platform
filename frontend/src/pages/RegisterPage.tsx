@@ -8,6 +8,7 @@ import { Field } from "../components/ui/Field";
 import { Input } from "../components/ui/Input";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { GoogleSignInButton } from "../components/GoogleSignInButton";
+import { GitHubSignInButton } from "../components/GitHubSignInButton";
 import { ApiError } from "../lib/api";
 
 interface FormState {
@@ -191,6 +192,7 @@ export function RegisterPage() {
         </div>
 
         <GoogleSignInButton />
+        <GitHubSignInButton />
       </form>
     </AuthLayout>
   );

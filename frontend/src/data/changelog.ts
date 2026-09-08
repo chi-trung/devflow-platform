@@ -151,10 +151,6 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
 
 export const ROADMAP_ITEMS: RoadmapItem[] = [
   {
-    title: { en: "GitHub sign-in alongside Google", vi: "Đăng nhập GitHub song song với Google" },
-    status: "planned",
-  },
-  {
     title: { en: "Recurring tasks and automation rules", vi: "Task lặp lại và quy tắc tự động hóa" },
     status: "planned",
   },

@@ -104,6 +104,7 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ITokenProvider, JwtTokenProvider>();
         services.AddScoped<IExternalIdentityProvider, GoogleIdentityProvider>();
+        services.AddScoped<IExternalIdentityProvider, GitHubIdentityProvider>();
         services.AddHttpClient("OAuth");
 
         var redisConnection = configuration.GetConnectionString("Redis");

@@ -18,6 +18,9 @@ public sealed class GoogleIdentityProvider(
 
     private readonly OAuthSettings _settings = options.Value;
 
+    /// <inheritdoc />
+    public string Provider => "google";
+
     public async Task<ExternalIdentity> GetProfileAsync(
         string provider,
         string code,

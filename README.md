@@ -21,7 +21,7 @@ Built as a long-term learning project with a strong focus on architecture, testi
 | Architecture | Clean Architecture, CQRS + MediatR |
 | Database | PostgreSQL + EF Core |
 | Auth | JWT access tokens + rotating refresh tokens |
-| Testing | xUnit (436 unit tests) |
+| Testing | xUnit (439 unit tests) |
 | DevOps | Docker Compose, GitHub Actions |
 
 **Frontend**
@@ -101,7 +101,7 @@ npm run dev                   # http://localhost:3000, proxies /api to :5217
 - [x] Solution setup with Clean Architecture
 - [x] Docker Compose (Postgres + Redis)
 - [x] Health checks, structured logging (Serilog)
-- [x] Authentication (JWT + Refresh Token), Google OAuth
+- [x] Authentication (JWT + Refresh Token), Google OAuth + GitHub OAuth
 - [x] Role-Based Authorization (workspace + project level)
 - [x] Workspace / Project / Sprint / Kanban Board & Tasks
 - [x] Comments, Realtime updates (SignalR), Notifications & Activity Log
@@ -118,3 +118,4 @@ npm run dev                   # http://localhost:3000, proxies /api to :5217
 - [x] Knowledge Base (Wiki / ADR / Runbook + auto-capture)
 - [x] AI Agent (real LLM planning + self-approval)
 - [x] Public roadmap / changelog page
+- [x] GitHub sign-in alongside Google

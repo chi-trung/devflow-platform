@@ -17,8 +17,9 @@ public class OAuthExchangeCommandHandlerTests
 
     public OAuthExchangeCommandHandlerTests()
     {
+        _identityProvider.Provider.Returns("google");
         _handler = new OAuthExchangeCommandHandler(
-            _identityProvider,
+            new[] { _identityProvider },
             _userRepository,
             _socialLoginRepository,
             _refreshTokenRepository,
@@ -122,5 +123,78 @@ public class OAuthExchangeCommandHandlerTests
         Assert.NotNull(created);
         Assert.Equal("mixed@google.com", created!.Email);
         Assert.Equal("mixed", created.Username);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldCreateUserAndLink_WhenGitHubAccountIsNew()
+    {
+        _identityProvider.Provider.Returns("github");
+        _identityProvider.GetProfileAsync("github", Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new ExternalIdentity("github-sub-1", "new@users.noreply.github.com", "GH User", "gho_test_token"));
+        _userRepository.GetByEmailAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((Domain.Entities.User?)null);
+        _tokenProvider.GenerateAccessToken(Arg.Any<Domain.Entities.User>())
+            .Returns("access-token");
+        _tokenProvider.GenerateRefreshToken()
+            .Returns("refresh-token");
+
+        var command = new OAuthExchangeCommand("github", "code-abc", "unused-verifier");
+
+        var response = await _handler.Handle(command, CancellationToken.None);
+
+        Assert.Equal("access-token", response.AccessToken);
+        await _userRepository.Received(1).AddAsync(Arg.Any<Domain.Entities.User>(), Arg.Any<CancellationToken>());
+        await _socialLoginRepository.Received(1).AddAsync(
+            Arg.Is<Domain.Entities.SocialLogin>(s =>
+                s.Provider == "github"
+                && s.Subject == "github-sub-1"
+                && s.AccessToken == "gho_test_token"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldUpdateStoredToken_WhenGitHubLinkExists()
+    {
+        _identityProvider.Provider.Returns("github");
+        var existing = Domain.Entities.User.Create("linked@users.noreply.github.com", "linked", "hash", "Linked");
+        var login = Domain.Entities.SocialLogin.Create(existing.Id, "github", "github-sub-2", "gho_old_token");
+        _identityProvider.GetProfileAsync("github", Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new ExternalIdentity("github-sub-2", "linked@users.noreply.github.com", "Linked", "gho_new_token"));
+        _socialLoginRepository.GetByProviderAsync("github", "github-sub-2", Arg.Any<CancellationToken>())
+            .Returns(login);
+        _userRepository.GetByIdAsync(login.UserId, Arg.Any<CancellationToken>())
+            .Returns(existing);
+        _tokenProvider.GenerateAccessToken(existing).Returns("access-token");
+        _tokenProvider.GenerateRefreshToken().Returns("refresh-token");
+
+        var command = new OAuthExchangeCommand("github", "code-abc", "unused-verifier");
+
+        await _handler.Handle(command, CancellationToken.None);
+
+        // Re-login refreshes the stored token in place — no new link row.
+        Assert.Equal("gho_new_token", login.AccessToken);
+        await _socialLoginRepository.DidNotReceive().AddAsync(Arg.Any<Domain.Entities.SocialLogin>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldStoreNullToken_WhenProviderOmitsToken()
+    {
+        _identityProvider.GetProfileAsync("google", Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new ExternalIdentity("google-sub-222", "notoken@google.com", "No Token"));
+        _userRepository.GetByEmailAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((Domain.Entities.User?)null);
+        _tokenProvider.GenerateAccessToken(Arg.Any<Domain.Entities.User>())
+            .Returns("access-token");
+        _tokenProvider.GenerateRefreshToken()
+            .Returns("refresh-token");
+
+        var command = new OAuthExchangeCommand("google", "code-abc", "verifier-xyz");
+
+        await _handler.Handle(command, CancellationToken.None);
+
+        // Google's token is discarded — the stored token stays null.
+        await _socialLoginRepository.Received(1).AddAsync(
+            Arg.Is<Domain.Entities.SocialLogin>(s => s.AccessToken == null),
+            Arg.Any<CancellationToken>());
     }
 }
