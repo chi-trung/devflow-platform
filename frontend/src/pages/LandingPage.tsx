@@ -2,9 +2,8 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { Logo } from "../components/ui/Logo";
+import { PublicHeader, PublicFooter } from "../components/landing/PublicChrome";
 import { Button } from "../components/ui/Button";
-import { ThemeToggle } from "../components/ui/ThemeToggle";
 import { HeroFlowDiagram } from "../components/landing/HeroFlowDiagram";
 import { IntelligenceSection } from "../components/landing/IntelligenceSection";
 import { FeatureBrowserFrame } from "../components/landing/FeatureBrowserFrame";
@@ -16,38 +15,6 @@ const HOW_STEPS = [
   { key: "step2", icon: "02" },
   { key: "step3", icon: "03" },
 ];
-
-function FooterLink({ href, label }: { href: string; label: string }) {
-  return (
-    <a
-      href={href}
-      className="text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground"
-    >
-      {label}
-    </a>
-  );
-}
-
-function FooterColumn({
-  title,
-  links,
-}: {
-  title: string;
-  links: { href: string; label: string }[];
-}) {
-  return (
-    <div className="flex flex-col gap-2.5">
-      {/* h3 keeps the outline sequential (h2 sections → h3 columns); h4 here
-          failed Lighthouse heading-order because the footer follows an h2. */}
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {title}
-      </h3>
-      {links.map((link) => (
-        <FooterLink key={link.href} {...link} />
-      ))}
-    </div>
-  );
-}
 
 export function LandingPage() {
   const { t } = useTranslation();
@@ -62,46 +29,13 @@ export function LandingPage() {
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground overflow-x-hidden">
       {/* ─── Sticky header ─── */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
-          <Logo to="/" size="md" wordmarkHideBelow="sm" />
-
-          <nav className="hidden items-center gap-8 lg:flex" aria-label={t("landing.nav.features")}>
-            <a
-              href="#features"
-              className="text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground"
-            >
-              {t("landing.nav.features")}
-            </a>
-            <a
-              href="#pricing"
-              className="text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground"
-            >
-              {t("landing.nav.pricing")}
-            </a>
-            <a
-              href="#docs"
-              className="text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground"
-            >
-              {t("landing.nav.docs")}
-            </a>
-          </nav>
-
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <ThemeToggle className="hidden w-auto lg:inline-flex" />
-            <Link to="/login" className="sm:whitespace-nowrap">
-              <Button variant="ghost" size="sm">
-                {t("landing.nav.login")}
-              </Button>
-            </Link>
-            <Link to="/register" className="sm:whitespace-nowrap">
-              <Button size="sm" className="px-2 sm:px-2.5">
-                {t("landing.nav.signup")}
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PublicHeader
+        nav={[
+          { href: "#features", label: t("landing.nav.features") },
+          { href: "#pricing", label: t("landing.nav.pricing") },
+          { href: "#docs", label: t("landing.nav.docs") },
+        ]}
+      />
 
       <main className="flex-1">
         {/* ─── Hero ─── */}
@@ -232,42 +166,7 @@ export function LandingPage() {
       </main>
 
       {/* ─── Footer ─── */}
-      <footer className="border-t border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-          <div className="mb-10 grid grid-cols-2 gap-8 sm:grid-cols-3">
-            <FooterColumn
-              title={t("landing.footer.product")}
-              links={[
-                { href: "#features", label: t("landing.footer.features") },
-                { href: "#pricing", label: t("landing.footer.pricing") },
-                { href: "#docs", label: t("landing.footer.docs") },
-                { href: "#changelog", label: t("landing.footer.changelog") },
-              ]}
-            />
-            <FooterColumn
-              title={t("landing.footer.resources")}
-              links={[
-                { href: "#blog", label: t("landing.footer.blog") },
-                { href: "#community", label: t("landing.footer.community") },
-                { href: "#help", label: t("landing.footer.help") },
-              ]}
-            />
-            <FooterColumn
-              title={t("landing.footer.legal")}
-              links={[
-                { href: "#privacy", label: t("landing.footer.privacy") },
-                { href: "#terms", label: t("landing.footer.terms") },
-              ]}
-            />
-          </div>
-          <div className="flex items-center justify-between border-t border-border pt-6">
-            <Logo to="/" size="sm" />
-            <p className="text-xs text-muted-foreground">
-              {t("landing.footer.copyright")}
-            </p>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

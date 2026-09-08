@@ -1,4 +1,22 @@
 {
+ "changelog": {
+  "eyebrow": "CÓ GÌ MỚI",
+  "title": "Nhật ký thay đổi",
+  "subtitle": "Mọi thứ chúng tôi đã phát hành, và những gì sắp tới.",
+  "shippedTitle": "Đã phát hành",
+  "roadmapTitle": "Sắp ra mắt",
+  "category": {
+   "added": "Bổ sung",
+   "improved": "Cải thiện",
+   "fixed": "Đã sửa",
+   "removed": "Đã xoá"
+  },
+  "roadmapStatus": {
+   "planned": "Kế hoạch",
+   "inProgress": "Đang thực hiện"
+  },
+  "ctaTitle": "Bắt đầu phát hành nhanh hơn ngay hôm nay."
+ },
  "landing": {
   "nav": {
    "features": "Tính năng",

@@ -6,6 +6,7 @@ import { ToastProvider } from "./components/ui/ToastProvider";
 import { API_BASE } from "./lib/api";
 
 const LandingPage = lazy(() => import("./pages/LandingPage").then(m => ({ default: m.LandingPage })));
+const ChangelogPage = lazy(() => import("./pages/ChangelogPage").then(m => ({ default: m.ChangelogPage })));
 const LoginPage = lazy(() => import("./pages/LoginPage").then(m => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import("./pages/RegisterPage").then(m => ({ default: m.RegisterPage })));
 const DashboardPage = lazy(() => import("./pages/DashboardPage").then(m => ({ default: m.DashboardPage })));
@@ -94,6 +95,7 @@ export default function App() {
               <Route path="/" element={<HomeRoute />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/changelog" element={<ChangelogPage />} />
               <Route element={<RequireAuth />}>
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />

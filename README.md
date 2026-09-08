@@ -117,4 +117,4 @@ npm run dev                   # http://localhost:3000, proxies /api to :5217
 - [x] Board Swimlanes (assignee / epic)
 - [x] Knowledge Base (Wiki / ADR / Runbook + auto-capture)
 - [x] AI Agent (real LLM planning + self-approval)
-- [ ] Public roadmap / changelog page
+- [x] Public roadmap / changelog page

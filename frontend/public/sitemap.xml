@@ -9,4 +9,7 @@
   <url>
     <loc>https://devflow-platform-kappa.vercel.app/register</loc>
   </url>
+  <url>
+    <loc>https://devflow-platform-kappa.vercel.app/changelog</loc>
+  </url>
 </urlset>

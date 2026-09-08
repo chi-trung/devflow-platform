@@ -1,4 +1,22 @@
 {
+ "changelog": {
+  "eyebrow": "WHAT'S NEW",
+  "title": "Changelog",
+  "subtitle": "Everything we've shipped, and what's next.",
+  "shippedTitle": "Shipped",
+  "roadmapTitle": "Coming soon",
+  "category": {
+   "added": "Added",
+   "improved": "Improved",
+   "fixed": "Fixed",
+   "removed": "Removed"
+  },
+  "roadmapStatus": {
+   "planned": "Planned",
+   "inProgress": "In progress"
+  },
+  "ctaTitle": "Start shipping faster today."
+ },
  "landing": {
   "nav": {
    "features": "Features",
