@@ -8,7 +8,8 @@ namespace DevFlow.Infrastructure.Authentication;
 /// GitHub OAuth App (Authorization Code, no PKCE) identity provider. Owns the
 /// raw HTTP calls: exchanges the one-time code for an access token, fetches the
 /// profile, and resolves a verified email from the emails endpoint (the profile
-/// email is null when the user keeps addresses private).
+/// email is null when the user keeps addresses private). Render: redeploy needed
+/// for new env vars to load.
 /// </summary>
 public sealed class GitHubIdentityProvider(
     IHttpClientFactory httpClientFactory,
