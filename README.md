@@ -21,7 +21,7 @@ Built as a long-term learning project with a strong focus on architecture, testi
 | Architecture | Clean Architecture, CQRS + MediatR |
 | Database | PostgreSQL + EF Core |
 | Auth | JWT access tokens + rotating refresh tokens |
-| Testing | xUnit (439 unit tests) |
+| Testing | xUnit (464 unit tests) |
 | DevOps | Docker Compose, GitHub Actions |
 
 **Frontend**
@@ -57,7 +57,7 @@ Built as a long-term learning project with a strong focus on architecture, testi
 - **Activity Log** — track all changes across projects
 - **Knowledge Base** — ADR / Pattern / Runbook entries with lifecycle, auto-captured when tasks ship
 - **Search** — global search (Ctrl+K) across tasks, projects, epics, labels, users, comments; saved searches
-- **GitHub Integration** — repo linking, PR tracking, webhooks with dead-letter queue (admin inspect/replay)
+- **GitHub Integration** — repo linking, PR tracking, webhooks with dead-letter queue (admin inspect/replay), Linear-style task keys (`DEV-123`) auto-linked from commits/PRs, create branch & PR from a task
 
 ### Analytics
 - **Burndown Charts** — sprint progress at a glance
@@ -119,3 +119,5 @@ npm run dev                   # http://localhost:3000, proxies /api to :5217
 - [x] AI Agent (real LLM planning + self-approval)
 - [x] Public roadmap / changelog page
 - [x] GitHub sign-in alongside Google
+- [x] Task keys (project key + sequence) auto-linked from commits/PRs
+- [x] Create branch & pull request from DevFlow (GitHub OAuth)

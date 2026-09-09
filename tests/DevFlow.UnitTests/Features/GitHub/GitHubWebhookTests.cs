@@ -87,6 +87,7 @@ public class GitHubWebhookHandlerTests
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
     private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly IRealtimeNotifier _realtimeNotifier = Substitute.For<IRealtimeNotifier>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
     private readonly Project _project;
@@ -98,6 +99,7 @@ public class GitHubWebhookHandlerTests
         _project = Project.Create(_workspaceId, "DevFlow", "DEV", null);
         _integration = GitHubIntegration.Create(_project.Id, "https://github.com/acme/devflow", null);
         _task = TaskItem.Create(_project.Id, "DEV-101: Fix CORS", null, TaskItemPriority.Medium);
+        _task.SetNumber(1);
 
         _gitHubRepository.GetByRepositoryUrlAsync("https://github.com/acme/devflow", Arg.Any<CancellationToken>())
             .Returns(_integration);
@@ -106,7 +108,7 @@ public class GitHubWebhookHandlerTests
             .Returns(new[] { _task });
     }
 
-    private GitHubWebhookPayload PrPayload(string action, bool merged, string state) =>
+    private GitHubWebhookPayload PrPayload(string action, bool merged, string state, IReadOnlyList<string>? commitMessages = null) =>
         new(
             Event: "pull_request",
             Action: action,
@@ -122,17 +124,21 @@ public class GitHubWebhookHandlerTests
             IssueBody: null,
             IssueUrl: null,
             IssueState: null,
-            CommitMessage: null,
+            CommitMessages: commitMessages ?? Array.Empty<string>(),
             Ref: null,
             ProjectId: _project.Id);
+
+    private Task ProcessAsync(GitHubWebhookPayload payload) =>
+        GitHubWebhookHandler.ProcessAsync(
+            payload,
+            _gitHubRepository, _activityLogRepository, _taskItemRepository, _projectRepository, _unitOfWork,
+            _realtimeNotifier,
+            CancellationToken.None);
 
     [Fact]
     public async Task ProcessAsync_PrOpened_ShouldMoveTaskToInReview()
     {
-        await GitHubWebhookHandler.ProcessAsync(
-            PrPayload("opened", merged: false, state: "open"),
-            _gitHubRepository, _activityLogRepository, _taskItemRepository, _projectRepository, _unitOfWork,
-            CancellationToken.None);
+        await ProcessAsync(PrPayload("opened", merged: false, state: "open"));
 
         Assert.Equal(TaskItemStatus.Review, _task.Status);
         await _activityLogRepository.Received(1).AddAsync(
@@ -143,10 +149,7 @@ public class GitHubWebhookHandlerTests
     [Fact]
     public async Task ProcessAsync_PrMerged_ShouldMoveTaskToDone()
     {
-        await GitHubWebhookHandler.ProcessAsync(
-            PrPayload("closed", merged: true, state: "closed"),
-            _gitHubRepository, _activityLogRepository, _taskItemRepository, _projectRepository, _unitOfWork,
-            CancellationToken.None);
+        await ProcessAsync(PrPayload("closed", merged: true, state: "closed"));
 
         Assert.Equal(TaskItemStatus.Done, _task.Status);
     }
@@ -157,12 +160,128 @@ public class GitHubWebhookHandlerTests
         _taskItemRepository.GetForProjectAsync(_project.Id, (TaskItemStatus?)null, Arg.Any<CancellationToken>())
             .Returns(Array.Empty<TaskItem>());
 
-        await GitHubWebhookHandler.ProcessAsync(
-            PrPayload("opened", merged: false, state: "open"),
-            _gitHubRepository, _activityLogRepository, _taskItemRepository, _projectRepository, _unitOfWork,
-            CancellationToken.None);
+        await ProcessAsync(PrPayload("opened", merged: false, state: "open"));
 
         await _activityLogRepository.DidNotReceive().AddAsync(Arg.Any<ActivityLog>(), Arg.Any<CancellationToken>());
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ProcessAsync_PrOpened_ShouldCreateLinkedPullRequestRow()
+    {
+        _gitHubRepository.GetPullRequestsByProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<PullRequest>());
+
+        await ProcessAsync(PrPayload("opened", merged: false, state: "open"));
+
+        await _gitHubRepository.Received(1).AddPullRequestAsync(
+            Arg.Is<PullRequest>(pr =>
+                pr.Url == "https://github.com/acme/devflow/pull/1" &&
+                pr.Status == "Open" &&
+                pr.LinkedTaskId == _task.Id &&
+                pr.Author == "bob"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ProcessAsync_PrRedelivery_ShouldNotDuplicatePullRequestRow()
+    {
+        var existing = PullRequest.Create(
+            _project.Id, "DEV-101: Fix CORS", "https://github.com/acme/devflow/pull/1", "Open", "bob");
+        _gitHubRepository.GetPullRequestsByProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(new[] { existing });
+
+        await ProcessAsync(PrPayload("opened", merged: false, state: "open"));
+
+        await _gitHubRepository.DidNotReceive().AddPullRequestAsync(Arg.Any<PullRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ProcessAsync_PrMerged_ShouldUpdateExistingRowStatus()
+    {
+        var existing = PullRequest.Create(
+            _project.Id, "DEV-101: Fix CORS", "https://github.com/acme/devflow/pull/1", "Open", "bob");
+        _gitHubRepository.GetPullRequestsByProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(new[] { existing });
+
+        await ProcessAsync(PrPayload("closed", merged: true, state: "closed"));
+
+        Assert.Equal("Merged", existing.Status);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_KeyInSecondCommit_ShouldMatchTaskByNumber()
+    {
+        _task.SetNumber(101);
+        _gitHubRepository.GetPullRequestsByProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<PullRequest>());
+
+        var payload = new GitHubWebhookPayload(
+            Event: "push",
+            Action: null,
+            RepositoryUrl: "https://github.com/acme/devflow",
+            SenderLogin: "bob",
+            SenderName: "Bob",
+            PrTitle: null,
+            PrBody: null,
+            PrUrl: null,
+            PrState: null,
+            PrMerged: false,
+            IssueTitle: null,
+            IssueBody: null,
+            IssueUrl: null,
+            IssueState: null,
+            CommitMessages: new[] { "chore: bump deps", "DEV-101: fix the thing" },
+            Ref: "refs/heads/main",
+            ProjectId: _project.Id);
+
+        await ProcessAsync(payload);
+
+        await _activityLogRepository.Received(1).AddAsync(
+            Arg.Is<ActivityLog>(log => log.Action.Contains("push", StringComparison.OrdinalIgnoreCase)),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ProcessAsync_IssueEvent_ShouldNotCreatePullRequestRow()
+    {
+        _gitHubRepository.GetPullRequestsByProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<PullRequest>());
+
+        var payload = new GitHubWebhookPayload(
+            Event: "issues",
+            Action: "opened",
+            RepositoryUrl: "https://github.com/acme/devflow",
+            SenderLogin: "bob",
+            SenderName: "Bob",
+            PrTitle: null,
+            PrBody: null,
+            PrUrl: null,
+            PrState: null,
+            PrMerged: false,
+            IssueTitle: "Bug in DEV-101",
+            IssueBody: null,
+            IssueUrl: "https://github.com/acme/devflow/issues/9",
+            IssueState: "open",
+            CommitMessages: Array.Empty<string>(),
+            Ref: null,
+            ProjectId: _project.Id);
+
+        await ProcessAsync(payload);
+
+        await _gitHubRepository.DidNotReceive().AddPullRequestAsync(Arg.Any<PullRequest>(), Arg.Any<CancellationToken>());
+        await _activityLogRepository.Received(1).AddAsync(Arg.Any<ActivityLog>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ProcessAsync_ChangesApplied_ShouldNotifyProject()
+    {
+        _gitHubRepository.GetPullRequestsByProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<PullRequest>());
+
+        await ProcessAsync(PrPayload("opened", merged: false, state: "open"));
+
+        await _realtimeNotifier.Received(1).NotifyProjectAsync(
+            _project.Id, "GitHubWebhook", Arg.Any<CancellationToken>());
     }
 }

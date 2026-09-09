@@ -101,6 +101,24 @@ public sealed class GitHubController(ISender sender) : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPost("tasks/{taskId:guid}/pull-request")]
+    [ProducesResponseType(typeof(Application.Features.GitHub.PullRequestResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> CreateTaskPullRequest(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        CreateTaskPullRequestRequest? request,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new Application.Features.GitHub.CreateTaskPullRequest.CreateTaskPullRequestCommand(
+                workspaceId, projectId, taskId, request?.BranchName),
+            cancellationToken);
+
+        return StatusCode(StatusCodes.Status201Created, result);
+    }
 }
 
 public sealed record LinkGitHubRequest(string RepositoryUrl);
@@ -112,3 +130,5 @@ public sealed record AddPullRequestRequest(
     string? Author);
 
 public sealed record UpdateWebhookSecretRequest(string Secret);
+
+public sealed record CreateTaskPullRequestRequest(string? BranchName);

@@ -110,7 +110,8 @@ public class ListPullRequestsHandler(
             pr.Status,
             pr.Author,
             pr.LinkedTaskId,
-            pr.CreatedAtUtc)).ToList();
+            pr.CreatedAtUtc,
+            pr.HeadBranch)).ToList();
     }
 }
 
@@ -148,7 +149,8 @@ public class AddPullRequestHandler(
             pr.Status,
             pr.Author,
             pr.LinkedTaskId,
-            pr.CreatedAtUtc);
+            pr.CreatedAtUtc,
+            pr.HeadBranch);
     }
 }
 

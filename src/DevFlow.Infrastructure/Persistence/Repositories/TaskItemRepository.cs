@@ -109,6 +109,17 @@ public sealed class TaskItemRepository(DevFlowDbContext dbContext) : ITaskItemRe
         return await query.CountAsync(cancellationToken);
     }
 
+    public async Task<int> GetMaxNumberAsync(Guid projectId, CancellationToken cancellationToken = default)
+    {
+        // IgnoreQueryFilters: soft-deleted tasks stay in the table and keep
+        // occupying their number — a filtered Max() would eventually collide
+        // with the (project_id, number) unique index.
+        return await dbContext.TaskItems
+            .IgnoreQueryFilters()
+            .Where(task => task.ProjectId == projectId)
+            .MaxAsync(task => (int?)task.Number, cancellationToken) ?? 0;
+    }
+
     public async Task RemoveAsync(TaskItem task, CancellationToken cancellationToken = default)
     {
         dbContext.TaskItems.Remove(task);

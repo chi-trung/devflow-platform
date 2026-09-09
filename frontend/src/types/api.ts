@@ -146,6 +146,9 @@ export interface SprintResponse {
 export interface TaskItemResponse {
   id: string;
   projectId: string;
+  /** "{Project.Key}-{Number}" — the Linear-style identifier (e.g. "DEV-42"). */
+  key: string;
+  number: number;
   title: string;
   description: string | null;
   /** Optional acceptance criteria / definition-of-done checklist (Sprint A). */
@@ -502,6 +505,8 @@ export interface PullRequestResponse {
   author: string | null;
   linkedTaskId: string | null;
   createdAtUtc: string;
+  /** Git branch the PR merges from (null for legacy rows). */
+  headBranch: string | null;
 }
 
 export interface TemplateResponse {

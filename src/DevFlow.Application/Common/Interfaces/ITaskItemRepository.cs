@@ -35,6 +35,13 @@ public interface ITaskItemRepository
         TaskItemStatus? status,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Highest sequence number ever used in the project (0 when empty). Ignores
+    /// the soft-delete filter — deleted tasks keep occupying their number, so
+    /// the next created task must not reuse it.
+    /// </summary>
+    Task<int> GetMaxNumberAsync(Guid projectId, CancellationToken cancellationToken = default);
+
     Task RemoveAsync(TaskItem task, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<TaskItem>> GetByAssigneeIdAsync(Guid assigneeId, CancellationToken cancellationToken = default);

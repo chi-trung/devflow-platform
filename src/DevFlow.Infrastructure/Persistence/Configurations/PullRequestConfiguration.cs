@@ -30,6 +30,9 @@ public class PullRequestConfiguration : IEntityTypeConfiguration<PullRequest>
         builder.Property(pr => pr.Author)
             .HasMaxLength(200);
 
+        builder.Property(pr => pr.HeadBranch)
+            .HasMaxLength(200);
+
         builder.HasIndex(pr => pr.ProjectId);
 
         builder.HasOne<Project>()

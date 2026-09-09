@@ -71,6 +71,21 @@ export function TaskCard({
   const [showChildForm, setShowChildForm] = useState(false);
   const [childTitle, setChildTitle] = useState("");
   const [addingChild, setAddingChild] = useState(false);
+  const [keyCopied, setKeyCopied] = useState(false);
+
+  const taskKey = task.key && task.key !== "—" ? task.key : null;
+
+  async function handleCopyKey(event: React.MouseEvent) {
+    event.stopPropagation();
+    if (!taskKey) return;
+    try {
+      await navigator.clipboard.writeText(taskKey);
+      setKeyCopied(true);
+      window.setTimeout(() => setKeyCopied(false), 1500);
+    } catch {
+      // clipboard unavailable — the chip still shows the key
+    }
+  }
 
   const previews = useAttachmentPreviews({
     workspaceId,
@@ -146,6 +161,16 @@ export function TaskCard({
           </button>
         )}
         <p className="min-w-0 flex-1 text-sm font-medium leading-snug truncate">{task.title}</p>
+        {taskKey && (
+          <button
+            type="button"
+            onClick={handleCopyKey}
+            title={keyCopied ? t("task.keyCopied") : t("task.copyKey")}
+            className="shrink-0 rounded bg-elevated px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground transition-colors duration-150 hover:text-foreground"
+          >
+            {keyCopied ? <Check className="size-3" aria-hidden /> : taskKey}
+          </button>
+        )}
         <button
           type="button"
           onClick={(event) => {

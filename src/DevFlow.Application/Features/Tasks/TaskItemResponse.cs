@@ -3,6 +3,9 @@ namespace DevFlow.Application.Features.Tasks;
 public sealed record TaskItemResponse(
     Guid Id,
     Guid ProjectId,
+    /// <summary>"{Project.Key}-{Number}" — the Linear/Jira-style identifier (e.g. "DEV-42").</summary>
+    string Key,
+    int Number,
     string Title,
     string? Description,
     string? DefinitionOfDone,

@@ -17,6 +17,17 @@ public sealed class SocialLoginRepository(DevFlowDbContext dbContext) : ISocialL
                 cancellationToken);
     }
 
+    public Task<SocialLogin?> GetByUserAndProviderAsync(
+        Guid userId,
+        string provider,
+        CancellationToken cancellationToken = default)
+    {
+        return dbContext.SocialLogins
+            .FirstOrDefaultAsync(
+                login => login.UserId == userId && login.Provider == provider,
+                cancellationToken);
+    }
+
     public Task<bool> ExistsForUserAsync(
         Guid userId,
         string provider,

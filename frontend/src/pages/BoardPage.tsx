@@ -657,6 +657,9 @@ export function BoardPage() {
     const optimistic: TaskItemResponse = {
       id: optimisticId,
       projectId,
+      // Placeholder key until the server row reconciles (number not yet known).
+      key: "—",
+      number: 0,
       title: input.title,
       description: input.description,
       status: "Idea",

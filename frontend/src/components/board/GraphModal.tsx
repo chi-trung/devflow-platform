@@ -228,6 +228,9 @@ export function GraphModal({
       byId.set(node.id, {
         id: node.id,
         projectId: node.projectId,
+        // Graph nodes don't carry the task key — display-only placeholder.
+        key: "",
+        number: 0,
         title: node.title,
         description: null,
         status: COLUMNS[columnIndexFor(node.status)],

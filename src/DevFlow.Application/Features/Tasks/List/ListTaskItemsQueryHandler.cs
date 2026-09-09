@@ -36,7 +36,7 @@ public sealed class ListTaskItemsQueryHandler(
 
         return await cacheService.GetOrSetAsync(
             cacheKey,
-            ct => LoadTasksAsync(query, skip, pageSize, cancellationToken),
+            ct => LoadTasksAsync(query, project.Key, skip, pageSize, cancellationToken),
             CacheTtl,
             [tag],
             cancellationToken);
@@ -44,6 +44,7 @@ public sealed class ListTaskItemsQueryHandler(
 
     private async Task<PagedResult<TaskItemResponse>> LoadTasksAsync(
         ListTaskItemsQuery query,
+        string projectKey,
         int skip,
         int pageSize,
         CancellationToken cancellationToken)
@@ -64,6 +65,8 @@ public sealed class ListTaskItemsQueryHandler(
             .Select(task => new TaskItemResponse(
                 task.Id,
                 task.ProjectId,
+                TaskKey.Format(projectKey, task.Number),
+                task.Number,
                 task.Title,
                 task.Description,
                 task.DefinitionOfDone,

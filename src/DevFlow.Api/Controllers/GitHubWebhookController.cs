@@ -15,6 +15,7 @@ public sealed class GitHubWebhookController(
     ITaskItemRepository taskItemRepository,
     IProjectRepository projectRepository,
     IUnitOfWork unitOfWork,
+    IRealtimeNotifier realtimeNotifier,
     ILogger<GitHubWebhookController> logger) : ControllerBase
 {
     [HttpPost]
@@ -64,6 +65,7 @@ public sealed class GitHubWebhookController(
             taskItemRepository,
             projectRepository,
             unitOfWork,
+            realtimeNotifier,
             cancellationToken);
 
         return Accepted();
@@ -110,6 +112,20 @@ public sealed class GitHubWebhookController(
                 }
             }
 
+            // Task keys can appear in any commit of a push — collect every
+            // message, not just the first.
+            var commitMessages = new List<string>();
+            if (root.TryGetProperty("commits", out var commits) && commits.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                foreach (var commit in commits.EnumerateArray())
+                {
+                    if (commit.TryGetProperty("message", out var messageEl) && messageEl.GetString() is { } message)
+                    {
+                        commitMessages.Add(message);
+                    }
+                }
+            }
+
             return new GitHubWebhookPayload(
                 Event: eventHeader,
                 Action: action,
@@ -125,7 +141,7 @@ public sealed class GitHubWebhookController(
                 IssueBody: root.TryGetProperty("issue", out var issue2) ? issue2.GetProperty("body").GetString() : null,
                 IssueUrl: root.TryGetProperty("issue", out var issue3) ? issue3.GetProperty("html_url").GetString() : null,
                 IssueState: root.TryGetProperty("issue", out var issue4) ? issue4.GetProperty("state").GetString() : null,
-                CommitMessage: root.TryGetProperty("commits", out var commits) && commits.GetArrayLength() > 0 ? commits[0].GetProperty("message").GetString() : null,
+                CommitMessages: commitMessages,
                 Ref: root.TryGetProperty("ref", out var refEl) ? refEl.GetString() : null,
                 ProjectId: projectId);
         }

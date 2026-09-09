@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ExternalLink, GitBranch, GitPullRequest, Loader2 } from "lucide-react";
-import { getProjectPRs } from "../../lib/api";
+import { ExternalLink, GitBranch, GitPullRequest, Loader2, PlusCircle } from "lucide-react";
+import { createTaskPullRequest, getGitHubIntegration, getProjectPRs } from "../../lib/api";
 import type { PullRequestResponse } from "../../types/api";
+import { useToast } from "../ui/ToastProvider";
 
 const prStatusStyle: Record<string, string> = {
   Open: "bg-teal-500/15 text-teal-600 dark:text-teal-300",
@@ -16,8 +17,9 @@ interface TaskPullRequestsProps {
   taskId: string;
 }
 
-/** Best-effort branch name from the PR URL (…/pull/42) or the title. */
+/** Best-effort branch name from the stored head branch or the PR URL (…/pull/42). */
 function deriveBranch(pr: PullRequestResponse): string | null {
+  if (pr.headBranch) return pr.headBranch;
   const pullMatch = pr.url.match(/pull\/(\d+)/i);
   if (pullMatch) return `branch-${pullMatch[1]}`;
   const slug = pr.title
@@ -30,9 +32,13 @@ function deriveBranch(pr: PullRequestResponse): string | null {
 
 export function TaskPullRequests({ workspaceId, projectId, taskId }: TaskPullRequestsProps) {
   const { t } = useTranslation();
+  const { push } = useToast();
   const [prs, setPrs] = useState<PullRequestResponse[] | null>(null);
+  const [repoLinked, setRepoLinked] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
-  useEffect(() => {
+  function reload() {
     let cancelled = false;
     getProjectPRs(workspaceId, projectId)
       .then((all) => {
@@ -46,17 +52,65 @@ export function TaskPullRequests({ workspaceId, projectId, taskId }: TaskPullReq
     return () => {
       cancelled = true;
     };
-  }, [workspaceId, projectId, taskId]);
+  }
 
-  if (prs !== null && prs.length === 0) return null;
+  useEffect(reload, [workspaceId, projectId, taskId]);
+
+  // The create button only makes sense when a repo is linked for this project.
+  useEffect(() => {
+    let cancelled = false;
+    getGitHubIntegration(workspaceId, projectId)
+      .then((integration) => {
+        if (!cancelled && integration?.isActive) setRepoLinked(true);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId, projectId]);
+
+  async function handleCreate() {
+    setCreating(true);
+    setCreateError(null);
+    try {
+      await createTaskPullRequest(workspaceId, projectId, taskId);
+      push(t("github.branchPrCreated"), "success");
+      reload();
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : t("github.createBranchPrFailed"));
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  if (prs !== null && prs.length === 0 && !repoLinked) return null;
 
   return (
     <section className="space-y-2">
-      <h3 className="flex items-center gap-1.5 text-sm font-medium">
-        <GitPullRequest className="size-4 text-muted-foreground" aria-hidden />
-        {t("github.linkedPrs")}{" "}
-        <span className="font-mono text-xs text-muted-foreground">({prs?.length ?? 0})</span>
-      </h3>
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="flex items-center gap-1.5 text-sm font-medium">
+          <GitPullRequest className="size-4 text-muted-foreground" aria-hidden />
+          {t("github.linkedPrs")}{" "}
+          <span className="font-mono text-xs text-muted-foreground">({prs?.length ?? 0})</span>
+        </h3>
+        {repoLinked && (
+          <button
+            type="button"
+            onClick={() => void handleCreate()}
+            disabled={creating}
+            className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium transition-colors duration-150 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {creating ? (
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            ) : (
+              <PlusCircle className="size-3.5" aria-hidden />
+            )}
+            {creating ? t("github.creatingBranchPr") : t("github.createBranchPr")}
+          </button>
+        )}
+      </div>
+
+      {createError && <p className="text-xs text-destructive">{createError}</p>}
 
       {!prs ? (
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">

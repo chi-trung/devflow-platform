@@ -24,6 +24,14 @@ public class TaskItem : BaseEntity, IAuditableEntity, ISoftDeletable
 
     public Guid ProjectId { get; private set; }
 
+    /// <summary>
+    /// Per-project sequence number (1-based, assigned at creation). The
+    /// human-readable task key is "{Project.Key}-{Number}" — computed at read
+    /// time, never stored. Unique per project (see TaskItemConfiguration);
+    /// soft-deleted tasks keep occupying their number.
+    /// </summary>
+    public int Number { get; private set; }
+
     public string Title { get; private set; } = string.Empty;
 
     public string? Description { get; private set; }
@@ -98,6 +106,16 @@ public class TaskItem : BaseEntity, IAuditableEntity, ISoftDeletable
     public void SetDefinitionOfDone(string? definitionOfDone)
     {
         DefinitionOfDone = definitionOfDone?.Trim();
+    }
+
+    /// <summary>
+    /// Assigns the per-project sequence number. Called by the create handler
+    /// right after the factory (Max+1, with a unique-index retry on races) —
+    /// the factory itself has no repository access.
+    /// </summary>
+    public void SetNumber(int number)
+    {
+        Number = number;
     }
 
     /// <summary>

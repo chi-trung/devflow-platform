@@ -601,12 +601,26 @@ export function TaskDetailPanel({
 
       <aside className="absolute inset-y-0 right-0 flex w-full max-w-3xl flex-col border-l border-border bg-surface shadow-[0_0_60px_rgba(0,0,0,0.5)]">
         <header className="flex items-start justify-between gap-3 border-b border-border p-4">
-          <input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            aria-label={t("board.titleAria")}
-            className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 font-display text-base font-semibold leading-snug transition-colors duration-200 hover:border-border focus:border-primary focus:bg-surface focus:outline-none"
-          />
+          <div className="min-w-0 flex-1">
+            {task.key && task.key !== "—" && (
+              <div className="mb-1 px-2">
+                <button
+                  type="button"
+                  onClick={() => void navigator.clipboard.writeText(task.key).catch(() => {})}
+                  title={t("task.copyKey")}
+                  className="rounded bg-elevated px-1.5 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground transition-colors duration-150 hover:text-foreground"
+                >
+                  {task.key}
+                </button>
+              </div>
+            )}
+            <input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              aria-label={t("board.titleAria")}
+              className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 font-display text-base font-semibold leading-snug transition-colors duration-200 hover:border-border focus:border-primary focus:bg-surface focus:outline-none"
+            />
+          </div>
           <button
             type="button"
             onClick={() => void saveAsTemplate()}

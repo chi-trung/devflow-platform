@@ -36,6 +36,8 @@ public sealed class ListSubtasksQueryHandler(
             .Select(task => new TaskItemResponse(
                 task.Id,
                 task.ProjectId,
+                TaskKey.Format(project.Key, task.Number),
+                task.Number,
                 task.Title,
                 task.Description,
                 task.DefinitionOfDone,

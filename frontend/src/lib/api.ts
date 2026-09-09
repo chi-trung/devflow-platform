@@ -685,6 +685,24 @@ export async function addPR(
   );
 }
 
+/** Creates a branch with a starter commit and opens a PR for the task in the
+ * linked GitHub repo (authenticated with the caller's stored GitHub token).
+ * Omit branchName to derive "{key}-{slugified title}". */
+export function createTaskPullRequest(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+  branchName?: string,
+): Promise<PullRequestResponse> {
+  return api<PullRequestResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/github/tasks/${taskId}/pull-request`,
+    {
+      method: "POST",
+      body: JSON.stringify({ branchName: branchName ?? null }),
+    },
+  );
+}
+
 export function getTemplates(
   workspaceId: string,
   projectId: string,

@@ -57,7 +57,14 @@ internal sealed class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
         builder.Property(task => task.StoryPoints)
             .IsRequired(false);
 
+        // Per-project sequence number backing the "{Project.Key}-{Number}" task
+        // key. Unique across soft-deleted rows too (they keep their number).
+        builder.Property(task => task.Number)
+            .IsRequired();
+
         builder.HasIndex(task => new { task.ProjectId, task.Status });
+        builder.HasIndex(task => new { task.ProjectId, task.Number })
+            .IsUnique();
         builder.HasIndex(task => task.EpicId);
         builder.HasIndex(task => task.ParentTaskId);
     }

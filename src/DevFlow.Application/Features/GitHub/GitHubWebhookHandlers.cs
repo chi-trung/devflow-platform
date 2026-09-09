@@ -22,7 +22,7 @@ public record GitHubWebhookPayload(
     string? IssueBody,
     string? IssueUrl,
     string? IssueState,
-    string? CommitMessage,
+    IReadOnlyList<string> CommitMessages,
     string? Ref,
     Guid? ProjectId);
 
@@ -35,6 +35,7 @@ public static class GitHubWebhookHandler
         ITaskItemRepository taskItemRepository,
         IProjectRepository projectRepository,
         IUnitOfWork unitOfWork,
+        IRealtimeNotifier realtimeNotifier,
         CancellationToken cancellationToken)
     {
         if (payload.ProjectId == null || string.IsNullOrWhiteSpace(payload.RepositoryUrl))
@@ -48,24 +49,40 @@ public static class GitHubWebhookHandler
         if (project == null)
             return;
 
+        var projectId = payload.ProjectId.Value;
         var projectKey = project.Key;
         var workspaceId = project.WorkspaceId;
         var actorName = payload.SenderLogin ?? payload.SenderName ?? "GitHub";
 
         var taskKeys = TaskKeyParser.ParseKeys(
-            string.Join(" ", payload.PrTitle ?? "", payload.PrBody ?? "", payload.IssueTitle ?? "", payload.IssueBody ?? "", payload.CommitMessage ?? ""),
+            string.Join(" ",
+                payload.PrTitle ?? "",
+                payload.PrBody ?? "",
+                payload.IssueTitle ?? "",
+                payload.IssueBody ?? "",
+                string.Join(" ", payload.CommitMessages)),
             projectKey);
 
-        var projectTasks = await taskItemRepository.GetForProjectAsync(payload.ProjectId.Value, null, cancellationToken);
+        var projectTasks = await taskItemRepository.GetForProjectAsync(projectId, null, cancellationToken);
 
         var tasks = new List<TaskItem>();
         foreach (var key in taskKeys)
         {
-            // Preferred: title starts with the key (e.g. "DF-104: Fix CORS headers")
-            var matched = projectTasks.FirstOrDefault(t =>
-                t.Title.StartsWith(key, StringComparison.OrdinalIgnoreCase)) ??
-                // Fallback: key appears anywhere in the title
-                projectTasks.FirstOrDefault(t => t.Title.Contains(key, StringComparison.OrdinalIgnoreCase));
+            // Preferred: the key's trailing number matches a stored task number
+            // (works even when the title no longer starts with the key).
+            var numberMatch = System.Text.RegularExpressions.Regex.Match(key, @"-(\d+)$");
+            TaskItem? matched = null;
+            if (numberMatch.Success && int.TryParse(numberMatch.Groups[1].Value, out var number))
+            {
+                matched = projectTasks.FirstOrDefault(t => t.Number == number);
+            }
+
+            // Fallbacks (pre-key-storage tasks and titles still embedding keys):
+            // title starts with the key, then key appears anywhere in the title.
+            matched ??= projectTasks.FirstOrDefault(t =>
+                t.Title.StartsWith(key, StringComparison.OrdinalIgnoreCase));
+            matched ??= projectTasks.FirstOrDefault(t =>
+                t.Title.Contains(key, StringComparison.OrdinalIgnoreCase));
 
             if (matched != null && !tasks.Contains(matched))
                 tasks.Add(matched);
@@ -91,6 +108,14 @@ public static class GitHubWebhookHandler
                 break;
         }
 
+        // Upsert the PullRequest row so the task's PR list reflects reality.
+        // Match by Url keeps webhook redeliveries (and the synchronize/edited
+        // actions GitHub fires after "opened") from creating duplicates.
+        if (payload.Event == "pull_request" && !string.IsNullOrWhiteSpace(payload.PrUrl))
+        {
+            await UpsertPullRequestAsync(payload, gitHubRepository, projectId, tasks[0].Id, actorName, cancellationToken);
+        }
+
         foreach (var task in tasks)
         {
             await activityLogRepository.AddAsync(ActivityLog.Create(
@@ -112,5 +137,68 @@ public static class GitHubWebhookHandler
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // The webhook path bypasses MediatR's RealtimeBehavior — push the
+        // board-refresh event here so open boards pick up the change live.
+        await realtimeNotifier.NotifyProjectAsync(projectId, "GitHubWebhook", cancellationToken);
+    }
+
+    private static async Task UpsertPullRequestAsync(
+        GitHubWebhookPayload payload,
+        IGitHubRepository gitHubRepository,
+        Guid projectId,
+        Guid linkedTaskId,
+        string actorName,
+        CancellationToken cancellationToken)
+    {
+        var existing = (await gitHubRepository.GetPullRequestsByProjectAsync(projectId, cancellationToken))
+            .FirstOrDefault(pr => pr.Url == payload.PrUrl);
+
+        // Statuses are capitalized to match rows from the manual add-PR flow
+        // and the frontend's status style map.
+        switch (payload.Action)
+        {
+            case "opened":
+            case "reopened":
+                if (existing != null)
+                {
+                    existing.UpdateStatus("Open");
+                }
+                else
+                {
+                    var created = PullRequest.Create(
+                        projectId,
+                        payload.PrTitle ?? "Pull request",
+                        payload.PrUrl!,
+                        "Open",
+                        actorName);
+                    created.LinkToTask(linkedTaskId);
+                    await gitHubRepository.AddPullRequestAsync(created, cancellationToken);
+                }
+                break;
+
+            case "closed":
+                var status = payload.PrMerged ? "Merged" : "Closed";
+                if (existing != null)
+                {
+                    existing.UpdateStatus(status);
+                }
+                else
+                {
+                    // Late-binding: the PR was never seen "opened" (created
+                    // outside DevFlow's knowledge) — record it closed.
+                    var created = PullRequest.Create(
+                        projectId,
+                        payload.PrTitle ?? "Pull request",
+                        payload.PrUrl!,
+                        status,
+                        actorName);
+                    created.LinkToTask(linkedTaskId);
+                    await gitHubRepository.AddPullRequestAsync(created, cancellationToken);
+                }
+                break;
+
+            // synchronize / edited / assigned / …: no row changes.
+        }
     }
 }

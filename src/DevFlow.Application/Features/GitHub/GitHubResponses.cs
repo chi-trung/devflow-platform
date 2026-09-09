@@ -15,4 +15,5 @@ public sealed record PullRequestResponse(
     string Status,
     string? Author,
     Guid? LinkedTaskId,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    string? HeadBranch = null);

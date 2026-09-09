@@ -2,6 +2,7 @@ using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Email;
 using DevFlow.Infrastructure.AI;
 using DevFlow.Infrastructure.Authentication;
+using DevFlow.Infrastructure.GitHub;
 using DevFlow.Infrastructure.Caching;
 using DevFlow.Infrastructure.Outbox;
 using DevFlow.Infrastructure.Persistence;
@@ -106,6 +107,13 @@ public static class DependencyInjection
         services.AddScoped<IExternalIdentityProvider, GoogleIdentityProvider>();
         services.AddScoped<IExternalIdentityProvider, GitHubIdentityProvider>();
         services.AddHttpClient("OAuth");
+        services.AddScoped<IGitHubApiClient, GitHubApiClient>();
+        services.AddHttpClient("GitHubApi", client =>
+        {
+            client.BaseAddress = new Uri("https://api.github.com/");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("DevFlow");
+            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+        });
 
         var redisConnection = configuration.GetConnectionString("Redis");
         if (!string.IsNullOrWhiteSpace(redisConnection))
