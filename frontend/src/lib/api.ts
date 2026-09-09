@@ -1296,6 +1296,8 @@ export interface BoardFilterState {
   priority: string;
   assignee: string;
   label: string;
+  /** PR-state filter: "" | "open" | "merged" | "closed" | "none". */
+  pr: string;
   dueFrom: string;
   dueTo: string;
   blockedOnly: boolean;

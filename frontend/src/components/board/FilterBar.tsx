@@ -12,6 +12,25 @@ import type { LabelResponse, WorkspaceMemberResponse } from "../../types/api";
 const inputClass =
   "w-full max-w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none sm:w-auto";
 
+const prStateKey: Record<string, string> = {
+  open: "filter.prOpen",
+  merged: "filter.prMerged",
+  closed: "filter.prClosed",
+  none: "filter.prNone",
+};
+
+const defaultFilterState: BoardFilterState = {
+  sprint: "all",
+  search: "",
+  priority: "",
+  assignee: "",
+  label: "",
+  pr: "",
+  dueFrom: "",
+  dueTo: "",
+  blockedOnly: false,
+};
+
 interface FilterBarProps {
   projectId: string;
   members: WorkspaceMemberResponse[];
@@ -44,6 +63,7 @@ export function FilterBar({
     !current.priority &&
     !current.assignee &&
     !current.label &&
+    !current.pr &&
     !current.dueFrom &&
     !current.dueTo &&
     !current.blockedOnly;
@@ -51,7 +71,10 @@ export function FilterBar({
   function applyPreset(name: string) {
     const preset = presets[name];
     if (!preset) return;
-    onChange(preset);
+    // Spread over the full default state: presets saved before a filter
+    // existed lack its key, and the page only patches defined fields —
+    // without this, applying an old preset would leave that filter stuck on.
+    onChange({ ...defaultFilterState, ...preset });
     setActivePreset(name);
     setPresetName("");
   }
@@ -90,6 +113,12 @@ export function FilterBar({
     chips.push({
       key: "label",
       label: t("filter.chipLabel", { value: label?.name ?? "?" }),
+    });
+  }
+  if (current.pr) {
+    chips.push({
+      key: "pr",
+      label: t("filter.chipPr", { value: t(prStateKey[current.pr]) }),
     });
   }
   if (current.dueFrom)
@@ -151,6 +180,19 @@ export function FilterBar({
             {label.name}
           </option>
         ))}
+      </select>
+
+      <select
+        aria-label={t("filter.filterByPr")}
+        value={current.pr}
+        onChange={(event) => onChange({ pr: event.target.value })}
+        className={inputClass}
+      >
+        <option value="">{t("filter.anyPr")}</option>
+        <option value="open">{t("filter.prOpen")}</option>
+        <option value="merged">{t("filter.prMerged")}</option>
+        <option value="closed">{t("filter.prClosed")}</option>
+        <option value="none">{t("filter.prNone")}</option>
       </select>
 
       <span className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1.5 sm:gap-y-2">

@@ -89,6 +89,8 @@ interface ParsedSearch {
   priority: string;
   assignee: string;
   label: string;
+  /** "" | "open" | "merged" | "closed" | "none" (prSummary-derived). */
+  pr: string;
   blockedOnly: boolean;
 }
 
@@ -99,12 +101,13 @@ function parseSearchQuery(raw: string): ParsedSearch {
     priority: "",
     assignee: "",
     label: "",
+    pr: "",
     blockedOnly: false,
   };
   const textParts: string[] = [];
 
   for (const token of raw.split(/\s+/).filter(Boolean)) {
-    const match = /^(status|priority|assignee|label|is):(.+)$/i.exec(token);
+    const match = /^(status|priority|assignee|label|pr|is):(.+)$/i.exec(token);
     if (!match) {
       textParts.push(token);
       continue;
@@ -135,11 +138,27 @@ function parseSearchQuery(raw: string): ParsedSearch {
       parsed.assignee = value;
     } else if (key === "label") {
       parsed.label = value;
+    } else if (key === "pr") {
+      const normalized = value === "no" ? "none" : value;
+      if (["open", "merged", "closed", "none"].includes(normalized))
+        parsed.pr = normalized;
     }
   }
 
   parsed.text = textParts.join(" ");
   return parsed;
+}
+
+/**
+ * The card's PR state for filtering — same priority the TaskCard badge uses:
+ * open work beats shipped, shipped beats abandoned. "none" covers tasks with
+ * no PR rows at all (prSummary absent or all buckets zero).
+ */
+function prStateOf(task: TaskItemResponse): string {
+  const pr = task.prSummary;
+  if (!pr || pr.open + pr.merged + pr.closed === 0) return "none";
+  if (pr.open > 0) return "open";
+  return pr.merged > 0 ? "merged" : "closed";
 }
 
 export function BoardPage() {
@@ -244,6 +263,7 @@ export function BoardPage() {
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [assigneeFilter, setAssigneeFilter] = useState("");
   const [labelFilter, setLabelFilter] = useState("");
+  const [prFilter, setPrFilter] = useState("");
   const [dueFrom, setDueFrom] = useState("");
   const [dueTo, setDueTo] = useState("");
   const [blockedOnly, setBlockedOnly] = useState(false);
@@ -339,6 +359,10 @@ export function BoardPage() {
         ? (task.labelIds ?? []).some((id) => operatorLabelIds.includes(id))
         : true,
     )
+    .filter((task) => (prFilter ? prStateOf(task) === prFilter : true))
+    .filter((task) =>
+      parsedSearch.pr ? prStateOf(task) === parsedSearch.pr : true,
+    )
     .filter((task) =>
       parsedSearch.status ? task.status === parsedSearch.status : true,
     )
@@ -364,7 +388,7 @@ export function BoardPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [sprintFilter, search, priorityFilter, assigneeFilter, labelFilter, dueFrom, dueTo, blockedOnly]);
+  }, [sprintFilter, search, priorityFilter, assigneeFilter, labelFilter, prFilter, dueFrom, dueTo, blockedOnly]);
 
   useEffect(() => {
     if (tasksRaw) setTasks(pagedItems<TaskItemResponse>(tasksRaw));
@@ -620,6 +644,12 @@ export function BoardPage() {
       ...task,
       status,
       completedAtUtc: status === "Done" ? new Date().toISOString() : null,
+      // Mirror the server's review stamp so the aging chip reads "0m" right
+      // after a drop into Review instead of waiting for the reload.
+      enteredReviewAtUtc:
+        status === "Review" && task.status !== "Review"
+          ? new Date().toISOString()
+          : task.enteredReviewAtUtc,
     };
     const rest = tasks.filter((t) => t.id !== taskId);
 
@@ -903,6 +933,7 @@ export function BoardPage() {
             priority: priorityFilter ?? "",
             assignee: assigneeFilter,
             label: labelFilter,
+            pr: prFilter,
             dueFrom,
             dueTo,
             blockedOnly,
@@ -914,6 +945,7 @@ export function BoardPage() {
               setPriorityFilter(patch.priority === "" ? null : patch.priority);
             if (patch.assignee !== undefined) setAssigneeFilter(patch.assignee);
             if (patch.label !== undefined) setLabelFilter(patch.label);
+            if (patch.pr !== undefined) setPrFilter(patch.pr);
             if (patch.dueFrom !== undefined) setDueFrom(patch.dueFrom);
             if (patch.dueTo !== undefined) setDueTo(patch.dueTo);
             if (patch.blockedOnly !== undefined) setBlockedOnly(patch.blockedOnly);

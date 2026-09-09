@@ -21,7 +21,7 @@ Built as a long-term learning project with a strong focus on architecture, testi
 | Architecture | Clean Architecture, CQRS + MediatR |
 | Database | PostgreSQL + EF Core |
 | Auth | JWT access tokens + rotating refresh tokens |
-| Testing | xUnit (473 unit tests) |
+| Testing | xUnit (480 unit tests) |
 | DevOps | Docker Compose, GitHub Actions |
 
 **Frontend**
@@ -39,7 +39,7 @@ Built as a long-term learning project with a strong focus on architecture, testi
 - JWT auth with silent refresh — page reloads keep you signed in
 - Workspaces with role-based access (Owner / Admin / Member) enforced server-side
 - Projects with keys, archive lifecycle, and project-level member RBAC
-- Kanban board: drag cards between Backlog → In Progress → In Review → Done, with assignee/epic swimlanes
+- Kanban board: drag cards between Backlog → In Progress → In Review → Done, with assignee/epic swimlanes, label & PR-state filters, and time-in-review aging on cards
 - Realtime boards via SignalR — changes made by teammates appear instantly
 - Task detail panel with comments thread, watchers, and attachments
 - Sprints API with single-active-sprint invariant per project
@@ -121,3 +121,4 @@ npm run dev                   # http://localhost:3000, proxies /api to :5217
 - [x] GitHub sign-in alongside Google
 - [x] Task keys (project key + sequence) auto-linked from commits/PRs
 - [x] Create branch & pull request from DevFlow (GitHub OAuth)
+- [x] Board filters (label, PR state) & review aging

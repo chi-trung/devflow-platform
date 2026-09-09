@@ -60,7 +60,7 @@ export function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
         </dl>
         <p className="mt-4 font-mono text-[10px] text-muted-foreground">
           {t("keyboard.searchOperatorsPrefix")} status:done · priority:high ·
-          assignee:me · label:bug · is:blocked
+          assignee:me · label:bug · pr:open · is:blocked
         </p>
       </div>
     </div>
