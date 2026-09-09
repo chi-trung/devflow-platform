@@ -19,6 +19,9 @@ name: Deploy Backend to Render
 on:
   push:
     branches: [main]
+  # Manual escape hatch: "Deploy Backend to Render → Run workflow" fires the
+  # hook regardless of what the last commits touched.
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -28,12 +31,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 2
+          # Full history: a push can carry many commits, and the deploy
+          # decision must look at the WHOLE range, not just HEAD~1..HEAD.
+          # (A 5-commit push whose last commit was frontend-only skipped
+          # the hook on 2026-09-09 — backend changes sat undeployed.)
+          fetch-depth: 0
 
       - name: Check for backend changes
         id: changes
         run: |
-          CHANGED=$(git diff --name-only HEAD~1 HEAD || git diff --name-only HEAD^ HEAD)
+          BASE="${{ github.event.before }}"
+          case "$BASE" in
+            ''|0000000000000000000000000000000000000000) BASE="HEAD~1" ;;
+          esac
+          # Force-deploy via workflow_dispatch skips the file check entirely.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Manual dispatch — deploying unconditionally."
+            exit 0
+          fi
+          # If the event SHA isn't the tip (rare), diff up to it explicitly.
+          if ! git merge-base --is-ancestor "$BASE" HEAD 2>/dev/null; then
+            BASE="HEAD~1"
+          fi
+          CHANGED=$(git diff --name-only "$BASE" "${{ github.sha }}")
           if echo "$CHANGED" | grep -Eq '^(src/|tests/|.*\.sln$|Directory\.|global\.json)'; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "Backend changes detected — will deploy."
