@@ -5,6 +5,8 @@ namespace DevFlow.Application.Common.Interfaces;
 
 public interface IProjectRepository
 {
+    /// <summary>True when a LIVE (non-deleted) project in the workspace owns the key
+    /// (the DeletedAtUtc query filter excludes soft-deleted rows).</summary>
     Task<bool> KeyExistsInWorkspaceAsync(Guid workspaceId, string key, CancellationToken cancellationToken = default);
 
     Task<Project?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);

@@ -109,6 +109,23 @@ public class ProjectLifecycleHandlerTests
     }
 
     [Fact]
+    public async Task Restore_ShouldThrowConflict_WhenKeyTakenByAnotherProject()
+    {
+        _project.Archive();
+        _projectRepository.KeyExistsInWorkspaceAsync(_workspaceId, "DEV", Arg.Any<CancellationToken>())
+            .Returns(true);
+
+        var handler = new RestoreProjectCommandHandler(_projectRepository, _unitOfWork);
+        var command = new RestoreProjectCommand(_workspaceId, _project.Id);
+
+        await Assert.ThrowsAsync<ConflictException>(() => handler.Handle(command, CancellationToken.None));
+
+        // The check runs before Restore() so the project stays soft-deleted.
+        Assert.NotNull(_project.DeletedAtUtc);
+        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Restore_ShouldThrowNotFound_WhenProjectIsMissing()
     {
         var handler = new RestoreProjectCommandHandler(_projectRepository, _unitOfWork);

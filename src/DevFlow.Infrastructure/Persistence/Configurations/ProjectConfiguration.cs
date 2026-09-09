@@ -31,8 +31,13 @@ internal sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
         builder.Property(project => project.ApproveAiPlans)
             .IsRequired();
 
+        // Partial so soft-deleted projects release their key — otherwise a
+        // deleted project's row keeps occupying (workspace_id, key) and the
+        // app-side pre-check (which honours the DeletedAtUtc query filter)
+        // can't see it, turning reuse into a raw 23505 → 500.
         builder.HasIndex(project => new { project.WorkspaceId, project.Key })
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("deleted_at_utc IS NULL");
 
         builder
             .HasOne<Domain.Entities.Workspace>()

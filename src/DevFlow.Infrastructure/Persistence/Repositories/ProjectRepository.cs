@@ -8,6 +8,8 @@ public sealed class ProjectRepository(DevFlowDbContext dbContext) : IProjectRepo
 {
     public Task<bool> KeyExistsInWorkspaceAsync(Guid workspaceId, string key, CancellationToken cancellationToken = default)
     {
+        // Query filter excludes soft-deleted projects, matching the partial
+        // unique index on (workspace_id, key).
         return dbContext.Projects.AnyAsync(
             project => project.WorkspaceId == workspaceId && project.Key == key,
             cancellationToken);
