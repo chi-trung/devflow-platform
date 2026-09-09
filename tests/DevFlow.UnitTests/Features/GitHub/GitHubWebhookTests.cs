@@ -73,6 +73,23 @@ public class TaskKeyParserTests
     }
 
     [Fact]
+    public void ParseKeys_ShouldMatchProjectKeyContainingDigits()
+    {
+        // Project keys may embed digits ("SPB2") — the parser must still find
+        // "SPB2-1"; a letters-only generic regex used to miss every such key.
+        var keys = TaskKeyParser.ParseKeys("Closes SPB2-1 and spb2-22", "SPB2");
+
+        Assert.Equal(new[] { "SPB2-1", "SPB2-22" }, keys);
+    }
+
+    [Fact]
+    public void ParseKeys_ShouldNotMatchDigitKeyAsLetterPrefix()
+    {
+        // Key "SP" must not swallow "SPB2-1" (letters-only keys stay exact).
+        Assert.Empty(TaskKeyParser.ParseKeys("SPB2-1", "SP"));
+    }
+
+    [Fact]
     public void ParseKeys_ShouldReturnEmpty_ForNullOrBlank()
     {
         Assert.Empty(TaskKeyParser.ParseKeys(null, "DF"));
