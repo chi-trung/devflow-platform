@@ -71,6 +71,34 @@ public sealed class LabelRepository(DevFlowDbContext dbContext) : ILabelReposito
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<Guid>>> GetLabelIdsByTaskIdsAsync(
+        Guid projectId,
+        IReadOnlyCollection<Guid> taskIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (taskIds.Count == 0)
+        {
+            return new Dictionary<Guid, IReadOnlyList<Guid>>();
+        }
+
+        // One query for the whole page; grouping happens in memory.
+        var pairs = await dbContext.TaskLabels
+            .AsNoTracking()
+            .Where(tl => taskIds.Contains(tl.TaskItemId))
+            .Join(
+                dbContext.Labels.Where(l => l.ProjectId == projectId),
+                tl => tl.LabelId,
+                l => l.Id,
+                (tl, l) => new { tl.TaskItemId, LabelId = l.Id })
+            .ToListAsync(cancellationToken);
+
+        return pairs
+            .GroupBy(pair => pair.TaskItemId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<Guid>)group.Select(pair => pair.LabelId).Distinct().ToList());
+    }
+
     public async Task<bool> TaskHasLabelAsync(Guid taskItemId, Guid labelId, CancellationToken cancellationToken = default)
     {
         return await dbContext.TaskLabels

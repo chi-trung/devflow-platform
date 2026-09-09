@@ -8,7 +8,7 @@ using NSubstitute;
 
 namespace DevFlow.UnitTests.Features.Tasks.List;
 
-public class PullRequestSummaryHandlerTests
+public class LabelIdsHandlerTests
 {
     private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
@@ -21,10 +21,10 @@ public class PullRequestSummaryHandlerTests
     private readonly Project _project;
     private readonly TaskItem _task;
 
-    public PullRequestSummaryHandlerTests()
+    public LabelIdsHandlerTests()
     {
         _project = Project.Create(_workspaceId, "DevFlow Core", "DEV", null);
-        _task = TaskItem.Create(_project.Id, "Ship the badge", null, TaskItemPriority.Medium);
+        _task = TaskItem.Create(_project.Id, "Labeled task", null, TaskItemPriority.Medium);
 
         _projectRepository.GetByIdAsync(_project.Id, Arg.Any<CancellationToken>()).Returns(_project);
 
@@ -37,9 +37,8 @@ public class PullRequestSummaryHandlerTests
                 Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
             .Returns(new Dictionary<Guid, IReadOnlyList<TaskAttachment>>());
 
-        _labelRepository.GetLabelIdsByTaskIdsAsync(
-                _project.Id, Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>())
-            .Returns(new Dictionary<Guid, IReadOnlyList<Guid>>());
+        _gitHubRepository.GetPullRequestsByProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<PullRequest>());
 
         // Cache miss by default — always invoke the loader factory.
         _cache.GetOrSetAsync(
@@ -51,21 +50,12 @@ public class PullRequestSummaryHandlerTests
             .Returns(info => info.ArgAt<Func<CancellationToken, Task<PagedResult<TaskItemResponse>>>>(1)(CancellationToken.None));
     }
 
-    private PullRequest Pr(Guid? linkedTaskId, string status)
+    private async Task<IReadOnlyList<Guid>?> HandleAsync(
+        IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> labelIdsByTask)
     {
-        var pr = PullRequest.Create(_project.Id, "some pr", $"https://github.com/acme/devflow/pull/{Guid.NewGuid():N}", status, "bob");
-        if (linkedTaskId.HasValue)
-        {
-            pr.LinkToTask(linkedTaskId.Value);
-        }
-
-        return pr;
-    }
-
-    private async Task<PullRequestSummary?> HandleAsync(params PullRequest[] prs)
-    {
-        _gitHubRepository.GetPullRequestsByProjectAsync(_project.Id, Arg.Any<CancellationToken>())
-            .Returns(prs);
+        _labelRepository.GetLabelIdsByTaskIdsAsync(
+                _project.Id, Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(labelIdsByTask);
 
         var handler = new ListTaskItemsQueryHandler(
             _projectRepository, _taskItemRepository, _taskAttachmentRepository, _gitHubRepository,
@@ -73,50 +63,41 @@ public class PullRequestSummaryHandlerTests
         var result = await handler.Handle(
             new ListTaskItemsQuery(_workspaceId, _project.Id, null, 1, 20), CancellationToken.None);
 
-        return result.Items.Single().PrSummary;
+        return result.Items.Single().LabelIds;
     }
 
     [Fact]
-    public async Task Summary_ShouldBucketCounts_CaseInsensitively()
+    public async Task LabelIds_ShouldComeFromBatchLookup()
     {
-        // legacy lowercase "open" counted with "Open"; "Merged"/"merged" both.
-        var summary = await HandleAsync(
-            Pr(_task.Id, "Open"),
-            Pr(_task.Id, "open"),
-            Pr(_task.Id, "merged"),
-            Pr(_task.Id, "Closed"));
+        var labelId = Guid.NewGuid();
 
-        Assert.NotNull(summary);
-        Assert.Equal(2, summary!.Open);
-        Assert.Equal(1, summary.Merged);
-        Assert.Equal(1, summary.Closed);
+        var ids = await HandleAsync(new Dictionary<Guid, IReadOnlyList<Guid>>
+        {
+            [_task.Id] = [labelId]
+        });
+
+        Assert.NotNull(ids);
+        Assert.Single(ids);
+        Assert.Equal(labelId, ids[0]);
     }
 
     [Fact]
-    public async Task Summary_ShouldBeNull_WhenTaskHasNoLinkedPrs()
+    public async Task LabelIds_ShouldBeNull_WhenTaskHasNoLabels()
     {
-        Assert.Null(await HandleAsync());
+        // The batch dictionary simply omits unlabeled tasks; GetValueOrDefault
+        // yields null (not an empty list) so the payload stays lean.
+        var ids = await HandleAsync(new Dictionary<Guid, IReadOnlyList<Guid>>());
+
+        Assert.Null(ids);
     }
 
     [Fact]
-    public async Task Summary_ShouldIgnoreUnlinkedPrs()
+    public async Task LabelIds_ShouldBeRequestedOnce_ForTheWholePage()
     {
-        Assert.Null(await HandleAsync(Pr(linkedTaskId: null, "Open")));
-    }
+        await HandleAsync(new Dictionary<Guid, IReadOnlyList<Guid>>());
 
-    [Fact]
-    public async Task Summary_ShouldNotCountPrsLinkedToOtherTasks()
-    {
-        var otherTask = TaskItem.Create(_project.Id, "other", null, TaskItemPriority.Low);
-
-        var summary = await HandleAsync(
-            Pr(otherTask.Id, "Open"),
-            Pr(otherTask.Id, "Merged"),
-            Pr(_task.Id, "Closed"));
-
-        Assert.NotNull(summary);
-        Assert.Equal(0, summary!.Open);
-        Assert.Equal(0, summary.Merged);
-        Assert.Equal(1, summary.Closed);
+        await _labelRepository.Received(1).GetLabelIdsByTaskIdsAsync(
+            _project.Id, Arg.Is<IReadOnlyCollection<Guid>>(ids => ids.Contains(_task.Id)),
+            Arg.Any<CancellationToken>());
     }
 }

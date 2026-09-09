@@ -14,6 +14,7 @@ public class AttachmentSummaryHandlerTests
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
     private readonly ITaskAttachmentRepository _taskAttachmentRepository = Substitute.For<ITaskAttachmentRepository>();
     private readonly IGitHubRepository _gitHubRepository = Substitute.For<IGitHubRepository>();
+    private readonly ILabelRepository _labelRepository = Substitute.For<ILabelRepository>();
     private readonly ICacheService _cache = Substitute.For<ICacheService>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
@@ -35,6 +36,10 @@ public class AttachmentSummaryHandlerTests
 
         _gitHubRepository.GetPullRequestsByProjectAsync(_project.Id, Arg.Any<CancellationToken>())
             .Returns(new List<PullRequest>());
+
+        _labelRepository.GetLabelIdsByTaskIdsAsync(
+                _project.Id, Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, IReadOnlyList<Guid>>());
     }
 
     private TaskItem NewTask() => TaskItem.Create(_project.Id, "Task with attachments", null, TaskItemPriority.Medium);
@@ -74,7 +79,7 @@ public class AttachmentSummaryHandlerTests
         };
         StubPage(task, attachments);
 
-        var handler = new ListTaskItemsQueryHandler(_projectRepository, _taskItemRepository, _taskAttachmentRepository, _gitHubRepository, _cache);
+        var handler = new ListTaskItemsQueryHandler(_projectRepository, _taskItemRepository, _taskAttachmentRepository, _gitHubRepository, _labelRepository, _cache);
         var result = await handler.Handle(new ListTaskItemsQuery(_workspaceId, _project.Id, null, 1, 20), CancellationToken.None);
 
         var summary = Assert.IsType<TaskItemResponse>(Assert.Single(result.Items)).AttachmentSummary;
@@ -96,7 +101,7 @@ public class AttachmentSummaryHandlerTests
         };
         StubPage(task, attachments);
 
-        var handler = new ListTaskItemsQueryHandler(_projectRepository, _taskItemRepository, _taskAttachmentRepository, _gitHubRepository, _cache);
+        var handler = new ListTaskItemsQueryHandler(_projectRepository, _taskItemRepository, _taskAttachmentRepository, _gitHubRepository, _labelRepository, _cache);
         var result = await handler.Handle(new ListTaskItemsQuery(_workspaceId, _project.Id, null, 1, 20), CancellationToken.None);
 
         var summary = Assert.IsType<TaskItemResponse>(Assert.Single(result.Items)).AttachmentSummary;
@@ -113,7 +118,7 @@ public class AttachmentSummaryHandlerTests
         var task = NewTask();
         StubPage(task);
 
-        var handler = new ListTaskItemsQueryHandler(_projectRepository, _taskItemRepository, _taskAttachmentRepository, _gitHubRepository, _cache);
+        var handler = new ListTaskItemsQueryHandler(_projectRepository, _taskItemRepository, _taskAttachmentRepository, _gitHubRepository, _labelRepository, _cache);
         var result = await handler.Handle(new ListTaskItemsQuery(_workspaceId, _project.Id, null, 1, 20), CancellationToken.None);
 
         var response = Assert.IsType<TaskItemResponse>(Assert.Single(result.Items));
@@ -131,7 +136,7 @@ public class AttachmentSummaryHandlerTests
         };
         StubPage(task, attachments);
 
-        var handler = new ListTaskItemsQueryHandler(_projectRepository, _taskItemRepository, _taskAttachmentRepository, _gitHubRepository, _cache);
+        var handler = new ListTaskItemsQueryHandler(_projectRepository, _taskItemRepository, _taskAttachmentRepository, _gitHubRepository, _labelRepository, _cache);
         var result = await handler.Handle(new ListTaskItemsQuery(_workspaceId, _project.Id, null, 1, 20), CancellationToken.None);
 
         var summary = Assert.IsType<TaskItemResponse>(Assert.Single(result.Items)).AttachmentSummary;

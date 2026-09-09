@@ -22,7 +22,10 @@ public sealed record TaskItemResponse(
     AttachmentSummary? AttachmentSummary = null,
     PullRequestSummary? PrSummary = null,
     /// <summary>When the task last entered Review; null if it never did (or predates the column).</summary>
-    DateTimeOffset? EnteredReviewAtUtc = null);
+    DateTimeOffset? EnteredReviewAtUtc = null,
+    /// <summary>Label ids for the board's client-side label filter. Null for
+    /// rows built without enrichment (e.g. subtasks).</summary>
+    IReadOnlyList<Guid>? LabelIds = null);
 
 /// <summary>
 /// Lightweight summary of a task's attachments for card thumbnails — ids only;

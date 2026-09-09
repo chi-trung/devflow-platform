@@ -54,12 +54,13 @@ public sealed class LabelsController(ISender sender) : ControllerBase
     [HttpPost("tasks/{taskId:guid}/assign/{labelId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> AssignLabelToTask(
+        Guid projectId,
         Guid taskId,
         Guid labelId,
         CancellationToken cancellationToken)
     {
         await sender.Send(
-            new Application.Features.Labels.AssignLabelToTaskCommand(taskId, labelId),
+            new Application.Features.Labels.AssignLabelToTaskCommand(projectId, taskId, labelId),
             cancellationToken);
 
         return NoContent();
@@ -68,12 +69,13 @@ public sealed class LabelsController(ISender sender) : ControllerBase
     [HttpDelete("tasks/{taskId:guid}/remove/{labelId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> RemoveLabelFromTask(
+        Guid projectId,
         Guid taskId,
         Guid labelId,
         CancellationToken cancellationToken)
     {
         await sender.Send(
-            new Application.Features.Labels.RemoveLabelFromTaskCommand(taskId, labelId),
+            new Application.Features.Labels.RemoveLabelFromTaskCommand(projectId, taskId, labelId),
             cancellationToken);
 
         return NoContent();

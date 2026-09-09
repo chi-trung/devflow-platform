@@ -1,3 +1,4 @@
+using DevFlow.Application.Common.Behaviors;
 using MediatR;
 
 namespace DevFlow.Application.Features.Labels;
@@ -18,14 +19,20 @@ public sealed record CreateLabelCommand(
     string Name,
     string Color) : IRequest<LabelResponse>;
 
+// Cache-invalidation carriers: these mutate TaskLabel rows that the board's
+// tasks payload embeds (labelIds), so they implement IProjectEvent —
+// CacheInvalidationBehavior then drops tasks:* and RealtimeBehavior wakes
+// connected clients. ActivityVerb stays empty → no activity-log entry.
 public sealed record DeleteLabelCommand(
     Guid ProjectId,
-    Guid LabelId) : IRequest;
+    Guid LabelId) : IRequest, IProjectEvent;
 
 public sealed record AssignLabelToTaskCommand(
+    Guid ProjectId,
     Guid TaskItemId,
-    Guid LabelId) : IRequest;
+    Guid LabelId) : IRequest, IProjectEvent;
 
 public sealed record RemoveLabelFromTaskCommand(
+    Guid ProjectId,
     Guid TaskItemId,
-    Guid LabelId) : IRequest;
+    Guid LabelId) : IRequest, IProjectEvent;

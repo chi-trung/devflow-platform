@@ -12,6 +12,7 @@ public sealed class ListTaskItemsQueryHandler(
     ITaskItemRepository taskItemRepository,
     ITaskAttachmentRepository taskAttachmentRepository,
     IGitHubRepository gitHubRepository,
+    ILabelRepository labelRepository,
     ICacheService cacheService) : IRequestHandler<ListTaskItemsQuery, PagedResult<TaskItemResponse>>
 {
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
@@ -70,6 +71,13 @@ public sealed class ListTaskItemsQueryHandler(
             .GroupBy(pr => pr.LinkedTaskId!.Value)
             .ToDictionary(group => group.Key, group => group.ToList());
 
+        // Label ids per task for the board's client-side label filter — also
+        // one project-wide query for the page.
+        var labelIdsByTaskId = await labelRepository.GetLabelIdsByTaskIdsAsync(
+            query.ProjectId,
+            tasks.Select(task => task.Id).ToList(),
+            cancellationToken);
+
         var items = tasks
             .Select(task => new TaskItemResponse(
                 task.Id,
@@ -91,7 +99,8 @@ public sealed class ListTaskItemsQueryHandler(
                 task.Position,
                 BuildAttachmentSummary(attachmentByTaskId.GetValueOrDefault(task.Id)),
                 BuildPullRequestSummary(pullRequestsByTaskId.GetValueOrDefault(task.Id)),
-                EnteredReviewAtUtc: task.EnteredReviewAtUtc))
+                EnteredReviewAtUtc: task.EnteredReviewAtUtc,
+                LabelIds: labelIdsByTaskId.GetValueOrDefault(task.Id)))
             .ToList();
 
         return new PagedResult<TaskItemResponse>(items, totalCount, query.Page, pageSize);
