@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useState, type FormEvent } from "react";
-import { Check, Link2, Hash, Plus, X, GitPullRequest, GitPullRequestArrow, GitPullRequestClosed } from "lucide-react";
+import { Check, Link2, Hash, Plus, X, Clock, GitPullRequest, GitPullRequestArrow, GitPullRequestClosed } from "lucide-react";
 import type { TaskItemResponse, WorkspaceMemberResponse, CustomFieldValueResponse } from "../../types/api";
 import { Avatar } from "../ui/Avatar";
 import { EstimationModal } from "../estimation/EstimationModal";
@@ -20,6 +20,17 @@ const priorityLabelKey: Record<TaskItemResponse["priority"], string> = {
   Medium: "task.medium",
   Low: "task.low",
 };
+
+/** Humanized "how long has this been waiting" string: minutes, then hours,
+ * then days. No date library is imported here, so it's computed by hand. */
+function humanizeAge(fromIso: string, nowMs: number): string {
+  const minutes = Math.floor((nowMs - new Date(fromIso).getTime()) / 60_000);
+  if (minutes < 1) return "<1m";
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
 
 interface TaskCardProps {
   task: TaskItemResponse;
@@ -105,6 +116,23 @@ export function TaskCard({
         ? { style: "bg-violet-500/15 text-violet-600 dark:text-violet-300", Icon: GitPullRequestArrow }
         : { style: "bg-elevated text-muted-foreground", Icon: GitPullRequestClosed }
     : null;
+
+  // Review aging: only Review cards with a stamp show the chip — tasks that
+  // entered Review before this column existed report no age (honest absence,
+  // no fallback to created/updated). Amber after 24h, red after 72h.
+  const reviewAge =
+    task.status === "Review" && task.enteredReviewAtUtc
+      ? humanizeAge(task.enteredReviewAtUtc, Date.now())
+      : null;
+  const reviewAgeHours = task.enteredReviewAtUtc
+    ? (Date.now() - new Date(task.enteredReviewAtUtc).getTime()) / 3_600_000
+    : 0;
+  const reviewAgeStyle =
+    reviewAgeHours >= 72
+      ? "bg-destructive/15 text-destructive"
+      : reviewAgeHours >= 24
+        ? "bg-amber-500/15 text-amber-600 dark:text-amber-300"
+        : "bg-elevated text-muted-foreground";
 
   const customFields = customFieldValues ?? [];
 
@@ -257,6 +285,15 @@ export function TaskCard({
           >
             <prBadge.Icon className="size-3" aria-hidden />
             {prCount}
+          </span>
+        )}
+        {reviewAge && (
+          <span
+            title={t("task.inReviewFor", { age: reviewAge })}
+            className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold ${reviewAgeStyle}`}
+          >
+            <Clock className="size-3" aria-hidden />
+            {reviewAge}
           </span>
         )}
         {(customFields ?? [])

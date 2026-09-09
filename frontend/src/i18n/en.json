@@ -580,6 +580,7 @@
   "movedTo": "Moved to {{column}}",
   "urgent": "Urgent",
   "blockedByDependencies": "Blocked by dependencies",
+  "inReviewFor": "{{age}} in review",
   "copyKey": "Copy task key",
   "keyCopied": "Task key copied",
   "watch": "Watch",

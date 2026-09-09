@@ -580,6 +580,7 @@
   "movedTo": "Đã chuyển sang {{column}}",
   "urgent": "Gấp",
   "blockedByDependencies": "Bị chặn bởi phụ thuộc",
+  "inReviewFor": "đang chờ review {{age}}",
   "copyKey": "Sao chép mã task",
   "keyCopied": "Đã sao chép mã task",
   "watch": "Theo dõi",
