@@ -88,6 +88,7 @@ public class GitHubWebhookHandlerTests
     private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly IRealtimeNotifier _realtimeNotifier = Substitute.For<IRealtimeNotifier>();
+    private readonly ICacheService _cacheService = Substitute.For<ICacheService>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
     private readonly Project _project;
@@ -132,7 +133,7 @@ public class GitHubWebhookHandlerTests
         GitHubWebhookHandler.ProcessAsync(
             payload,
             _gitHubRepository, _activityLogRepository, _taskItemRepository, _projectRepository, _unitOfWork,
-            _realtimeNotifier,
+            _realtimeNotifier, _cacheService,
             CancellationToken.None);
 
     [Fact]
@@ -283,5 +284,27 @@ public class GitHubWebhookHandlerTests
 
         await _realtimeNotifier.Received(1).NotifyProjectAsync(
             _project.Id, "GitHubWebhook", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ProcessAsync_ChangesApplied_ShouldInvalidateTasksCache()
+    {
+        _gitHubRepository.GetPullRequestsByProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<PullRequest>());
+
+        await ProcessAsync(PrPayload("opened", merged: false, state: "open"));
+
+        await _cacheService.Received(1).RemoveByTagAsync($"project:{_project.Id}", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ProcessAsync_NoMatchingTask_ShouldNotInvalidateCache()
+    {
+        _taskItemRepository.GetForProjectAsync(_project.Id, (TaskItemStatus?)null, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<TaskItem>());
+
+        await ProcessAsync(PrPayload("opened", merged: false, state: "open"));
+
+        await _cacheService.DidNotReceive().RemoveByTagAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 }

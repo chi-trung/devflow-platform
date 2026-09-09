@@ -175,6 +175,13 @@ export interface TaskItemResponse {
     count: number;
     previews: Array<{ id: string; contentType: string }>;
   };
+
+  /** Linked PR counts for the board card badge; buckets are case-insensitive. */
+  prSummary?: {
+    open: number;
+    merged: number;
+    closed: number;
+  };
 }
 
 export interface TaskDependencyResponse {

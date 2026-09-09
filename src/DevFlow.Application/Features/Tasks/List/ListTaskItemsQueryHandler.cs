@@ -11,6 +11,7 @@ public sealed class ListTaskItemsQueryHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
     ITaskAttachmentRepository taskAttachmentRepository,
+    IGitHubRepository gitHubRepository,
     ICacheService cacheService) : IRequestHandler<ListTaskItemsQuery, PagedResult<TaskItemResponse>>
 {
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
@@ -61,6 +62,14 @@ public sealed class ListTaskItemsQueryHandler(
             tasks.Select(task => task.Id),
             cancellationToken);
 
+        // One project-wide PR query for the whole page — the table holds few
+        // rows per project, so grouping in memory beats a per-task lookup.
+        var pullRequestsByTaskId = (await gitHubRepository.GetPullRequestsByProjectAsync(
+                query.ProjectId, cancellationToken))
+            .Where(pr => pr.LinkedTaskId.HasValue)
+            .GroupBy(pr => pr.LinkedTaskId!.Value)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
         var items = tasks
             .Select(task => new TaskItemResponse(
                 task.Id,
@@ -80,7 +89,8 @@ public sealed class ListTaskItemsQueryHandler(
                 task.DueDateUtc,
                 task.CompletedAtUtc,
                 task.Position,
-                BuildAttachmentSummary(attachmentByTaskId.GetValueOrDefault(task.Id))))
+                BuildAttachmentSummary(attachmentByTaskId.GetValueOrDefault(task.Id)),
+                BuildPullRequestSummary(pullRequestsByTaskId.GetValueOrDefault(task.Id))))
             .ToList();
 
         return new PagedResult<TaskItemResponse>(items, totalCount, query.Page, pageSize);
@@ -105,5 +115,24 @@ public sealed class ListTaskItemsQueryHandler(
             .ToList();
 
         return new AttachmentSummary(attachments.Count, previews);
+    }
+
+    /// <summary>
+    /// Buckets a task's linked PRs by status for the card badge. Statuses are
+    /// compared case-insensitively — legacy rows store lowercase "open" while
+    /// the webhook and manual-add flows write "Open"/"Merged"/"Closed".
+    /// </summary>
+    private static PullRequestSummary? BuildPullRequestSummary(IReadOnlyList<PullRequest>? pullRequests)
+    {
+        if (pullRequests is null || pullRequests.Count == 0)
+        {
+            return null;
+        }
+
+        var open = pullRequests.Count(pr => "open".Equals(pr.Status, StringComparison.OrdinalIgnoreCase));
+        var merged = pullRequests.Count(pr => "merged".Equals(pr.Status, StringComparison.OrdinalIgnoreCase));
+        var closed = pullRequests.Count(pr => "closed".Equals(pr.Status, StringComparison.OrdinalIgnoreCase));
+
+        return new PullRequestSummary(open, merged, closed);
     }
 }

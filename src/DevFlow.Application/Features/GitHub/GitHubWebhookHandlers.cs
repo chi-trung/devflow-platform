@@ -36,6 +36,7 @@ public static class GitHubWebhookHandler
         IProjectRepository projectRepository,
         IUnitOfWork unitOfWork,
         IRealtimeNotifier realtimeNotifier,
+        ICacheService cacheService,
         CancellationToken cancellationToken)
     {
         if (payload.ProjectId == null || string.IsNullOrWhiteSpace(payload.RepositoryUrl))
@@ -141,6 +142,11 @@ public static class GitHubWebhookHandler
         // The webhook path bypasses MediatR's RealtimeBehavior — push the
         // board-refresh event here so open boards pick up the change live.
         await realtimeNotifier.NotifyProjectAsync(projectId, "GitHubWebhook", cancellationToken);
+
+        // …and it bypasses CacheInvalidationBehavior too — drop the cached
+        // task pages so PR badges and auto-status changes show immediately
+        // instead of waiting out the 30s TTL.
+        await cacheService.RemoveByTagAsync($"project:{projectId}", cancellationToken);
     }
 
     private static async Task UpsertPullRequestAsync(

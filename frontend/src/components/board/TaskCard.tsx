@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useState, type FormEvent } from "react";
-import { Check, Link2, Hash, Plus, X } from "lucide-react";
+import { Check, Link2, Hash, Plus, X, GitPullRequest, GitPullRequestArrow, GitPullRequestClosed } from "lucide-react";
 import type { TaskItemResponse, WorkspaceMemberResponse, CustomFieldValueResponse } from "../../types/api";
 import { Avatar } from "../ui/Avatar";
 import { EstimationModal } from "../estimation/EstimationModal";
@@ -93,6 +93,18 @@ export function TaskCard({
     taskId: task.id,
     previews: task.attachmentSummary?.previews,
   });
+
+  // PR badge: one chip per card, colored by the most relevant status
+  // (open work > shipped > abandoned). Count is always the total.
+  const pr = task.prSummary;
+  const prCount = (pr?.open ?? 0) + (pr?.merged ?? 0) + (pr?.closed ?? 0);
+  const prBadge = pr && prCount > 0
+    ? pr.open > 0
+      ? { style: "bg-teal-500/15 text-teal-600 dark:text-teal-300", Icon: GitPullRequest }
+      : pr.merged > 0
+        ? { style: "bg-violet-500/15 text-violet-600 dark:text-violet-300", Icon: GitPullRequestArrow }
+        : { style: "bg-elevated text-muted-foreground", Icon: GitPullRequestClosed }
+    : null;
 
   const customFields = customFieldValues ?? [];
 
@@ -232,6 +244,19 @@ export function TaskCard({
           >
             <Check className="size-3" aria-hidden />
             {t("board.dodMet")}
+          </span>
+        )}
+        {prBadge && (
+          <span
+            title={t("github.prBadgeTitle", {
+              open: pr!.open,
+              merged: pr!.merged,
+              closed: pr!.closed,
+            })}
+            className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold ${prBadge.style}`}
+          >
+            <prBadge.Icon className="size-3" aria-hidden />
+            {prCount}
           </span>
         )}
         {(customFields ?? [])

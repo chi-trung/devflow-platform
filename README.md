@@ -21,7 +21,7 @@ Built as a long-term learning project with a strong focus on architecture, testi
 | Architecture | Clean Architecture, CQRS + MediatR |
 | Database | PostgreSQL + EF Core |
 | Auth | JWT access tokens + rotating refresh tokens |
-| Testing | xUnit (464 unit tests) |
+| Testing | xUnit (469 unit tests) |
 | DevOps | Docker Compose, GitHub Actions |
 
 **Frontend**
@@ -57,7 +57,7 @@ Built as a long-term learning project with a strong focus on architecture, testi
 - **Activity Log** — track all changes across projects
 - **Knowledge Base** — ADR / Pattern / Runbook entries with lifecycle, auto-captured when tasks ship
 - **Search** — global search (Ctrl+K) across tasks, projects, epics, labels, users, comments; saved searches
-- **GitHub Integration** — repo linking, PR tracking, webhooks with dead-letter queue (admin inspect/replay), Linear-style task keys (`DEV-123`) auto-linked from commits/PRs, create branch & PR from a task
+- **GitHub Integration** — repo linking, PR tracking, webhooks with dead-letter queue (admin inspect/replay), Linear-style task keys (`DEV-123`) auto-linked from commits/PRs, create branch & PR from a task, PR status badge on board cards
 
 ### Analytics
 - **Burndown Charts** — sprint progress at a glance

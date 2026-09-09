@@ -19,7 +19,8 @@ public sealed record TaskItemResponse(
     DateTimeOffset? DueDateUtc,
     DateTimeOffset? CompletedAtUtc,
     int Position,
-    AttachmentSummary? AttachmentSummary = null);
+    AttachmentSummary? AttachmentSummary = null,
+    PullRequestSummary? PrSummary = null);
 
 /// <summary>
 /// Lightweight summary of a task's attachments for card thumbnails — ids only;
@@ -28,3 +29,10 @@ public sealed record TaskItemResponse(
 public sealed record AttachmentSummary(int Count, IReadOnlyList<AttachmentPreview> Previews);
 
 public sealed record AttachmentPreview(Guid Id, string ContentType);
+
+/// <summary>
+/// Linked pull-request counts for the board card badge. The status buckets
+/// absorb the legacy lowercase "open" as well as the "Open"/"Merged"/"Closed"
+/// written by the webhook and manual flows (matched case-insensitively).
+/// </summary>
+public sealed record PullRequestSummary(int Open, int Merged, int Closed);

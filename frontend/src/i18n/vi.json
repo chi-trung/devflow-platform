@@ -987,6 +987,7 @@
   "creatingBranchPr": "Đang tạo…",
   "createBranchPrFailed": "Không thể tạo branch và pull request.",
   "branchPrCreated": "Đã tạo branch và pull request",
+  "prBadgeTitle": "{{open}} đang mở, {{merged}} đã merge, {{closed}} đã đóng",
   "addPrFailed": "Không thể thêm pull request.",
   "deletePrFailed": "Không thể xóa pull request.",
   "loadFailed": "Không tải được tích hợp GitHub.",

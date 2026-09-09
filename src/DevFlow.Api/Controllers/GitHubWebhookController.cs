@@ -16,6 +16,7 @@ public sealed class GitHubWebhookController(
     IProjectRepository projectRepository,
     IUnitOfWork unitOfWork,
     IRealtimeNotifier realtimeNotifier,
+    ICacheService cacheService,
     ILogger<GitHubWebhookController> logger) : ControllerBase
 {
     [HttpPost]
@@ -66,6 +67,7 @@ public sealed class GitHubWebhookController(
             projectRepository,
             unitOfWork,
             realtimeNotifier,
+            cacheService,
             cancellationToken);
 
         return Accepted();
