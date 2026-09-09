@@ -164,11 +164,10 @@ export interface TaskItemResponse {
   position?: number;
   storyPoints?: number | null;
   /**
-   * Backend note: the task list does NOT include isBlocked/labelIds/
-   * estimateMinutes/totalLoggedMinutes/subtaskCount — those TS fields never
-   * existed on TaskItemResponse. Blocked state lives in the per-task
-   * /dependencies response; per-task labels in the assign/remove endpoints;
-   * logged time in /time-entries. */
+   * Backend note: the task list does NOT include isBlocked/
+   * estimateMinutes/totalLoggedMinutes/subtaskCount. Blocked state lives in
+   * the per-task /dependencies response; logged time in /time-entries.
+   * labelIds IS included (board label filter) but null on subtask rows. */
 
   /** Attachment summary for card thumbnails (B32.2). */
   attachmentSummary?: {
@@ -185,6 +184,9 @@ export interface TaskItemResponse {
 
   /** When the task last entered Review; null if never (or predates the column). */
   enteredReviewAtUtc?: string | null;
+
+  /** Label ids for the board's client-side label filter; null on subtask rows. */
+  labelIds?: string[] | null;
 }
 
 export interface TaskDependencyResponse {

@@ -290,6 +290,18 @@ export function BoardPage() {
                 .toLowerCase()
                 .includes(parsedSearch.assignee),
           )?.userId ?? "no-match");
+  // `label:<name>` matches by name (case-insensitive, any label whose name
+  // contains the token). Falls back to id match so chips cleared from the
+  // dropdown still parse; no match → sentinel that filters everything out.
+  const operatorLabelIds = parsedSearch.label
+    ? (labels ?? [])
+        .filter(
+          (label) =>
+            label.name.toLowerCase().includes(parsedSearch.label) ||
+            label.id.toLowerCase() === parsedSearch.label,
+        )
+        .map((label) => label.id)
+    : [];
 
   const visibleTasks = tasks
     .filter((task) =>
@@ -318,6 +330,15 @@ export function BoardPage() {
     // Blocked state is derived from the dependency graph (unresolved edges) —
     // the task list response has no isBlocked field.
     .filter((task) => (blockedOnly ? blockedTaskIds.has(task.id) : true))
+    // Subtask rows carry no labelIds; the board list always does.
+    .filter((task) =>
+      labelFilter ? (task.labelIds ?? []).includes(labelFilter) : true,
+    )
+    .filter((task) =>
+      parsedSearch.label
+        ? (task.labelIds ?? []).some((id) => operatorLabelIds.includes(id))
+        : true,
+    )
     .filter((task) =>
       parsedSearch.status ? task.status === parsedSearch.status : true,
     )
