@@ -182,6 +182,9 @@ export interface TaskItemResponse {
     merged: number;
     closed: number;
   };
+
+  /** When the task last entered Review; null if never (or predates the column). */
+  enteredReviewAtUtc?: string | null;
 }
 
 export interface TaskDependencyResponse {

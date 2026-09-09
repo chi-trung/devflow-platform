@@ -63,6 +63,13 @@ public class TaskItem : BaseEntity, IAuditableEntity, ISoftDeletable
 
     public DateTimeOffset? StartedAtUtc { get; private set; }
 
+    /// <summary>
+    /// When the task last entered Review — drives the board's time-in-review
+    /// aging. Null for tasks that never reached Review (and for legacy rows,
+    /// which stay honest rather than backfilled).
+    /// </summary>
+    public DateTimeOffset? EnteredReviewAtUtc { get; private set; }
+
     public int? EstimateMinutes { get; private set; }
 
     public int Position { get; set; }
@@ -121,7 +128,7 @@ public class TaskItem : BaseEntity, IAuditableEntity, ISoftDeletable
     /// <summary>
     /// Changes the task status with 7-stage auto-transitions:
     /// - Ready → InProgress  auto-starts the clock
-    /// - InProgress → Review marks the review phase
+    /// - InProgress → Review marks the review phase (stamps EnteredReviewAtUtc)
     /// - Review → Done stamps completion
     /// - Re-opening from Done clears CompletedAtUtc
     /// </summary>
@@ -131,6 +138,15 @@ public class TaskItem : BaseEntity, IAuditableEntity, ISoftDeletable
         if (Status == TaskItemStatus.Done && status != TaskItemStatus.Done)
         {
             CompletedAtUtc = null;
+        }
+
+        // Fresh stamp only on a real transition into Review. Reorder calls
+        // ChangeStatus on every drag, including same-column drops, and must
+        // not reset the age. Leaving Review keeps the last stamp; re-entry
+        // (e.g. InProgress → Review) refreshes it.
+        if (status == TaskItemStatus.Review && Status != status)
+        {
+            EnteredReviewAtUtc = DateTimeOffset.UtcNow;
         }
 
         Status = status;

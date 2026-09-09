@@ -90,7 +90,8 @@ public sealed class ListTaskItemsQueryHandler(
                 task.CompletedAtUtc,
                 task.Position,
                 BuildAttachmentSummary(attachmentByTaskId.GetValueOrDefault(task.Id)),
-                BuildPullRequestSummary(pullRequestsByTaskId.GetValueOrDefault(task.Id))))
+                BuildPullRequestSummary(pullRequestsByTaskId.GetValueOrDefault(task.Id)),
+                EnteredReviewAtUtc: task.EnteredReviewAtUtc))
             .ToList();
 
         return new PagedResult<TaskItemResponse>(items, totalCount, query.Page, pageSize);
