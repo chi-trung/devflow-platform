@@ -127,13 +127,18 @@ public static class GitHubWebhookHandler
                 action,
                 task.Title), cancellationToken);
 
+            // Status changes must land on a TRACKED instance — the project-wide
+            // match query is AsNoTracking, so mutating its results would never
+            // reach the database. GetByIdAsync is tracked by default.
             if (payload.Event == "pull_request" && payload.Action == "opened" && task.Status != TaskItemStatus.Review)
             {
-                task.ChangeStatus(TaskItemStatus.Review);
+                var tracked = await taskItemRepository.GetByIdAsync(task.Id, cancellationToken);
+                tracked?.ChangeStatus(TaskItemStatus.Review);
             }
             else if (payload.Event == "pull_request" && payload.PrMerged && task.Status != TaskItemStatus.Done)
             {
-                task.ChangeStatus(TaskItemStatus.Done);
+                var tracked = await taskItemRepository.GetByIdAsync(task.Id, cancellationToken);
+                tracked?.ChangeStatus(TaskItemStatus.Done);
             }
         }
 

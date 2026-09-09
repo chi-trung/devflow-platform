@@ -107,6 +107,10 @@ public class GitHubWebhookHandlerTests
         _projectRepository.GetByIdAsync(_project.Id, Arg.Any<CancellationToken>()).Returns(_project);
         _taskItemRepository.GetForProjectAsync(_project.Id, (TaskItemStatus?)null, Arg.Any<CancellationToken>())
             .Returns(new[] { _task });
+        // The handler re-loads tasks by id for status transitions (the match
+        // query is AsNoTracking in production) — return the same instance.
+        _taskItemRepository.GetByIdAsync(_task.Id, Arg.Any<CancellationToken>())
+            .Returns(_task);
     }
 
     private GitHubWebhookPayload PrPayload(string action, bool merged, string state, IReadOnlyList<string>? commitMessages = null) =>
