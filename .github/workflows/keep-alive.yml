@@ -1,28 +1,47 @@
 name: Keep Alive
 
-# Pings the API every 3 minutes so the free-tier Render instance
-# doesn't spin down (and the Supabase database stays active).
-# Render's free tier sleeps after ~15 minutes idle; GitHub often delays
-# or skips scheduled runs under load, so pinging at 3-minute intervals
-# leaves enough slack that the instance stays warm between pings.
+# Pings the API so the free-tier Render instance doesn't spin down
+# (and the Supabase database stays active).
+#
+# Why a loop job instead of a plain */3 cron: GitHub's scheduler silently
+# skips or delays frequent schedule runs under load — with the old
+# every-3-minute cron the *effective* gap was 2-5 hours, so Render slept
+# and every visit paid a cold start. Each scheduled run now keeps ONE
+# job alive for ~6 hours (the Actions per-job ceiling), pinging every
+# 10 minutes inside it. Even when GitHub skips runs, consecutive 6-hour
+# jobs overlap and the pings never gap. Public repo = free unlimited
+# runner minutes, so the long-lived jobs cost nothing.
+#
+# Render's free web service sleeps after ~15 minutes idle; 10-minute
+# pings keep it warm continuously. Jobs are staggered every 3 hours so
+# at most ~2 run in parallel (GitHub caps free accounts at 20 concurrent
+# jobs); the 6-hour life of each job overlaps the next, so a skipped
+# scheduled run still leaves live pingers covering the gap.
 on:
   schedule:
-    - cron: "*/3 * * * *"
+    - cron: "17 */3 * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  ping:
+  pinger:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 360
     steps:
-      - name: Ping API health endpoint
+      - name: Ping API health endpoint for ~6 hours
         run: |
-          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 120 \
-            https://devflow-api-vd5h.onrender.com/health)
-          echo "Health check returned HTTP $code"
-          if [ "$code" != "200" ]; then
-            echo "::warning::API health check returned HTTP $code"
-          fi
+          deadline=$(( $(date +%s) + 350 * 60 ))
+          failures=0
+          while [ "$(date +%s)" -lt "$deadline" ]; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 120 \
+              https://devflow-api-vd5h.onrender.com/health || echo "000")
+            echo "$(date -u +%H:%M:%S) health=$code"
+            if [ "$code" != "200" ]; then
+              failures=$(( failures + 1 ))
+              echo "::warning::API health check returned HTTP $code"
+            fi
+            sleep 600
+          done
+          echo "Pinger finished. Failures this run: $failures"
