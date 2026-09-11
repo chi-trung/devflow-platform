@@ -115,6 +115,13 @@ public static class DependencyInjection
             client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         });
 
+        // MemoryCache is the default: the deployment is a single Render
+        // instance, so a process-local cache gives the same wins as Redis
+        // without the connection or the round-trip. Redis is used when a
+        // connection string is provided (multi-instance setups); if even
+        // connecting fails, the in-memory cache still serves reads instead
+        // of degrading to no caching at all.
+        services.AddMemoryCache();
         var redisConnection = configuration.GetConnectionString("Redis");
         if (!string.IsNullOrWhiteSpace(redisConnection))
         {
@@ -126,12 +133,12 @@ public static class DependencyInjection
             }
             catch
             {
-                services.AddSingleton<ICacheService, NullCacheService>();
+                services.AddSingleton<ICacheService, MemoryCacheService>();
             }
         }
         else
         {
-            services.AddSingleton<ICacheService, NullCacheService>();
+            services.AddSingleton<ICacheService, MemoryCacheService>();
         }
 
         return services;
