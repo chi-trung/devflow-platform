@@ -11,6 +11,16 @@
 DevFlow helps software teams plan sprints, manage tasks on a Kanban board, and ship faster.
 Built as a long-term learning project with a strong focus on architecture, testing, and DevOps practices.
 
+## Screenshots
+
+| Login | Workspace Dashboard |
+|---|---|
+| ![Login page](docs/screenshots/01-login.png) | ![Workspace dashboard](docs/screenshots/02-dashboard.png) |
+
+| Kanban Board | Task Detail |
+|---|---|
+| ![Kanban board](docs/screenshots/03-board.png) | ![Task detail](docs/screenshots/04-task-detail.png) |
+
 ## Tech Stack
 
 **Backend**
