@@ -115,9 +115,125 @@ function cacheKey(path: string, opts: RequestInit): string {
   return `${method}:${path}:${body}`;
 }
 
-/** Drop all cached GET responses (call after mutations or auth changes). */
+/** Drop all cached GET responses and persistent snapshots (auth changes). */
 export function invalidateApiCache(): void {
   cache.clear();
+  snapshotStore = {};
+  try {
+    localStorage.removeItem(SNAPSHOT_STORE_KEY);
+  } catch {
+    // storage unavailable — nothing to clear
+  }
+}
+
+// ── Persistent snapshot store (localStorage) ────────────────────────
+// useApi seeds first paint from the last successfully fetched copy of a
+// keyed request so a reload/revisit never waits on the network. Same
+// trust domain as the auth tokens already kept in localStorage; cleared
+// with the rest of the cache on auth changes via invalidateApiCache.
+const SNAPSHOT_STORE_KEY = "devflow.apiSnapshots";
+const SNAPSHOT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const SNAPSHOT_ITEM_LIMIT = 512 * 1024; // per-entry JSON cap
+const SNAPSHOT_STORE_LIMIT = 2 * 1024 * 1024; // total cap before eviction
+
+interface SnapshotEntry {
+  v: 1;
+  json: string;
+  ts: number;
+}
+type SnapshotStore = Record<string, SnapshotEntry>;
+
+let snapshotStore: SnapshotStore | null = null;
+let snapshotFlushTimer: number | null = null;
+
+function ensureSnapshotStore(): SnapshotStore {
+  if (snapshotStore !== null) return snapshotStore;
+  try {
+    const raw = localStorage.getItem(SNAPSHOT_STORE_KEY);
+    if (!raw) {
+      snapshotStore = {};
+      return snapshotStore;
+    }
+    const parsed = JSON.parse(raw) as SnapshotStore;
+    const now = Date.now();
+    for (const key of Object.keys(parsed)) {
+      const entry = parsed[key];
+      if (
+        !entry ||
+        entry.v !== 1 ||
+        typeof entry.ts !== "number" ||
+        now - entry.ts > SNAPSHOT_MAX_AGE_MS
+      ) {
+        delete parsed[key];
+      }
+    }
+    snapshotStore = parsed;
+  } catch {
+    // private mode / disabled storage / corrupt JSON — snapshots are a
+    // pure optimization, so degrade to an empty store
+    snapshotStore = {};
+  }
+  return snapshotStore;
+}
+
+/**
+ * Read the persisted copy for a snapshot key (undefined when absent or
+ * expired). The data round-trips through JSON, so only JSON-serializable
+ * values may be stashed.
+ */
+export function peekSnapshot<T>(key: string): T | undefined {
+  const entry = ensureSnapshotStore()[key];
+  if (!entry || entry.v !== 1) return undefined;
+  if (Date.now() - entry.ts > SNAPSHOT_MAX_AGE_MS) return undefined;
+  try {
+    return JSON.parse(entry.json) as T;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Persist a fetched copy for a snapshot key (best-effort, debounced). */
+export function stashSnapshot(key: string, data: unknown): void {
+  let json: string;
+  try {
+    json = JSON.stringify(data);
+  } catch {
+    return; // non-serializable (Map etc.) — skip rather than store garbage
+  }
+  if (json.length > SNAPSHOT_ITEM_LIMIT) return;
+
+  const store = ensureSnapshotStore();
+  store[key] = { v: 1, json, ts: Date.now() };
+
+  // Total-size eviction: drop the oldest entries when over budget.
+  let entries = Object.entries(store);
+  let total = entries.reduce((sum, [, entry]) => sum + entry.json.length, 0);
+  while (total > SNAPSHOT_STORE_LIMIT && entries.length > 1) {
+    entries.sort((a, b) => a[1].ts - b[1].ts);
+    const [oldestKey, oldest] = entries.shift()!;
+    delete store[oldestKey];
+    total -= oldest.json.length;
+  }
+
+  if (snapshotFlushTimer !== null) return;
+  snapshotFlushTimer = window.setTimeout(() => {
+    snapshotFlushTimer = null;
+    try {
+      localStorage.setItem(
+        SNAPSHOT_STORE_KEY,
+        JSON.stringify(ensureSnapshotStore()),
+      );
+    } catch {
+      // Quota exceeded — drop the store and move on; the next boot simply
+      // starts without seeds.
+      try {
+        localStorage.removeItem(SNAPSHOT_STORE_KEY);
+      } catch {
+        // ignore
+      }
+      snapshotStore = {};
+    }
+  }, 500);
 }
 
 /**

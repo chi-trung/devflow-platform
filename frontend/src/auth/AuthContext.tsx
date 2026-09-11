@@ -79,6 +79,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ email, password }),
     });
     tokens.save(data.accessToken, data.refreshToken);
+    // New principal — drop any persisted snapshots from the previous one.
+    invalidateApiCache();
     setStatus("authenticated");
   }, []);
 

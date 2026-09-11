@@ -1,19 +1,31 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { apiStaleIfError } from "../lib/api";
+import { apiStaleIfError, peekSnapshot, stashSnapshot } from "../lib/api";
 
 // Revalidating hook: shows the previous data immediately on re-mount /
 // deps change while a background re-fetch replaces it.  Falls back to a
 // full blocking load only on the very first fetch of a key.
+//
+// Passing `snapshotKey` additionally seeds first paint from the persisted
+// copy of the last successful fetch (localStorage) so a reload paints
+// instantly and revalidates in the background — stale-while-revalidate
+// that survives F5.  `reload()` re-fetches and stashes a fresh snapshot
+// but never re-seeds from the old one, so user-visible updates aren't
+// overwritten by stale data.
 export function useApi<T>(
   fetcher: () => Promise<T>,
   deps: readonly unknown[],
+  options?: { snapshotKey?: string },
 ): { data: T | null; error: string | null; loading: boolean; reload: () => void } {
-  const [data, setData] = useState<T | null>(null);
+  const [data, setData] = useState<T | null>(() =>
+    options?.snapshotKey ? (peekSnapshot<T>(options.snapshotKey) ?? null) : null,
+  );
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => data === null);
   const [tick, setTick] = useState(0);
   const fetcherRef = useRef(fetcher);
+  const snapshotKeyRef = useRef(options?.snapshotKey);
   fetcherRef.current = fetcher;
+  snapshotKeyRef.current = options?.snapshotKey;
 
   useEffect(() => {
     let cancelled = false;
@@ -23,14 +35,17 @@ export function useApi<T>(
     setError(null);
 
     const run = async () => {
-      // Sniff the key so we can prefer a cached copy when available.
       const fn = fetcherRef.current;
-      // Wrap the fetcher so a cold fetch also feeds SWR.
       try {
         const result = await fn();
         if (!cancelled) {
           setData(result);
           setLoading(false);
+          // Stash only real payloads — gated fetchers resolve null while
+          // their enable-flag is off, and null must never overwrite the
+          // persisted copy.
+          const key = snapshotKeyRef.current;
+          if (key && result != null) stashSnapshot(key, result);
         }
       } catch (err: unknown) {
         if (!cancelled) {

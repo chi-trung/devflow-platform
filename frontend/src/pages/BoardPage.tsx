@@ -59,10 +59,8 @@ import { usePresence } from "../hooks/usePresence";
 import { getEpics } from "../lib/api";
 import type {
   ActivityResponse,
-  CustomFieldValueResponse,
   EpicResponse,
   LabelResponse,
-  ProjectDependencyGraphResponse,
   ProjectResponse,
   SprintResponse,
   TaskItemResponse,
@@ -166,20 +164,28 @@ export function BoardPage() {
   const COLUMNS = getColumns(t);
   const { workspaceId = "", projectId = "" } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  // Declared before the hooks that consume them in deps/fetchers.
+  const [activityOpen, setActivityOpen] = useState(false);
+  // Flips shortly after mount so the heavyweight dep-graph and custom-field
+  // fetches start only once the board's first paint is committed.
+  const [deferredReady, setDeferredReady] = useState(false);
 
   const { data: project } = useApi<ProjectResponse>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}`),
     [workspaceId, projectId],
+    { snapshotKey: `board:project:${workspaceId}:${projectId}` },
   );
 
   const { data: members } = useApi<WorkspaceMemberResponse[]>(
     () => api(`/workspaces/${workspaceId}/members`),
     [workspaceId],
+    { snapshotKey: `board:members:${workspaceId}` },
   );
 
   const { data: sprintsRaw, reload: reloadSprints } = useApi<unknown>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/sprints`),
     [workspaceId, projectId],
+    { snapshotKey: `board:sprints:${workspaceId}:${projectId}` },
   );
   const sprints = useMemo(
     () => pagedItems<SprintResponse>(sprintsRaw),
@@ -189,6 +195,7 @@ export function BoardPage() {
   const { data: labelsRaw } = useApi<unknown>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/labels`),
     [workspaceId, projectId],
+    { snapshotKey: `board:labels:${workspaceId}:${projectId}` },
   );
   const labels = useMemo(
     () => pagedItems<LabelResponse>(labelsRaw),
@@ -198,13 +205,18 @@ export function BoardPage() {
   const { data: epics } = useApi<EpicResponse[]>(
     () => getEpics(workspaceId, projectId),
     [workspaceId, projectId],
+    { snapshotKey: `board:epics:${workspaceId}:${projectId}` },
   );
 
   // Project-wide dependency graph — the task list response has no isBlocked
   // field, so "blocked" badges/filters derive from these unresolved edges.
-  const { data: depGraph, reload: reloadDepGraph } = useApi<ProjectDependencyGraphResponse>(
-    () => getProjectDependencyGraph(workspaceId, projectId),
-    [workspaceId, projectId],
+  // Deferred past first paint: blocked badges appear moments later and the
+  // initial board doesn't wait on this heavyweight graph query.
+  const { data: depGraph, reload: reloadDepGraph } = useApi(
+    async () =>
+      deferredReady ? await getProjectDependencyGraph(workspaceId, projectId) : null,
+    [workspaceId, projectId, deferredReady],
+    { snapshotKey: `board:depgraph:${workspaceId}:${projectId}` },
   );
   const blockedTaskIds = useMemo(() => {
     const ids = new Set<string>();
@@ -227,18 +239,25 @@ export function BoardPage() {
         `/workspaces/${workspaceId}/projects/${projectId}/tasks?page=1&pageSize=100`,
       ),
     [workspaceId, projectId],
+    { snapshotKey: `board:tasks:${workspaceId}:${projectId}` },
   );
 
   // /activities returns a PagedResult ({ items, totalCount, ... }), not a
   // flat array — unwrap through pagedItems or ActivityDrawer's activities.map
   // crashes the page ("n.map is not a function").
+  // Lazily fetched: the drawer only loads history when actually opened —
+  // one fewer heavyweight request on every board mount.
   const {
     data: activitiesRaw,
     loading: activitiesLoading,
     reload: reloadActivities,
   } = useApi<unknown>(
-    () => api(`/workspaces/${workspaceId}/projects/${projectId}/activities`),
-    [workspaceId, projectId],
+    () =>
+      activityOpen
+        ? api(`/workspaces/${workspaceId}/projects/${projectId}/activities`)
+        : Promise.resolve(null),
+    [workspaceId, projectId, activityOpen],
+    { snapshotKey: `board:activities:${workspaceId}:${projectId}` },
   );
   const activities = useMemo(
     () => pagedItems<ActivityResponse>(activitiesRaw),
@@ -247,10 +266,14 @@ export function BoardPage() {
 
   // Custom-field values for the whole project in ONE request. The board used
   // to fire a request per TaskCard (N+1) which made project loads slow — this
-  // map is passed down to each Column/Card instead.
-  const { data: customFieldsByTaskId } = useApi<Map<string, CustomFieldValueResponse[]>>(
-    () => getProjectTaskFieldValues(workspaceId, projectId),
-    [workspaceId, projectId],
+  // map is passed down to each Column/Card instead. Deferred past first
+  // paint: field chips are secondary content on cards. (Not snapshotted —
+  // a Map doesn't survive the JSON round-trip, and being deferred it costs
+  // the first paint nothing.)
+  const { data: customFieldsByTaskId } = useApi(
+    async () =>
+      deferredReady ? await getProjectTaskFieldValues(workspaceId, projectId) : null,
+    [workspaceId, projectId, deferredReady],
   );
 
   const [tasks, setTasks] = useState<TaskItemResponse[]>([]);
@@ -258,7 +281,6 @@ export function BoardPage() {
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [activityOpen, setActivityOpen] = useState(false);
   const [sprintFilter, setSprintFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [assigneeFilter, setAssigneeFilter] = useState("");
@@ -296,6 +318,16 @@ export function BoardPage() {
       document.title = `${project.name} — DevFlow`;
     }
   }, [project?.name]);
+
+  // One shared toggle for the deferred fetches: flips after the browser has
+  // painted, so first paint competes with zero secondary API calls. A short
+  // timeout (instead of rAF-only) also avoids firing while the main thread
+  // is still churning through the initial board render.
+  useEffect(() => {
+    setDeferredReady(false);
+    const timer = window.setTimeout(() => setDeferredReady(true), 600);
+    return () => window.clearTimeout(timer);
+  }, [workspaceId, projectId]);
 
   const parsedSearch = parseSearchQuery(search);
   const operatorAssigneeId =
