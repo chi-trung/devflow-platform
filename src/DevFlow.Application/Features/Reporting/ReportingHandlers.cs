@@ -113,10 +113,10 @@ public class GetTeamReportHandler(
 
         foreach (var member in members)
         {
-            var tasks = await taskItemRepository.GetByAssigneeIdAsync(member.UserId, ct);
+            var tasks = await taskItemRepository.GetAssignedInWorkspaceAsync(member.UserId, request.WorkspaceId, ct);
             var completed = tasks.Count(t => t.Status == TaskItemStatus.Done);
             var inProgress = tasks.Count(t => t.Status == TaskItemStatus.InProgress);
-            var minutes = await timeEntryRepository.GetTotalMinutesByUserIdAsync(member.UserId, ct);
+            var minutes = await timeEntryRepository.GetTotalMinutesByUserIdInWorkspaceAsync(member.UserId, request.WorkspaceId, ct);
 
             // Calculate avg cycle time for completed tasks
             var completedTasks = tasks.Where(t => t.Status == TaskItemStatus.Done && t.StartedAtUtc.HasValue && t.CompletedAtUtc.HasValue).ToList();
@@ -168,7 +168,7 @@ public class GetTeamReportHandler(
 
         foreach (var member in members)
         {
-            var tasks = await taskItemRepository.GetByAssigneeIdAsync(member.UserId, ct);
+            var tasks = await taskItemRepository.GetAssignedInWorkspaceAsync(member.UserId, request.WorkspaceId, ct);
 
             foreach (var task in tasks.Where(t => t.Status == TaskItemStatus.Done && t.CompletedAtUtc.HasValue))
             {

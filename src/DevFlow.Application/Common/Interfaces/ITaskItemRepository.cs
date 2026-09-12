@@ -46,5 +46,13 @@ public interface ITaskItemRepository
 
     Task<IReadOnlyList<TaskItem>> GetByAssigneeIdAsync(Guid assigneeId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Assignee's tasks limited to one workspace (team report). Keeps the
+    /// report's task columns in the same scope as its minutes column —
+    /// otherwise a user in two workspaces inflates this workspace's report.
+    /// </summary>
+    Task<IReadOnlyList<TaskItem>> GetAssignedInWorkspaceAsync(
+        Guid assigneeId, Guid workspaceId, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<TaskItem>> GetSubtasksAsync(Guid parentTaskId, CancellationToken cancellationToken = default);
 }

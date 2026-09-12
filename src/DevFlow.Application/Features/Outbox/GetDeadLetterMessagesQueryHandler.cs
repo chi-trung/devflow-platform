@@ -11,10 +11,14 @@ public sealed class GetDeadLetterMessagesQueryHandler(
         GetDeadLetterMessagesQuery query,
         CancellationToken cancellationToken)
     {
-        var messages = await outboxRepository.GetDeadLetteredAsync(query.BatchSize, cancellationToken);
+        var messages = await outboxRepository.GetDeadLetteredAsync(query.WorkspaceId, query.BatchSize, cancellationToken);
 
+        // SQL already scoped the window to this workspace; the resolve-filter is
+        // defense-in-depth for payloads whose workspaceId spelling the LIKE
+        // pattern misses, and the Take re-applies the cap after that filter.
         return messages
             .Where(m => OutboxMessage.ResolveWorkspaceId(m.Type, m.Payload) == query.WorkspaceId)
+            .Take(query.BatchSize)
             .Select(m => new DeadLetterMessageDto(
                 m.Id,
                 m.Type,

@@ -21,9 +21,9 @@ public class TeamReportTrendsTests
     {
         _workspaceRepository.GetMembersAsync(_workspaceId, Arg.Any<CancellationToken>())
             .Returns(new[] { (UserId: _memberId, Email: "a@x.io", Username: "a", DisplayName: "A", Role: WorkspaceRole.Member) });
-        _taskItemRepository.GetByAssigneeIdAsync(_memberId, Arg.Any<CancellationToken>())
+        _taskItemRepository.GetAssignedInWorkspaceAsync(_memberId, _workspaceId, Arg.Any<CancellationToken>())
             .Returns(new List<TaskItem>());
-        _timeEntryRepository.GetTotalMinutesByUserIdAsync(_memberId, Arg.Any<CancellationToken>())
+        _timeEntryRepository.GetTotalMinutesByUserIdInWorkspaceAsync(_memberId, _workspaceId, Arg.Any<CancellationToken>())
             .Returns(0);
 
         var handler = new GetTeamReportHandler(_workspaceRepository, _taskItemRepository, _timeEntryRepository);
@@ -44,9 +44,9 @@ public class TeamReportTrendsTests
 
         _workspaceRepository.GetMembersAsync(_workspaceId, Arg.Any<CancellationToken>())
             .Returns(new[] { (UserId: _memberId, Email: "a@x.io", Username: "a", DisplayName: "A", Role: WorkspaceRole.Member) });
-        _taskItemRepository.GetByAssigneeIdAsync(_memberId, Arg.Any<CancellationToken>())
+        _taskItemRepository.GetAssignedInWorkspaceAsync(_memberId, _workspaceId, Arg.Any<CancellationToken>())
             .Returns(new[] { currentTask, previousTask });
-        _timeEntryRepository.GetTotalMinutesByUserIdAsync(_memberId, Arg.Any<CancellationToken>())
+        _timeEntryRepository.GetTotalMinutesByUserIdInWorkspaceAsync(_memberId, _workspaceId, Arg.Any<CancellationToken>())
             .Returns(0);
 
         var handler = new GetTeamReportHandler(_workspaceRepository, _taskItemRepository, _timeEntryRepository);

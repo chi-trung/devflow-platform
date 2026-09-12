@@ -14,5 +14,19 @@ public interface ITimeEntryRepository
 
     void Remove(TimeEntry entry);
 
-    Task<int> GetTotalMinutesByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// All entries for a set of tasks (backup export). Ordering is not
+    /// guaranteed; callers sort or map as needed.
+    /// </summary>
+    Task<IReadOnlyList<TimeEntry>> GetForTaskIdsAsync(
+        IReadOnlyCollection<Guid> taskIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Minutes logged by a user, counted only on tasks that live in the given
+    /// workspace. TimeEntry has no workspace column and no soft-delete filter,
+    /// so scoping goes through the owning task → project chain (which also
+    /// drops minutes on soft-deleted tasks).
+    /// </summary>
+    Task<int> GetTotalMinutesByUserIdInWorkspaceAsync(
+        Guid userId, Guid workspaceId, CancellationToken cancellationToken = default);
 }

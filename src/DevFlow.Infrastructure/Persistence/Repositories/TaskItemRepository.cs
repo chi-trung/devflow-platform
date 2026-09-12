@@ -135,6 +135,21 @@ public sealed class TaskItemRepository(DevFlowDbContext dbContext) : ITaskItemRe
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<TaskItem>> GetAssignedInWorkspaceAsync(
+        Guid assigneeId, Guid workspaceId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.TaskItems
+            .AsNoTracking()
+            .Join(dbContext.Projects,
+                t => t.ProjectId,
+                p => p.Id,
+                (t, p) => new { t, p.WorkspaceId })
+            .Where(x => x.t.AssigneeId == assigneeId && x.WorkspaceId == workspaceId)
+            .Select(x => x.t)
+            .OrderByDescending(t => t.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
     // Tracked on purpose: callers rely on identity resolution seeing in-memory status changes
     // (e.g. the subtask-cascade rule completing a parent when its last open child is done).
     public async Task<IReadOnlyList<TaskItem>> GetSubtasksAsync(Guid parentTaskId, CancellationToken cancellationToken = default)

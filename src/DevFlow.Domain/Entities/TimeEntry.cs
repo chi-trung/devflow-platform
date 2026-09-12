@@ -39,6 +39,30 @@ public class TimeEntry : BaseEntity, IAuditableEntity
         return new TimeEntry(taskId, userId, minutes, description?.Trim(), dateUtc);
     }
 
+    /// <summary>
+    /// Rebuild an entry from a backup: work date and creation date are the
+    /// exported values, not "now" (same restore-after-stamp pattern as
+    /// Comment.CreatedAtUtc — the audit interceptor may still refresh
+    /// CreatedAtUtc on save, which is the accepted shipped behavior).
+    /// </summary>
+    public static TimeEntry Restore(
+        Guid taskId,
+        Guid userId,
+        int minutes,
+        string? description,
+        DateTimeOffset dateUtc,
+        DateTimeOffset createdAtUtc)
+    {
+        if (minutes <= 0)
+            throw new ArgumentException("Minutes must be positive.", nameof(minutes));
+
+        var entry = new TimeEntry(taskId, userId, minutes, description?.Trim(), dateUtc)
+        {
+            CreatedAtUtc = createdAtUtc
+        };
+        return entry;
+    }
+
     public void Update(int minutes, string? description)
     {
         if (minutes <= 0)

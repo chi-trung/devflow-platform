@@ -12,8 +12,14 @@ public interface IOutboxRepository
 
     Task IncrementRetryAsync(Guid id, string? error, CancellationToken cancellationToken = default);
 
-    /// <summary>Messages whose retries were exhausted (<see cref="OutboxMessage.HasFailedPermanently"/>).</summary>
-    Task<IReadOnlyList<OutboxMessage>> GetDeadLetteredAsync(int batchSize, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Messages whose retries were exhausted (<see cref="OutboxMessage.HasFailedPermanently"/>),
+    /// restricted to the given workspace and capped at <paramref name="batchSize"/>.
+    /// The workspace filter happens in SQL so the cap can never be consumed by
+    /// other tenants' messages.
+    /// </summary>
+    Task<IReadOnlyList<OutboxMessage>> GetDeadLetteredAsync(
+        Guid workspaceId, int batchSize, CancellationToken cancellationToken = default);
 
     Task<OutboxMessage?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 

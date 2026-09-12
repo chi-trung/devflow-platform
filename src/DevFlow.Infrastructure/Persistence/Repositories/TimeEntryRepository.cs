@@ -36,10 +36,36 @@ public sealed class TimeEntryRepository(DevFlowDbContext dbContext) : ITimeEntry
         dbContext.TimeEntries.Remove(entry);
     }
 
-    public async Task<int> GetTotalMinutesByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TimeEntry>> GetForTaskIdsAsync(
+        IReadOnlyCollection<Guid> taskIds, CancellationToken cancellationToken = default)
     {
+        if (taskIds.Count == 0)
+        {
+            return [];
+        }
+
         return await dbContext.TimeEntries
-            .Where(te => te.UserId == userId)
+            .AsNoTracking()
+            .Where(te => taskIds.Contains(te.TaskId))
+            .OrderByDescending(te => te.DateUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> GetTotalMinutesByUserIdInWorkspaceAsync(
+        Guid userId, Guid workspaceId, CancellationToken cancellationToken = default)
+    {
+        // TaskItem carries the soft-delete query filter, so tasks soft-deleted
+        // in this workspace stop contributing their minutes here too.
+        var taskIdsInWorkspace = dbContext.TaskItems
+            .Join(dbContext.Projects,
+                t => t.ProjectId,
+                p => p.Id,
+                (t, p) => new { t.Id, p.WorkspaceId })
+            .Where(x => x.WorkspaceId == workspaceId)
+            .Select(x => x.Id);
+
+        return await dbContext.TimeEntries
+            .Where(te => te.UserId == userId && taskIdsInWorkspace.Contains(te.TaskId))
             .SumAsync(te => te.Minutes, cancellationToken);
     }
 }

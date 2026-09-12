@@ -31,6 +31,7 @@ public class ImportProjectBackupHandler(
     IEpicRepository epicRepository,
     ISprintRepository sprintRepository,
     ICommentRepository commentRepository,
+    ITimeEntryRepository timeEntryRepository,
     IProjectRepository projectRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<ImportProjectBackupCommand, ImportBackupResult>
@@ -40,7 +41,7 @@ public class ImportProjectBackupHandler(
         var project = await projectRepository.GetByIdAsync(request.ProjectId, ct);
         if (project is null)
         {
-            return new ImportBackupResult(0, 0, 0, 0, new[] { "Project not found." });
+            return new ImportBackupResult(0, 0, 0, 0, 0, new[] { "Project not found." });
         }
 
         ExportData? backup;
@@ -52,15 +53,15 @@ public class ImportProjectBackupHandler(
         }
         catch
         {
-            return new ImportBackupResult(0, 0, 0, 0, new[] { "Invalid JSON format." });
+            return new ImportBackupResult(0, 0, 0, 0, 0, new[] { "Invalid JSON format." });
         }
 
         if (backup is null)
         {
-            return new ImportBackupResult(0, 0, 0, 0, new[] { "Empty or invalid backup data." });
+            return new ImportBackupResult(0, 0, 0, 0, 0, new[] { "Empty or invalid backup data." });
         }
 
-        int importedTasks = 0, importedEpics = 0, importedSprints = 0, importedComments = 0;
+        int importedTasks = 0, importedEpics = 0, importedSprints = 0, importedComments = 0, importedTimeEntries = 0;
         var errors = new List<string>();
 
         // ── 1. Remap Epic IDs ──
@@ -265,13 +266,43 @@ public class ImportProjectBackupHandler(
             }
         }
 
+        // ── 5. Import Time Entries ──
+        foreach (var entryData in backup.TimeEntries)
+        {
+            // Only import entries whose parent task was imported
+            if (!taskIdMap.TryGetValue(entryData.TaskItemId, out var newTaskIdForEntry))
+            {
+                continue;
+            }
+
+            try
+            {
+                var entry = Domain.Entities.TimeEntry.Restore(
+                    newTaskIdForEntry,
+                    entryData.UserId,
+                    entryData.Minutes,
+                    entryData.Description,
+                    entryData.DateUtc,
+                    entryData.CreatedAtUtc);
+                EntityIdSetter.SetId(entry, Guid.NewGuid());
+
+                await timeEntryRepository.AddAsync(entry, ct);
+                importedTimeEntries++;
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"Failed to import time entry: {ex.Message}");
+            }
+        }
+
         // Save all changes
-        if (importedTasks + importedEpics + importedSprints + importedComments > 0)
+        if (importedTasks + importedEpics + importedSprints + importedComments + importedTimeEntries > 0)
         {
             await unitOfWork.SaveChangesAsync(ct);
         }
 
-        return new ImportBackupResult(importedTasks, importedEpics, importedSprints, importedComments, errors);
+        return new ImportBackupResult(
+            importedTasks, importedEpics, importedSprints, importedComments, importedTimeEntries, errors);
     }
 }
 
@@ -280,4 +311,5 @@ public sealed record ImportBackupResult(
     int EpicsImported,
     int SprintsImported,
     int CommentsImported,
+    int TimeEntriesImported,
     IReadOnlyList<string> Errors);

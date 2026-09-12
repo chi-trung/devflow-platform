@@ -16,6 +16,7 @@ public class ImportExportRoundTripTests
     private readonly IEpicRepository _epicRepository = Substitute.For<IEpicRepository>();
     private readonly ISprintRepository _sprintRepository = Substitute.For<ISprintRepository>();
     private readonly ICommentRepository _commentRepository = Substitute.For<ICommentRepository>();
+    private readonly ITimeEntryRepository _timeEntryRepository = Substitute.For<ITimeEntryRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
@@ -29,6 +30,12 @@ public class ImportExportRoundTripTests
     {
         _project = Project.Create(_workspaceId, "Test Project", "TP", null);
         IdProperty.SetValue(_project, _projectId);
+
+        // NSubstitute returns a completed Task(null) for unstubbed
+        // Task<IReadOnlyList<...>> members — the export handler would NRE.
+        _timeEntryRepository.GetForTaskIdsAsync(
+                Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns([]);
     }
 
     [Fact]
@@ -56,7 +63,7 @@ public class ImportExportRoundTripTests
 
         // Act: export
         var exportHandler = new ExportProjectBackupHandler(
-            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository);
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository);
 
         var exportResult = await exportHandler.Handle(
             new ExportProjectBackupQuery(_workspaceId, _projectId, "json"),
@@ -102,7 +109,7 @@ public class ImportExportRoundTripTests
             .Do(x => importedComments.Add(x.Arg<Comment>()));
 
         var importHandler = new ImportProjectBackupHandler(
-            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository, _unitOfWork);
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository, _unitOfWork);
 
         var importResult = await importHandler.Handle(
             new ImportProjectBackupCommand(_workspaceId, newProjectId, json),
@@ -154,7 +161,7 @@ public class ImportExportRoundTripTests
 
         // Act: export
         var exportHandler = new ExportProjectBackupHandler(
-            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository);
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository);
 
         var exportResult = await exportHandler.Handle(
             new ExportProjectBackupQuery(_workspaceId, _projectId, "json"),
@@ -174,7 +181,7 @@ public class ImportExportRoundTripTests
             .Do(x => importedComments.Add(x.Arg<Comment>()));
 
         var importHandler = new ImportProjectBackupHandler(
-            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository, _unitOfWork);
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository, _unitOfWork);
 
         var importResult = await importHandler.Handle(
             new ImportProjectBackupCommand(_workspaceId, newProjectId, json),
@@ -216,7 +223,7 @@ public class ImportExportRoundTripTests
             .Returns(Array.Empty<Comment>());
 
         var exportHandler = new ExportProjectBackupHandler(
-            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository);
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository);
 
         var exportResult = await exportHandler.Handle(
             new ExportProjectBackupQuery(_workspaceId, _projectId, "json"),
@@ -237,7 +244,7 @@ public class ImportExportRoundTripTests
             .Do(x => importedSprints.Add(x.Arg<Sprint>()));
 
         var importHandler = new ImportProjectBackupHandler(
-            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository, _unitOfWork);
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository, _unitOfWork);
 
         var importResult = await importHandler.Handle(
             new ImportProjectBackupCommand(_workspaceId, newProjectId, json),
@@ -283,7 +290,7 @@ public class ImportExportRoundTripTests
             .Returns(Array.Empty<Comment>());
 
         var exportHandler = new ExportProjectBackupHandler(
-            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository);
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository);
 
         var exportResult = await exportHandler.Handle(
             new ExportProjectBackupQuery(_workspaceId, _projectId, "json"),
@@ -301,7 +308,7 @@ public class ImportExportRoundTripTests
             .Do(x => importedTasks.Add(x.Arg<TaskItem>()));
 
         var importHandler = new ImportProjectBackupHandler(
-            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository, _unitOfWork);
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository, _unitOfWork);
 
         var importResult = await importHandler.Handle(
             new ImportProjectBackupCommand(_workspaceId, newProjectId, json),
@@ -318,13 +325,79 @@ public class ImportExportRoundTripTests
     }
 
     [Fact]
+    public async Task RoundTrip_ShouldPreserveTimeEntries()
+    {
+        // TimeEntry rows were never written to the backup payload at all:
+        // export → delete project → import left every task at "No time
+        // logged" and silently zeroed the team report's minutes column.
+        var task = TaskItem.Create(_projectId, "Timed task", null, TaskItemPriority.Medium);
+        _taskItemRepository.GetForProjectAsync(_projectId, null, Arg.Any<CancellationToken>())
+            .Returns(new[] { task });
+        _epicRepository.GetForProjectAsync(_projectId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Epic>());
+        _sprintRepository.GetForProjectAsync(_projectId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Sprint>());
+        _commentRepository.GetForTaskAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Comment>());
+
+        var dateUtc = new DateTimeOffset(2026, 2, 10, 8, 30, 0, TimeSpan.Zero);
+        var createdAtUtc = new DateTimeOffset(2026, 2, 10, 10, 15, 0, TimeSpan.Zero);
+        var userId = Guid.NewGuid();
+        var entry = TimeEntry.Restore(task.Id, userId, 90, "debugging", dateUtc, createdAtUtc);
+        _timeEntryRepository.GetForTaskIdsAsync(
+                Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new[] { entry });
+
+        var exportHandler = new ExportProjectBackupHandler(
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository);
+        var exportResult = await exportHandler.Handle(
+            new ExportProjectBackupQuery(_workspaceId, _projectId, "json"),
+            CancellationToken.None);
+        var json = System.Text.Encoding.UTF8.GetString(exportResult.Data);
+
+        var newProjectId = Guid.NewGuid();
+        var newProject = Project.Create(_workspaceId, "Restored", "RS", null);
+        IdProperty.SetValue(newProject, newProjectId);
+        _projectRepository.GetByIdAsync(newProjectId, Arg.Any<CancellationToken>())
+            .Returns(newProject);
+
+        var importedEntries = new List<TimeEntry>();
+        _timeEntryRepository.When(x => x.AddAsync(Arg.Any<TimeEntry>(), Arg.Any<CancellationToken>()))
+            .Do(x => importedEntries.Add(x.Arg<TimeEntry>()));
+        var importedTaskIds = new List<Guid>();
+        _taskItemRepository.When(x => x.AddAsync(Arg.Any<TaskItem>(), Arg.Any<CancellationToken>()))
+            .Do(x => importedTaskIds.Add(x.Arg<TaskItem>().Id));
+
+        var importHandler = new ImportProjectBackupHandler(
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository, _unitOfWork);
+        var importResult = await importHandler.Handle(
+            new ImportProjectBackupCommand(_workspaceId, newProjectId, json),
+            CancellationToken.None);
+
+        Assert.Empty(importResult.Errors);
+        Assert.Equal(1, importResult.TimeEntriesImported);
+
+        var restored = Assert.Single(importedEntries);
+        // The entry must hang off the REMAPPED task, not the old (deleted) id.
+        Assert.Equal(Assert.Single(importedTaskIds), restored.TaskId);
+        Assert.NotEqual(task.Id, restored.TaskId);
+        // Same corruption signature as the comment/timestamp fixes: "now"
+        // standing in for the original work date.
+        Assert.Equal(90, restored.Minutes);
+        Assert.Equal(userId, restored.UserId);
+        Assert.Equal("debugging", restored.Description);
+        Assert.Equal(dateUtc, restored.DateUtc);
+        Assert.Equal(createdAtUtc, restored.CreatedAtUtc);
+    }
+
+    [Fact]
     public async Task Import_ShouldReturnError_WhenJsonIsInvalid()
     {
         _projectRepository.GetByIdAsync(_projectId, Arg.Any<CancellationToken>())
             .Returns(_project);
 
         var handler = new ImportProjectBackupHandler(
-            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository, _unitOfWork);
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository, _unitOfWork);
 
         var result = await handler.Handle(
             new ImportProjectBackupCommand(_workspaceId, _projectId, "not valid json {{{"),
@@ -342,7 +415,7 @@ public class ImportExportRoundTripTests
             .Returns((Project?)null);
 
         var handler = new ImportProjectBackupHandler(
-            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository, _unitOfWork);
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository, _unitOfWork);
 
         var result = await handler.Handle(
             new ImportProjectBackupCommand(_workspaceId, _projectId, "{}"),

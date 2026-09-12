@@ -42,17 +42,23 @@ public class GetDeadLetterMessagesQueryHandlerTests
         return messages;
     }
 
+    private static Guid WorkspaceId => Guid.Parse("7b9e0a1c-2d3f-4a5b-8c6d-7e8f9a0b1c2d");
+
     public GetDeadLetterMessagesQueryHandlerTests()
     {
-        _outboxRepository.GetDeadLetteredAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(_deadLettered));
+        // The SQL window is now workspace-scoped; emulate that here so the
+        // assertions below exercise the same shape a scoped repository gives.
+        _outboxRepository.GetDeadLetteredAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(ci => Task.FromResult<IReadOnlyList<OutboxMessage>>(_deadLettered
+                .Where(m => OutboxMessage.ResolveWorkspaceId(m.Type, m.Payload) == (Guid?)ci[0])
+                .ToList()));
     }
 
     [Fact]
     public async Task Handle_ReturnsOnlyMessages_ForWorkspace()
     {
         var handler = new GetDeadLetterMessagesQueryHandler(_outboxRepository);
-        var workspaceId = Guid.Parse("7b9e0a1c-2d3f-4a5b-8c6d-7e8f9a0b1c2d");
+        var workspaceId = WorkspaceId;
 
         var result = await handler.Handle(
             new GetDeadLetterMessagesQuery(workspaceId),
@@ -66,7 +72,7 @@ public class GetDeadLetterMessagesQueryHandlerTests
     [Fact]
     public async Task Handle_ReturnsEmpty_WhenNoDeadLetterMessages()
     {
-        _outboxRepository.GetDeadLetteredAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _outboxRepository.GetDeadLetteredAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns([]);
 
         var handler = new GetDeadLetterMessagesQueryHandler(_outboxRepository);
@@ -79,14 +85,18 @@ public class GetDeadLetterMessagesQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_RespectsBatchSize()
+    public async Task Handle_PassesWorkspaceIdToRepository()
     {
+        // The Take() window must be scoped per workspace in SQL — an unscoped
+        // global window let other tenants' dead letters crowd this workspace's
+        // messages out of the list (empty UI while replay-all still found them).
         var handler = new GetDeadLetterMessagesQueryHandler(_outboxRepository);
 
         await handler.Handle(
-            new GetDeadLetterMessagesQuery(Guid.Parse("7b9e0a1c-2d3f-4a5b-8c6d-7e8f9a0b1c2d"), 50),
+            new GetDeadLetterMessagesQuery(WorkspaceId, 50),
             CancellationToken.None);
 
-        await _outboxRepository.Received(1).GetDeadLetteredAsync(50, Arg.Any<CancellationToken>());
+        await _outboxRepository.Received(1)
+            .GetDeadLetteredAsync(WorkspaceId, 50, Arg.Any<CancellationToken>());
     }
 }

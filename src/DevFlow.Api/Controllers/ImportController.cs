@@ -59,6 +59,7 @@ public sealed class ImportController(
             result.EpicsImported,
             result.SprintsImported,
             result.CommentsImported,
+            result.TimeEntriesImported,
             result.Errors));
     }
 
@@ -307,5 +308,6 @@ public sealed class ImportController(
         int EpicsImported,
         int SprintsImported,
         int CommentsImported,
+        int TimeEntriesImported,
         IReadOnlyList<string> Errors);
 }

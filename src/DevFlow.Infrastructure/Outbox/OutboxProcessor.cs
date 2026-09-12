@@ -94,7 +94,15 @@ public sealed class OutboxProcessor(
                 var root = doc.RootElement;
 
                 var workspaceId = root.GetProperty("workspaceId").GetGuid();
-                var eventName = root.GetProperty("eventName").GetString() ?? message.Type;
+                // Subscribers store the bare ("webhook."-stripped) discriminator.
+                // Falling back to message.Type would match no webhook list, and
+                // the message would then be marked processed — the event lost
+                // silently. Strip the prefix so the fallback speaks the same
+                // spelling as the payload.
+                var eventName = root.GetProperty("eventName").GetString()
+                    ?? (message.Type.StartsWith("webhook.", StringComparison.OrdinalIgnoreCase)
+                        ? message.Type.Substring("webhook.".Length)
+                        : message.Type);
                 var data = root.GetProperty("data");
 
                 await webhookDispatcher.DispatchAsync(workspaceId, eventName, data, cancellationToken);

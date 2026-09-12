@@ -46,13 +46,17 @@ public class GetTimeEntriesHandler(
 
 // Log time entry
 [RequireWorkspaceRole(WorkspaceRole.Member)]
+// IProjectEvent so CacheInvalidation/Realtime behaviors fire for the
+// project:{id} tag (dashboard recentActivity reads these rows). The
+// default-empty ActivityVerb keeps ActivityBehavior out — this handler
+// writes the ActivityLog itself because it needs task.Title.
 public sealed record LogTimeEntryCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     Guid TaskId,
     int Minutes,
     string? Description,
-    DateTimeOffset DateUtc) : IRequest<Guid>, IWorkspaceRequest;
+    DateTimeOffset DateUtc) : IRequest<Guid>, IWorkspaceRequest, IProjectEvent;
 
 public class LogTimeEntryHandler(
     ITimeEntryRepository timeEntryRepository,
@@ -102,7 +106,7 @@ public sealed record DeleteTimeEntryCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     Guid TaskId,
-    Guid EntryId) : IRequest, IWorkspaceRequest;
+    Guid EntryId) : IRequest, IWorkspaceRequest, IProjectEvent;
 
 public class DeleteTimeEntryHandler(
     ITimeEntryRepository timeEntryRepository,

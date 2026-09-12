@@ -14,6 +14,7 @@ public class ImportHandlerTests
     private readonly IEpicRepository _epicRepository = Substitute.For<IEpicRepository>();
     private readonly ISprintRepository _sprintRepository = Substitute.For<ISprintRepository>();
     private readonly ICommentRepository _commentRepository = Substitute.For<ICommentRepository>();
+    private readonly ITimeEntryRepository _timeEntryRepository = Substitute.For<ITimeEntryRepository>();
     private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
@@ -28,7 +29,7 @@ public class ImportHandlerTests
     }
 
     private ImportProjectBackupHandler CreateHandler() =>
-        new(_taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository, _unitOfWork);
+        new(_taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository, _unitOfWork);
 
     [Fact]
     public async Task Import_ShouldCreateTasksAndComments()

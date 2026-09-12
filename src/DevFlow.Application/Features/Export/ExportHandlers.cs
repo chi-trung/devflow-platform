@@ -76,6 +76,7 @@ public class ExportProjectBackupHandler(
     IEpicRepository epicRepository,
     ISprintRepository sprintRepository,
     ICommentRepository commentRepository,
+    ITimeEntryRepository timeEntryRepository,
     IProjectRepository projectRepository)
     : IRequestHandler<ExportProjectBackupQuery, ExportResult>
 {
@@ -99,6 +100,9 @@ public class ExportProjectBackupHandler(
                 CreatedAtUtc = c.CreatedAtUtc
             }));
         }
+
+        var allTimeEntries = await timeEntryRepository.GetForTaskIdsAsync(
+            tasks.Select(t => t.Id).ToList(), ct);
 
         var backup = new ProjectBackupData
         {
@@ -145,7 +149,16 @@ public class ExportProjectBackupHandler(
                 CompletedAtUtc = s.CompletedAtUtc,
                 CreatedAtUtc = s.CreatedAtUtc
             }).ToList(),
-            Comments = allComments
+            Comments = allComments,
+            TimeEntries = allTimeEntries.Select(te => new TimeEntryBackupDto
+            {
+                TaskItemId = te.TaskId,
+                UserId = te.UserId,
+                Minutes = te.Minutes,
+                Description = te.Description,
+                DateUtc = te.DateUtc,
+                CreatedAtUtc = te.CreatedAtUtc
+            }).ToList()
         };
 
         var projectName = project?.Name ?? "project";
@@ -270,6 +283,26 @@ public class ExportProjectBackupHandler(
         }
         commentsSheet.Columns().AdjustToContents();
 
+        var timeEntriesSheet = workbook.Worksheets.Add("TimeEntries");
+        timeEntriesSheet.Cell(1, 1).Value = "TaskItemId";
+        timeEntriesSheet.Cell(1, 2).Value = "UserId";
+        timeEntriesSheet.Cell(1, 3).Value = "Minutes";
+        timeEntriesSheet.Cell(1, 4).Value = "Description";
+        timeEntriesSheet.Cell(1, 5).Value = "DateUtc";
+        timeEntriesSheet.Cell(1, 6).Value = "CreatedAtUtc";
+
+        for (int i = 0; i < backup.TimeEntries.Count; i++)
+        {
+            var te = backup.TimeEntries[i];
+            timeEntriesSheet.Cell(i + 2, 1).Value = te.TaskItemId.ToString();
+            timeEntriesSheet.Cell(i + 2, 2).Value = te.UserId.ToString();
+            timeEntriesSheet.Cell(i + 2, 3).Value = te.Minutes;
+            timeEntriesSheet.Cell(i + 2, 4).Value = te.Description ?? "";
+            timeEntriesSheet.Cell(i + 2, 5).Value = te.DateUtc.ToString("O");
+            timeEntriesSheet.Cell(i + 2, 6).Value = te.CreatedAtUtc.ToString("O");
+        }
+        timeEntriesSheet.Columns().AdjustToContents();
+
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
         stream.Position = 0;
@@ -294,6 +327,7 @@ public sealed class ProjectBackupData
     public List<EpicBackupDto> Epics { get; set; } = new();
     public List<SprintBackupDto> Sprints { get; set; } = new();
     public List<CommentDto> Comments { get; set; } = new();
+    public List<TimeEntryBackupDto> TimeEntries { get; set; } = new();
 }
 
 public sealed class TaskBackupDto
@@ -345,5 +379,15 @@ public sealed class CommentDto
     public Guid TaskItemId { get; set; }
     public Guid AuthorId { get; set; }
     public string Content { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAtUtc { get; set; }
+}
+
+public sealed class TimeEntryBackupDto
+{
+    public Guid TaskItemId { get; set; }
+    public Guid UserId { get; set; }
+    public int Minutes { get; set; }
+    public string? Description { get; set; }
+    public DateTimeOffset DateUtc { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; }
 }

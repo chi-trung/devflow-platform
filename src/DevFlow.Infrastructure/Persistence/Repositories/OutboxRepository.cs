@@ -42,10 +42,19 @@ public sealed class OutboxRepository(DevFlowDbContext context) : IOutboxReposito
         }
     }
 
-    public async Task<IReadOnlyList<OutboxMessage>> GetDeadLetteredAsync(int batchSize, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<OutboxMessage>> GetDeadLetteredAsync(
+        Guid workspaceId, int batchSize, CancellationToken cancellationToken = default)
     {
+        // Scope in SQL, not after truncation: dead letters from OTHER workspaces
+        // with newer FailedPermanentlyAt values used to fill the Take() window,
+        // so this workspace's list rendered empty while its messages still
+        // existed (and still got picked up by the unbounded replay-all/purge).
+        // OutboxMessage has no workspace column — the payload's top-level
+        // workspaceId is the only source, matched case-insensitively.
+        var pattern = $"%\"workspaceId\":%{workspaceId}%";
+
         return await context.OutboxMessages
-            .Where(m => m.FailedPermanentlyAt != null)
+            .Where(m => m.FailedPermanentlyAt != null && EF.Functions.ILike(m.Payload, pattern))
             .OrderByDescending(m => m.FailedPermanentlyAt)
             .Take(batchSize)
             .ToListAsync(cancellationToken);

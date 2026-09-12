@@ -14,6 +14,7 @@ public class ExportHandlerTests
     private readonly IEpicRepository _epicRepository = Substitute.For<IEpicRepository>();
     private readonly ISprintRepository _sprintRepository = Substitute.For<ISprintRepository>();
     private readonly ICommentRepository _commentRepository = Substitute.For<ICommentRepository>();
+    private readonly ITimeEntryRepository _timeEntryRepository = Substitute.For<ITimeEntryRepository>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
     private readonly Guid _projectId = Guid.NewGuid();
@@ -30,6 +31,11 @@ public class ExportHandlerTests
         _projectRepository.GetByIdAsync(_projectId, Arg.Any<CancellationToken>()).Returns(_project);
         _taskItemRepository.GetForProjectAsync(_projectId, (TaskItemStatus?)null, Arg.Any<CancellationToken>())
             .Returns(new[] { _task });
+        // NSubstitute completes unstubbed Task<IReadOnlyList<...>> with null —
+        // the export handler would NRE without this.
+        _timeEntryRepository.GetForTaskIdsAsync(
+                Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns([]);
     }
 
     [Fact]
@@ -73,7 +79,7 @@ public class ExportHandlerTests
         _commentRepository.GetForTaskAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(new List<Comment>());
 
         var handler = new ExportProjectBackupHandler(
-            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository);
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _timeEntryRepository, _projectRepository);
         var result = await handler.Handle(
             new ExportProjectBackupQuery(_workspaceId, _projectId, "json"),
             CancellationToken.None);
