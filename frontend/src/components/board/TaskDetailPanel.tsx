@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { X, Paperclip, Download, Trash2, BookmarkPlus, Eye, RefreshCw, CheckSquare, Square } from "lucide-react";
 import { api, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask, uploadTaskAttachment, getTaskWatchers, pagedItems } from "../../lib/api";
@@ -8,6 +8,7 @@ import { ErrorAlert } from "../ui/ErrorAlert";
 import { Avatar } from "../ui/Avatar";
 import { Skeleton } from "../ui/Skeleton";
 import { useToast } from "../ui/ToastProvider";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 import type {
   CommentResponse,
   SprintResponse,
@@ -140,42 +141,10 @@ export function TaskDetailPanel({
   onTaskChanged,
 }: TaskDetailPanelProps) {
   const { t } = useTranslation();
-  const dialogRef = useRef<HTMLDivElement>(null);
-  // While open the panel is a modal: Tab must cycle through its controls,
-  // not leak to the board cards behind the overlay. Focus lands inside on
-  // open; the keydown trap below keeps it there.
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    const first = dialog.querySelector<HTMLElement>(
-      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
-    );
-    first?.focus();
-  }, [task.id]);
-  function trapTab(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key !== "Tab") return;
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    const items = Array.from(
-      dialog.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), textarea, input:not([disabled]), select, [tabindex]:not([tabindex="-1"])',
-      ),
-    ).filter((el) => el.offsetParent !== null || el === document.activeElement);
-    if (items.length === 0) return;
-    const first = items[0];
-    const last = items[items.length - 1];
-    const active = document.activeElement;
-    if (!dialog.contains(active)) {
-      event.preventDefault();
-      (event.shiftKey ? last : first).focus();
-    } else if (event.shiftKey && active === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
+  // While open the panel is a modal: focus lands inside, Tab cycles its
+  // controls without leaking to the board cards behind the overlay, and
+  // closing hands focus back to the card that opened it.
+  const { ref: dialogRef, onKeyDown: trapTab } = useFocusTrap<HTMLDivElement>(true);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
   const [definitionOfDone, setDefinitionOfDone] = useState(
