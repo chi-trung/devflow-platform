@@ -161,7 +161,11 @@ describe("AppShell sidebar collapse", () => {
     const { container } = renderShell("/workspaces/ws1", false);
     const skip = container.querySelector('a[href="#devflow-content"]');
     expect(skip?.textContent).toBe("ui.skipToContent");
-    expect(container.querySelector("main")?.id).toBe("devflow-content");
+    const main = container.querySelector("main");
+    expect(main?.id).toBe("devflow-content");
+    // A plain scroll target is not enough: the jump must move focus so the
+    // next Tab continues inside the page content.
+    expect(main?.getAttribute("tabindex")).toBe("-1");
   });
 
   it("swaps the account trigger to icon-only when collapsed (no name overflow)", () => {

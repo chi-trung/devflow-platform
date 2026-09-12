@@ -674,7 +674,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main id="devflow-content" inert={drawerOpen} className="min-w-0 flex-1 overflow-y-auto pt-14 pb-16 lg:pt-0 lg:pb-0">
+      {/* tabIndex -1 makes the hash jump move focus into the page: without it
+          the browser only scrolls, and the next Tab restarts at the nav the
+          skip link just bypassed. inert (drawer open) still blocks the focus,
+          which is correct then. */}
+      <main id="devflow-content" tabIndex={-1} inert={drawerOpen} className="min-w-0 flex-1 overflow-y-auto pt-14 pb-16 outline-none lg:pt-0 lg:pb-0">
         {children}
       </main>
 
