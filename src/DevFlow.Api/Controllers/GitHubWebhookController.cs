@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.GitHub;
+using DevFlow.Domain.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -40,7 +41,12 @@ public sealed class GitHubWebhookController(
             return Accepted();
         }
 
-        var integration = await gitHubRepository.GetByRepositoryUrlAsync(repositoryUrl, cancellationToken);
+        // RepositoryUrl == is exact SQL equality; stored rows are canonical
+        // (GitHubIntegration.Create), and html_url is too — canonicalize the
+        // payload anyway so the two sides cannot drift silently into a 202
+        // drop for every delivery of that repository.
+        var canonicalRepositoryUrl = GitHubUrl.CanonicalizeRepository(repositoryUrl) ?? repositoryUrl;
+        var integration = await gitHubRepository.GetByRepositoryUrlAsync(canonicalRepositoryUrl, cancellationToken);
         if (integration == null)
         {
             logger.LogInformation("No GitHub integration found for webhook delivery {DeliveryId}", deliveryId);

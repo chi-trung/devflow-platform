@@ -33,7 +33,13 @@ public class GitHubIntegration : BaseEntity, IAuditableEntity
         if (string.IsNullOrWhiteSpace(repositoryUrl))
             throw new ArgumentException("Repository URL is required.", nameof(repositoryUrl));
 
-        return new GitHubIntegration(projectId, repositoryUrl.Trim(), webhookSecret);
+        // Canonical form so webhook deliveries match regardless of how the
+        // user pasted the URL (ssh/www/.git/trailing slash/casing). Unknown
+        // shapes fall back to the trimmed input rather than being rewritten.
+        return new GitHubIntegration(
+            projectId,
+            GitHubUrl.CanonicalizeRepository(repositoryUrl) ?? repositoryUrl.Trim(),
+            webhookSecret);
     }
 
     public void Deactivate() => IsActive = false;

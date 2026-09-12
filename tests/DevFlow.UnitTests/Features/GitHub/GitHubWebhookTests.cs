@@ -319,6 +319,39 @@ public class GitHubWebhookHandlerTests
     }
 
     [Fact]
+    public async Task ProcessAsync_VariantRepositoryUrl_ShouldLookUpCanonicalKey()
+    {
+        // Integrations linked before store-side canonicalization carried raw
+        // pasted variants; the handler must query the canonical key GitHub's
+        // html_url maps to, or the delivery silently drops with no match.
+        var payload = PrPayload("opened", merged: false, state: "open");
+        await GitHubWebhookHandler.ProcessAsync(
+            payload with { RepositoryUrl = "https://www.GitHub.com/Acme/DevFlow.git" },
+            _gitHubRepository, _activityLogRepository, _taskItemRepository, _projectRepository,
+            _unitOfWork, _realtimeNotifier, _cacheService, CancellationToken.None);
+
+        await _gitHubRepository.Received(1).GetByRepositoryUrlAsync(
+            "https://github.com/acme/devflow", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ProcessAsync_PrRedeliveryAgainstVariantStoredUrl_ShouldNotDuplicateRow()
+    {
+        // The manual add-PR form stored the URL exactly as pasted — a
+        // trailing slash or casing difference used to re-create the row on
+        // every webhook redelivery instead of updating the existing one.
+        var existing = PullRequest.Create(
+            _project.Id, "DEV-101: Fix CORS", "https://github.com/Acme/DevFlow/pull/1/", "Open", "bob");
+        _gitHubRepository.GetPullRequestsByProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(new[] { existing });
+
+        await ProcessAsync(PrPayload("closed", merged: true, state: "closed"));
+
+        await _gitHubRepository.DidNotReceive().AddPullRequestAsync(Arg.Any<PullRequest>(), Arg.Any<CancellationToken>());
+        Assert.Equal("Merged", existing.Status);
+    }
+
+    [Fact]
     public async Task ProcessAsync_NoMatchingTask_ShouldNotInvalidateCache()
     {
         _taskItemRepository.GetForProjectAsync(_project.Id, (TaskItemStatus?)null, Arg.Any<CancellationToken>())

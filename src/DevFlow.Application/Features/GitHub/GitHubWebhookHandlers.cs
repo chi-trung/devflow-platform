@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Domain.Common;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
 using MediatR;
@@ -42,7 +43,11 @@ public static class GitHubWebhookHandler
         if (payload.ProjectId == null || string.IsNullOrWhiteSpace(payload.RepositoryUrl))
             return;
 
-        var integration = await gitHubRepository.GetByRepositoryUrlAsync(payload.RepositoryUrl, cancellationToken);
+        // Same canonical key the controller looked up and the integration was
+        // stored under — an exact-equality miss here would silently drop the
+        // whole event after the signature check already passed.
+        var canonicalRepositoryUrl = GitHubUrl.CanonicalizeRepository(payload.RepositoryUrl) ?? payload.RepositoryUrl;
+        var integration = await gitHubRepository.GetByRepositoryUrlAsync(canonicalRepositoryUrl, cancellationToken);
         if (integration == null)
             return;
 
@@ -162,8 +167,12 @@ public static class GitHubWebhookHandler
         string actorName,
         CancellationToken cancellationToken)
     {
+        // Match on the canonical PR URL, not the raw string: the manual
+        // add-PR form stores whatever the user pasted (trailing slash, www.,
+        // different casing), and an exact-equality miss here would re-create
+        // the row on every redelivery instead of updating it in place.
         var existing = (await gitHubRepository.GetPullRequestsByProjectAsync(projectId, cancellationToken))
-            .FirstOrDefault(pr => pr.Url == payload.PrUrl);
+            .FirstOrDefault(pr => GitHubUrl.SamePullRequest(pr.Url, payload.PrUrl));
 
         // Statuses are capitalized to match rows from the manual add-PR flow
         // and the frontend's status style map.
