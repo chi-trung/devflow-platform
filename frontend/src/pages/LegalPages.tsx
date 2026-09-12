@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { PublicHeader, PublicFooter } from "../components/landing/PublicChrome";
 import { Button } from "../components/ui/Button";
+import { usePageMeta } from "../lib/seo";
 import {
   LEGAL_UPDATED,
   PRIVACY_SECTIONS,
@@ -32,6 +33,7 @@ function LegalLayout({
 }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith("vi") ? "vi" : "en";
+  usePageMeta(`${titleKey}.title`, `${titleKey}.subtitle`);
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground overflow-x-hidden">

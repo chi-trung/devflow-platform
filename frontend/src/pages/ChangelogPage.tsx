@@ -6,6 +6,7 @@ import {
   PublicFooter,
 } from "../components/landing/PublicChrome";
 import { Button } from "../components/ui/Button";
+import { usePageMeta } from "../lib/seo";
 import {
   CHANGELOG_ENTRIES,
   ROADMAP_ITEMS,
@@ -26,6 +27,7 @@ function formatDate(iso: string, lang: string): string {
 export function ChangelogPage() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith("vi") ? "vi" : "en";
+  usePageMeta("changelog.title", "changelog.subtitle");
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground overflow-x-hidden">

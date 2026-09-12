@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { PublicHeader, PublicFooter } from "../components/landing/PublicChrome";
 import { Button } from "../components/ui/Button";
+import { usePageMeta } from "../lib/seo";
 import { BLOG_POSTS } from "../data/blog";
 
 // Public marketing blog: short engineering notes backed by src/data/blog.ts
@@ -20,6 +21,7 @@ function formatDate(iso: string, lang: string): string {
 export function BlogPage() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith("vi") ? "vi" : "en";
+  usePageMeta("blog.title", "blog.subtitle");
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground overflow-x-hidden">

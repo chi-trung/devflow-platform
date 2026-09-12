@@ -15,6 +15,7 @@ import {
   HelpSection,
 } from "../components/landing/MarketingSections";
 import { API_BASE } from "../lib/api";
+import { usePageMeta } from "../lib/seo";
 
 const HOW_STEPS = [
   { key: "step1", icon: "01" },
@@ -24,6 +25,10 @@ const HOW_STEPS = [
 
 export function LandingPage() {
   const { t } = useTranslation();
+
+  // Restore the marketing title after a visit to /blog or /terms keeps their
+  // per-route titles from bleeding through client-side navigation.
+  usePageMeta("landing.heroTitle", "landing.heroSubtitle");
 
   // Warm the Render backend as early as possible — the landing page is the
   // first page most visitors hit, so firing a ping here means the instance
