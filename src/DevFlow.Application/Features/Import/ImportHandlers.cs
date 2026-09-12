@@ -20,11 +20,15 @@ internal static class EntityIdSetter
     }
 }
 
+// IProjectEvent with the default empty ActivityVerb: bulk-imported tasks must
+// not keep serving the pre-import cache for a full TTL, and realtime clients
+// need the board-wake. No activity row is emitted here (empty verb) because
+// per-task entries would flood the feed on a bulk restore.
 [RequireWorkspaceRole(WorkspaceRole.Admin)]
 public sealed record ImportProjectBackupCommand(
     Guid WorkspaceId,
     Guid ProjectId,
-    string JsonData) : IRequest<ImportBackupResult>, IWorkspaceRequest;
+    string JsonData) : IRequest<ImportBackupResult>, IWorkspaceRequest, IProjectEvent;
 
 public class ImportProjectBackupHandler(
     ITaskItemRepository taskItemRepository,
