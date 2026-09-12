@@ -112,7 +112,7 @@ public class PlanTaskCommandHandlerTests
 
         Assert.True(response.Applied);
         Assert.Equal(AiPlanStatus.Applied.ToString(), response.Status);
-        Assert.Equal("Tests pass\nDocs updated", _task.DefinitionOfDone?.Replace("\r\n", "\n"));
+        Assert.Equal("- [ ] Tests pass\n- [ ] Docs updated", _task.DefinitionOfDone?.Replace("\r\n", "\n"));
 
         // Two subtasks created under the parent, inheriting sprint context.
         await _taskItemRepository.Received(2).AddAsync(

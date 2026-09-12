@@ -62,9 +62,14 @@ public sealed class AiPlanApplier(
             await taskItemRepository.AddAsync(subtask, cancellationToken);
         }
 
+        // The task's DoD field renders a clickable checklist only for lines in
+        // "- [ ] …" form (see TaskDetailPanel's DefinitionOfDoneField). The
+        // contract items are plain criteria, so normalize them here — otherwise
+        // an applied plan silently loses its checkboxes.
         var doD = string.Join(Environment.NewLine, contract.DefinitionOfDone
             .Select(d => d.Trim())
-            .Where(d => !string.IsNullOrWhiteSpace(d)));
+            .Where(d => !string.IsNullOrWhiteSpace(d))
+            .Select(d => d.StartsWith("- [", StringComparison.Ordinal) ? d : $"- [ ] {d}"));
 
         if (!string.IsNullOrWhiteSpace(doD))
         {

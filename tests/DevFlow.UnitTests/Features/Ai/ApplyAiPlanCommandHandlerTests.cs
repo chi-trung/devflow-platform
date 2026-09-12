@@ -73,7 +73,7 @@ public class ApplyAiPlanCommandHandlerTests
 
         Assert.True(response.Applied);
         Assert.Equal(AiPlanStatus.Applied, plan.Status);
-        Assert.Equal("Tests pass", _task.DefinitionOfDone);
+        Assert.Equal("- [ ] Tests pass", _task.DefinitionOfDone);
 
         await _taskItemRepository.Received(2).AddAsync(
             Arg.Is<TaskItem>(subtask => subtask.ParentTaskId == _task.Id),

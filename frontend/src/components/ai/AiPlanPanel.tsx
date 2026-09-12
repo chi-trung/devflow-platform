@@ -89,12 +89,9 @@ export function AiPlanPanel({
     }
   }
 
-  const checkedCount =
-    plan?.definitionOfDone.filter((d) =>
-      d.trim().startsWith("- [x]") || d.trim().startsWith("- [X]"),
-    ).length ?? 0;
-  const totalDoD = plan?.definitionOfDone.length ?? 0;
-  const allMet = totalDoD > 0 && checkedCount === totalDoD;
+  // Plan DoD items are plain criteria strings (the "- [ ]" checkbox form is
+  // only added when the plan is applied to the task), so there is nothing to
+  // count as checked here — the panel just previews the list.
 
   return (
     <section className="space-y-3">
@@ -207,11 +204,6 @@ export function AiPlanPanel({
             <div className="space-y-1">
               <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("ai.dod")}
-                {allMet && (
-                  <span className="rounded bg-emerald-500/10 px-1 py-0.5 font-mono text-[10px] text-emerald-500">
-                    {t("ai.allMet")}
-                  </span>
-                )}
               </p>
               <ul className="space-y-0.5">
                 {plan.definitionOfDone.map((d, i) => (
