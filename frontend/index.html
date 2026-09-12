@@ -76,6 +76,18 @@
       property="og:description"
       content="Plan sprints, run your kanban board, and ship faster."
     />
+    <!-- Absolute URL because crawlers fetch this from the raw HTML, before
+         any JS runs. 1400x631 sits above the 1200x630 minimum Facebook and
+         Slack want and matches the 1.91:1-ish shape they crop toward. -->
+    <meta property="og:image" content="https://devflow-platform-kappa.vercel.app/landing-opt.png" />
+    <meta property="og:image:width" content="1400" />
+    <meta property="og:image:height" content="631" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DevFlow" />
+    <!-- Without a card tag Twitter/Slack fall back to a title-only summary,
+         which is why shared links previewed as bare text. -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://devflow-platform-kappa.vercel.app/landing-opt.png" />
     <link rel="preconnect" href="https://devflow-api-vd5h.onrender.com" />
     <link rel="dns-prefetch" href="https://devflow-api-vd5h.onrender.com" />
     <!-- Fonts are self-hosted same-origin (see @font-face in index.css).
