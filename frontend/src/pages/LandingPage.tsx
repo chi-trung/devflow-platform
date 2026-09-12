@@ -39,6 +39,25 @@ export function LandingPage() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground overflow-x-clip">
+      {/* SoftwareApplication graph so Google knows the URL is an app, not
+          just an article. Values are plain facts about this product: free
+          to start, web-based, same origin as the page. React 19 renders a
+          <script> child into <head> without manual DOM handling. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "DevFlow",
+            applicationCategory: "ProjectManagementApplication",
+            operatingSystem: "Web",
+            url: "https://devflow-platform-kappa.vercel.app/",
+            image: "https://devflow-platform-kappa.vercel.app/landing-opt.png",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+          }),
+        }}
+      />
       {/* ─── Sticky header ─── */}
       <PublicHeader
         nav={[
