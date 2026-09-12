@@ -691,12 +691,14 @@ export function exportTasks(
   );
 }
 
+// MVC camel-cases ImportBackupResultResponse on the wire; PascalCase here
+// would silently yield undefined for every field.
 export interface ExportBackupResult {
-  TasksImported: number;
-  EpicsImported: number;
-  SprintsImported: number;
-  CommentsImported: number;
-  Errors: string[];
+  tasksImported: number;
+  epicsImported: number;
+  sprintsImported: number;
+  commentsImported: number;
+  errors: string[];
 }
 
 export function exportProjectBackup(

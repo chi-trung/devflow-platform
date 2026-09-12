@@ -20,6 +20,10 @@ public sealed class JwtTokenProvider(IOptions<JwtSettings> options) : ITokenProv
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim("username", user.Username),
+            // AuthContext's currentUser.displayName and ProjectHub's presence
+            // payload both read this claim; without it they were permanently
+            // null and the UI fell back to username everywhere.
+            new Claim("displayName", user.DisplayName),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

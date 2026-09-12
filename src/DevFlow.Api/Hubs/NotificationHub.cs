@@ -54,8 +54,12 @@ public sealed class NotificationBroadcaster(IHubContext<NotificationHub> hubCont
 
     public async Task NotifyWorkspace(string workspaceId, string type, object data)
     {
+        // useWorkspaceEvents reads top-level eventType/workspaceId — emit
+        // those names (matching the project-event writer in
+        // SignalRProjectNotifier), not the generic { type, data } shape,
+        // which left the hook's declared payload permanently null.
         await hubContext.Clients.Group($"workspace:{workspaceId}")
-            .SendAsync("workspace-event", new { type, data });
+            .SendAsync("workspace-event", new { eventType = type, workspaceId, data });
     }
 
     public async Task NotifyProject(string projectId, string type, object data)
