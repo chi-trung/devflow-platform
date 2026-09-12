@@ -18,8 +18,17 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
+  // The grid is a sibling of the trigger, so keystrokes inside it reach this
+  // wrapper. Escape closes the popover and stops there: the picker often sits
+  // in a form dialog, and that dialog should not dismiss with it.
+  function onKeyDown(event: React.KeyboardEvent) {
+    if (event.key !== "Escape" || !open) return;
+    event.stopPropagation();
+    setOpen(false);
+  }
+
   return (
-    <div className="relative">
+    <div className="relative" onKeyDown={onKeyDown}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

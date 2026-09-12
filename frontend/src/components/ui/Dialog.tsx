@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId } from "react";
 import { createPortal } from "react-dom";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 
 interface DialogProps {
   open: boolean;
@@ -10,54 +11,16 @@ interface DialogProps {
 }
 
 export function Dialog({ open, onClose, title, children, footer }: DialogProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
+  const { ref: dialogRef, onKeyDown: trapTab } = useFocusTrap<HTMLDivElement>(open);
 
   useEffect(() => {
     if (!open) return;
-
-    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
-
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    const focusable = dialog.querySelector<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    );
-    focusable?.focus();
-
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-        return;
-      }
-      if (event.key === "Tab" && dialog) {
-        const focusableElements = dialog.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-        );
-        if (focusableElements.length === 0) return;
-        const first = focusableElements[0];
-        const last = focusableElements[focusableElements.length - 1];
-        if (event.shiftKey) {
-          if (document.activeElement === first) {
-            event.preventDefault();
-            last.focus();
-          }
-        } else {
-          if (document.activeElement === last) {
-            event.preventDefault();
-            first.focus();
-          }
-        }
-      }
+      if (event.key === "Escape") onClose();
     }
-
     document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      previouslyFocusedRef.current?.focus();
-    };
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
   if (!open) return null;
@@ -68,10 +31,12 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
         type="button"
         aria-label="Close dialog"
         onClick={onClose}
+        tabIndex={-1}
         className="absolute inset-0 cursor-default bg-black/50"
       />
       <div
         ref={dialogRef}
+        onKeyDown={trapTab}
         role="dialog"
         aria-modal
         aria-labelledby={title ? titleId : undefined}

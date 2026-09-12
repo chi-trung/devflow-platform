@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Key, Plus, Trash2, X } from "lucide-react";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 import { Button } from "../ui/Button";
 import { ConfirmDialog } from "../ConfirmDialog";
 import {
@@ -35,6 +36,27 @@ export function PATSection() {
   const [newExpires, setNewExpires] = useState("");
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PatResponse | null>(null);
+
+  // Both overlays mount with the section and hide behind a flag, so the
+  // traps gate on the flags. Focus lands on the first control of each:
+  // the close X of the create form, the copy button of the token view.
+  const { ref: createDialogRef, onKeyDown: trapCreateTab } =
+    useFocusTrap<HTMLDivElement>(showCreate);
+  const { ref: tokenDialogRef, onKeyDown: trapTokenTab } =
+    useFocusTrap<HTMLDivElement>(createdToken !== null);
+
+  useEffect(() => {
+    if (!showCreate && createdToken === null) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      // Only one is on screen at a time; the token dialog wins because
+      // it is the last thing the user did.
+      if (createdToken !== null) setCreatedToken(null);
+      else setShowCreate(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showCreate, createdToken]);
 
   useEffect(() => {
     let cancelled = false;
@@ -196,12 +218,22 @@ export function PATSection() {
 
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl">
+          <div
+            ref={createDialogRef}
+            onKeyDown={trapCreateTab}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pat-create-title"
+            className="relative w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl"
+          >
             <div className="flex items-center justify-between">
-              <h3 className="font-display font-semibold">{t("pat.createTitle")}</h3>
+              <h3 id="pat-create-title" className="font-display font-semibold">
+                {t("pat.createTitle")}
+              </h3>
               <button
                 type="button"
                 onClick={() => setShowCreate(false)}
+                aria-label={t("board.closeDialogAria")}
                 className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-elevated hover:text-foreground"
               >
                 <X className="size-4" aria-hidden />
@@ -271,8 +303,17 @@ export function PATSection() {
 
       {createdToken && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl">
-            <h3 className="font-display font-semibold">{t("pat.createdTitle")}</h3>
+          <div
+            ref={tokenDialogRef}
+            onKeyDown={trapTokenTab}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pat-created-title"
+            className="relative w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-2xl"
+          >
+            <h3 id="pat-created-title" className="font-display font-semibold">
+              {t("pat.createdTitle")}
+            </h3>
             <p className="mt-1 text-sm text-muted-foreground">{t("pat.createdHint")}</p>
             <code className="mt-3 block break-all rounded-lg border border-border bg-card px-3 py-2 font-mono text-xs text-foreground">
               {createdToken}
