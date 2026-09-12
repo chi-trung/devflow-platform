@@ -4,7 +4,7 @@
   "description": "Modern project management for development teams",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
+  "background_color": "#0a0e14",
   "theme_color": "#14b8a6",
   "orientation": "any",
   "icons": [
