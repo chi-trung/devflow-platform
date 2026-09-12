@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { CalendarRange, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { createSprint } from "../../lib/api";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { ErrorAlert } from "../ui/ErrorAlert";
@@ -20,6 +21,7 @@ export function CreateSprintModal({
   onCreated,
 }: CreateSprintModalProps) {
   const { t } = useTranslation();
+  const { ref: dialogRef, onKeyDown: trapTab } = useFocusTrap<HTMLDivElement>(true);
   const [name, setName] = useState("");
   const [goal, setGoal] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -62,9 +64,12 @@ export function CreateSprintModal({
         type="button"
         aria-label={t("sprint.closeAria")}
         onClick={onClose}
+        tabIndex={-1}
         className="absolute inset-0 cursor-default bg-black/50"
       />
       <div
+        ref={dialogRef}
+        onKeyDown={trapTab}
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-sprint-title"
