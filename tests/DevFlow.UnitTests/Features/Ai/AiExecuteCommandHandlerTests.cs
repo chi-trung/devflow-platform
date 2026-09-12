@@ -1,6 +1,7 @@
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Ai.Execute;
+using DevFlow.Application.Features.Tasks.AttachToEpic;
 using DevFlow.Application.Features.Tasks.Create;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
@@ -196,7 +197,17 @@ public class AiExecuteCommandHandlerTests
         Assert.Equal("success", response.Actions[0].Status);
         Assert.Contains("added to epic", response.Actions[0].Message);
         Assert.Equal(task.Id, response.Actions[0].EntityId);
-        Assert.Equal(task.EpicId, epic.Id);
+        // The mutation now rides AttachTaskToEpicCommand (the IProjectEvent that
+        // invalidates the cached board) — assert the exact command was dispatched,
+        // not the domain field: this test's _sender is a substitute, so no
+        // handler runs and task.EpicId is deliberately untouched here.
+        await _sender.Received(1).Send(
+            Arg.Is<AttachTaskToEpicCommand>(c =>
+                c.WorkspaceId == _workspaceId &&
+                c.ProjectId == _project.Id &&
+                c.EpicId == epic.Id &&
+                c.TaskId == task.Id),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]

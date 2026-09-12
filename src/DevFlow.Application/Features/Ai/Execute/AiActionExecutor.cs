@@ -6,6 +6,7 @@ using DevFlow.Application.Features.Epics.Create;
 using DevFlow.Application.Features.Projects.Create;
 using DevFlow.Application.Features.Sprints.AssignTask;
 using DevFlow.Application.Features.Sprints.Create;
+using DevFlow.Application.Features.Tasks.AttachToEpic;
 using DevFlow.Application.Features.Tasks.Create;
 using DevFlow.Application.Features.Tasks.Subtasks;
 using DevFlow.Application.Features.Tasks.Update;
@@ -294,10 +295,14 @@ public sealed class AiActionExecutor(
         var task = await ResolveTaskAsync(workspaceId, project.Id, TargetTaskRef(action), cancellationToken);
         var epic = await ResolveEpicAsync(project.Id, action.EpicRef ?? action.Title, cancellationToken);
 
-        // Attach the task to the epic directly (mirrors the subtask handler):
-        // there is no dedicated "move to epic" command, and the task's EpicId is
-        // a plain FK on the aggregate.
-        task.AttachToEpic(epic.Id);
+        // Must go through the command pipeline, not task.AttachToEpic + a bare
+        // save: EpicId ships on every cached board card (tasks:{projectId}), and
+        // only IProjectEvent invalidates that cache and wakes realtime clients.
+        // Every other task mutation already routes this way — this was the one
+        // that didn't, so the board kept showing the old epic for a full TTL.
+        await sender.Send(
+            new AttachTaskToEpicCommand(workspaceId, project.Id, epic.Id, task.Id),
+            cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return Ok(action, "add_to_epic", task.Id, $"Task \"{task.Title}\" added to epic \"{epic.Name}\".");
