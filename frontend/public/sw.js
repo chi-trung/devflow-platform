@@ -1,10 +1,20 @@
-const CACHE_NAME = "devflow-v3";
+const CACHE_NAME = "devflow-v4";
 const STATIC_ASSETS = [
   "/",
   "/index.html",
   "/favicon.svg",
   "/manifest.json",
 ];
+
+// The SPA rewrite answers any missing asset URL with index.html at HTTP 200,
+// so a plain response.ok check would store HTML under a .js/.css/.woff key.
+// Cache-first reads then replay that HTML forever, and the browser fails to
+// parse it as the script/type it asked for. v4 also evicts entries a v3 run
+// may already have poisoned.
+function cacheable(response) {
+  const type = response.headers.get("content-type") || "";
+  return response.ok && !type.includes("text/html");
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -57,7 +67,7 @@ self.addEventListener("fetch", (event) => {
       if (cached) {
         fetch(event.request)
           .then((response) => {
-            if (response && response.ok) {
+            if (cacheable(response)) {
               const clone = response.clone();
               caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
             }
@@ -68,7 +78,7 @@ self.addEventListener("fetch", (event) => {
 
       return fetch(event.request)
         .then((response) => {
-          if (response && response.ok) {
+          if (cacheable(response)) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
