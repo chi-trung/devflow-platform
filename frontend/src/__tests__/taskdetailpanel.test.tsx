@@ -88,7 +88,7 @@ const CONTROL_SELECTOR =
 
 function tabbables(dialog: HTMLElement) {
   return Array.from(dialog.querySelectorAll<HTMLElement>(CONTROL_SELECTOR)).filter(
-    (el) => el.offsetParent !== null || el === document.activeElement,
+    (el) => el.tabIndex >= 0 && el.offsetParent !== null,
   );
 }
 
@@ -98,6 +98,11 @@ describe("TaskDetailPanel focus trap", () => {
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveAttribute("aria-modal", "true");
     expect(dialog.contains(document.activeElement)).toBe(true);
+    // The backdrop close button is tabIndex -1; initial focus must land on
+    // the first control a real Tab press could reach.
+    const active = document.activeElement as HTMLElement;
+    expect(active.tabIndex).toBeGreaterThanOrEqual(0);
+    expect(active).toBe(tabbables(dialog)[0]);
   });
 
   it("wraps Tab from the last control to the first, and Shift+Tab back", () => {

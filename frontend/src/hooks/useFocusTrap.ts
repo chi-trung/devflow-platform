@@ -12,6 +12,10 @@ const FOCUSABLE_SELECTOR =
  * ends; a focus that has leaked behind the overlay is pulled back on the
  * next keystroke. On close, focus returns to whatever held it before the
  * dialog opened (typically the card or button that launched it).
+ *
+ * Controls with a negative tabindex (the invisible backdrop close button)
+ * are skipped: they are clickable but must not join the Tab cycle or take
+ * the initial focus.
  */
 export function useFocusTrap<T extends HTMLElement>(
   active: boolean,
@@ -19,15 +23,21 @@ export function useFocusTrap<T extends HTMLElement>(
   const ref = useRef<T>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
 
+  // querySelectorAll can't express "and tabindex >= 0" across all the
+  // alternatives, so filter programmatically. The offsetParent check skips
+  // hidden controls.
+  function collect(dialog: HTMLElement): HTMLElement[] {
+    return Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+      (el) => el.tabIndex >= 0 && el.offsetParent !== null,
+    );
+  }
+
   useEffect(() => {
     if (!active) return;
     restoreRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const dialog = ref.current;
     if (!dialog) return;
-    const first = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).find(
-      (el) => el.offsetParent !== null,
-    );
-    first?.focus();
+    collect(dialog)[0]?.focus();
     return () => {
       const restore = restoreRef.current;
       if (restore && restore.isConnected) restore.focus();
@@ -38,9 +48,7 @@ export function useFocusTrap<T extends HTMLElement>(
     if (event.key !== "Tab") return;
     const dialog = ref.current;
     if (!dialog) return;
-    const items = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
-      (el) => el.offsetParent !== null || el === document.activeElement,
-    );
+    const items = collect(dialog);
     if (items.length === 0) return;
     const first = items[0];
     const last = items[items.length - 1];
