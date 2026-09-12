@@ -740,7 +740,10 @@ export interface VelocityHistoryResponse {
     sprintName: string;
     totalStoryPoints: number;
     completedStoryPoints: number;
-    endDateUtc: string;
+    // Backend VelocityHistoryPoint.EndDateUtc is DateTimeOffset? (a sprint
+    // can be planned without an end) — declaring it required here would let
+    // a future consumer call .slice() on null.
+    endDateUtc: string | null;
   }>;
   averageCompleted: number;
   averageTotal: number;
