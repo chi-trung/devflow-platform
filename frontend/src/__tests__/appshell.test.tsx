@@ -156,6 +156,14 @@ describe("AppShell sidebar collapse", () => {
     expect(aside?.contains(document.activeElement)).toBe(false);
   });
 
+  it("wires the skip-to-content link to the main region", () => {
+    // WCAG 2.4.1: keyboard users must be able to jump past the nav chrome.
+    const { container } = renderShell("/workspaces/ws1", false);
+    const skip = container.querySelector('a[href="#devflow-content"]');
+    expect(skip?.textContent).toBe("ui.skipToContent");
+    expect(container.querySelector("main")?.id).toBe("devflow-content");
+  });
+
   it("swaps the account trigger to icon-only when collapsed (no name overflow)", () => {
     // Collapsed: the sidebar UserMenu renders compact (avatar initials + long
     // username/email hidden) so a long Gmail address can't stick out of the

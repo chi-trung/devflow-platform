@@ -384,6 +384,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-dvh overflow-hidden">
+      {/* First tab stop on every screen: jumps past the drawer, header, and
+          primary nav straight into the page (WCAG 2.4.1). Painted only while
+          focused, so mouse users never see it. */}
+      <a
+        href="#devflow-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:rounded-lg focus:border focus:border-border focus:bg-surface focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground"
+      >
+        {t("ui.skipToContent")}
+      </a>
       <aside
         ref={drawerRef}
         className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
@@ -665,7 +674,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main inert={drawerOpen} className="min-w-0 flex-1 overflow-y-auto pt-14 pb-16 lg:pt-0 lg:pb-0">
+      <main id="devflow-content" inert={drawerOpen} className="min-w-0 flex-1 overflow-y-auto pt-14 pb-16 lg:pt-0 lg:pb-0">
         {children}
       </main>
 
