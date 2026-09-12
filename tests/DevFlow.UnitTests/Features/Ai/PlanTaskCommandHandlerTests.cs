@@ -172,6 +172,40 @@ public class PlanTaskCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_ShouldPersistSubtasksJson_WithLowercaseContractKeys()
+    {
+        // Regression guard for the write/read casing drift: the stored bytes
+        // must match AiPlanSubtaskContract's [JsonPropertyName]s exactly.
+        // Deserializing with DEFAULT (case-sensitive) options is the probe —
+        // if the write site ever reverts to an anonymous type (PascalCase
+        // "Title"), these bindings come back empty and this test fails,
+        // instead of relying on every reader remembering to opt in to
+        // PropertyNameCaseInsensitive.
+        var persisted = new List<AiPlan>();
+        _aiPlanRepository
+            .When(x => x.AddAsync(Arg.Any<AiPlan>(), Arg.Any<CancellationToken>()))
+            .Do(x => persisted.Add(x.Arg<AiPlan>()));
+        _aiClient.PlanTaskAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(SamplePlanJson());
+
+        var handler = BuildHandler();
+        await handler.Handle(
+            new PlanTaskCommand(_workspaceId, _project.Id, _task.Id),
+            CancellationToken.None);
+
+        var subtasks = JsonSerializer.Deserialize<List<AiPlanSubtaskContract>>(
+            Assert.Single(persisted).SubtasksJson);
+
+        Assert.NotNull(subtasks);
+        Assert.Equal(2, subtasks.Count);
+        Assert.Equal("Subtask 1", subtasks[0].Title);
+        Assert.Equal("Do step 1", subtasks[0].Description);
+        Assert.Equal("High", subtasks[0].Priority);
+        Assert.Equal("Subtask 2", subtasks[1].Title);
+        Assert.Equal("Medium", subtasks[1].Priority);
+    }
+
+    [Fact]
     public async Task Handle_ShouldSupersedePreviousPendingPlans()
     {
         var previous = AiPlan.Create(

@@ -105,8 +105,14 @@ public sealed class PlanTaskCommandHandler(
             command.WorkspaceId,
             contract.Summary,
             JsonSerializer.Serialize(contract.Steps),
-            JsonSerializer.Serialize(contract.Subtasks.Select(
-                s => new { s.Title, s.Description, s.Priority })),
+            // Serialize the typed contract, not an anonymous type: anonymous
+            // members emit PascalCase ("Title") while every read-side key —
+            // AiPlanSubtaskContract's [JsonPropertyName]s and AiPlan's own doc
+            // comment — promises lowercase. Current readers survive only
+            // because each independently sets PropertyNameCaseInsensitive;
+            // one default-options reader would bind empty titles and Apply
+            // would silently drop every subtask.
+            JsonSerializer.Serialize(contract.Subtasks),
             JsonSerializer.Serialize(contract.DefinitionOfDone));
 
         await aiPlanRepository.AddAsync(plan, cancellationToken);
