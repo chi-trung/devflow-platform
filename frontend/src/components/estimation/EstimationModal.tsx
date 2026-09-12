@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { X, Check } from "lucide-react";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 import { Button } from "../ui/Button";
 import { setTaskEstimation } from "../../lib/api";
 
@@ -28,6 +29,18 @@ export function EstimationModal({
   const { t } = useTranslation();
   const [selected, setSelected] = useState<number | null>(currentEstimate);
   const [saving, setSaving] = useState(false);
+  // Rendered per card with an `open` flag; the trap follows the flag so
+  // focus lands on the story point grid and returns to the card on close.
+  const { ref: dialogRef, onKeyDown: trapTab } = useFocusTrap<HTMLDivElement>(open);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -46,17 +59,25 @@ export function EstimationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-xs">
-      <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl">
+      <div
+        ref={dialogRef}
+        onKeyDown={trapTab}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="estimation-title"
+        className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl"
+      >
         <div className="flex items-center justify-between">
-          <h2 className="font-display font-semibold">
+          <h2 id="estimation-title" className="font-display font-semibold">
             {t("estimation.title")}
           </h2>
           <button
             type="button"
             onClick={onClose}
+            aria-label={t("board.closeDialogAria")}
             className="rounded-lg p-1.5 text-muted-foreground hover:bg-elevated hover:text-foreground transition-colors"
           >
-            <X className="size-4" />
+            <X className="size-4" aria-hidden />
           </button>
         </div>
 

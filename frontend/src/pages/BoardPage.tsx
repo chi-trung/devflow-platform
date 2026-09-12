@@ -549,6 +549,9 @@ export function BoardPage() {
           if (graphOpen) setGraphOpen(false);
           else if (helpOpen) setHelpOpen(false);
           else if (confirmBulkDelete) setConfirmBulkDelete(false);
+          // The activity drawer renders above the detail drawer, so while
+          // both are open it takes the keystroke first.
+          else if (activityOpen) setActivityOpen(false);
           // The open drawer is the topmost focused surface when no modal is
           // up, so it closes before the selection-clearing branch can eat
           // the keystroke.
@@ -566,6 +569,7 @@ export function BoardPage() {
     graphOpen,
     helpOpen,
     confirmBulkDelete,
+    activityOpen,
     visibleTasks,
   ]);
 

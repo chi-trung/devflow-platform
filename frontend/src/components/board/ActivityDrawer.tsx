@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { History, X } from "lucide-react";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 import type { ActivityResponse } from "../../types/api";
 import { Avatar } from "../ui/Avatar";
 
@@ -17,11 +18,29 @@ export function ActivityDrawer({
   loading,
 }: ActivityDrawerProps) {
   const { t } = useTranslation();
+  // Mounted once per board and hidden by returning null, so the trap gates
+  // on `open` rather than mounting. The close button is the dialog's first
+  // and last control; the list body scrolls without a tabbable.
+  const { ref: dialogRef, onKeyDown: trapTab } = useFocusTrap<HTMLDivElement>(open);
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-background/60 backdrop-blur-xs">
-      <div className="flex w-full max-w-md animate-slide-in flex-col bg-surface border-l border-border shadow-2xl">
+    <div
+      ref={dialogRef}
+      onKeyDown={trapTab}
+      className="fixed inset-0 z-50 flex justify-end bg-background/60 backdrop-blur-xs"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t("activity.projectActivity")}
+    >
+      <button
+        type="button"
+        aria-label={t("board.closeDialogAria")}
+        onClick={onClose}
+        tabIndex={-1}
+        className="absolute inset-0 cursor-default bg-transparent"
+      />
+      <div className="relative flex w-full max-w-md animate-slide-in flex-col bg-surface border-l border-border shadow-2xl">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div className="flex items-center gap-2">
             <History className="size-5 text-primary" aria-hidden />
@@ -30,10 +49,12 @@ export function ActivityDrawer({
             </h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={t("board.closeDialogAria")}
             className="rounded-lg p-1.5 text-muted-foreground hover:bg-elevated hover:text-foreground transition-colors"
           >
-            <X className="size-5" />
+            <X className="size-5" aria-hidden />
           </button>
         </div>
 
