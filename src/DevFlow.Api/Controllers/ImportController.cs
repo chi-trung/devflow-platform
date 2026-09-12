@@ -93,13 +93,13 @@ public sealed class ImportController(
         using var reader = new StreamReader(Request.Body, Encoding.UTF8);
         var body = await reader.ReadToEndAsync(cancellationToken);
 
-        var lines = body.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length < 2)
+        var lines = SplitCsvLines(body);
+        if (lines.Count < 2)
         {
             return BadRequest("CSV must have a header row and at least one data row.");
         }
 
-        var header = lines[0].Split(',').Select(h => h.Trim().ToLowerInvariant()).ToArray();
+        var header = SplitCsvRow(lines[0]).Select(h => h.Trim().ToLowerInvariant()).ToArray();
         var titleIndex = Array.IndexOf(header, "title");
         var descIndex = Array.IndexOf(header, "description");
         var statusIndex = Array.IndexOf(header, "status");
@@ -112,20 +112,20 @@ public sealed class ImportController(
 
         var items = new List<ImportTaskItem>();
 
-        for (int i = 1; i < lines.Length; i++)
+        for (int i = 1; i < lines.Count; i++)
         {
-            var cols = lines[i].Split(',');
-            if (cols.Length <= titleIndex) continue;
+            var cols = SplitCsvRow(lines[i]);
+            if (cols.Count <= titleIndex) continue;
 
-            var title = cols[titleIndex].Trim().Trim('"');
+            var title = cols[titleIndex].Trim();
             if (string.IsNullOrWhiteSpace(title)) continue;
 
             items.Add(new ImportTaskItem
             {
                 Title = title,
-                Description = descIndex >= 0 && cols.Length > descIndex ? cols[descIndex].Trim().Trim('"') : null,
-                Status = statusIndex >= 0 && cols.Length > statusIndex ? cols[statusIndex].Trim() : "Backlog",
-                Priority = priorityIndex >= 0 && cols.Length > priorityIndex ? cols[priorityIndex].Trim() : "Medium",
+                Description = descIndex >= 0 && cols.Count > descIndex ? cols[descIndex].Trim() : null,
+                Status = statusIndex >= 0 && cols.Count > statusIndex ? cols[statusIndex].Trim() : "Backlog",
+                Priority = priorityIndex >= 0 && cols.Count > priorityIndex ? cols[priorityIndex].Trim() : "Medium",
             });
         }
 
@@ -135,6 +135,98 @@ public sealed class ImportController(
         }
 
         return await ProcessImport(projectId, items, cancellationToken);
+    }
+
+    /// <summary>
+    /// Splits a CSV body into logical rows. A naive '\n' split breaks on
+    /// quoted fields containing newlines, which the task export emits
+    /// verbatim (it only escapes quotes, never newlines).
+    /// </summary>
+    private static List<string> SplitCsvLines(string body)
+    {
+        var lines = new List<string>();
+        var current = new StringBuilder();
+        var inQuotes = false;
+
+        for (var i = 0; i < body.Length; i++)
+        {
+            var c = body[i];
+
+            if (c == '"')
+            {
+                inQuotes = !inQuotes;
+                current.Append(c);
+            }
+            else if ((c == '\n' || c == '\r') && !inQuotes)
+            {
+                // Collapse CRLF; skip the CR half so rows don't gain a phantom
+                // trailing carriage return.
+                if (c == '\r' && i + 1 < body.Length && body[i + 1] == '\n')
+                {
+                    continue;
+                }
+
+                if (current.Length > 0)
+                {
+                    lines.Add(current.ToString());
+                    current.Clear();
+                }
+            }
+            else
+            {
+                current.Append(c);
+            }
+        }
+
+        if (current.Length > 0)
+        {
+            lines.Add(current.ToString());
+        }
+
+        return lines;
+    }
+
+    /// <summary>
+    /// Splits one CSV row into fields, honouring RFC 4180 quoting: a quoted
+    /// field may contain commas and doubled "" escapes. The old
+    /// Split(',') + Trim('"') shredded any title like "Fix, quickly" into two
+    /// columns and left stray quotes on the rest.
+    /// </summary>
+    private static List<string> SplitCsvRow(string line)
+    {
+        var fields = new List<string>();
+        var current = new StringBuilder();
+        var inQuotes = false;
+
+        for (var i = 0; i < line.Length; i++)
+        {
+            var c = line[i];
+
+            if (c == '"')
+            {
+                if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+                {
+                    current.Append('"');
+                    i++;
+                }
+                else
+                {
+                    inQuotes = !inQuotes;
+                }
+            }
+            else if (c == ',' && !inQuotes)
+            {
+                fields.Add(current.ToString());
+                current.Clear();
+            }
+            else
+            {
+                current.Append(c);
+            }
+        }
+
+        fields.Add(current.ToString());
+        return fields;
     }
 
     private async Task<IActionResult> ProcessImport(
