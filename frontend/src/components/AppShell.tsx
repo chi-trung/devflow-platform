@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -53,6 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerRef = useRef<HTMLElement>(null);
   // Desktop-only: collapse the sidebar into a narrow icon rail. Remembered
   // across reloads; the mobile drawer is unaffected (see aside className).
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -116,12 +117,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!drawerOpen) return;
+    // The drawer is the app's modal on mobile and the rest of the chrome is
+    // inert while it is open (see the header/main/nav inert={drawerOpen});
+    // moving focus inside it stops keyboard users from being stranded on
+    // body, and returning focus on close mirrors the Dialog primitive.
+    const previous = document.activeElement as HTMLElement | null;
+    drawerRef.current
+      ?.querySelector<HTMLElement>("a[href], button:not([disabled])")
+      ?.focus();
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setDrawerOpen(false);
     }
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      previous?.focus();
+    };
   }, [drawerOpen]);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    // Crossing into the lg breakpoint while the drawer is open would strand
+    // the background inert with no visible way to close it (the desktop rail
+    // ignores drawerOpen, and the overlay is lg:hidden). Close on the way up.
+    const desktop = window.matchMedia("(min-width: 64rem)");
+    function onChange(event: MediaQueryListEvent) {
+      if (event.matches) setDrawerOpen(false);
+    }
+    desktop.addEventListener("change", onChange);
+    return () => desktop.removeEventListener("change", onChange);
+  }, []);
 
   useEffect(() => {
     const match = location.pathname.match(
@@ -360,6 +385,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-dvh overflow-hidden">
       <aside
+        ref={drawerRef}
         className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface transition-[transform,visibility] duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
           collapsed ? "lg:w-[72px]" : "lg:w-60"
         } ${
@@ -607,7 +633,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      <header className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-border bg-surface px-4 py-3 lg:hidden">
+      {/* When the drawer is open it is the app's modal: inert keeps header,
+          page content, and the bottom bar out of the tab order and hides them
+          from assistive tech, so keyboard focus stays inside the drawer.
+          Portals to document.body (dropdown panels, command palette) are not
+          inside these elements and remain reachable. */}
+      <header inert={drawerOpen} className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-border bg-surface px-4 py-3 lg:hidden">
         <div className="flex items-center gap-1.5">
           <button
             type="button"
@@ -630,12 +661,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="min-w-0 flex-1 overflow-y-auto pt-14 pb-16 lg:pt-0 lg:pb-0">
+      <main inert={drawerOpen} className="min-w-0 flex-1 overflow-y-auto pt-14 pb-16 lg:pt-0 lg:pb-0">
         {children}
       </main>
 
       <nav
         aria-label={t("ui.primaryNavAria")}
+        inert={drawerOpen}
         className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
       >
         {mobileNavItems.map(({ key, label, icon: Icon, active, onClick }) => (

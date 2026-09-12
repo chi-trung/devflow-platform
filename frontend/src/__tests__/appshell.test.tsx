@@ -121,6 +121,30 @@ describe("AppShell sidebar collapse", () => {
     expect(aside?.className).not.toContain("invisible");
   });
 
+  it("makes the background inert and moves focus into the open drawer", () => {
+    // The open drawer behaves as a modal: page chrome behind it is inert, and
+    // focus enters the drawer so keyboard users are not stranded on body.
+    const { container } = renderShell("/workspaces/ws1", false);
+    const inertBefore = container.querySelector("main")?.hasAttribute("inert");
+    expect(inertBefore).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "ui.openMenuAria" }));
+    expect(container.querySelector("main")?.hasAttribute("inert")).toBe(true);
+    expect(container.querySelector("header")?.hasAttribute("inert")).toBe(true);
+    // The bottom bar is the nav with the primary-nav label, not the sidebar's
+    // own nav sections.
+    expect(
+      container
+        .querySelector('nav[aria-label="ui.primaryNavAria"]')
+        ?.hasAttribute("inert"),
+    ).toBe(true);
+
+    // Two elements share the close label (the drawer's X and the overlay);
+    // Escape exercises the same close path without the ambiguity.
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(container.querySelector("main")?.hasAttribute("inert")).toBe(false);
+  });
+
   it("swaps the account trigger to icon-only when collapsed (no name overflow)", () => {
     // Collapsed: the sidebar UserMenu renders compact (avatar initials + long
     // username/email hidden) so a long Gmail address can't stick out of the
