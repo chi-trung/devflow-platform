@@ -1529,7 +1529,9 @@
   "saving": "Saving…",
   "close": "Close",
   "edit": "Edit",
-  "refresh": "Refresh"
+  "refresh": "Refresh",
+  "loadError": "A new version just shipped. Reload to get it.",
+  "unexpectedError": "Something broke while rendering this page."
  },
  "graph": {
   "aria": "Dependency graph",

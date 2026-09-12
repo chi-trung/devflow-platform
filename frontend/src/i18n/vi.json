@@ -1529,7 +1529,9 @@
   "saving": "Đang lưu…",
   "close": "Đóng",
   "edit": "Sửa",
-  "refresh": "Làm mới"
+  "refresh": "Làm mới",
+  "loadError": "Phiên bản mới vừa được phát hành. Tải lại để nhận bản mới.",
+  "unexpectedError": "Có lỗi xảy ra khi hiển thị trang này."
  },
  "graph": {
   "aria": "Biểu đồ phụ thuộc",

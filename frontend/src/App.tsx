@@ -1,40 +1,115 @@
 import { lazy, Suspense, useEffect } from "react";
-import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  useParams,
+  useLocation,
+} from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { RequireAuth } from "./auth/RequireAuth";
 import { ToastProvider } from "./components/ui/ToastProvider";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
 import { API_BASE } from "./lib/api";
 
-const LandingPage = lazy(() => import("./pages/LandingPage").then(m => ({ default: m.LandingPage })));
-const ChangelogPage = lazy(() => import("./pages/ChangelogPage").then(m => ({ default: m.ChangelogPage })));
-const BlogPage = lazy(() => import("./pages/BlogPage").then(m => ({ default: m.BlogPage })));
-const PrivacyPage = lazy(() => import("./pages/LegalPages").then(m => ({ default: m.PrivacyPage })));
-const TermsPage = lazy(() => import("./pages/LegalPages").then(m => ({ default: m.TermsPage })));
-const LoginPage = lazy(() => import("./pages/LoginPage").then(m => ({ default: m.LoginPage })));
-const RegisterPage = lazy(() => import("./pages/RegisterPage").then(m => ({ default: m.RegisterPage })));
-const DashboardPage = lazy(() => import("./pages/DashboardPage").then(m => ({ default: m.DashboardPage })));
-const ProfilePage = lazy(() => import("./pages/ProfilePage").then(m => ({ default: m.ProfilePage })));
-const SettingsPage = lazy(() => import("./pages/SettingsPage").then(m => ({ default: m.SettingsPage })));
-const WorkspacePage = lazy(() => import("./pages/WorkspacePage").then(m => ({ default: m.WorkspacePage })));
-const BoardPage = lazy(() => import("./pages/BoardPage").then(m => ({ default: m.BoardPage })));
-const SprintPlanningPage = lazy(() => import("./pages/SprintPlanningPage").then(m => ({ default: m.SprintPlanningPage })));
-const ReportsPage = lazy(() => import("./pages/ReportsPage").then(m => ({ default: m.ReportsPage })));
-const SavedSearchesPage = lazy(() => import("./pages/SavedSearchesPage").then(m => ({ default: m.SavedSearchesPage })));
-const EpicsPage = lazy(() => import("./pages/EpicsPage").then(m => ({ default: m.EpicsPage })));
-const MilestonesPage = lazy(() => import("./pages/MilestonesPage").then(m => ({ default: m.MilestonesPage })));
-const KnowledgePage = lazy(() => import("./pages/KnowledgePage").then(m => ({ default: m.KnowledgePage })));
-const LabelsPage = lazy(() => import("./pages/LabelsPage").then(m => ({ default: m.LabelsPage })));
-const CustomFieldsPage = lazy(() => import("./pages/CustomFieldsPage").then(m => ({ default: m.CustomFieldsPage })));
-const TemplatesPage = lazy(() => import("./pages/TemplatesPage").then(m => ({ default: m.TemplatesPage })));
-const WebhooksPage = lazy(() => import("./pages/WebhooksPage").then(m => ({ default: m.WebhooksPage })));
-const GitHubPage = lazy(() => import("./pages/GitHubPage").then(m => ({ default: m.GitHubPage })));
-const ActivitiesPage = lazy(() => import("./pages/ActivitiesPage").then(m => ({ default: m.ActivitiesPage })));
-const SearchPage = lazy(() => import("./pages/SearchPage").then(m => ({ default: m.SearchPage })));
-const MyTasksPage = lazy(() => import("./pages/MyTasksPage").then(m => ({ default: m.MyTasksPage })));
-const NotificationsPage = lazy(() => import("./pages/NotificationsPage").then(m => ({ default: m.NotificationsPage })));
-const ProjectSettingsPage = lazy(() => import("./pages/ProjectSettingsPage").then(m => ({ default: m.ProjectSettingsPage })));
-const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
+const LandingPage = lazy(() =>
+  import("./pages/LandingPage").then((m) => ({ default: m.LandingPage })),
+);
+const ChangelogPage = lazy(() =>
+  import("./pages/ChangelogPage").then((m) => ({ default: m.ChangelogPage })),
+);
+const BlogPage = lazy(() =>
+  import("./pages/BlogPage").then((m) => ({ default: m.BlogPage })),
+);
+const PrivacyPage = lazy(() =>
+  import("./pages/LegalPages").then((m) => ({ default: m.PrivacyPage })),
+);
+const TermsPage = lazy(() =>
+  import("./pages/LegalPages").then((m) => ({ default: m.TermsPage })),
+);
+const LoginPage = lazy(() =>
+  import("./pages/LoginPage").then((m) => ({ default: m.LoginPage })),
+);
+const RegisterPage = lazy(() =>
+  import("./pages/RegisterPage").then((m) => ({ default: m.RegisterPage })),
+);
+const DashboardPage = lazy(() =>
+  import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })),
+);
+const ProfilePage = lazy(() =>
+  import("./pages/ProfilePage").then((m) => ({ default: m.ProfilePage })),
+);
+const SettingsPage = lazy(() =>
+  import("./pages/SettingsPage").then((m) => ({ default: m.SettingsPage })),
+);
+const WorkspacePage = lazy(() =>
+  import("./pages/WorkspacePage").then((m) => ({ default: m.WorkspacePage })),
+);
+const BoardPage = lazy(() =>
+  import("./pages/BoardPage").then((m) => ({ default: m.BoardPage })),
+);
+const SprintPlanningPage = lazy(() =>
+  import("./pages/SprintPlanningPage").then((m) => ({
+    default: m.SprintPlanningPage,
+  })),
+);
+const ReportsPage = lazy(() =>
+  import("./pages/ReportsPage").then((m) => ({ default: m.ReportsPage })),
+);
+const SavedSearchesPage = lazy(() =>
+  import("./pages/SavedSearchesPage").then((m) => ({
+    default: m.SavedSearchesPage,
+  })),
+);
+const EpicsPage = lazy(() =>
+  import("./pages/EpicsPage").then((m) => ({ default: m.EpicsPage })),
+);
+const MilestonesPage = lazy(() =>
+  import("./pages/MilestonesPage").then((m) => ({ default: m.MilestonesPage })),
+);
+const KnowledgePage = lazy(() =>
+  import("./pages/KnowledgePage").then((m) => ({ default: m.KnowledgePage })),
+);
+const LabelsPage = lazy(() =>
+  import("./pages/LabelsPage").then((m) => ({ default: m.LabelsPage })),
+);
+const CustomFieldsPage = lazy(() =>
+  import("./pages/CustomFieldsPage").then((m) => ({
+    default: m.CustomFieldsPage,
+  })),
+);
+const TemplatesPage = lazy(() =>
+  import("./pages/TemplatesPage").then((m) => ({ default: m.TemplatesPage })),
+);
+const WebhooksPage = lazy(() =>
+  import("./pages/WebhooksPage").then((m) => ({ default: m.WebhooksPage })),
+);
+const GitHubPage = lazy(() =>
+  import("./pages/GitHubPage").then((m) => ({ default: m.GitHubPage })),
+);
+const ActivitiesPage = lazy(() =>
+  import("./pages/ActivitiesPage").then((m) => ({ default: m.ActivitiesPage })),
+);
+const SearchPage = lazy(() =>
+  import("./pages/SearchPage").then((m) => ({ default: m.SearchPage })),
+);
+const MyTasksPage = lazy(() =>
+  import("./pages/MyTasksPage").then((m) => ({ default: m.MyTasksPage })),
+);
+const NotificationsPage = lazy(() =>
+  import("./pages/NotificationsPage").then((m) => ({
+    default: m.NotificationsPage,
+  })),
+);
+const ProjectSettingsPage = lazy(() =>
+  import("./pages/ProjectSettingsPage").then((m) => ({
+    default: m.ProjectSettingsPage,
+  })),
+);
+const NotFoundPage = lazy(() =>
+  import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })),
+);
 
 function LoadingFallback() {
   return (
@@ -95,90 +170,102 @@ export default function App() {
         <ScrollToTop />
         <BackendWarmer />
         <ToastProvider>
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              <Route path="/" element={<HomeRoute />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/changelog" element={<ChangelogPage />} />
-              <Route path="/blog" element={<BlogPage />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route element={<RequireAuth />}>
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/notifications" element={<NotificationsPage />} />
-                <Route path="/saved-searches" element={<SavedSearchesPage />} />
-                <Route
-                  path="/workspaces/:workspaceId"
-                  element={<KeyedWorkspacePage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/projects/:projectId"
-                  element={<BoardPage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/projects/:projectId/sprints"
-                  element={<SprintPlanningPage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/projects/:projectId/reports"
-                  element={<ReportsPage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/projects/:projectId/epics"
-                  element={<EpicsPage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/projects/:projectId/milestones"
-                  element={<MilestonesPage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/projects/:projectId/knowledge"
-                  element={<KnowledgePage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/projects/:projectId/labels"
-                  element={<LabelsPage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/projects/:projectId/fields"
-                  element={<CustomFieldsPage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/projects/:projectId/templates"
-                  element={<TemplatesPage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/webhooks"
-                  element={<WebhooksPage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/projects/:projectId/github"
-                  element={<GitHubPage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/projects/:projectId/activities"
-                  element={<ActivitiesPage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/projects/:projectId/settings"
-                  element={<ProjectSettingsPage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/my-tasks"
-                  element={<MyTasksPage />}
-                />
-                <Route
-                  path="/workspaces/:workspaceId/search"
-                  element={<SearchPage />}
-                />
-              </Route>
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </Suspense>
+          {/* Keyed by pathname: once the visitor navigates away from the
+              route that threw, remount so a failed chunk can be retried on
+              the next visit instead of staying stuck on the fallback. */}
+          <RoutedBoundary />
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
+  );
+}
+
+function RoutedBoundary() {
+  const { pathname } = useLocation();
+  return (
+    <RouteErrorBoundary key={pathname}>
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route path="/" element={<HomeRoute />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/changelog" element={<ChangelogPage />} />
+          <Route path="/blog" element={<BlogPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route element={<RequireAuth />}>
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/saved-searches" element={<SavedSearchesPage />} />
+            <Route
+              path="/workspaces/:workspaceId"
+              element={<KeyedWorkspacePage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId"
+              element={<BoardPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId/sprints"
+              element={<SprintPlanningPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId/reports"
+              element={<ReportsPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId/epics"
+              element={<EpicsPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId/milestones"
+              element={<MilestonesPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId/knowledge"
+              element={<KnowledgePage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId/labels"
+              element={<LabelsPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId/fields"
+              element={<CustomFieldsPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId/templates"
+              element={<TemplatesPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/webhooks"
+              element={<WebhooksPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId/github"
+              element={<GitHubPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId/activities"
+              element={<ActivitiesPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId/settings"
+              element={<ProjectSettingsPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/my-tasks"
+              element={<MyTasksPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/search"
+              element={<SearchPage />}
+            />
+          </Route>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+    </RouteErrorBoundary>
   );
 }
