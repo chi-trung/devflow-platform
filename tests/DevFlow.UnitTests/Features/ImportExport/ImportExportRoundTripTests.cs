@@ -147,6 +147,8 @@ public class ImportExportRoundTripTests
             .Returns(Array.Empty<Sprint>());
 
         var comment = Comment.Create(task.Id, Guid.NewGuid(), "This is a test comment");
+        var commentTime = new DateTimeOffset(2026, 2, 3, 10, 0, 0, TimeSpan.Zero);
+        comment.CreatedAtUtc = commentTime;
         _commentRepository.GetForTaskAsync(task.Id, Arg.Any<CancellationToken>())
             .Returns(new[] { comment });
 
@@ -182,6 +184,9 @@ public class ImportExportRoundTripTests
         Assert.Equal(1, importResult.CommentsImported);
         Assert.Single(importedComments);
         Assert.Equal("This is a test comment", importedComments[0].Content);
+        // Without the restore, Comment.Create re-stamps "now" and the
+        // conversation's original dates (and order) are silently lost.
+        Assert.Equal(commentTime, importedComments[0].CreatedAtUtc);
     }
 
     [Fact]

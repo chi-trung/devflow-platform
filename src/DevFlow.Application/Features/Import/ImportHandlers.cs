@@ -241,6 +241,9 @@ public class ImportProjectBackupHandler(
                     commentData.AuthorId,
                     commentData.Content);
                 EntityIdSetter.SetId(comment, Guid.NewGuid());
+                // Comment.Create stamps "now"; restore the exported timestamp
+                // so the conversation keeps its original order and dates.
+                comment.CreatedAtUtc = commentData.CreatedAtUtc;
 
                 await commentRepository.AddAsync(comment, ct);
                 importedComments++;
