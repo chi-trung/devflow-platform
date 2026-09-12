@@ -1100,8 +1100,7 @@
  "notFound": {
   "error404": "Lỗi 404",
   "title": "Trang này đã trôi khỏi bảng",
-  "description": "Trang bạn tìm không tồn tại hoặc có thể đã bị di chuyển.",
-  "backToDashboard": "Quay lại tổng quan"
+  "description": "Trang bạn tìm không tồn tại hoặc có thể đã bị di chuyển."
  },
  "auth": {
   "login": "Đăng nhập",

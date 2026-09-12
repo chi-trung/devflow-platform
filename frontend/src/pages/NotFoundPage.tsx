@@ -26,7 +26,10 @@ export function NotFoundPage() {
       <Link to="/" className="mt-6">
         <Button>
           <Home className="size-4" aria-hidden />
-          {t("notFound.backToDashboard")}
+          {/* "/" is the landing page for visitors and the dashboard for
+              members, so a 404 button that promises "dashboard" lies to
+              most people who see it. The icon already says home. */}
+          {t("nav.home")}
         </Button>
       </Link>
     </div>
