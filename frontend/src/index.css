@@ -270,6 +270,13 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+  /* The universal selector above can't reach the html element's own
+     scroll-behavior: smooth (line 114), and the "*" rule would fight it for
+     specificity anyway. Visitors asking for reduced motion get instant jumps
+     instead of the animated scroll. */
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* Thin, invisible horizontal scroll row — used for the board header nav links

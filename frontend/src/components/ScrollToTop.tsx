@@ -22,7 +22,16 @@ export function ScrollToTop() {
     const tryScroll = () => {
       const el = document.getElementById(id);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        // An explicit behavior option overrides index.css's scroll-behavior,
+        // so honor a reduced-motion request here too instead of relying on the
+        // stylesheet.
+        const reduce = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+        el.scrollIntoView({
+          behavior: reduce ? "auto" : "smooth",
+          block: "start",
+        });
         return;
       }
       if (performance.now() < deadline) raf = requestAnimationFrame(tryScroll);
