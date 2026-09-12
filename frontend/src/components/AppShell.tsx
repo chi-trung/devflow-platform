@@ -395,6 +395,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </a>
       <aside
         ref={drawerRef}
+        role={drawerOpen ? "dialog" : undefined}
+        aria-modal={drawerOpen ? true : undefined}
+        aria-label={drawerOpen ? t("ui.menuDialogAria") : undefined}
         className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
           collapsed ? "lg:w-[72px]" : "lg:w-60"
         } ${

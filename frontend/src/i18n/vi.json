@@ -1580,6 +1580,7 @@
   "openMenuAria": "Mở menu",
   "closeMenuAria": "Đóng menu",
   "primaryNavAria": "Điều hướng chính",
+  "menuDialogAria": "Menu",
   "skipToContent": "Bỏ qua tới nội dung",
   "emojiPicker": {
    "label": "Chọn emoji",

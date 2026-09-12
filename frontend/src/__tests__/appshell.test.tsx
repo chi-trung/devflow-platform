@@ -156,6 +156,22 @@ describe("AppShell sidebar collapse", () => {
     expect(aside?.contains(document.activeElement)).toBe(false);
   });
 
+  it("announces the open drawer as a modal dialog", () => {
+    // Inert hides the background from assistive tech, but the drawer itself
+    // must announce as dialog + aria-modal or screen readers keep browsing
+    // the page around it. The desktop rail (drawer closed) is a landmark,
+    // not a dialog, so the role must disappear with the open state.
+    const { container } = renderShell("/workspaces/ws1", false);
+    const aside = container.querySelector("aside");
+    expect(aside?.getAttribute("role")).toBeNull();
+    expect(aside?.hasAttribute("aria-modal")).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "ui.openMenuAria" }));
+    expect(aside?.getAttribute("role")).toBe("dialog");
+    expect(aside?.getAttribute("aria-modal")).toBe("true");
+    expect(aside?.getAttribute("aria-label")).toBe("ui.menuDialogAria");
+  });
+
   it("wires the skip-to-content link to the main region", () => {
     // WCAG 2.4.1: keyboard users must be able to jump past the nav chrome.
     const { container } = renderShell("/workspaces/ws1", false);
