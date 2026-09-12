@@ -67,7 +67,8 @@ export function LandingPage() {
         ]}
       />
 
-      <main className="flex-1">
+      {/* Skip-link target (see PublicChrome): focus lands here, not just scroll. */}
+      <main id="devflow-content" tabIndex={-1} className="flex-1 outline-none">
         {/* ─── Hero ─── */}
         <section className="relative overflow-hidden border-b border-border">
           {/* Background gradient decoration */}

@@ -33,7 +33,8 @@ export function ChangelogPage() {
     <div className="flex min-h-dvh flex-col bg-background text-foreground overflow-x-clip">
       <PublicHeader />
 
-      <main className="flex-1">
+      {/* Skip-link target (see PublicChrome): focus lands here, not just scroll. */}
+      <main id="devflow-content" tabIndex={-1} className="flex-1 outline-none">
         {/* ─── Hero ─── */}
         <section className="relative overflow-hidden border-b border-border">
           <div

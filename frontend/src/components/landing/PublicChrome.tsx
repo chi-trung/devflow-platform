@@ -15,7 +15,17 @@ export function PublicHeader({
 }) {
   const { t } = useTranslation();
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+    <>
+      {/* First tab stop on every public page: jumps past the header nav and
+          CTAs into the page (WCAG 2.4.1), visible only while focused. The
+          target lives on each page's <main id="devflow-content">. */}
+      <a
+        href="#devflow-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:rounded-lg focus:border focus:border-border focus:bg-surface focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground"
+      >
+        {t("ui.skipToContent")}
+      </a>
+      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <Logo to="/" size="md" wordmarkHideBelow="sm" />
 
@@ -56,6 +66,7 @@ export function PublicHeader({
         </div>
       </div>
     </header>
+    </>
   );
 }
 
