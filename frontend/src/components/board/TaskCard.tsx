@@ -178,6 +178,7 @@ export function TaskCard({
           ? "border-primary ring-1 ring-primary/40"
           : "border-border hover:border-border-strong"
       }`}
+      role="group"
       aria-label={t("taskCard.aria", { title: task.title })}
     >
       <div className="flex items-start justify-between gap-2">
@@ -200,7 +201,21 @@ export function TaskCard({
             {selected && <Check className="size-3" strokeWidth={3} aria-hidden />}
           </button>
         )}
-        <p className="min-w-0 flex-1 text-sm font-medium leading-snug truncate">{task.title}</p>
+        {/* The card div is mouse-clickable but not focusable, so the title
+            carries the keyboard entry point: Tab reaches it and Enter/Space
+            open the detail panel through the same onSelect the card click
+            uses. stopPropagation keeps the parent click handler from firing
+            a second time. */}
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onSelect(task.id);
+          }}
+          className="min-w-0 flex-1 cursor-pointer truncate rounded text-left text-sm font-medium leading-snug focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+        >
+          {task.title}
+        </button>
         {taskKey && (
           <button
             type="button"
