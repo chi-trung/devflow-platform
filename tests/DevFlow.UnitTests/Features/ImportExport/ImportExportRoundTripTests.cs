@@ -185,6 +185,70 @@ public class ImportExportRoundTripTests
     }
 
     [Fact]
+    public async Task RoundTrip_ShouldPreserveDueDatesAndSprintLifecycle()
+    {
+        // The original round-trip test only carried plain tasks and a Planned
+        // sprint, so the import silently dropping task DueDateUtc and the
+        // sprint Status/StartDate/EndDate/CompletedAt went unnoticed.
+        var due = new DateTimeOffset(2026, 3, 15, 9, 0, 0, TimeSpan.Zero);
+        var task = TaskItem.Create(_projectId, "Deadline task", null, TaskItemPriority.High);
+        task.UpdateDetails("Deadline task", null, TaskItemPriority.High, due);
+
+        _taskItemRepository.GetForProjectAsync(_projectId, null, Arg.Any<CancellationToken>())
+            .Returns(new[] { task });
+        _epicRepository.GetForProjectAsync(_projectId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Epic>());
+
+        var start = new DateTimeOffset(2026, 1, 5, 0, 0, 0, TimeSpan.Zero);
+        var end = new DateTimeOffset(2026, 1, 19, 0, 0, 0, TimeSpan.Zero);
+        var sprint = Sprint.Create(_projectId, "Sprint 7", "Ship it");
+        sprint.Start(start, end);
+        sprint.Complete();
+        _sprintRepository.GetForProjectAsync(_projectId, Arg.Any<CancellationToken>())
+            .Returns(new[] { sprint });
+
+        _commentRepository.GetForTaskAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Comment>());
+
+        var exportHandler = new ExportProjectBackupHandler(
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository);
+
+        var exportResult = await exportHandler.Handle(
+            new ExportProjectBackupQuery(_workspaceId, _projectId, "json"),
+            CancellationToken.None);
+        var json = System.Text.Encoding.UTF8.GetString(exportResult.Data);
+
+        var newProjectId = Guid.NewGuid();
+        var newProject = Project.Create(_workspaceId, "Restored", "RS", null);
+        IdProperty.SetValue(newProject, newProjectId);
+        _projectRepository.GetByIdAsync(newProjectId, Arg.Any<CancellationToken>())
+            .Returns(newProject);
+
+        var importedTasks = new List<TaskItem>();
+        var importedSprints = new List<Sprint>();
+        _taskItemRepository.When(x => x.AddAsync(Arg.Any<TaskItem>(), Arg.Any<CancellationToken>()))
+            .Do(x => importedTasks.Add(x.Arg<TaskItem>()));
+        _sprintRepository.When(x => x.AddAsync(Arg.Any<Sprint>(), Arg.Any<CancellationToken>()))
+            .Do(x => importedSprints.Add(x.Arg<Sprint>()));
+
+        var importHandler = new ImportProjectBackupHandler(
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository, _unitOfWork);
+
+        var importResult = await importHandler.Handle(
+            new ImportProjectBackupCommand(_workspaceId, newProjectId, json),
+            CancellationToken.None);
+
+        Assert.Empty(importResult.Errors);
+        Assert.Equal(due, Assert.Single(importedTasks).DueDateUtc);
+
+        var restored = Assert.Single(importedSprints);
+        Assert.Equal(SprintStatus.Completed, restored.Status);
+        Assert.Equal(start, restored.StartDateUtc);
+        Assert.Equal(end, restored.EndDateUtc);
+        Assert.Equal(sprint.CompletedAtUtc, restored.CompletedAtUtc);
+    }
+
+    [Fact]
     public async Task Import_ShouldReturnError_WhenJsonIsInvalid()
     {
         _projectRepository.GetByIdAsync(_projectId, Arg.Any<CancellationToken>())

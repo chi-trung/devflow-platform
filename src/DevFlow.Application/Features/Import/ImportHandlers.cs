@@ -106,6 +106,17 @@ public class ImportProjectBackupHandler(
                     sprintData.Goal);
                 EntityIdSetter.SetId(sprint, newSprintId);
 
+                // The export carries the sprint's real lifecycle; without this
+                // every restored sprint collapses to Planned with null dates.
+                if (Enum.TryParse<SprintStatus>(sprintData.Status, true, out var sprintStatus))
+                {
+                    sprint.RestoreLifecycle(
+                        sprintStatus,
+                        sprintData.StartDateUtc,
+                        sprintData.EndDateUtc,
+                        sprintData.CompletedAtUtc);
+                }
+
                 await sprintRepository.AddAsync(sprint, ct);
                 importedSprints++;
             }
@@ -173,6 +184,13 @@ public class ImportProjectBackupHandler(
                 if (taskData.EstimateMinutes.HasValue)
                 {
                     task.SetEstimate(taskData.EstimateMinutes);
+                }
+
+                // Exported but previously never read back — restored tasks
+                // silently lost their deadline.
+                if (taskData.DueDateUtc.HasValue)
+                {
+                    task.SetDueDate(taskData.DueDateUtc);
                 }
 
                 task.Position = taskData.Position;

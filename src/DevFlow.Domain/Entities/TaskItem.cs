@@ -190,4 +190,6 @@ public class TaskItem : BaseEntity, IAuditableEntity, ISoftDeletable
     public void DetachFromParent() => ParentTaskId = null;
 
     public void SetStoryPoints(int? storyPoints) => StoryPoints = storyPoints;
+
+    public void SetDueDate(DateTimeOffset? dueDateUtc) => DueDateUtc = dueDateUtc;
 }

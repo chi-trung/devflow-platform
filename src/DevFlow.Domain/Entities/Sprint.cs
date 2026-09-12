@@ -83,4 +83,22 @@ public class Sprint : BaseEntity, IAuditableEntity
         Status = SprintStatus.Completed;
         CompletedAtUtc = DateTimeOffset.UtcNow;
     }
+
+    /// <summary>
+    /// Restores a sprint's lifecycle verbatim from a backup. Deliberately
+    /// bypasses the Start/Complete state machine: those derive timestamps from
+    /// the wall clock and reject out-of-order transitions, so replaying a
+    /// historical sprint through them would rewrite its dates to "now" or throw.
+    /// </summary>
+    public void RestoreLifecycle(
+        SprintStatus status,
+        DateTimeOffset? startDateUtc,
+        DateTimeOffset? endDateUtc,
+        DateTimeOffset? completedAtUtc)
+    {
+        Status = status;
+        StartDateUtc = startDateUtc;
+        EndDateUtc = endDateUtc;
+        CompletedAtUtc = completedAtUtc;
+    }
 }
