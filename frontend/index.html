@@ -131,6 +131,32 @@
         <div id="splash-spinner" aria-hidden="true"></div>
       </div>
     </div>
+    <script>
+      // Boot watchdog. The route error boundary ships inside the bundle, so
+      // it cannot help when the bundle itself never runs (offline mid-load of
+      // a stale chunk, blocked script). When React mounts it replaces
+      // #splash's contents, so a splash still present after 12s means boot
+      // failed. Swap the spinner for a reload prompt instead of spinning
+      // forever. Kept inline and dependency-free on purpose: everything it
+      // needs is already parsed at this point.
+      setTimeout(function () {
+        var splash = document.getElementById("splash");
+        if (!splash) return;
+        // The splash paints #f5f7fa behind html.light, so pick readable
+        // text colors per theme instead of hardcoding the dark palette.
+        var light = document.documentElement.classList.contains("light");
+        splash.innerHTML =
+          '<div style="text-align:center;padding:24px;max-width:320px">' +
+          '<p style="margin:0;font:600 16px/1.5 system-ui;color:' +
+          (light ? "#16212c" : "#e6edf3") +
+          '">DevFlow could not start</p>' +
+          '<p style="margin:8px 0 0;font:13px/1.5 system-ui;color:' +
+          (light ? "#5b6b7d" : "#93a4b8") +
+          '">A connection problem stopped the app from loading.</p>' +
+          '<button style="margin-top:16px;padding:8px 18px;border-radius:8px;border:1px solid #14b8a6;background:#14b8a6;color:#04211e;font:600 14px system-ui;cursor:pointer" onclick="location.reload()">Try again</button>' +
+          "</div>";
+      }, 12000);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
