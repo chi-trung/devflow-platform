@@ -128,7 +128,11 @@ describe("AppShell sidebar collapse", () => {
     const inertBefore = container.querySelector("main")?.hasAttribute("inert");
     expect(inertBefore).toBe(false);
 
-    fireEvent.click(screen.getByRole("button", { name: "ui.openMenuAria" }));
+    // A real click focuses the trigger first; jsdom's fireEvent does not, so
+    // focus it explicitly to also exercise the restore-on-close path.
+    const trigger = screen.getByRole("button", { name: "ui.openMenuAria" });
+    trigger.focus();
+    fireEvent.click(trigger);
     expect(container.querySelector("main")?.hasAttribute("inert")).toBe(true);
     expect(container.querySelector("header")?.hasAttribute("inert")).toBe(true);
     // The bottom bar is the nav with the primary-nav label, not the sidebar's
@@ -139,10 +143,17 @@ describe("AppShell sidebar collapse", () => {
         ?.hasAttribute("inert"),
     ).toBe(true);
 
+    // Focus must land on a control inside the drawer, not stay on body — the
+    // prod bug was focus() running while the element was still transition-
+    // hidden, which silently no-ops.
+    const aside = container.querySelector("aside");
+    expect(aside?.contains(document.activeElement)).toBe(true);
+
     // Two elements share the close label (the drawer's X and the overlay);
     // Escape exercises the same close path without the ambiguity.
     fireEvent.keyDown(window, { key: "Escape" });
     expect(container.querySelector("main")?.hasAttribute("inert")).toBe(false);
+    expect(aside?.contains(document.activeElement)).toBe(false);
   });
 
   it("swaps the account trigger to icon-only when collapsed (no name overflow)", () => {

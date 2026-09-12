@@ -386,13 +386,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex h-dvh overflow-hidden">
       <aside
         ref={drawerRef}
-        className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface transition-[transform,visibility] duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
+        className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
           collapsed ? "lg:w-[72px]" : "lg:w-60"
         } ${
           drawerOpen
-            ? "translate-x-0 shadow-[0_24px_80px_rgba(0,0,0,0.7)] lg:shadow-none"
-            : "-translate-x-full invisible lg:visible"
+            ? "translate-x-0 transition-transform shadow-[0_24px_80px_rgba(0,0,0,0.7)] lg:shadow-none"
+            : "-translate-x-full invisible lg:visible transition-[transform,visibility]"
         }`}
+        /* The open state drops visibility from the transition list on
+           purpose: discrete properties flip at the halfway point, so the
+           drawer would stay computed-hidden for ~150ms while the mount
+           effect already runs the focus move (see the drawerOpen effect). */
         /* Kept for dropdown menus (UserMenu, NotificationsPanel) anchored in
            the sidebar footer; see bf3155b. */
         style={{ overflow: 'visible' }}
