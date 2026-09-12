@@ -1,18 +1,19 @@
 using System.Text;
 using System.Text.Json;
-using DevFlow.Application.Common.Interfaces;
-using DevFlow.Domain.Enums;
+using DevFlow.Application.Features.Import;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DevFlow.Api.Controllers;
 
+// [Authorize] is load-bearing, not decoration: this controller has no
+// fallback auth policy, so before this attribute the import endpoints were
+// anonymous writes — anyone could create tasks in any project by id.
+[Authorize]
 [ApiController]
 [Route("api/v1/workspaces/{workspaceId:guid}/projects/{projectId:guid}/import")]
-public sealed class ImportController(
-    ITaskItemRepository taskItemRepository,
-    IUnitOfWork unitOfWork,
-    ISender sender) : ControllerBase
+public sealed class ImportController(ISender sender) : ControllerBase
 {
     [HttpPost("tasks")]
     [Consumes("application/json", "text/csv")]
@@ -27,10 +28,10 @@ public sealed class ImportController(
 
         if (contentType.Contains("text/csv"))
         {
-            return await ImportFromCsv(projectId, cancellationToken);
+            return await ImportFromCsv(workspaceId, projectId, cancellationToken);
         }
 
-        return await ImportFromJson(projectId, cancellationToken);
+        return await ImportFromJson(workspaceId, projectId, cancellationToken);
     }
 
     [HttpPost("backup")]
@@ -51,7 +52,7 @@ public sealed class ImportController(
         }
 
         var result = await sender.Send(
-            new Application.Features.Import.ImportProjectBackupCommand(workspaceId, projectId, body),
+            new ImportProjectBackupCommand(workspaceId, projectId, body),
             cancellationToken);
 
         return Ok(new ImportBackupResultResponse(
@@ -63,7 +64,7 @@ public sealed class ImportController(
             result.Errors));
     }
 
-    private async Task<IActionResult> ImportFromJson(Guid projectId, CancellationToken cancellationToken)
+    private async Task<IActionResult> ImportFromJson(Guid workspaceId, Guid projectId, CancellationToken cancellationToken)
     {
         using var reader = new StreamReader(Request.Body);
         var body = await reader.ReadToEndAsync(cancellationToken);
@@ -86,10 +87,10 @@ public sealed class ImportController(
             return BadRequest("No tasks to import.");
         }
 
-        return await ProcessImport(projectId, items, cancellationToken);
+        return await ProcessImport(workspaceId, projectId, items, cancellationToken);
     }
 
-    private async Task<IActionResult> ImportFromCsv(Guid projectId, CancellationToken cancellationToken)
+    private async Task<IActionResult> ImportFromCsv(Guid workspaceId, Guid projectId, CancellationToken cancellationToken)
     {
         using var reader = new StreamReader(Request.Body, Encoding.UTF8);
         var body = await reader.ReadToEndAsync(cancellationToken);
@@ -135,7 +136,7 @@ public sealed class ImportController(
             return BadRequest("No valid tasks found in CSV.");
         }
 
-        return await ProcessImport(projectId, items, cancellationToken);
+        return await ProcessImport(workspaceId, projectId, items, cancellationToken);
     }
 
     /// <summary>
@@ -231,63 +232,25 @@ public sealed class ImportController(
     }
 
     private async Task<IActionResult> ProcessImport(
+        Guid workspaceId,
         Guid projectId,
         List<ImportTaskItem> items,
         CancellationToken cancellationToken)
     {
-        int imported = 0;
-        int skipped = 0;
-        var errors = new List<string>();
-
-        foreach (var item in items)
-        {
-            if (string.IsNullOrWhiteSpace(item.Title))
-            {
-                skipped++;
-                continue;
-            }
-
-            // Backward-compat: pre-7-stage CSVs used "Backlog" — map it to the
-            // new default stage "Idea" so old exports still import cleanly.
-            var statusText = string.Equals(item.Status, "Backlog", StringComparison.OrdinalIgnoreCase)
-                ? nameof(TaskItemStatus.Idea)
-                : item.Status;
-
-            if (!Enum.TryParse<TaskItemStatus>(statusText, true, out var status))
-            {
-                errors.Add($"Invalid status '{item.Status}' for task '{item.Title}'.");
-                skipped++;
-                continue;
-            }
-
-            if (!Enum.TryParse<TaskItemPriority>(item.Priority, true, out var priority))
-            {
-                errors.Add($"Invalid priority '{item.Priority}' for task '{item.Title}'.");
-                skipped++;
-                continue;
-            }
-
-            var task = Domain.Entities.TaskItem.Create(
+        // The controller's only job is shape-agnostic parsing (CSV/JSON); the
+        // writes go through ImportTasksCommand so authorization (member-only),
+        // the project-to-workspace tenant check, cache invalidation and the
+        // realtime board-wake all apply. Previously this method created
+        // TaskItems through the repository directly from an unauthenticated
+        // endpoint that never looked at workspaceId.
+        var result = await sender.Send(
+            new ImportTasksCommand(
+                workspaceId,
                 projectId,
-                item.Title.Trim(),
-                item.Description?.Trim(),
-                priority);
+                items.Select(i => new ImportTaskRow(i.Title, i.Description, i.Status, i.Priority)).ToList()),
+            cancellationToken);
 
-            if (status != TaskItemStatus.Idea)
-            {
-                task.ChangeStatus(status);
-            }
-
-            await taskItemRepository.AddAsync(task, cancellationToken);
-            imported++;
-        }
-
-        if (imported > 0)
-        {
-            await unitOfWork.SaveChangesAsync(cancellationToken);
-        }
-
-        return Ok(new ImportResult(imported, skipped, errors));
+        return Ok(new ImportResult(result.Imported, result.Skipped, result.Errors));
     }
 
     public sealed class ImportTaskItem

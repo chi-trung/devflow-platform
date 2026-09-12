@@ -1,6 +1,8 @@
 using System.Text;
 using DevFlow.Api.Controllers;
+using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Import;
 using DevFlow.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -11,13 +13,33 @@ namespace DevFlow.UnitTests.Features.Import;
 
 public class ImportControllerCsvTests
 {
+    private readonly Project _project = Project.Create(Guid.NewGuid(), "Import Target", "IMP", null);
+    private readonly Guid _workspaceId;
+    private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ISender _sender = Substitute.For<ISender>();
 
+    public ImportControllerCsvTests()
+    {
+        _workspaceId = _project.WorkspaceId;
+        // The controller now parses only — the writes ride ImportTasksCommand.
+        // Route the sender through the real handler so these CSV round-trip
+        // assertions still exercise parse → TaskItem.Create end to end.
+        _projectRepository
+            .GetByIdAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(_project);
+
+        _sender
+            .Send(Arg.Any<IRequest<ImportTasksResult>>(), Arg.Any<CancellationToken>())
+            .Returns(ci => new ImportTasksCommandHandler(
+                    _projectRepository, _taskItemRepository, _unitOfWork)
+                .Handle((ImportTasksCommand)ci[0], CancellationToken.None));
+    }
+
     private ImportController BuildController(string csv)
     {
-        var controller = new ImportController(_taskItemRepository, _unitOfWork, _sender)
+        var controller = new ImportController(_sender)
         {
             ControllerContext = new ControllerContext
             {
@@ -45,7 +67,7 @@ public class ImportControllerCsvTests
             "1,\"Fix, quickly\",\"He said \"\"hi\"\"\",InProgress,High,,,\n";
 
         var result = await BuildController(csv)
-            .ImportTasks(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+            .ImportTasks(_workspaceId, _project.Id, CancellationToken.None);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var importResult = Assert.IsType<ImportController.ImportResult>(ok.Value);
@@ -69,7 +91,7 @@ public class ImportControllerCsvTests
             "1,\"Multi-line\",\"first\nsecond\",Idea,Medium,,,\n";
 
         var result = await BuildController(csv)
-            .ImportTasks(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+            .ImportTasks(_workspaceId, _project.Id, CancellationToken.None);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var importResult = Assert.IsType<ImportController.ImportResult>(ok.Value);
@@ -90,7 +112,7 @@ public class ImportControllerCsvTests
             "1,\"Ship it\",\"desc\",Idea,High,,,\r\n";
 
         var result = await BuildController(csv)
-            .ImportTasks(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+            .ImportTasks(_workspaceId, _project.Id, CancellationToken.None);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var importResult = Assert.IsType<ImportController.ImportResult>(ok.Value);
@@ -100,5 +122,22 @@ public class ImportControllerCsvTests
         await _taskItemRepository.Received(1).AddAsync(
             Arg.Is<TaskItem>(t => t.Priority == Domain.Enums.TaskItemPriority.High),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ImportFromCsv_ShouldRejectProjectFromAnotherWorkspace()
+    {
+        // The endpoint used to create tasks in ANY project id with no auth and
+        // no tenant check at all. The command now enforces
+        // project.WorkspaceId == route workspaceId.
+        var foreignWorkspaceId = Guid.NewGuid();
+        var csv = "Title,Status,Priority\n\"Alien task\",Idea,Medium\n";
+
+        var controller = BuildController(csv);
+
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            controller.ImportTasks(foreignWorkspaceId, _project.Id, CancellationToken.None));
+
+        await _taskItemRepository.DidNotReceiveWithAnyArgs().AddAsync(default!, default);
     }
 }
