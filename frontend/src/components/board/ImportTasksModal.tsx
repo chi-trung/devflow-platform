@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "r
 import { FileUp, X, ShieldAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { importTasks } from "../../lib/api";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 import type { ImportResultResponse } from "../../types/api";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
@@ -23,6 +24,7 @@ export function ImportTasksModal({
   isAdmin = false,
 }: ImportTasksModalProps) {
   const { t } = useTranslation();
+  const { ref: dialogRef, onKeyDown: trapTab } = useFocusTrap<HTMLDivElement>(true);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ImportResultResponse | null>(null);
@@ -69,9 +71,12 @@ export function ImportTasksModal({
         type="button"
         aria-label={t("board.closeAria")}
         onClick={onClose}
+        tabIndex={-1}
         className="absolute inset-0 cursor-default bg-black/50"
       />
       <div
+        ref={dialogRef}
+        onKeyDown={trapTab}
         role="dialog"
         aria-modal="true"
         aria-labelledby="import-tasks-title"

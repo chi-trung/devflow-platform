@@ -604,6 +604,7 @@ export function TaskDetailPanel({
         type="button"
         aria-label={t("board.closePanelAria")}
         onClick={onClose}
+        tabIndex={-1}
         className="absolute inset-0 cursor-default bg-foreground/20"
       />
 

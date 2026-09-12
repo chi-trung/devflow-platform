@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link2, Search, X } from "lucide-react";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 import {
   addTaskDependency,
   getProjectDependencyGraph,
@@ -159,6 +160,9 @@ export function GraphModal({
   onDependencyChanged,
 }: GraphModalProps) {
   const { t } = useTranslation();
+  // The graph is a modal: Tab stays inside it, focus lands on its first
+  // control when it opens, and close returns focus to the launcher.
+  const { ref: dialogRef, onKeyDown: trapTab } = useFocusTrap<HTMLDivElement>(true);
   const [graph, setGraph] = useState<ProjectDependencyGraphResponse | null>(
     null,
   );
@@ -416,15 +420,18 @@ export function GraphModal({
 
   return (
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-50"
       role="dialog"
       aria-modal="true"
       aria-label={t("graph.aria")}
+      onKeyDown={trapTab}
     >
       <button
         type="button"
         aria-label={t("graph.closeGraphAria")}
         onClick={onClose}
+        tabIndex={-1}
         className="absolute inset-0 cursor-default bg-foreground/30"
       />
       <div className="absolute left-1/2 top-1/2 flex max-h-[90vh] w-[min(96vw,1180px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-[0_0_60px_rgba(0,0,0,0.5)]">
