@@ -2,9 +2,11 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Compass, Home } from "lucide-react";
 import { Button } from "../components/ui/Button";
+import { usePageMeta } from "../lib/seo";
 
 export function NotFoundPage() {
   const { t } = useTranslation();
+  usePageMeta("notFound.title", "notFound.description");
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center p-6 text-center">
       <span className="mb-5 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
