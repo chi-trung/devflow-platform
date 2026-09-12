@@ -17,7 +17,13 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
   useEffect(() => {
     if (!open) return;
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key !== "Escape") return;
+      // Consume the keystroke. The page keeps window-level Escape handlers
+      // for its own layers, and this dialog sits on top of them: without
+      // the stop, one Escape closes the dialog and also reaches the page
+      // underneath, which can clear selection state and drop focus.
+      event.stopPropagation();
+      onClose();
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
