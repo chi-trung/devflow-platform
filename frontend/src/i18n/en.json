@@ -822,7 +822,7 @@
   "deleteEntryFailed": "Failed to delete entry.",
   "save": "Save",
   "loggedTotal": "{{time}} logged",
-  "estPrefix": "· est. {{time}}",
+  "estPrefix": "· est. {{points}} pts",
   "hoursAria": "Hours spent",
   "minutesAria": "Minutes spent",
   "deleteEntryAria": "Delete time entry"

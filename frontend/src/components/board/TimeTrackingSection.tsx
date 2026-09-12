@@ -79,8 +79,13 @@ export function TimeTrackingSection({
 
   useEffect(() => {
     if (!timerRunning) return;
+    // Recompute from the wall clock instead of accumulating +1 per tick:
+    // browsers throttle setInterval in hidden tabs to roughly once a minute,
+    // so tick counting silently under-records elapsed time by up to ~60x.
     const interval = window.setInterval(() => {
-      setElapsedSeconds((seconds) => seconds + 1);
+      if (startedAtRef.current != null) {
+        setElapsedSeconds(Math.floor((Date.now() - startedAtRef.current) / 1000));
+      }
     }, 1000);
     return () => window.clearInterval(interval);
   }, [timerRunning]);
@@ -93,7 +98,13 @@ export function TimeTrackingSection({
 
   function stopTimer() {
     setTimerRunning(false);
-    const totalMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
+    // Derive minutes from the wall clock, not from (possibly throttled-stale)
+    // elapsedSeconds state — the same silent under-recording failure mode.
+    const wallSeconds =
+      startedAtRef.current != null
+        ? Math.floor((Date.now() - startedAtRef.current) / 1000)
+        : elapsedSeconds;
+    const totalMinutes = Math.max(1, Math.round(wallSeconds / 60));
     setHours(String(Math.floor(totalMinutes / 60)));
     setExtraMinutes(String(totalMinutes % 60));
     descriptionRef.current?.focus();
@@ -234,7 +245,7 @@ export function TimeTrackingSection({
         <span className="ml-auto font-mono text-xs text-muted-foreground">
           {t("timeTracking.loggedTotal", { time: formatMinutes(loggedTotal) })}
           {estimate != null
-            ? ` ${t("timeTracking.estPrefix", { time: formatMinutes(estimate) })}`
+            ? ` ${t("timeTracking.estPrefix", { points: estimate })}`
             : ""}
         </span>
       </div>

@@ -822,7 +822,7 @@
   "deleteEntryFailed": "Không thể xóa bản ghi.",
   "save": "Lưu",
   "loggedTotal": "Đã ghi {{time}}",
-  "estPrefix": "· ước tính {{time}}",
+  "estPrefix": "· ước tính {{points}} pts",
   "hoursAria": "Số giờ đã dùng",
   "minutesAria": "Số phút đã dùng",
   "deleteEntryAria": "Xóa bản ghi thời gian"
