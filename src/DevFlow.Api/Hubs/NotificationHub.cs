@@ -39,19 +39,19 @@ public sealed class NotificationHub : Hub
 
 public interface INotificationBroadcaster
 {
-    Task NotifyUser(string userId, string type, object data);
+    // Only the workspace fan-out lives here. A NotifyUser/NotifyProject pair
+    // used to sit on this interface with zero callers, a stale { type, data }
+    // payload, and — for projects — a "project:{id}" group that no client
+    // ever joins (the frontend's project-event listeners connect to
+    // ProjectHub's "project-{id}" group instead). Any future caller wiring
+    // through them would have broadcast into the void; user/project events
+    // go through SignalRNotificationService / SignalRProjectNotifier, which
+    // match the live client contracts.
     Task NotifyWorkspace(string workspaceId, string type, object data);
-    Task NotifyProject(string projectId, string type, object data);
 }
 
 public sealed class NotificationBroadcaster(IHubContext<NotificationHub> hubContext) : INotificationBroadcaster
 {
-    public async Task NotifyUser(string userId, string type, object data)
-    {
-        await hubContext.Clients.Group($"user:{userId}")
-            .SendAsync("notification", new { type, data });
-    }
-
     public async Task NotifyWorkspace(string workspaceId, string type, object data)
     {
         // useWorkspaceEvents reads top-level eventType/workspaceId — emit
@@ -60,11 +60,5 @@ public sealed class NotificationBroadcaster(IHubContext<NotificationHub> hubCont
         // which left the hook's declared payload permanently null.
         await hubContext.Clients.Group($"workspace:{workspaceId}")
             .SendAsync("workspace-event", new { eventType = type, workspaceId, data });
-    }
-
-    public async Task NotifyProject(string projectId, string type, object data)
-    {
-        await hubContext.Clients.Group($"project:{projectId}")
-            .SendAsync("project-event", new { type, data });
     }
 }
