@@ -254,6 +254,70 @@ public class ImportExportRoundTripTests
     }
 
     [Fact]
+    public async Task RoundTrip_ShouldPreserveTaskLifecycleTimestamps()
+    {
+        // TaskBackupDto carried no CompletedAtUtc/StartedAtUtc and the import
+        // never called RestoreTimestamps, so every restored Done task came
+        // back stamped with the import instant — silently rewriting cycle time
+        // and every burndown drawn from completion history.
+        var started = new DateTimeOffset(2026, 1, 6, 8, 0, 0, TimeSpan.Zero);
+        var reviewed = new DateTimeOffset(2026, 1, 9, 15, 30, 0, TimeSpan.Zero);
+        var completed = new DateTimeOffset(2026, 1, 12, 17, 0, 0, TimeSpan.Zero);
+
+        var task = TaskItem.Create(_projectId, "Shipped feature", null, TaskItemPriority.High);
+        task.ChangeStatus(TaskItemStatus.InProgress);
+        task.RestoreTimestamps(started, null, null);
+        task.ChangeStatus(TaskItemStatus.Review);
+        task.RestoreTimestamps(null, null, reviewed);
+        task.ChangeStatus(TaskItemStatus.Done);
+        task.RestoreTimestamps(null, completed, null);
+        Assert.Equal(completed, task.CompletedAtUtc);
+
+        _taskItemRepository.GetForProjectAsync(_projectId, null, Arg.Any<CancellationToken>())
+            .Returns(new[] { task });
+        _epicRepository.GetForProjectAsync(_projectId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Epic>());
+        _sprintRepository.GetForProjectAsync(_projectId, Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Sprint>());
+        _commentRepository.GetForTaskAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Comment>());
+
+        var exportHandler = new ExportProjectBackupHandler(
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository);
+
+        var exportResult = await exportHandler.Handle(
+            new ExportProjectBackupQuery(_workspaceId, _projectId, "json"),
+            CancellationToken.None);
+        var json = System.Text.Encoding.UTF8.GetString(exportResult.Data);
+
+        var newProjectId = Guid.NewGuid();
+        var newProject = Project.Create(_workspaceId, "Restored", "RS", null);
+        IdProperty.SetValue(newProject, newProjectId);
+        _projectRepository.GetByIdAsync(newProjectId, Arg.Any<CancellationToken>())
+            .Returns(newProject);
+
+        var importedTasks = new List<TaskItem>();
+        _taskItemRepository.When(x => x.AddAsync(Arg.Any<TaskItem>(), Arg.Any<CancellationToken>()))
+            .Do(x => importedTasks.Add(x.Arg<TaskItem>()));
+
+        var importHandler = new ImportProjectBackupHandler(
+            _taskItemRepository, _epicRepository, _sprintRepository, _commentRepository, _projectRepository, _unitOfWork);
+
+        var importResult = await importHandler.Handle(
+            new ImportProjectBackupCommand(_workspaceId, newProjectId, json),
+            CancellationToken.None);
+
+        Assert.Empty(importResult.Errors);
+        var restored = Assert.Single(importedTasks);
+        Assert.Equal(TaskItemStatus.Done, restored.Status);
+        Assert.Equal(started, restored.StartedAtUtc);
+        Assert.Equal(reviewed, restored.EnteredReviewAtUtc);
+        Assert.Equal(completed, restored.CompletedAtUtc);
+        // The corruption signature: import time masquerading as completion time.
+        Assert.True(restored.CompletedAtUtc < DateTimeOffset.UtcNow.AddMinutes(-1));
+    }
+
+    [Fact]
     public async Task Import_ShouldReturnError_WhenJsonIsInvalid()
     {
         _projectRepository.GetByIdAsync(_projectId, Arg.Any<CancellationToken>())

@@ -192,4 +192,33 @@ public class TaskItem : BaseEntity, IAuditableEntity, ISoftDeletable
     public void SetStoryPoints(int? storyPoints) => StoryPoints = storyPoints;
 
     public void SetDueDate(DateTimeOffset? dueDateUtc) => DueDateUtc = dueDateUtc;
+
+    /// <summary>
+    /// Restores lifecycle timestamps from a backup. Deliberately bypasses the
+    /// <see cref="ChangeStatus"/> state machine: that derives StartedAtUtc,
+    /// CompletedAtUtc and EnteredReviewAtUtc from the wall clock, so importing
+    /// a Done task would re-stamp its completion to the import time and
+    /// silently corrupt burndown / cycle-time history. Nulls mean "the backup
+    /// predates this field" and leave whatever ChangeStatus established.
+    /// </summary>
+    public void RestoreTimestamps(
+        DateTimeOffset? startedAtUtc,
+        DateTimeOffset? completedAtUtc,
+        DateTimeOffset? enteredReviewAtUtc)
+    {
+        if (startedAtUtc.HasValue)
+        {
+            StartedAtUtc = startedAtUtc;
+        }
+
+        if (completedAtUtc.HasValue)
+        {
+            CompletedAtUtc = completedAtUtc;
+        }
+
+        if (enteredReviewAtUtc.HasValue)
+        {
+            EnteredReviewAtUtc = enteredReviewAtUtc;
+        }
+    }
 }

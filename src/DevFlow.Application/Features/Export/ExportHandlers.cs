@@ -120,7 +120,10 @@ public class ExportProjectBackupHandler(
                 DueDateUtc = t.DueDateUtc,
                 EstimateMinutes = t.EstimateMinutes,
                 Position = t.Position,
-                CreatedAtUtc = t.CreatedAtUtc
+                CreatedAtUtc = t.CreatedAtUtc,
+                CompletedAtUtc = t.CompletedAtUtc,
+                StartedAtUtc = t.StartedAtUtc,
+                EnteredReviewAtUtc = t.EnteredReviewAtUtc
             }).ToList(),
             Epics = epics.Select(e => new EpicBackupDto
             {
@@ -180,6 +183,8 @@ public class ExportProjectBackupHandler(
         tasksSheet.Cell(1, 12).Value = "EstimateMinutes";
         tasksSheet.Cell(1, 13).Value = "Position";
         tasksSheet.Cell(1, 14).Value = "CreatedAtUtc";
+        tasksSheet.Cell(1, 15).Value = "CompletedAtUtc";
+        tasksSheet.Cell(1, 16).Value = "StartedAtUtc";
 
         for (int i = 0; i < backup.Tasks.Count; i++)
         {
@@ -198,6 +203,8 @@ public class ExportProjectBackupHandler(
             tasksSheet.Cell(i + 2, 12).Value = t.EstimateMinutes?.ToString() ?? "";
             tasksSheet.Cell(i + 2, 13).Value = t.Position;
             tasksSheet.Cell(i + 2, 14).Value = t.CreatedAtUtc.ToString("O");
+            tasksSheet.Cell(i + 2, 15).Value = t.CompletedAtUtc?.ToString("O") ?? "";
+            tasksSheet.Cell(i + 2, 16).Value = t.StartedAtUtc?.ToString("O") ?? "";
         }
         tasksSheet.Columns().AdjustToContents();
 
@@ -305,6 +312,9 @@ public sealed class TaskBackupDto
     public int? EstimateMinutes { get; set; }
     public int Position { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; }
+    public DateTimeOffset? CompletedAtUtc { get; set; }
+    public DateTimeOffset? StartedAtUtc { get; set; }
+    public DateTimeOffset? EnteredReviewAtUtc { get; set; }
 }
 
 public sealed class EpicBackupDto

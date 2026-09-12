@@ -160,6 +160,17 @@ public class ImportProjectBackupHandler(
                     task.ChangeStatus(status);
                 }
 
+                // ChangeStatus derives StartedAt/CompletedAt/EnteredReviewAt
+                // from "now", so a restored Done task would report a completion
+                // time equal to the import — silently corrupting burndown and
+                // cycle-time analytics. Overwrite with the backup's real
+                // timestamps whenever it carries them (older backups without
+                // the fields keep the ChangeStatus stamp as an honest floor).
+                task.RestoreTimestamps(
+                    taskData.StartedAtUtc,
+                    taskData.CompletedAtUtc,
+                    taskData.EnteredReviewAtUtc);
+
                 // Remap references
                 if (taskData.SprintId.HasValue && sprintIdMap.TryGetValue(taskData.SprintId.Value, out var newSprintId))
                 {
