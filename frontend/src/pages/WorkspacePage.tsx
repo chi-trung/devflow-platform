@@ -593,7 +593,7 @@ export function WorkspacePage() {
                                   aria-label={t("workspace.editNamedAria", {
                                     name: project.name,
                                   })}
-                                  className="rounded p-1 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-primary group-hover:opacity-100"
+                                  className="rounded p-1 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-primary focus-visible:opacity-100 group-hover:opacity-100"
                                 >
                                   <Pencil className="size-3.5" aria-hidden />
                                 </button>
@@ -607,7 +607,7 @@ export function WorkspacePage() {
                                   aria-label={t("workspace.archiveNamedAria", {
                                     name: project.name,
                                   })}
-                                  className="rounded p-1 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-destructive group-hover:opacity-100"
+                                  className="rounded p-1 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
                                 >
                                   <Trash2 className="size-3.5" aria-hidden />
                                 </button>

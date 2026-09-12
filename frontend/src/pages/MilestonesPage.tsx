@@ -396,7 +396,7 @@ export function MilestonesPage() {
                         </div>
                       )}
                     </div>
-                    <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                    <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
                       <button
                         type="button"
                         onClick={() => handleEdit(milestone)}
