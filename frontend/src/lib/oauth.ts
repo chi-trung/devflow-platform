@@ -13,16 +13,43 @@ export interface OAuthConfig {
 }
 
 let cachedConfig: OAuthConfig | null = null;
+// Deduplicates concurrent callers: without this, GoogleSignInButton and
+// GitHubSignInButton each fire their own request while the config is still in
+// flight, and a boot prefetch would race both of them.
+let configRequest: Promise<OAuthConfig | null> | null = null;
+
+/**
+ * Fire-and-forget the config fetch so it is warm before an auth page renders.
+ * The login/register cards show "Continue with Google/GitHub" only once the
+ * config says a provider is enabled; when that round-trip lands after first
+ * paint the card grows by ~115px and the shift trips Lighthouse CLS.
+ * main.tsx calls this on boot so the answer is usually cached by the time the
+ * buttons mount.
+ */
+export function prefetchOAuthConfig(): void {
+  void getOAuthConfig();
+}
+
+/** The cached config if a fetch already landed, else null (no request fired).
+ *  Lets a button seed its enabled-state synchronously during the first render
+ *  instead of waiting a round-trip, so the login card never grows after paint. */
+export function peekOAuthConfig(): OAuthConfig | null {
+  return cachedConfig;
+}
 
 /** Fetches which OAuth providers are configured on the backend (cached). */
 export async function getOAuthConfig(): Promise<OAuthConfig | null> {
   if (cachedConfig) return cachedConfig;
-  try {
-    cachedConfig = await api<OAuthConfig>("/auth/oauth/config");
-    return cachedConfig;
-  } catch {
-    return null;
-  }
+  configRequest ??= api<OAuthConfig>("/auth/oauth/config")
+    .then((config) => {
+      cachedConfig = config;
+      return config;
+    })
+    .catch(() => null)
+    .finally(() => {
+      configRequest = null;
+    });
+  return configRequest;
 }
 
 function base64Url(bytes: Uint8Array): string {

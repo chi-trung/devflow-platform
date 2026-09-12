@@ -5,6 +5,7 @@ import {
   buildGitHubAuthUrl,
   completeOAuthExchange,
   getOAuthConfig,
+  peekOAuthConfig,
 } from "../lib/oauth";
 
 /**
@@ -25,7 +26,11 @@ import {
 export function GitHubSignInButton() {
   const { t } = useTranslation();
   const { setSessionFromTokens } = useAuth();
-  const [enabled, setEnabled] = useState(false);
+  // Seed from the boot prefetch's cache: when the config already landed, the
+  // button renders in the card's first paint instead of popping in later and
+  // shifting everything below it (the measured login CLS). The effect below
+  // still covers the case where the prefetch has not resolved yet.
+  const [enabled, setEnabled] = useState(() => !!peekOAuthConfig()?.gitHubEnabled);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

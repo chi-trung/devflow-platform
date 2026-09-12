@@ -5,6 +5,7 @@ import {
   buildGoogleAuthUrl,
   completeOAuthExchange,
   getOAuthConfig,
+  peekOAuthConfig,
 } from "../lib/oauth";
 
 /**
@@ -21,7 +22,10 @@ import {
 export function GoogleSignInButton() {
   const { t } = useTranslation();
   const { setSessionFromTokens } = useAuth();
-  const [enabled, setEnabled] = useState(false);
+  // Seed from the boot prefetch's cache so the button can render in the card's
+  // first paint instead of popping in later and shifting the layout below it.
+  // The effect below still covers a prefetch that has not resolved yet.
+  const [enabled, setEnabled] = useState(() => !!peekOAuthConfig()?.googleEnabled);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
