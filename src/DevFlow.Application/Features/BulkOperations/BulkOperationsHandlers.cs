@@ -8,12 +8,17 @@ using MediatR;
 namespace DevFlow.Application.Features.BulkOperations;
 
 // Bulk move tasks to status
+// Cache-invalidation carriers: bulk ops write Status/AssigneeId/existence
+// that the board's cached tasks payload and dashboard counts embed. Without
+// IProjectEvent the 30s tasks:{projectId}:* cache keeps serving pre-bulk rows
+// and the reload after a successful bulk call reverts the board.
+// ActivityVerb stays empty → no per-task activity-log entries.
 [RequireWorkspaceRole(WorkspaceRole.Member)]
 public sealed record BulkMoveTasksCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     List<Guid> TaskIds,
-    TaskItemStatus NewStatus) : IRequest<int>, IWorkspaceRequest;
+    TaskItemStatus NewStatus) : IRequest<int>, IWorkspaceRequest, IProjectEvent;
 
 public class BulkMoveTasksHandler(
     ITaskItemRepository taskItemRepository,
@@ -43,7 +48,7 @@ public sealed record BulkAssignTasksCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     List<Guid> TaskIds,
-    Guid? AssigneeId) : IRequest<int>, IWorkspaceRequest;
+    Guid? AssigneeId) : IRequest<int>, IWorkspaceRequest, IProjectEvent;
 
 public class BulkAssignTasksHandler(
     ITaskItemRepository taskItemRepository,
@@ -72,7 +77,7 @@ public class BulkAssignTasksHandler(
 public sealed record BulkDeleteTasksCommand(
     Guid WorkspaceId,
     Guid ProjectId,
-    List<Guid> TaskIds) : IRequest<int>, IWorkspaceRequest;
+    List<Guid> TaskIds) : IRequest<int>, IWorkspaceRequest, IProjectEvent;
 
 public class BulkDeleteTasksHandler(
     ITaskItemRepository taskItemRepository,
