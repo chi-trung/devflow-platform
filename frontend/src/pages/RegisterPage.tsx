@@ -10,6 +10,7 @@ import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { GoogleSignInButton } from "../components/GoogleSignInButton";
 import { GitHubSignInButton } from "../components/GitHubSignInButton";
 import { ApiError } from "../lib/api";
+import { usePageMeta } from "../lib/seo";
 
 interface FormState {
   displayName: string;
@@ -56,6 +57,9 @@ function validate(form: FormState, t: (key: string) => string): Partial<Record<k
 
 export function RegisterPage() {
   const { t } = useTranslation();
+  // Same as LoginPage: the route must own its title so a previous marketing
+  // page's copy does not bleed through client-side navigation.
+  usePageMeta("auth.createAccount", "auth.startManaging");
   const { register } = useAuth();
   const navigate = useNavigate();
 

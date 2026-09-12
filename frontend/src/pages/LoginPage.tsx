@@ -10,9 +10,14 @@ import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { GoogleSignInButton } from "../components/GoogleSignInButton";
 import { GitHubSignInButton } from "../components/GitHubSignInButton";
 import { ApiError } from "../lib/api";
+import { usePageMeta } from "../lib/seo";
 
 export function LoginPage() {
   const { t } = useTranslation();
+  // Public routes share one index.html, so without this the previous route's
+  // title bleeds through client-side navigation (signing up from a marketing
+  // page, or the header's Log in button on "/" after visiting /blog).
+  usePageMeta("auth.welcomeBack", "auth.signInToAccount");
   const { login } = useAuth();
   const navigate = useNavigate();
 
