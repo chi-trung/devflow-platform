@@ -27,7 +27,15 @@ function stubReload() {
   return reload;
 }
 
+// One blocked-storage test replaces the sessionStorage object; capture the
+// real descriptor once and put it back after every test.
+const sessionDescriptor = Object.getOwnPropertyDescriptor(
+  window,
+  "sessionStorage",
+)!;
+
 afterEach(() => {
+  Object.defineProperty(window, "sessionStorage", sessionDescriptor);
   sessionStorage.clear();
   vi.restoreAllMocks();
 });
@@ -90,6 +98,29 @@ describe("RouteErrorBoundary", () => {
     );
     expect(reload).not.toHaveBeenCalled();
     expect(screen.getByText("common.unexpectedError")).toBeInTheDocument();
+  });
+
+  it("never auto-reloads when sessionStorage is blocked", () => {
+    // Brave shields / resistFingerprinting make storage throw. Reloading
+    // without a persisted guard would loop the tab forever, so the boundary
+    // must show the retry UI instead.
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const thrower = () => {
+      throw new Error("SecurityError");
+    };
+    Object.defineProperty(window, "sessionStorage", {
+      configurable: true,
+      writable: true,
+      value: { getItem: thrower, setItem: thrower, removeItem: thrower },
+    });
+    const reload = stubReload();
+    render(
+      <RouteErrorBoundary>
+        <Boom message="Failed to fetch dynamically imported module: https://x/a.js" />
+      </RouteErrorBoundary>,
+    );
+    expect(reload).not.toHaveBeenCalled();
+    expect(screen.getByText("common.loadError")).toBeInTheDocument();
   });
 
   it("keeps children visible when nothing throws", () => {

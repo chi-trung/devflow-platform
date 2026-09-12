@@ -24,15 +24,22 @@ function wasAutoReloaded(): boolean {
   try {
     return sessionStorage.getItem(RELOAD_KEY) === "1";
   } catch {
-    return false;
+    // Storage blocked. Treat the guard as already tripped: a reload we cannot
+    // record is a reload that never stops.
+    return true;
   }
 }
 
-function markAutoReload(): void {
+// True only when the marker actually persisted. sessionStorage can throw even
+// on a write (blocked by Brave shields, resistFingerprinting, or enterprise
+// policy), and without a persisted flag the guard is useless: a reload lands
+// on the same stale chunk, fires the same error, and the tab loops forever.
+function markAutoReload(): boolean {
   try {
     sessionStorage.setItem(RELOAD_KEY, "1");
+    return true;
   } catch {
-    // Private-mode sessionStorage throws; the fallback UI still works.
+    return false;
   }
 }
 
@@ -94,8 +101,10 @@ export class RouteErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error): void {
-    if (isChunkLoadError(error) && !wasAutoReloaded()) {
-      markAutoReload();
+    // Only auto-reload when the one-shot marker stuck. If storage is blocked,
+    // fall through to the retry UI (one manual click) instead of an infinite
+    // reload loop.
+    if (isChunkLoadError(error) && !wasAutoReloaded() && markAutoReload()) {
       window.location.reload();
       return;
     }
