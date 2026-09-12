@@ -23,17 +23,55 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
+// CACHE_NAME is a constant, so every deploy's hashed chunks pile up in the
+// same cache: activate only evicts when the cache name changes, and the
+// cache-first path never deletes. Left alone, each deploy leaves dead JS/CSS
+// copies behind (tens of MB after a few weeks) until the browser evicts the
+// whole origin under storage pressure, which also throws away the live ones.
+// The sweep reads the live filenames from index.html and the entry bundle
+// (Vite bakes every lazy chunk name into it as a string literal) and deletes
+// anything else under /assets/. A miss in either direction is harmless:
+// over-deleting costs a refetch, under-deleting leaves an unused copy.
+async function sweepStaleAssets() {
+  const cache = await caches.open(CACHE_NAME);
+  const keys = (await cache.keys())
+    .map((request) => request.url)
+    .filter((url) => new URL(url).pathname.startsWith("/assets/"));
+  if (keys.length === 0) return;
+
+  // A SW-initiated fetch bypasses this worker's fetch handler, so this goes
+  // straight to the network and can never read a cached old shell.
+  const html = await (await fetch("/index.html", { cache: "no-store" })).text();
+  const entryMatch = html.match(/\/assets\/[\w.-]+\.js/);
+  if (!entryMatch) return;
+  const entry = await (await fetch(entryMatch[0], { cache: "no-store" })).text();
+  const css = html.match(/\/assets\/[\w.-]+\.css/g) || [];
+  const live = new Set(
+    (entry.match(/assets\/[\w.-]+\.(?:js|css)/g) || [])
+      .map((path) => path.split("/").pop())
+      .concat(css.map((path) => path.split("/").pop())),
+  );
+  for (const url of keys) {
+    const file = new URL(url).pathname.split("/").pop();
+    if (!live.has(file)) await cache.delete(url);
+  }
+}
+
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(
-        names
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name)),
-      ),
-    ),
+    caches
+      .keys()
+      .then((names) =>
+        Promise.all(
+          names
+            .filter((name) => name !== CACHE_NAME)
+            .map((name) => caches.delete(name)),
+        ),
+      )
+      .then(sweepStaleAssets)
+      .catch(() => {})
+      .then(() => self.clients.claim()),
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
