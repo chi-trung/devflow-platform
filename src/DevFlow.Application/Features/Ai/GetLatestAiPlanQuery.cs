@@ -50,10 +50,12 @@ public sealed class GetLatestAiPlanQueryHandler(
 
     private static AiPlanResponse BuildResponse(AiPlan plan)
     {
-        // SubtasksJson is persisted from an anonymous type, so its keys are
-        // PascalCase ("Title") while the contract declares lowercase
-        // JsonPropertyName ("title"). A case-sensitive read silently leaves
-        // every Title empty — match the other plan handlers here.
+        // SubtasksJson is persisted from the typed contract (lowercase
+        // [JsonPropertyName]s since c934bd0), so keys match the contract
+        // exactly. Keep the case-insensitive option anyway: rows written
+        // before that fix still hold PascalCase keys in the database, and
+        // a case-sensitive read on those legacy rows silently leaves every
+        // Title empty.
         var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         var subtasks = JsonSerializer.Deserialize<List<AiPlanSubtaskContract>>(plan.SubtasksJson, jsonOptions)
             ?? new List<AiPlanSubtaskContract>();
