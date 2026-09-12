@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
  * previous route's behind. A fresh page load of "/" still renders the
  * hand-written "DevFlow — ship in flow" title from index.html.
  */
-export function usePageMeta(titleKey: string, descriptionKey: string) {
+export function usePageMeta(titleKey: string, descriptionKey: string, noindex = false) {
   const { t, i18n } = useTranslation();
 
   useEffect(() => {
@@ -31,8 +31,11 @@ export function usePageMeta(titleKey: string, descriptionKey: string) {
       description,
     );
 
-    // Canonical is origin-derived so it tracks whichever deployment serves the
-    // page (production alias or preview URL) rather than hardcoding one host.
+    // The SPA rewrite serves index.html for every unknown path, so a 404 at
+    // /random-typo would otherwise self-canonicalize to that random URL and
+    // multiply the soft-404 surface. Real pages canonicalize to themselves.
+    // NotFoundPage is only reachable through the "*" route (no known path
+    // renders it), so that's the one caller passing `noindex`.
     let link = document.querySelector(`link[rel="canonical"]`);
     if (!link) {
       link = document.createElement("link");
@@ -41,11 +44,16 @@ export function usePageMeta(titleKey: string, descriptionKey: string) {
     }
     link.setAttribute(
       "href",
-      `${window.location.origin}${window.location.pathname}`,
+      noindex ? window.location.origin + "/" : `${window.location.origin}${window.location.pathname}`,
     );
+    if (noindex) {
+      setMeta(`meta[name="robots"]`, "name", "robots", "noindex,follow");
+    } else {
+      document.querySelector(`meta[name="robots"]`)?.remove();
+    }
 
     // Re-run when the visitor toggles language so the title follows the locale.
-  }, [t, titleKey, descriptionKey, i18n.language]);
+  }, [t, titleKey, descriptionKey, noindex, i18n.language]);
 }
 
 // Update an existing <meta> by selector, or create it appended to <head>.
