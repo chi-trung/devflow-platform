@@ -221,15 +221,23 @@ public sealed class AiActionExecutor(
         var project = await ResolveProjectAsync(workspaceId, projectId, action.ProjectRef, cancellationToken);
         var task = await ResolveTaskAsync(workspaceId, project.Id, TargetTaskRef(action), cancellationToken);
 
+        // The dispatcher at ExecuteActionAsync already normalized action.Type
+        // (Trim + ToLowerInvariant) before routing here, but these comparisons
+        // did not — a model drifting to "Set_Due_Date" or " assign_task"
+        // routed correctly yet failed every field-selection ternary below,
+        // rewriting the task's existing values and returning a success-shaped
+        // no-op. Normalize once and use the same value the dispatch used.
+        var type = action.Type.Trim().ToLowerInvariant();
+
         // Read the current values first so partial updates (only a due date, only
         // a priority, only an assignee) do not clobber the other fields.
-        var assigneeId = action.Type == "assign_task"
+        var assigneeId = type == "assign_task"
             ? await ResolveAssigneeAsync(workspaceId, action.Assignee, cancellationToken)
             : task.AssigneeId;
-        var dueDate = action.Type == "set_due_date"
+        var dueDate = type == "set_due_date"
             ? ToDueDate(action.DueDate)
             : task.DueDateUtc;
-        var priority = action.Type == "set_priority"
+        var priority = type == "set_priority"
             ? ToPriority(action.Priority)
             : task.Priority;
 
@@ -248,7 +256,7 @@ public sealed class AiActionExecutor(
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var message = action.Type switch
+        var message = type switch
         {
             "set_due_date" => $"Due date for \"{task.Title}\" set.",
             "set_priority" => $"Priority for \"{task.Title}\" set to {priority}.",
