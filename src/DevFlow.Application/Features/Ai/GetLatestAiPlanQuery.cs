@@ -50,11 +50,16 @@ public sealed class GetLatestAiPlanQueryHandler(
 
     private static AiPlanResponse BuildResponse(AiPlan plan)
     {
-        var subtasks = JsonSerializer.Deserialize<List<AiPlanSubtaskContract>>(plan.SubtasksJson)
+        // SubtasksJson is persisted from an anonymous type, so its keys are
+        // PascalCase ("Title") while the contract declares lowercase
+        // JsonPropertyName ("title"). A case-sensitive read silently leaves
+        // every Title empty — match the other plan handlers here.
+        var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        var subtasks = JsonSerializer.Deserialize<List<AiPlanSubtaskContract>>(plan.SubtasksJson, jsonOptions)
             ?? new List<AiPlanSubtaskContract>();
-        var steps = JsonSerializer.Deserialize<List<string>>(plan.StepsJson)
+        var steps = JsonSerializer.Deserialize<List<string>>(plan.StepsJson, jsonOptions)
             ?? new List<string>();
-        var doD = JsonSerializer.Deserialize<List<string>>(plan.DefinitionOfDoneJson)
+        var doD = JsonSerializer.Deserialize<List<string>>(plan.DefinitionOfDoneJson, jsonOptions)
             ?? new List<string>();
 
         return new AiPlanResponse(
