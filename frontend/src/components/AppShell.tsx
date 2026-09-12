@@ -69,10 +69,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [collapsed]);
 
-  // The sidebar collapses to a 72px icon rail and expands via the explicit
-  // toggle button — click-based only, no hover behavior. Collapsed state is the
-  // pinned state; every layout branch reads `railCollapsed`.
-  const railCollapsed = collapsed;
+  // Hover-peek: the rail stays pinned at its collapsed width, but resting the
+  // pointer over it floats a full-width panel on top of the content (no reflow)
+  // so workspace/project names are readable without a slow native tooltip.
+  // `railCollapsed` drives label visibility (false while peeking); `collapsed`
+  // drives the pinned width; `peeking` drives the floating overlay.
+  const [railHovered, setRailHovered] = useState(false);
+  const railCollapsed = collapsed && !railHovered;
+  const peeking = collapsed && railHovered;
 
   // Collapsed-rail design system (A33): every clickable becomes a centered
   // 36px square cell so icons, emoji tiles and the avatar share one optical
@@ -359,8 +363,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-dvh overflow-hidden">
       <aside
-        className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface transition-transform duration-300 ease-out lg:static lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
-          railCollapsed ? "lg:w-[72px]" : "lg:w-60"
+        onMouseEnter={() => setRailHovered(true)}
+        onMouseLeave={() => setRailHovered(false)}
+        className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
+          collapsed ? "lg:w-[72px]" : "lg:w-60"
         } ${
           drawerOpen
             ? "translate-x-0 shadow-[0_24px_80px_rgba(0,0,0,0.7)] lg:shadow-none"
@@ -368,6 +374,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }`}
         style={{ overflow: 'visible' }}
       >
+        {/* Pinned rail keeps its 72px footprint in the page layout; while
+            peeking this wrapper lifts out and floats the full-width panel over
+            the content, so hovering never reflows the board. */}
+        <div
+          className={`flex min-h-0 flex-1 flex-col ${
+            peeking
+              ? "lg:absolute lg:inset-y-0 lg:left-0 lg:w-60 lg:border-r lg:border-border lg:bg-surface lg:shadow-[0_24px_80px_rgba(0,0,0,0.45)] lg:z-[70]"
+              : ""
+          }`}
+        >
         <div className={`flex items-center justify-between pr-2 ${railCollapsed ? "lg:justify-center lg:pr-0" : ""}`}>
           <Link
             to="/"
@@ -590,6 +606,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {collapsed ? <PanelLeftOpen className={`size-4 shrink-0 ${railIcon}`} aria-hidden /> : <PanelLeftClose className={`size-4 shrink-0 ${railIcon}`} aria-hidden />}
             <span className={`${railCollapsed ? "hidden lg:hidden" : ""}`}>{collapsed ? t("nav.expand") : t("nav.collapse")}</span>
           </button>
+        </div>
         </div>
       </aside>
 
