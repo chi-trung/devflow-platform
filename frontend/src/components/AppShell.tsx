@@ -505,22 +505,42 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {t("nav.projects")}
               </h2>
               <ul className="space-y-1">
-                {(projects ?? []).map((project) => (
-                  <li key={project.id}>
-                    <Link
-                      to={`/workspaces/${workspaceId}/projects/${project.id}`}
-                      title={railCollapsed ? project.name : undefined}
-                      className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated/60 hover:text-foreground ${railCell}`}
-                    >
-                      <EmojiTile
-                        emoji={project.emoji}
-                        size="sm"
-                        className={railCollapsed ? "lg:size-8 lg:text-lg" : ""}
-                      />
-                      <span className={`truncate ${railCollapsed ? "lg:hidden" : ""}`}>{project.name}</span>
-                    </Link>
-                  </li>
-                ))}
+                {(projects ?? []).map((project) => {
+                  const active = project.id === projectId;
+                  return (
+                    <li key={project.id}>
+                      <Link
+                        to={`/workspaces/${workspaceId}/projects/${project.id}`}
+                        aria-current={active ? "page" : undefined}
+                        title={railCollapsed ? project.name : undefined}
+                        className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors duration-150 ${railCell} ${
+                          active
+                            ? "bg-elevated font-semibold text-foreground"
+                            : "text-muted-foreground hover:bg-elevated/60 hover:text-foreground"
+                        }`}
+                      >
+                        {/* EmojiTile renders nothing without an emoji; a bare
+                            link whose only other child hides in the rail left
+                            an invisible 36px cell with no hover feedback.
+                            Fall back to initials like the workspace rows. */}
+                        {project.emoji ? (
+                          <EmojiTile
+                            emoji={project.emoji}
+                            size="sm"
+                            className={railCollapsed ? "lg:size-8 lg:text-lg" : ""}
+                          />
+                        ) : (
+                          <Avatar
+                            name={project.name}
+                            id={project.id}
+                            className={railCollapsed ? "lg:size-8 lg:text-xs" : ""}
+                          />
+                        )}
+                        <span className={`truncate ${railCollapsed ? "lg:hidden" : ""}`}>{project.name}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           )}
