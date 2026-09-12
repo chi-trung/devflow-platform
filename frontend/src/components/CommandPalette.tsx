@@ -38,8 +38,13 @@ interface Command {
 }
 
 interface SavedFilters {
+  status?: string;
   priority?: string;
+  /** Token form (overdue/today/week) for the ?fs board handoff. */
   due?: string;
+  /** Resolved range SearchPage's applySavedSearch reads back. */
+  dueBefore?: string;
+  dueAfter?: string;
 }
 
 interface CommandPaletteProps {
@@ -399,9 +404,10 @@ export function CommandPalette({
         workspaceId,
         query: query.trim(),
         filtersJson: JSON.stringify({
+          status: statusFilter,
           priority: priorityFilter,
           due: dueFilter,
-        }),
+        } satisfies SavedFilters),
       });
       push(t("commandPalette.savedSearchSaved"));
       setSaveMode(false);

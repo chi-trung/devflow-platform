@@ -6,7 +6,7 @@ import { AppShell } from "../components/AppShell";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Skeleton } from "../components/ui/Skeleton";
-import { searchWorkspace, getSavedSearches, api, pagedItems } from "../lib/api";
+import { searchWorkspace, getSavedSearches, api, pagedItems, type SearchFilters } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import type { SearchResponse, WorkspaceMemberResponse, ProjectResponse, SavedSearchResponse, LabelResponse } from "../types/api";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -93,21 +93,32 @@ export function SearchPage() {
   );
   const savedSearches = savedSearchesRaw ?? [];
 
-  async function runSearch(page = 1) {
+  async function runSearch(page = 1, overrides?: Partial<SearchFilters>) {
+    const f = {
+      status,
+      priority,
+      assigneeId,
+      labelId,
+      dueBefore,
+      dueAfter,
+      sortBy,
+      sortDir,
+      ...overrides,
+    };
     setLoading(true);
     setError(null);
     setSearched(true);
     setSearchPage(page);
     try {
       const data = await searchWorkspace(workspaceId, query.trim(), {
-        status: status || undefined,
-        priority: priority || undefined,
-        assigneeId: assigneeId || undefined,
-        labelId: labelId || undefined,
-        dueBefore: dueBefore || undefined,
-        dueAfter: dueAfter || undefined,
-        sortBy: sortBy || undefined,
-        sortDir: sortDir || undefined,
+        status: f.status || undefined,
+        priority: f.priority || undefined,
+        assigneeId: f.assigneeId || undefined,
+        labelId: f.labelId || undefined,
+        dueBefore: f.dueBefore || undefined,
+        dueAfter: f.dueAfter || undefined,
+        sortBy: f.sortBy || undefined,
+        sortDir: f.sortDir || undefined,
       }, page, 20);
       setResult(data);
     } catch (err) {
@@ -122,20 +133,57 @@ export function SearchPage() {
     if (!saved) return;
     setSavedSearchId(searchId);
     setQuery(saved.query);
+    let filters: Record<string, string> = {};
     try {
-      const filters = JSON.parse(saved.filtersJson ?? "{}") as Record<string, string>;
-      setStatus(filters.status ?? "");
-      setPriority(filters.priority ?? "");
-      setAssigneeId(filters.assigneeId ?? "");
-      setLabelId(filters.labelId ?? "");
-      setDueBefore(filters.dueBefore ?? "");
-      setDueAfter(filters.dueAfter ?? "");
-      setSortBy(filters.sortBy ?? "");
-      setSortDir((filters.sortDir === "asc" ? "asc" : "desc"));
+      filters = JSON.parse(saved.filtersJson ?? "{}") as Record<string, string>;
     } catch {
       // ignore malformed saved search
     }
-    runSearch(1);
+    const fStatus = filters.status ?? "";
+    const fPriority = filters.priority ?? "";
+    const fAssigneeId = filters.assigneeId ?? "";
+    const fLabelId = filters.labelId ?? "";
+    const fSortBy = filters.sortBy ?? "";
+    const fSortDir = filters.sortDir === "asc" ? "asc" : "desc";
+
+    // The command palette saves a relative due token (overdue/today/week);
+    // resolve it at apply time so a search saved last month still means
+    // "overdue" today. Absolute dueBefore/dueAfter pass through untouched.
+    let fDueBefore = filters.dueBefore ?? "";
+    let fDueAfter = filters.dueAfter ?? "";
+    const now = new Date();
+    const iso = (d: Date) => d.toISOString();
+    if (filters.due === "overdue") {
+      fDueBefore = iso(now);
+      fDueAfter = "";
+    } else if (filters.due === "today") {
+      const end = new Date(now);
+      end.setHours(23, 59, 59, 999);
+      fDueBefore = iso(end);
+      fDueAfter = "";
+    } else if (filters.due === "week") {
+      fDueBefore = iso(new Date(now.getTime() + 7 * 86400000));
+      fDueAfter = "";
+    }
+
+    setStatus(fStatus);
+    setPriority(fPriority);
+    setAssigneeId(fAssigneeId);
+    setLabelId(fLabelId);
+    setDueBefore(fDueBefore);
+    setDueAfter(fDueAfter);
+    setSortBy(fSortBy);
+    setSortDir(fSortDir);
+    runSearch(1, {
+      status: fStatus,
+      priority: fPriority,
+      assigneeId: fAssigneeId,
+      labelId: fLabelId,
+      dueBefore: fDueBefore,
+      dueAfter: fDueAfter,
+      sortBy: fSortBy,
+      sortDir: fSortDir,
+    });
   }
 
   async function handleSearch(event: FormEvent) {
