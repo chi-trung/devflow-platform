@@ -17,6 +17,26 @@
   },
   "ctaTitle": "Bắt đầu phát hành nhanh hơn ngay hôm nay."
  },
+ "blog": {
+  "eyebrow": "GHI CHÚ KỸ THUẬT",
+  "title": "Blog",
+  "subtitle": "Những bài viết ngắn giải thích tính năng của DevFlow vận hành ra sao, do chính người đã ship viết.",
+  "ctaTitle": "Xem nó chạy trên board của chính bạn."
+ },
+ "privacy": {
+  "eyebrow": "PHÁP LÝ",
+  "title": "Chính sách Quyền riêng tư",
+  "subtitle": "DevFlow lưu gì, vì sao lưu, và làm sao để yêu cầu xóa.",
+  "updated": "Cập nhật lần cuối {{date}}",
+  "ctaTitle": "Muốn tự host? Repository công khai."
+ },
+ "terms": {
+  "eyebrow": "PHÁP LÝ",
+  "title": "Điều khoản Dịch vụ",
+  "subtitle": "Quy tắc dùng instance công khai, viết bằng ngôn ngữ dễ hiểu.",
+  "updated": "Cập nhật lần cuối {{date}}",
+  "ctaTitle": "Đồng ý? Tạo tài khoản nào."
+ },
  "landing": {
   "nav": {
    "features": "Tính năng",
@@ -128,6 +148,26 @@
    "privacy": "Quyền riêng tư",
    "terms": "Điều khoản",
    "copyright": "© 2026 DevFlow"
+  },
+  "pricing": {
+   "eyebrow": "BẢNG GIÁ",
+   "title": "Một gói duy nhất: miễn phí",
+   "subtitle": "Instance công khai chạy trên hạ tầng của chính nhóm bảo trì. Mục này nói rõ nó tốn bao nhiêu và bên trong có gì."
+  },
+  "docs": {
+   "title": "Tài liệu chạy được",
+   "subtitle": "Tài liệu API do chính API đang chạy sinh ra, nên không thể lệch so với các endpoint đang phục vụ."
+  },
+  "community": {
+   "title": "Xây dựng công khai",
+   "subtitle": "Không forum, không Discord giả vờ có người trực. Mã nguồn, danh sách issue và lịch sử phát hành chính là nơi trò chuyện.",
+   "apiHint": "Đang tích hợp? Tài liệu API trực tuyến nằm trong Swagger."
+  },
+  "help": {
+   "title": "Trung tâm trợ giúp",
+   "subtitle": "Trả lời thẳng về chi phí, nơi lưu trữ, AI và cách lấy dữ liệu của bạn ra.",
+   "more": "Có thứ chưa được nêu?",
+   "askIssue": "Hỏi trên GitHub"
   },
   "hero": {
    "flow": {

@@ -69,14 +69,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [collapsed]);
 
-  // Hover-peek: the rail stays pinned at its collapsed width, but resting the
-  // pointer over it floats a full-width panel on top of the content (no reflow)
-  // so workspace/project names are readable without a slow native tooltip.
-  // `railCollapsed` drives label visibility (false while peeking); `collapsed`
-  // drives the pinned width; `peeking` drives the floating overlay.
-  const [railHovered, setRailHovered] = useState(false);
-  const railCollapsed = collapsed && !railHovered;
-  const peeking = collapsed && railHovered;
+  // The collapsed rail expands ONLY via the toggle button (setCollapsed).
+  // A previous hover-peek (floating the full panel on mouseenter) was removed:
+  // resting the pointer is not intent, and users found the rail springing
+  // open under the cursor unpredictable. Labels come back on click alone.
+  const railCollapsed = collapsed;
 
   // Collapsed-rail design system (A33): every clickable becomes a centered
   // 36px square cell so icons, emoji tiles and the avatar share one optical
@@ -363,8 +360,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-dvh overflow-hidden">
       <aside
-        onMouseEnter={() => setRailHovered(true)}
-        onMouseLeave={() => setRailHovered(false)}
         className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface transition-transform duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
           collapsed ? "lg:w-[72px]" : "lg:w-60"
         } ${
@@ -372,18 +367,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ? "translate-x-0 shadow-[0_24px_80px_rgba(0,0,0,0.7)] lg:shadow-none"
             : "-translate-x-full"
         }`}
+        /* Kept for dropdown menus (UserMenu, NotificationsPanel) anchored in
+           the sidebar footer; see bf3155b. */
         style={{ overflow: 'visible' }}
       >
-        {/* Pinned rail keeps its 72px footprint in the page layout; while
-            peeking this wrapper lifts out and floats the full-width panel over
-            the content, so hovering never reflows the board. */}
-        <div
-          className={`flex min-h-0 flex-1 flex-col ${
-            peeking
-              ? "lg:absolute lg:inset-y-0 lg:left-0 lg:w-60 lg:border-r lg:border-border lg:bg-surface lg:shadow-[0_24px_80px_rgba(0,0,0,0.45)] lg:z-[70]"
-              : ""
-          }`}
-        >
+        <div className="flex min-h-0 flex-1 flex-col">
         <div className={`flex items-center justify-between pr-2 ${railCollapsed ? "lg:justify-center lg:pr-0" : ""}`}>
           <Link
             to="/"

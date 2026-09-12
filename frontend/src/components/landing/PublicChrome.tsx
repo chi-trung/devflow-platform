@@ -34,14 +34,22 @@ export function PublicHeader({
         )}
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <ThemeToggle className="hidden w-auto lg:inline-flex" />
-          <Link to="/login" className="sm:whitespace-nowrap">
+          {/* The toggle's own root carries `inline-flex` as a base class, so
+              adding `hidden` via className loses the display cascade battle
+              (Tailwind emits .inline-flex after .hidden) and the 214px chip
+              stayed visible at 390px — which squeezed "Get started free"
+              into a 70×60 wrapped blob inside the 64px header. Hide it from
+              a wrapper element instead so the two utilities never meet. */}
+          <div className="hidden lg:inline-flex">
+            <ThemeToggle className="w-auto" />
+          </div>
+          <Link to="/login" className="whitespace-nowrap">
             <Button variant="ghost" size="sm">
               {t("landing.nav.login")}
             </Button>
           </Link>
-          <Link to="/register" className="sm:whitespace-nowrap">
-            <Button size="sm" className="px-2 sm:px-2.5">
+          <Link to="/register" className="whitespace-nowrap">
+            <Button size="sm" className="px-2 whitespace-nowrap sm:px-2.5">
               {t("landing.nav.signup")}
             </Button>
           </Link>
@@ -107,7 +115,7 @@ export function PublicFooter() {
           <FooterColumn
             title={t("landing.footer.resources")}
             links={[
-              { href: "/#blog", label: t("landing.footer.blog") },
+              { href: "/blog", label: t("landing.footer.blog") },
               { href: "/#community", label: t("landing.footer.community") },
               { href: "/#help", label: t("landing.footer.help") },
             ]}
@@ -115,8 +123,8 @@ export function PublicFooter() {
           <FooterColumn
             title={t("landing.footer.legal")}
             links={[
-              { href: "/#privacy", label: t("landing.footer.privacy") },
-              { href: "/#terms", label: t("landing.footer.terms") },
+              { href: "/privacy", label: t("landing.footer.privacy") },
+              { href: "/terms", label: t("landing.footer.terms") },
             ]}
           />
         </div>

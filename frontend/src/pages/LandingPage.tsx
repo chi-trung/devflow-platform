@@ -8,6 +8,12 @@ import { HeroFlowDiagram } from "../components/landing/HeroFlowDiagram";
 import { IntelligenceSection } from "../components/landing/IntelligenceSection";
 import { FeatureBrowserFrame } from "../components/landing/FeatureBrowserFrame";
 import { ScreenshotShowcase } from "../components/landing/ScreenshotShowcase";
+import {
+  PricingSection,
+  DocsSection,
+  CommunitySection,
+  HelpSection,
+} from "../components/landing/MarketingSections";
 import { API_BASE } from "../lib/api";
 
 const HOW_STEPS = [
@@ -103,6 +109,12 @@ export function LandingPage() {
             <FeatureBrowserFrame />
           </div>
         </section>
+
+        {/* ─── Pricing / Docs / Community / Help ─── */}
+        <PricingSection />
+        <DocsSection />
+        <CommunitySection />
+        <HelpSection />
 
         {/* ─── How it works ─── */}
         <section className="border-b border-border py-20 sm:py-28">
