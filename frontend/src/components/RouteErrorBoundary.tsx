@@ -7,13 +7,15 @@ const RELOAD_KEY = "devflow.chunkReload";
 
 // Vite's dynamic-import failure wording differs per browser ("Failed to fetch
 // dynamically imported module" in Chrome/Firefox, "Importing a module script
-// failed" in Safari). All of them mean the same thing for this app: the HTML
-// still open references chunk filenames a newer deploy deleted, and the SPA
-// rewrite hands the importer index.html where a script was expected. A
-// one-shot reload picks up the fresh index.html and its new chunk names.
+// failed" in Safari), and the preload helper adds "Unable to preload CSS"
+// when a route's stylesheet chunk 404s after a deploy. All of them mean the
+// same thing for this app: the HTML still open references chunk filenames a
+// newer deploy deleted, and the SPA rewrite hands the importer index.html
+// where a script or stylesheet was expected. A one-shot reload picks up the
+// fresh index.html and its new chunk names.
 export function isChunkLoadError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return /dynamically imported module|Importing a module script failed/i.test(
+  return /dynamically imported module|Importing a module script failed|Unable to preload CSS/i.test(
     message,
   );
 }

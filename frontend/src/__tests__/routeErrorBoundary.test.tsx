@@ -33,13 +33,17 @@ afterEach(() => {
 });
 
 describe("isChunkLoadError", () => {
-  it("matches Chrome/Firefox and Safari dynamic-import failures", () => {
+  it("matches Chrome/Firefox and Safari dynamic-import and CSS-preload failures", () => {
     expect(
       isChunkLoadError(
         new Error("Failed to fetch dynamically imported module: https://x/assets/Board-abc.js"),
       ),
     ).toBe(true);
     expect(isChunkLoadError(new Error("Importing a module script failed."))).toBe(
+      true,
+    );
+    // Vite's preload helper wording when a route's CSS chunk is gone.
+    expect(isChunkLoadError(new Error("Unable to preload CSS for /assets/Board-abc.css"))).toBe(
       true,
     );
     expect(isChunkLoadError(new Error("Cannot read properties of undefined"))).toBe(
