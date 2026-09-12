@@ -119,10 +119,17 @@ export function GitHubPage() {
     }
   }
 
+  // Rows are canonicalized to "Open"/"Merged"/"Closed" by the backend
+  // entity; lowercase keys kept as fallback for legacy rows cached or
+  // stored before the normalization shipped (case-sensitive lookup else
+  // silently drops the color).
   const statusColors: Record<string, string> = {
+    Open: "text-green-600",
+    Merged: "text-purple-600",
+    Closed: "text-red-600",
     open: "text-green-600",
-    closed: "text-red-600",
     merged: "text-purple-600",
+    closed: "text-red-600",
   };
 
   return (

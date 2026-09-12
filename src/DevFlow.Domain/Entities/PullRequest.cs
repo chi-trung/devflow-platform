@@ -13,7 +13,7 @@ public class PullRequest : BaseEntity, IAuditableEntity
         ProjectId = projectId;
         Title = title;
         Url = url;
-        Status = status;
+        Status = NormalizeStatus(status);
         Author = author;
         HeadBranch = headBranch;
     }
@@ -24,7 +24,28 @@ public class PullRequest : BaseEntity, IAuditableEntity
 
     public string Url { get; private set; } = string.Empty;
 
-    public string Status { get; private set; } = "open"; // open, merged, closed
+    public string Status { get; private set; } = "Open"; // canonical: Open, Merged, Closed
+
+    /// <summary>
+    /// Single choke-point for status casing. Readers (frontend style maps)
+    /// key off "Open"/"Merged"/"Closed", but writers drifted: the manual
+    /// add-PR form submits the raw lowercase select value while the webhook
+    /// writes capitalized strings — case-sensitive JS lookups then rendered
+    /// open manual PRs as "Closed" badges. Normalize at construction/update
+    /// so every row carries one canonical casing regardless of the writer.
+    /// Unknown values pass through trimmed rather than being silently mapped.
+    /// </summary>
+    private static string NormalizeStatus(string status)
+    {
+        var trimmed = status.Trim();
+        return trimmed.ToLowerInvariant() switch
+        {
+            "open" => "Open",
+            "merged" => "Merged",
+            "closed" => "Closed",
+            _ => trimmed,
+        };
+    }
 
     public string? Author { get; private set; }
 
@@ -50,7 +71,7 @@ public class PullRequest : BaseEntity, IAuditableEntity
         return new PullRequest(projectId, title, url, status, author, headBranch);
     }
 
-    public void UpdateStatus(string status) => Status = status;
+    public void UpdateStatus(string status) => Status = NormalizeStatus(status);
 
     public void LinkToTask(Guid taskId) => LinkedTaskId = taskId;
 }

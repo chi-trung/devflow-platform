@@ -12,10 +12,17 @@ import type {
   PullRequestResponse,
 } from "../../types/api";
 
+// Canonical casing is PascalCase (backend normalizes it). Lowercase keys
+// are fallbacks for legacy rows stored before normalization shipped — a
+// case-sensitive miss would fall through to the gray "Closed" style and
+// render an open PR as closed.
 const prStatusStyle: Record<string, string> = {
   Open: "bg-teal-500/15 text-teal-600 dark:text-teal-300",
   Merged: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
   Closed: "bg-elevated text-muted-foreground",
+  open: "bg-teal-500/15 text-teal-600 dark:text-teal-300",
+  merged: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
+  closed: "bg-elevated text-muted-foreground",
 };
 
 interface GitHubCardProps {
