@@ -30,7 +30,7 @@ export function ChangelogPage() {
   usePageMeta("changelog.title", "changelog.subtitle");
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background text-foreground overflow-x-hidden">
+    <div className="flex min-h-dvh flex-col bg-background text-foreground overflow-x-clip">
       <PublicHeader />
 
       <main className="flex-1">

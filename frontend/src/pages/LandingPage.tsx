@@ -38,7 +38,7 @@ export function LandingPage() {
   }, []);
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background text-foreground overflow-x-hidden">
+    <div className="flex min-h-dvh flex-col bg-background text-foreground overflow-x-clip">
       {/* ─── Sticky header ─── */}
       <PublicHeader
         nav={[
