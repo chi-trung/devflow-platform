@@ -268,6 +268,26 @@ var app = builder.Build();
 // X-Forwarded-For so rate limiting partitions per real client.
 app.UseForwardedHeaders();
 
+// Baseline hardening headers on every response. The SPA gets these from
+// vercel.json; the API origin serves them nothing, and Swagger UI is HTML
+// that benefits from the same framing/sniffing rules. Set before anything
+// short-circuits (auth 401s, rate-limit 429s still carry them).
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "DENY";
+    headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    if (context.Request.Path.StartsWithSegments("/swagger"))
+    {
+        // Swagger UI ships inline styles and scripts; allow same-origin and
+        // inline, deny everything else.
+        headers["Content-Security-Policy"] =
+            "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'";
+    }
+    await next();
+});
+
 // Apply pending EF Core migrations so a fresh database (e.g. a managed
 // cloud instance) is ready on first boot.
 using (var scope = app.Services.CreateScope())
