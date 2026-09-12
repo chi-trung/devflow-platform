@@ -10,13 +10,22 @@ namespace DevFlow.UnitTests.Features.Reporting;
 public class CycleLeadTimeHandlerTests
 {
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
+    private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly ICacheService _cacheService = Substitute.For<ICacheService>();
 
-    private readonly Guid _workspaceId = Guid.NewGuid();
-    private readonly Guid _projectId = Guid.NewGuid();
+    // The project's own WorkspaceId — the handler now rejects a route
+    // workspaceId that doesn't own the projectId.
+    private readonly Project _project = Project.Create(Guid.NewGuid(), "Reporting Target", "RPT", null);
+    private readonly Guid _workspaceId;
+    private readonly Guid _projectId;
 
     public CycleLeadTimeHandlerTests()
     {
+        _workspaceId = _project.WorkspaceId;
+        _projectId = _project.Id;
+        _projectRepository
+            .GetByIdAsync(_projectId, Arg.Any<CancellationToken>())
+            .Returns(_project);
         _cacheService.GetOrSetAsync<CycleLeadTimeResponse>(
                 Arg.Any<string>(), Arg.Any<Func<CancellationToken, Task<CycleLeadTimeResponse>>>(),
                 Arg.Any<TimeSpan?>(), Arg.Any<IEnumerable<string>?>(), Arg.Any<CancellationToken>())
@@ -38,7 +47,7 @@ public class CycleLeadTimeHandlerTests
         _taskItemRepository.GetForProjectAsync(_projectId, (TaskItemStatus?)null, Arg.Any<CancellationToken>())
             .Returns(tasks);
 
-        var handler = new GetCycleLeadTimeHandler(_taskItemRepository, _cacheService);
+        var handler = new GetCycleLeadTimeHandler(_taskItemRepository, _projectRepository, _cacheService);
         var result = await handler.Handle(
             new GetCycleLeadTimeQuery(_workspaceId, _projectId),
             CancellationToken.None);
@@ -59,7 +68,7 @@ public class CycleLeadTimeHandlerTests
         _taskItemRepository.GetForProjectAsync(_projectId, (TaskItemStatus?)null, Arg.Any<CancellationToken>())
             .Returns(new[] { task });
 
-        var handler = new GetCycleLeadTimeHandler(_taskItemRepository, _cacheService);
+        var handler = new GetCycleLeadTimeHandler(_taskItemRepository, _projectRepository, _cacheService);
         var result = await handler.Handle(
             new GetCycleLeadTimeQuery(_workspaceId, _projectId),
             CancellationToken.None);
@@ -80,7 +89,7 @@ public class CycleLeadTimeHandlerTests
         _taskItemRepository.GetForProjectAsync(_projectId, (TaskItemStatus?)null, Arg.Any<CancellationToken>())
             .Returns(new[] { done, open });
 
-        var handler = new GetCycleLeadTimeHandler(_taskItemRepository, _cacheService);
+        var handler = new GetCycleLeadTimeHandler(_taskItemRepository, _projectRepository, _cacheService);
         var result = await handler.Handle(
             new GetCycleLeadTimeQuery(_workspaceId, _projectId),
             CancellationToken.None);
@@ -97,7 +106,7 @@ public class CycleLeadTimeHandlerTests
         _taskItemRepository.GetForProjectAsync(_projectId, (TaskItemStatus?)null, Arg.Any<CancellationToken>())
             .Returns(new[] { open });
 
-        var handler = new GetCycleLeadTimeHandler(_taskItemRepository, _cacheService);
+        var handler = new GetCycleLeadTimeHandler(_taskItemRepository, _projectRepository, _cacheService);
         var result = await handler.Handle(
             new GetCycleLeadTimeQuery(_workspaceId, _projectId),
             CancellationToken.None);

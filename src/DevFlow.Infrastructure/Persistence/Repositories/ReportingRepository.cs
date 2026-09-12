@@ -16,10 +16,15 @@ public sealed class ReportingRepository(DevFlowDbContext dbContext) : IReporting
 
     public async Task<IReadOnlyList<Sprint>> GetSprintsByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
     {
+        // EndDateUtc is nullable and Postgres sorts NULLs FIRST for DESC — a
+        // handful of unscheduled backlog sprints used to occupy the Take(10)
+        // window and crowd the recently-completed sprints out of the velocity
+        // report entirely. Schedule-less sprints sort last instead.
         return await dbContext.Sprints
             .AsNoTracking()
             .Where(s => s.ProjectId == projectId)
-            .OrderByDescending(s => s.EndDateUtc)
+            .OrderByDescending(s => s.EndDateUtc.HasValue)
+            .ThenByDescending(s => s.EndDateUtc)
             .Take(10)
             .ToListAsync(cancellationToken);
     }

@@ -1,6 +1,7 @@
 using DevFlow.Application.Common.Authorization;
-using DevFlow.Application.Common.Behaviors;
+using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
 using MediatR;
 
@@ -9,10 +10,11 @@ namespace DevFlow.Application.Features.Reporting;
 [RequireWorkspaceRole(WorkspaceRole.Member)]
 public sealed record GetCycleLeadTimeQuery(
     Guid WorkspaceId,
-    Guid ProjectId) : IRequest<CycleLeadTimeResponse>, IWorkspaceRequest;
+    Guid ProjectId) : IRequest<CycleLeadTimeResponse>, IProjectRequest;
 
 public sealed class GetCycleLeadTimeHandler(
     ITaskItemRepository taskItemRepository,
+    IProjectRepository projectRepository,
     ICacheService cacheService)
     : IRequestHandler<GetCycleLeadTimeQuery, CycleLeadTimeResponse>
 {
@@ -22,6 +24,16 @@ public sealed class GetCycleLeadTimeHandler(
         GetCycleLeadTimeQuery request,
         CancellationToken ct)
     {
+        // Tenant check — the route's workspaceId was authorized but never tied
+        // to the projectId; see GetBurndownHandler. Runs BEFORE the cache
+        // lookup so a foreign probe can't even key off cached rows.
+        var project = await projectRepository.GetByIdAsync(request.ProjectId, ct);
+
+        if (project is null || project.WorkspaceId != request.WorkspaceId)
+        {
+            throw new NotFoundException(nameof(Project), request.ProjectId);
+        }
+
         var cacheKey = $"cycle-lead-time:{request.ProjectId}";
         var tag = $"project:{request.ProjectId}";
 

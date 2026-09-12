@@ -1,6 +1,7 @@
 using DevFlow.Application.Common.Authorization;
-using DevFlow.Application.Common.Behaviors;
+using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
 using MediatR;
 
@@ -12,14 +13,27 @@ public sealed record GetBurndownQuery(
     Guid WorkspaceId,
     Guid ProjectId,
     DateOnly StartDate,
-    DateOnly EndDate) : IRequest<BurndownResponse>, IWorkspaceRequest;
+    DateOnly EndDate) : IRequest<BurndownResponse>, IProjectRequest;
 
 public class GetBurndownHandler(
-    IReportingRepository reportingRepository)
+    IReportingRepository reportingRepository,
+    IProjectRepository projectRepository)
     : IRequestHandler<GetBurndownQuery, BurndownResponse>
 {
     public async Task<BurndownResponse> Handle(GetBurndownQuery request, CancellationToken ct)
     {
+        // Regression (wave 5b hand-audit): the route authorized the caller as a
+        // member of request.WorkspaceId, but nothing tied request.ProjectId to
+        // that workspace — any member of any workspace could read another
+        // tenant's burndown by naming their own workspaceId with a foreign
+        // projectId. This predicate mirrors ListTaskItemsQueryHandler.
+        var project = await projectRepository.GetByIdAsync(request.ProjectId, ct);
+
+        if (project is null || project.WorkspaceId != request.WorkspaceId)
+        {
+            throw new NotFoundException(nameof(Project), request.ProjectId);
+        }
+
         var tasks = await reportingRepository.GetTasksByProjectAsync(request.ProjectId, ct);
 
         var totalTasks = tasks.Count;
@@ -52,14 +66,23 @@ public class GetBurndownHandler(
 [RequireWorkspaceRole(WorkspaceRole.Member)]
 public sealed record GetVelocityQuery(
     Guid WorkspaceId,
-    Guid ProjectId) : IRequest<VelocityResponse>, IWorkspaceRequest;
+    Guid ProjectId) : IRequest<VelocityResponse>, IProjectRequest;
 
 public class GetVelocityHandler(
-    IReportingRepository reportingRepository)
+    IReportingRepository reportingRepository,
+    IProjectRepository projectRepository)
     : IRequestHandler<GetVelocityQuery, VelocityResponse>
 {
     public async Task<VelocityResponse> Handle(GetVelocityQuery request, CancellationToken ct)
     {
+        // Tenant check — see GetBurndownHandler for the full rationale.
+        var project = await projectRepository.GetByIdAsync(request.ProjectId, ct);
+
+        if (project is null || project.WorkspaceId != request.WorkspaceId)
+        {
+            throw new NotFoundException(nameof(Project), request.ProjectId);
+        }
+
         var sprints = await reportingRepository.GetSprintsByProjectAsync(request.ProjectId, ct);
         var allTasks = await reportingRepository.GetTasksByProjectAsync(request.ProjectId, ct);
 

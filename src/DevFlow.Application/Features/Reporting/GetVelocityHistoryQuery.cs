@@ -1,6 +1,7 @@
 using DevFlow.Application.Common.Authorization;
-using DevFlow.Application.Common.Behaviors;
+using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
 using MediatR;
 
@@ -9,11 +10,12 @@ namespace DevFlow.Application.Features.Reporting;
 [RequireWorkspaceRole(WorkspaceRole.Member)]
 public sealed record GetVelocityHistoryQuery(
     Guid WorkspaceId,
-    Guid ProjectId) : IRequest<VelocityHistoryResponse>, IWorkspaceRequest;
+    Guid ProjectId) : IRequest<VelocityHistoryResponse>, IProjectRequest;
 
 public sealed class GetVelocityHistoryHandler(
     ISprintRepository sprintRepository,
     ITaskItemRepository taskItemRepository,
+    IProjectRepository projectRepository,
     ICacheService cacheService)
     : IRequestHandler<GetVelocityHistoryQuery, VelocityHistoryResponse>
 {
@@ -23,6 +25,14 @@ public sealed class GetVelocityHistoryHandler(
         GetVelocityHistoryQuery request,
         CancellationToken ct)
     {
+        // Tenant check — see GetBurndownHandler; before the cache lookup.
+        var project = await projectRepository.GetByIdAsync(request.ProjectId, ct);
+
+        if (project is null || project.WorkspaceId != request.WorkspaceId)
+        {
+            throw new NotFoundException(nameof(Project), request.ProjectId);
+        }
+
         var cacheKey = $"velocity-history:{request.ProjectId}";
         var tag = $"project:{request.ProjectId}";
 
