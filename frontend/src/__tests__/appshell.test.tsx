@@ -108,6 +108,19 @@ describe("AppShell sidebar collapse", () => {
     expect(c2.querySelector("aside")?.className).toContain("lg:w-[72px]");
   });
 
+  it("keeps the closed mobile drawer out of the tab order", () => {
+    // -translate-x-full alone leaves the offscreen links focusable; the closed
+    // state must also carry invisible (with lg:visible so the desktop rail
+    // stays shown). Opening must drop invisible, not override it.
+    const { container } = renderShell("/workspaces/ws1", false);
+    const aside = container.querySelector("aside");
+    expect(aside?.className).toContain("-translate-x-full invisible lg:visible");
+
+    fireEvent.click(screen.getByRole("button", { name: "ui.openMenuAria" }));
+    expect(aside?.className).toContain("translate-x-0");
+    expect(aside?.className).not.toContain("invisible");
+  });
+
   it("swaps the account trigger to icon-only when collapsed (no name overflow)", () => {
     // Collapsed: the sidebar UserMenu renders compact (avatar initials + long
     // username/email hidden) so a long Gmail address can't stick out of the
