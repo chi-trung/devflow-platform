@@ -5,5 +5,11 @@
 - [Features](https://devflow-platform-kappa.vercel.app/#features): structured flows, AI agent, kanban board, releases, orgs & teams
 - [Pricing](https://devflow-platform-kappa.vercel.app/#pricing): free tier, no credit card required
 - [Docs / REST API (Swagger)](https://devflow-api-vd5h.onrender.com/swagger): full REST API reference for personal access tokens and integrations
+- [Changelog](https://devflow-platform-kappa.vercel.app/changelog): shipped releases and roadmap
+- [Blog](https://devflow-platform-kappa.vercel.app/blog): engineering notes on how features work
+- [Community](https://devflow-platform-kappa.vercel.app/#community): Discord and GitHub issues
+- [Help center](https://devflow-platform-kappa.vercel.app/#help): contact and support
+- [Privacy](https://devflow-platform-kappa.vercel.app/privacy): what DevFlow stores and why
+- [Terms](https://devflow-platform-kappa.vercel.app/terms): rules for the hosted instance
 - [Log in](https://devflow-platform-kappa.vercel.app/login): existing workspace members
 - [Get started free](https://devflow-platform-kappa.vercel.app/register): create a workspace in minutes
