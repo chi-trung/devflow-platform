@@ -506,8 +506,13 @@ export function BoardPage() {
       if (
         target &&
         target.closest("input, textarea, select, [contenteditable=true]")
-      )
-        return;
+      ) {
+        // Typing in a field must not fire shortcuts. The exception is
+        // Escape while the detail drawer is open: its title and comment
+        // fields live inside the dialog, and closing the dialog has to
+        // stay reachable from them.
+        if (!(event.key === "Escape" && selectedTaskId)) return;
+      }
 
       if ((event.ctrlKey || event.metaKey) && !event.altKey) {
         if (event.key.toLowerCase() === "a" && !selectedTaskId) {
