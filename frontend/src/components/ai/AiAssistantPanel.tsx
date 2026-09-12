@@ -209,7 +209,6 @@ export function AiAssistantPanel({
   return (
     <div
       role="dialog"
-      aria-modal
       aria-label={t("ai.assistant")}
       className="flex h-[min(70dvh,26rem)] w-[min(92vw,26rem)] flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_24px_80px_rgba(0,0,0,0.5)] rise"
     >

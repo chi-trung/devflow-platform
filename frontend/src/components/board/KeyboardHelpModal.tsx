@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 
 function getShortcuts(t: (key: string) => string) {
   return [
@@ -19,17 +20,22 @@ interface KeyboardHelpModalProps {
 
 export function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
   const { t } = useTranslation();
+  const { ref: dialogRef, onKeyDown: trapTab } = useFocusTrap<HTMLDivElement>(true);
   const SHORTCUTS = getShortcuts(t);
   return (
     <div
+      ref={dialogRef}
+      onKeyDown={trapTab}
       className="fixed inset-0 z-50"
       role="dialog"
+      aria-modal="true"
       aria-label={t("keyboard.title")}
     >
       <button
         type="button"
         aria-label={t("keyboard.closeHelpAria")}
         onClick={onClose}
+        tabIndex={-1}
         className="absolute inset-0 cursor-default bg-foreground/30"
       />
       <div className="absolute left-1/2 top-1/2 w-[min(92vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface p-5 shadow-[0_0_60px_rgba(0,0,0,0.5)]">
