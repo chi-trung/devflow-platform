@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Browsers without SVG favicon support (Safari before 16, old Edge)
+         skip the SVG and request /favicon.ico, which the SPA rewrite serves
+         as HTML. Point the fallback at the real PNG instead. -->
+    <link rel="alternate icon" type="image/png" href="/icon-192.png" />
     <link rel="manifest" href="/manifest.json" />
     <!-- iOS ignores the web manifest for Add-to-Home-Screen and only reads this
          tag; without it the pinned tile is a screenshot of the page. -->
