@@ -544,6 +544,10 @@ export function BoardPage() {
           if (graphOpen) setGraphOpen(false);
           else if (helpOpen) setHelpOpen(false);
           else if (confirmBulkDelete) setConfirmBulkDelete(false);
+          // The open drawer is the topmost focused surface when no modal is
+          // up, so it closes before the selection-clearing branch can eat
+          // the keystroke.
+          else if (selectedTaskId) setSelectedTaskId(null);
           else if (selectedIds.size > 0) setSelectedIds(new Set());
           break;
       }
