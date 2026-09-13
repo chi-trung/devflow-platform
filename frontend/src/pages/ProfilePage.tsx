@@ -142,7 +142,7 @@ export function ProfilePage() {
               />
             </label>
 
-            {profileError && <ErrorAlert message={profileError} />}
+            {profileError && <ErrorAlert message={profileError} id={profileErrorId} />}
 
             <div className="mt-1 flex justify-end">
               <Button type="submit" disabled={savingProfile}>
