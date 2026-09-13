@@ -701,7 +701,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           the browser only scrolls, and the next Tab restarts at the nav the
           skip link just bypassed. inert (drawer open) still blocks the focus,
           which is correct then. */}
-      <main id="devflow-content" tabIndex={-1} inert={drawerOpen} className="min-w-0 flex-1 overflow-y-auto pt-14 pb-16 outline-none lg:pt-0 lg:pb-0">
+      <main id="devflow-content" tabIndex={-1} inert={drawerOpen} className="min-w-0 flex-1 overflow-y-auto pt-14 pb-16 outline-none scroll-pt-16 scroll-pb-[calc(3.75rem+env(safe-area-inset-bottom))] lg:pt-0 lg:pb-0 lg:scroll-pt-0 lg:scroll-pb-0">
         {children}
       </main>
 
