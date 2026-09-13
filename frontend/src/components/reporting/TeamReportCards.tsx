@@ -27,10 +27,10 @@ export function TeamReportCards({ data, members, className = "" }: TeamReportCar
   return (
     <div className={`space-y-3 ${className}`}>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <h3 className="inline-flex items-center gap-1.5 font-display text-sm font-semibold">
+        <h2 className="inline-flex items-center gap-1.5 font-display text-sm font-semibold">
           <Users className="size-4 text-primary" aria-hidden />
           {t("reports.teamWorkload")}
-        </h3>
+        </h2>
         <span className="ml-auto font-mono text-[11px] text-muted-foreground">
           {t("reports.tasksDone", { done: data.totalCompleted, total: data.totalTasks })} ·{" "}
           {formatMinutes(data.totalMinutesLogged)} {t("timeTracking.logged")}

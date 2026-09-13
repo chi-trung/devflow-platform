@@ -47,13 +47,13 @@ export function VelocityChart({ data, className = "" }: VelocityChartProps) {
   return (
     <div className={`rounded-lg border border-border bg-surface p-4 ${className}`}>
       <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-        <h3 className="inline-flex items-center gap-1.5 font-display text-sm font-semibold">
+        <h2 className="inline-flex items-center gap-1.5 font-display text-sm font-semibold">
           <BarChart3 className="size-4 text-primary" aria-hidden />
           {t("reports.sprintVelocity")}
           <span className="ml-1 font-mono text-[11px] font-normal text-muted-foreground">
             {t("reports.avgCompletion", { pct: Math.round(data.averageCompletionRate * 100) })}
           </span>
-        </h3>
+        </h2>
         <div className="ml-auto flex items-center gap-4 font-mono text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <span className="size-2.5 rounded-sm bg-primary/25" aria-hidden />

@@ -54,10 +54,10 @@ export function CycleLeadTimeChart({ data, className = "" }: CycleLeadTimeChartP
   return (
     <div className={`rounded-lg border border-border bg-surface p-4 ${className}`}>
       <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-        <h3 className="inline-flex items-center gap-1.5 font-display text-sm font-semibold">
+        <h2 className="inline-flex items-center gap-1.5 font-display text-sm font-semibold">
           <Activity className="size-4 text-primary" aria-hidden />
           {t("reports.cycleLeadTime")}
-        </h3>
+        </h2>
         <div className="ml-auto flex flex-wrap items-center gap-3 font-mono text-[11px] text-muted-foreground">
           <span>{t("reports.cycleTimeP50")}: {formatMetric(data.cycleTimeP50)} {t("reports.days")}</span>
           <span>{t("reports.cycleTimeP90")}: {formatMetric(data.cycleTimeP90)} {t("reports.days")}</span>

@@ -91,7 +91,7 @@ export function BurndownChartApi({ data, className = "" }: BurndownChartApiProps
   return (
     <div className={`rounded-lg border border-border bg-surface p-4 ${className}`}>
       <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-        <h3 className="inline-flex items-center gap-1.5 font-display text-sm font-semibold">
+        <h2 className="inline-flex items-center gap-1.5 font-display text-sm font-semibold">
           <TrendingDown className="size-4 text-primary" aria-hidden />
           {t("reports.burndown")}
           <span className="ml-1 font-mono text-[11px] font-normal text-muted-foreground">
@@ -101,7 +101,7 @@ export function BurndownChartApi({ data, className = "" }: BurndownChartApiProps
               count: data.totalTasks,
             })}
           </span>
-        </h3>
+        </h2>
         <div className="ml-auto flex items-center gap-4 font-mono text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <svg width="18" height="6" aria-hidden>

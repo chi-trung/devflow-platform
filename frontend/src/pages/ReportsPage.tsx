@@ -252,9 +252,9 @@ export function ReportsPage() {
                 <Download className="size-4" aria-hidden />
               </span>
               <div>
-                <h3 className="font-display text-sm font-semibold">
+                <h2 className="font-display text-sm font-semibold">
                   {t("reports.export")}
-                </h3>
+                </h2>
                 <p className="mt-0.5 text-sm text-muted-foreground">
                   {t("reports.exportDescription")}
                 </p>
