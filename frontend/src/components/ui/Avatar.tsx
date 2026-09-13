@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 const PALETTE = [
   "bg-teal-400/15 text-teal-300",
   "bg-sky-400/15 text-sky-300",
@@ -30,6 +32,7 @@ export function Avatar({
   online = false,
   className = "",
 }: AvatarProps) {
+  const { t } = useTranslation();
   const initials = name
     .split(/[\s_-]+/)
     .filter(Boolean)
@@ -53,7 +56,7 @@ export function Avatar({
       {online && (
         <span
           role="img"
-          aria-label="online"
+          aria-label={t("ui.statusOnline")}
           className={`absolute -right-0.5 -bottom-0.5 ${dotSize} rounded-full bg-emerald-500 ring-2 ring-surface`}
         />
       )}

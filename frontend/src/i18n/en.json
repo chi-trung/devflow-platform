@@ -1592,6 +1592,9 @@
   "primaryNavAria": "Primary navigation",
   "sidebarNavAria": "Sidebar navigation",
   "menuDialogAria": "Menu",
+  "closeDialogAria": "Close dialog",
+  "publicNavAria": "Public navigation",
+  "statusOnline": "Online",
   "skipToContent": "Skip to content",
   "emojiPicker": {
    "label": "Choose an emoji",

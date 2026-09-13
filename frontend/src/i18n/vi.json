@@ -1592,6 +1592,9 @@
   "primaryNavAria": "Điều hướng chính",
   "sidebarNavAria": "Điều hướng sidebar",
   "menuDialogAria": "Menu",
+  "closeDialogAria": "Đóng hộp thoại",
+  "publicNavAria": "Điều hướng công khai",
+  "statusOnline": "Đang online",
   "skipToContent": "Bỏ qua tới nội dung",
   "emojiPicker": {
    "label": "Chọn emoji",

@@ -30,7 +30,7 @@ export function PublicHeader({
         <Logo to="/" size="md" wordmarkHideBelow="sm" />
 
         {nav && nav.length > 0 && (
-          <nav className="hidden items-center gap-8 lg:flex" aria-label="Public">
+          <nav className="hidden items-center gap-8 lg:flex" aria-label={t("ui.publicNavAria")}>
             {nav.map((link) => (
               <a
                 key={link.href}

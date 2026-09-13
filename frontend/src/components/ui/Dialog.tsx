@@ -1,5 +1,6 @@
 import { useEffect, useId } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { useFocusTrap } from "../../hooks/useFocusTrap";
 
 interface DialogProps {
@@ -11,6 +12,7 @@ interface DialogProps {
 }
 
 export function Dialog({ open, onClose, title, children, footer }: DialogProps) {
+  const { t } = useTranslation();
   const titleId = useId();
   const { ref: dialogRef, onKeyDown: trapTab } = useFocusTrap<HTMLDivElement>(open);
 
@@ -35,7 +37,7 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
       <button
         type="button"
-        aria-label="Close dialog"
+        aria-label={t("ui.closeDialogAria")}
         onClick={onClose}
         tabIndex={-1}
         className="absolute inset-0 cursor-default bg-black/50"
