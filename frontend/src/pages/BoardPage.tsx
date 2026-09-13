@@ -57,6 +57,7 @@ import { ImportTasksModal } from "../components/board/ImportTasksModal";
 import { BoardPresence } from "../components/board/BoardPresence";
 import { usePresence } from "../hooks/usePresence";
 import { getEpics } from "../lib/api";
+import { areCharacterShortcutsEnabled } from "../lib/keyboardShortcuts";
 import type {
   ActivityResponse,
   EpicResponse,
@@ -500,6 +501,8 @@ export function BoardPage() {
 
   // Keyboard shortcuts: n=new, / or f=focus filter, ?=help,
   // Ctrl+A=select visible, Delete=bulk delete, Esc=step back.
+  // The bare-character ones honor the Settings → General turn-off
+  // required by WCAG 2.1.4; modifier chords and Delete/Esc are exempt.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
@@ -524,11 +527,13 @@ export function BoardPage() {
 
       switch (event.key) {
         case "n":
+          if (!areCharacterShortcutsEnabled()) break;
           if (!creating && !selectedTaskId && !graphOpen && !helpOpen)
             setCreating(true);
           break;
         case "/":
         case "f": {
+          if (!areCharacterShortcutsEnabled()) break;
           event.preventDefault();
           document
             .querySelector<HTMLInputElement>("input[data-board-search]")
@@ -536,6 +541,7 @@ export function BoardPage() {
           break;
         }
         case "?":
+          if (!areCharacterShortcutsEnabled()) break;
           setHelpOpen((open) => !open);
           break;
         case "Delete":

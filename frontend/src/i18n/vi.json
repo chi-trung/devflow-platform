@@ -1179,6 +1179,11 @@
   "signOutConfirmMsg": "Bạn sẽ cần đăng nhập lại để truy cập không gian làm việc của mình.",
   "languageDesc": "Chọn ngôn ngữ hiển thị cho giao diện.",
   "languageChangedTo": "Đã đổi ngôn ngữ sang {{language}}",
+  "keyboardShortcuts": "Phím tắt",
+  "characterKeys": "Phím đơn",
+  "characterKeysDesc": "N, /, F và ? trên board. Tắt nếu chúng xung đột với công cụ hoặc trình đọc màn hình của bạn.",
+  "shortcutsOn": "Đã bật phím đơn",
+  "shortcutsOff": "Đã tắt phím đơn",
   "syncedToAccount": "Đồng bộ với tài khoản của bạn.",
   "prefsSaveFailed": "Không lưu được tuỳ chọn thông báo.",
   "inAppNotifications": "Thông báo trong ứng dụng",
@@ -1572,7 +1577,10 @@
  "keyboard": {
   "title": "Phím tắt",
   "searchOperatorsPrefix": "Toán tử tìm kiếm:",
-  "closeHelpAria": "Đóng trợ giúp"
+  "closeHelpAria": "Đóng trợ giúp",
+  "showHelp": "Hiện trợ giúp này",
+  "selectAll": "Chọn mọi task đang hiển thị",
+  "characterShortcutsOff": "Phím đơn (N, /, F, ?) đang tắt. Bật lại trong Cài đặt → Chung."
  },
  "fields": {
   "taskFieldsTitle": "Trường",

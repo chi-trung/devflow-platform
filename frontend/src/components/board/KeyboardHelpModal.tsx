@@ -1,16 +1,24 @@
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import { useFocusTrap } from "../../hooks/useFocusTrap";
+import { areCharacterShortcutsEnabled } from "../../lib/keyboardShortcuts";
 
+/**
+ * `character` marks bindings of bare printable keys — WCAG 2.1.4 requires a
+ * way to turn those off, and the Settings toggle does exactly that, so this
+ * list has to reflect what is currently live (modifier chords and Escape/
+ * Delete are exempt from the criterion and stay listed either way).
+ */
 function getShortcuts(t: (key: string) => string) {
   return [
-    { keys: "Ctrl + K", action: t("nav.search") },
-    { keys: "N", action: t("board.newTask") },
-    { keys: "/", action: t("filter.filters") },
-    { keys: "?", action: "?" },
-    { keys: "Ctrl + A", action: t("common.confirm") },
-    { keys: "Delete", action: t("common.delete") },
-    { keys: "Esc", action: t("common.cancel") },
+    { keys: "Ctrl + K", action: t("nav.search"), character: false },
+    { keys: "N", action: t("board.newTask"), character: true },
+    { keys: "/", action: t("filter.filters"), character: true },
+    { keys: "F", action: t("filter.filters"), character: true },
+    { keys: "?", action: t("keyboard.showHelp"), character: true },
+    { keys: "Ctrl + A", action: t("keyboard.selectAll"), character: false },
+    { keys: "Delete", action: t("common.delete"), character: false },
+    { keys: "Esc", action: t("common.cancel"), character: false },
   ];
 }
 
@@ -21,7 +29,10 @@ interface KeyboardHelpModalProps {
 export function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
   const { t } = useTranslation();
   const { ref: dialogRef, onKeyDown: trapTab } = useFocusTrap<HTMLDivElement>(true);
-  const SHORTCUTS = getShortcuts(t);
+  const shortcutsOn = areCharacterShortcutsEnabled();
+  const SHORTCUTS = getShortcuts(t).filter(
+    (shortcut) => shortcutsOn || !shortcut.character,
+  );
   return (
     <div
       ref={dialogRef}
@@ -64,6 +75,11 @@ export function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
             </div>
           ))}
         </dl>
+        {!shortcutsOn && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            {t("keyboard.characterShortcutsOff")}
+          </p>
+        )}
         <p className="mt-4 font-mono text-[10px] text-muted-foreground">
           {t("keyboard.searchOperatorsPrefix")} status:done · priority:high ·
           assignee:me · label:bug · pr:open · is:blocked

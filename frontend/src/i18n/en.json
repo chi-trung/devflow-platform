@@ -1179,6 +1179,11 @@
   "signOutConfirmMsg": "You'll need to sign in again to access your workspaces.",
   "languageDesc": "Choose your preferred language for the interface.",
   "languageChangedTo": "Language changed to {{language}}",
+  "keyboardShortcuts": "Keyboard shortcuts",
+  "characterKeys": "Single-key shortcuts",
+  "characterKeysDesc": "N, /, F and ? on the board. Turn off if they conflict with your own tools or screen reader.",
+  "shortcutsOn": "Single-key shortcuts on",
+  "shortcutsOff": "Single-key shortcuts off",
   "syncedToAccount": "Synced to your account.",
   "prefsSaveFailed": "Couldn't save notification preferences.",
   "inAppNotifications": "In-app notifications",
@@ -1572,7 +1577,10 @@
  "keyboard": {
   "title": "Keyboard shortcuts",
   "searchOperatorsPrefix": "Search operators:",
-  "closeHelpAria": "Close help"
+  "closeHelpAria": "Close help",
+  "showHelp": "Show this help",
+  "selectAll": "Select all visible tasks",
+  "characterShortcutsOff": "Single-key shortcuts (N, /, F, ?) are turned off. Re-enable them in Settings → General."
  },
  "fields": {
   "taskFieldsTitle": "Fields",

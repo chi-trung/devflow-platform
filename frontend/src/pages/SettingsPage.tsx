@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import {
   BellRing,
   Globe,
+  Keyboard,
   LogOut,
   Palette,
   TriangleAlert,
@@ -22,6 +23,10 @@ import { Button } from "../components/ui/Button";
 import { ThemeToggle } from "../components/ui/ThemeToggle";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { PATSection } from "../components/settings/PATSection";
+import {
+  areCharacterShortcutsEnabled,
+  setCharacterShortcutsEnabled,
+} from "../lib/keyboardShortcuts";
 
 function Switch({
   checked,
@@ -366,6 +371,7 @@ export function SettingsPage() {
             </section>
 
             <LanguageSection />
+            <KeyboardShortcutsSection />
           </div>
         )}
 
@@ -541,6 +547,46 @@ function LanguageSection() {
             </button>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function KeyboardShortcutsSection() {
+  const { t } = useTranslation();
+  const { push } = useToast();
+  const [enabled, setEnabled] = useState(areCharacterShortcutsEnabled);
+
+  return (
+    <section
+      aria-label={t("settings.keyboardShortcuts")}
+      className="rounded-xl border border-border bg-surface p-5"
+    >
+      <div className="mb-4 flex items-center gap-2.5">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary-strong">
+          <Keyboard className="size-4" aria-hidden />
+        </span>
+        <h2 className="font-display font-semibold">
+          {t("settings.keyboardShortcuts")}
+        </h2>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium">{t("settings.characterKeys")}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {t("settings.characterKeysDesc")}
+          </p>
+        </div>
+        <Switch
+          checked={enabled}
+          onChange={(value) => {
+            setEnabled(value);
+            setCharacterShortcutsEnabled(value);
+            push(t(value ? "settings.shortcutsOn" : "settings.shortcutsOff"));
+          }}
+          label={t("settings.characterKeys")}
+        />
       </div>
     </section>
   );
