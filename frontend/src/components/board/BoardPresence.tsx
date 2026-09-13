@@ -14,7 +14,12 @@ export function BoardPresence({ users, remainingCount, totalOnline }: BoardPrese
   if (totalOnline === 0) return null;
 
   return (
-    <div className="flex items-center gap-1" title={`${totalOnline} ${t("board.onlineNow", { count: totalOnline })}`}>
+    <div
+      className="flex items-center gap-1"
+      title={`${totalOnline} ${t("board.onlineNow", { count: totalOnline })}`}
+      aria-label={t("board.onlineNow", { count: totalOnline })}
+      role="img"
+    >
       <div className="flex -space-x-2 overflow-hidden">
         {users.map((user) => (
           <span key={user.userId} className="ring-2 ring-surface rounded-lg">
