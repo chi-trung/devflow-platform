@@ -25,8 +25,14 @@ export function UserMenu({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
+  // A pointer click on the trigger should leave focus on the button, but
+  // keyboard activation must move it into the menu. React batches both
+  // onClick paths identically, so record the input modality here and let the
+  // open effect below read it.
+  const openedByPointer = useRef(false);
 
   useEffect(() => {
     function onPointerDown(event: PointerEvent) {
@@ -39,7 +45,14 @@ export function UserMenu({
       }
     }
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        if (dropdownRef.current?.contains(document.activeElement)) {
+          // Focus is inside the portal; returning it to the trigger keeps the
+          // keyboard user on the widget they opened.
+          triggerRef.current?.focus();
+        }
+        setOpen(false);
+      }
     }
     function onScroll() {
       setOpen(false);
@@ -54,6 +67,37 @@ export function UserMenu({
     };
   }, []);
 
+  // Menu-button pattern: after keyboard activation, put focus on the first
+  // menuitem so arrows/Enter work immediately instead of Tab-ing through the
+  // rest of the page (the portal items are the next tab stop anyway, but only
+  // after unrelated body content, since the menu is appended to <body>).
+  useEffect(() => {
+    if (open && !openedByPointer.current) {
+      dropdownRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    }
+    openedByPointer.current = false;
+  }, [open]);
+
+  function onMenuKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Tab") {
+      // Menu-button behavior: Tab leaves the menu and closes it, so a
+      // keyboard user does not have to walk back through the open list.
+      setOpen(false);
+      return;
+    }
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+    const items = [...(dropdownRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])];
+    if (items.length === 0) return;
+    event.preventDefault();
+    const current = items.indexOf(document.activeElement as HTMLElement);
+    let next: number;
+    if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = items.length - 1;
+    else if (event.key === "ArrowDown") next = current + 1 >= items.length ? 0 : current + 1;
+    else next = current - 1 < 0 ? items.length - 1 : current - 1;
+    items[next]?.focus();
+  }
+
   async function handleLogout() {
     setOpen(false);
     await logout();
@@ -64,8 +108,6 @@ export function UserMenu({
     setOpen(false);
     navigate(path);
   }
-
-  const triggerRef = useRef<HTMLButtonElement>(null);
 
   function getDropdownStyle(): React.CSSProperties {
     if (!triggerRef.current) return {};
@@ -85,8 +127,20 @@ export function UserMenu({
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((value) => !value)}
+        onPointerDown={() => {
+          openedByPointer.current = true;
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            // Open with the keyboard; the open effect moves focus to the
+            // first item once the menu renders.
+            event.preventDefault();
+            setOpen(true);
+          }
+        }}
         aria-label={t("ui.userMenuAria")}
         aria-expanded={open}
+        aria-haspopup="menu"
         className={
           compact
             ? `flex items-center gap-1 rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground ${triggerClassName}`
@@ -122,6 +176,7 @@ export function UserMenu({
         <div
           ref={dropdownRef}
           role="menu"
+          onKeyDown={onMenuKeyDown}
           style={getDropdownStyle()}
           className="w-56 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise"
         >
