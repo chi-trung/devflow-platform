@@ -10,7 +10,7 @@ export function NotFoundPage() {
   // so tell crawlers neither to index nor to canonicalize the random path.
   usePageMeta("notFound.title", "notFound.description", true);
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center p-6 text-center">
+    <main className="flex min-h-dvh flex-col items-center justify-center p-6 text-center">
       <span className="mb-5 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
         <Compass className="size-7" aria-hidden />
       </span>
@@ -32,6 +32,6 @@ export function NotFoundPage() {
           {t("nav.home")}
         </Button>
       </Link>
-    </div>
+    </main>
   );
 }
