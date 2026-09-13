@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, type FormEvent } from "react";
+import { useState, useMemo, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Search, FileText, FolderOpen, Layers, Tag, Users, MessageSquare, ChevronUp, ChevronDown } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
@@ -72,20 +72,18 @@ export function SearchPage() {
 
   const selectedProjectId = projects[0]?.id ?? "";
 
-  const { data: labelsRaw, reload: reloadLabels } = useApi<LabelResponse[]>(
+  const { data: labelsRaw } = useApi<LabelResponse[] | null>(
+    // The project list arrives a beat after mount; fetching with the
+    // empty placeholder id builds /projects//labels and 404s.
     () =>
-      api(
-        `/workspaces/${workspaceId}/projects/${selectedProjectId}/labels`,
-      ),
+      selectedProjectId
+        ? api(
+            `/workspaces/${workspaceId}/projects/${selectedProjectId}/labels`,
+          )
+        : Promise.resolve(null),
     [workspaceId, selectedProjectId],
   );
   const labels = labelsRaw ?? [];
-
-  useEffect(() => {
-    if (selectedProjectId) {
-      reloadLabels();
-    }
-  }, [selectedProjectId, reloadLabels]);
 
   const { data: savedSearchesRaw } = useApi<SavedSearchResponse[]>(
     () => getSavedSearches(),
