@@ -134,9 +134,9 @@ export function SprintBoard({
             <TaskRow key={task.id} task={task} />
           ))}
           {backlogTasks.length === 0 && (
-            <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
+            <li className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
               {t("sprint.dropTasksRemove")}
-            </p>
+            </li>
           )}
         </ul>
       </section>
@@ -193,9 +193,9 @@ export function SprintBoard({
                   <TaskRow key={task.id} task={task} />
                 ))}
                 {sprintTasks.length === 0 && (
-                  <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
+                  <li className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
                     {locked ? t("sprint.noTasksInCol") : t("board.dropHere")}
-                  </p>
+                  </li>
                 )}
               </ul>
             </section>
