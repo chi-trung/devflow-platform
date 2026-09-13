@@ -468,7 +468,7 @@ export function CommandPalette({
         className="absolute left-1/2 top-24 w-full max-w-lg -translate-x-1/2 overflow-hidden rounded-xl border border-border-strong bg-card shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise"
         onKeyDown={handleKeyDown}
       >
-        <div className="flex items-center gap-2.5 border-b border-border px-4">
+        <div className="flex items-center gap-2.5 border-b border-border px-4 focus-within:border-primary">
           <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden />
           <input
             ref={inputRef}
@@ -496,7 +496,7 @@ export function CommandPalette({
               aria-label={t("commandPalette.statusFilter")}
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
-              className="rounded-md border border-border bg-surface px-1.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:border-border-strong focus:outline-none"
+              className="rounded-md border border-border bg-surface px-1.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:border-border-strong focus:border-primary focus:outline-none"
             >
               <option value="">{t("commandPalette.anyStatus")}</option>
               <option value="Idea">{t("board.idea")}</option>
@@ -511,7 +511,7 @@ export function CommandPalette({
               aria-label={t("commandPalette.priorityFilter")}
               value={priorityFilter}
               onChange={(event) => setPriorityFilter(event.target.value)}
-              className="rounded-md border border-border bg-surface px-1.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:border-border-strong focus:outline-none"
+              className="rounded-md border border-border bg-surface px-1.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:border-border-strong focus:border-primary focus:outline-none"
             >
               <option value="">{t("commandPalette.anyPriority")}</option>
               <option value="Low">{t("task.low")}</option>
@@ -523,7 +523,7 @@ export function CommandPalette({
               aria-label={t("commandPalette.dueFilter")}
               value={dueFilter}
               onChange={(event) => setDueFilter(event.target.value)}
-              className="rounded-md border border-border bg-surface px-1.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:border-border-strong focus:outline-none"
+              className="rounded-md border border-border bg-surface px-1.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors duration-150 hover:border-border-strong focus:border-primary focus:outline-none"
             >
               <option value="">{t("commandPalette.anyDue")}</option>
               <option value="overdue">{t("commandPalette.dueOverdue")}</option>
@@ -534,7 +534,7 @@ export function CommandPalette({
         )}
 
         {workspaceId && hasActiveFilters && (
-          <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
+          <div className="flex items-center gap-2 border-b border-border px-3 py-1.5 focus-within:border-primary">
             {saveMode ? (
               <>
                 <BookmarkPlus className="size-3.5 shrink-0 text-primary" aria-hidden />
