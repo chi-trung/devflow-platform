@@ -245,12 +245,14 @@ export function SearchPage() {
         <form onSubmit={handleSearch} className="mb-6 space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <Input
+              aria-label={t("search.search")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("search.placeholder")}
               className="sm:col-span-2"
             />
             <select
+              aria-label={t("search.statusLabel")}
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
@@ -265,6 +267,7 @@ export function SearchPage() {
               <option value="Done">{t("board.done")}</option>
             </select>
             <select
+              aria-label={t("search.priorityLabel")}
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
               className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
@@ -276,6 +279,7 @@ export function SearchPage() {
               <option value="Critical">Critical</option>
             </select>
             <select
+              aria-label={t("search.assigneeLabel")}
               value={assigneeId}
               onChange={(e) => setAssigneeId(e.target.value)}
               className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
@@ -288,6 +292,7 @@ export function SearchPage() {
               ))}
             </select>
             <select
+              aria-label={t("search.labelLabel")}
               value={labelId}
               onChange={(e) => setLabelId(e.target.value)}
               className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
@@ -301,17 +306,20 @@ export function SearchPage() {
             </select>
             <Input
               type="date"
+              aria-label={t("search.dueBefore")}
               value={dueBefore}
               onChange={(e) => setDueBefore(e.target.value)}
               placeholder={t("search.dueBefore")}
             />
             <Input
               type="date"
+              aria-label={t("search.dueAfter")}
               value={dueAfter}
               onChange={(e) => setDueAfter(e.target.value)}
               placeholder={t("search.dueAfter")}
             />
             <select
+              aria-label={t("search.sortLabel")}
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
@@ -327,6 +335,7 @@ export function SearchPage() {
                 type="button"
                 variant="outline"
                 onClick={toggleSortDir}
+                aria-label={t("search.sortDirection")}
                 className="shrink-0"
               >
                 {sortDir === "asc" ? (
@@ -336,6 +345,7 @@ export function SearchPage() {
                 )}
               </Button>
               <select
+                aria-label={t("search.applySavedSearch")}
                 value={savedSearchId}
                 onChange={(e) => {
                   const id = e.target.value;

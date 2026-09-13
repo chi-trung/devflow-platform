@@ -1231,6 +1231,12 @@
   "sortPriority": "Priority",
   "sortDueDate": "Due date",
   "applySavedSearch": "Apply saved search",
+  "statusLabel": "Filter by status",
+  "priorityLabel": "Filter by priority",
+  "assigneeLabel": "Filter by assignee",
+  "labelLabel": "Filter by label",
+  "sortDirection": "Toggle sort direction",
+  "sortLabel": "Sort by",
   "clearFilters": "Clear filters"
  },
  "savedSearch": {

@@ -1231,6 +1231,12 @@
   "sortPriority": "Độ ưu tiên",
   "sortDueDate": "Ngày đến hạn",
   "applySavedSearch": "Áp dụng tìm kiếm đã lưu",
+  "statusLabel": "Lọc theo trạng thái",
+  "priorityLabel": "Lọc theo mức độ ưu tiên",
+  "assigneeLabel": "Lọc theo người được gán",
+  "labelLabel": "Lọc theo nhãn",
+  "sortDirection": "Đổi chiều sắp xếp",
+  "sortLabel": "Sắp xếp theo",
   "clearFilters": "Xóa bộ lọc"
  },
  "savedSearch": {
