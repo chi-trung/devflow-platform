@@ -984,7 +984,7 @@ export function TaskDetailPanel({
                     </div>
                     {item.error ? (
                       <div className="mt-1 flex items-center gap-2">
-                        <p className="text-xs text-destructive">{item.error}</p>
+                        <p role="alert" className="text-xs text-destructive">{item.error}</p>
                         <button
                           type="button"
                           onClick={() => void retryUpload(item)}

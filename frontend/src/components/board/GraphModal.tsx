@@ -513,7 +513,7 @@ export function GraphModal({
               {t("graph.loadingDeps")}
             </p>
           ) : loadError ? (
-            <p className="p-8 text-center text-sm text-destructive">
+            <p role="alert" className="p-8 text-center text-sm text-destructive">
               {loadError}
             </p>
           ) : allTasks.length === 0 ? (

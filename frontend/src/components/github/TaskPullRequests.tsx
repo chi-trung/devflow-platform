@@ -117,7 +117,7 @@ export function TaskPullRequests({ workspaceId, projectId, taskId }: TaskPullReq
         )}
       </div>
 
-      {createError && <p className="text-xs text-destructive">{createError}</p>}
+      {createError && <p role="alert" className="text-xs text-destructive">{createError}</p>}
 
       {!prs ? (
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">

@@ -465,6 +465,9 @@ export function WebhooksPage() {
                         <span>• {formatDate(msg.occurredAtUtc)}</span>
                         <span>• {formatDate(msg.failedPermanentlyAt)}</span>
                       </div>
+                      {/* a11y-ok: one error per dead-letter row in a scrollable
+                          list — announced in normal browse flow; role="alert"
+                          here would fire N alerts on load. */}
                       {msg.error && (
                         <p
                           className="mt-1 truncate text-xs text-destructive"

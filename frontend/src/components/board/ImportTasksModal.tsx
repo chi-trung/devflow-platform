@@ -114,7 +114,7 @@ export function ImportTasksModal({
               </span>
             </p>
             {result.errors.length > 0 && (
-              <div className="max-h-40 overflow-y-auto rounded-lg border border-border bg-surface p-3">
+              <div role="status" className="max-h-40 overflow-y-auto rounded-lg border border-border bg-surface p-3">
                 <p className="mb-1 text-xs font-medium text-destructive">
                   {t("import.errors")}
                 </p>

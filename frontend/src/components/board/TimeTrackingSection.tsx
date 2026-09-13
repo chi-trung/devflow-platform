@@ -266,7 +266,7 @@ export function TimeTrackingSection({
       )}
 
       {overBudget && (
-        <p className="flex items-start gap-1.5 rounded-lg border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
+        <p role="status" className="flex items-start gap-1.5 rounded-lg border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
           <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           {t("timeTracking.overEstimate", {
             time: formatMinutes(loggedTotal - (estimate ?? 0) * 60),
