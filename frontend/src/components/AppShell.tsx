@@ -688,7 +688,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex items-center gap-1.5">
           <ApiStatusDot />
-          <ThemeToggle />
+          <ThemeToggle compact />
           <NotificationsPanel
             workspaceId={workspaceId}
             direction="down"

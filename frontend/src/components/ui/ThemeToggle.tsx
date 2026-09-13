@@ -6,6 +6,12 @@ import { applyTheme, getTheme, type Theme } from "../../lib/theme";
 interface ThemeToggleProps {
   className?: string;
   onThemeChange?: (theme: Theme) => void;
+  /**
+   * Keep the option labels for assistive tech but hide them visually. The
+   * mobile app header has ~170px for four controls; icon-only stops the
+   * segmented control from pushing the notification bell off-screen.
+   */
+  compact?: boolean;
 }
 
 const OPTIONS: { theme: Theme; labelKey: string }[] = [
@@ -13,7 +19,11 @@ const OPTIONS: { theme: Theme; labelKey: string }[] = [
   { theme: "light", labelKey: "ui.light" },
 ];
 
-export function ThemeToggle({ className = "", onThemeChange }: ThemeToggleProps) {
+export function ThemeToggle({
+  className = "",
+  onThemeChange,
+  compact = false,
+}: ThemeToggleProps) {
   const { t } = useTranslation();
   const [theme, setThemeState] = useState<Theme>(() => getTheme());
   const groupRef = useRef<HTMLDivElement>(null);
@@ -43,11 +53,15 @@ export function ThemeToggle({ className = "", onThemeChange }: ThemeToggleProps)
   }
 
   const optionClass = (active: boolean) =>
-    `inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+    `inline-flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-sm font-medium transition-all duration-200 ${
+      compact ? "px-2" : "px-3"
+    } ${
       active
         ? "bg-card text-foreground shadow-sm"
         : "text-muted-foreground hover:text-foreground"
     }`;
+  const optionLabel = (labelKey: string) =>
+    compact ? <span className="sr-only">{t(labelKey)}</span> : t(labelKey);
 
   return (
     <div
@@ -55,7 +69,9 @@ export function ThemeToggle({ className = "", onThemeChange }: ThemeToggleProps)
       role="radiogroup"
       aria-label={t("ui.colorThemeAria")}
       onKeyDown={onKeyDown}
-      className={`inline-flex w-full max-w-56 rounded-lg border border-border bg-surface p-0.5 ${className}`}
+      className={`inline-flex rounded-lg border border-border bg-surface p-0.5 ${
+        compact ? "w-auto" : "w-full max-w-56"
+      } ${className}`}
     >
       <button
         type="button"
@@ -67,7 +83,7 @@ export function ThemeToggle({ className = "", onThemeChange }: ThemeToggleProps)
         className={optionClass(theme === "dark")}
       >
         <Moon className="size-4" aria-hidden />
-        {t("ui.dark")}
+        {optionLabel("ui.dark")}
       </button>
       <button
         type="button"
@@ -79,7 +95,7 @@ export function ThemeToggle({ className = "", onThemeChange }: ThemeToggleProps)
         className={optionClass(theme === "light")}
       >
         <Sun className="size-4" aria-hidden />
-        {t("ui.light")}
+        {optionLabel("ui.light")}
       </button>
     </div>
   );
