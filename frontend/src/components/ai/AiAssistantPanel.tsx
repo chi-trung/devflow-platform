@@ -309,7 +309,7 @@ export function AiAssistantPanel({
             aria-label={t("ai.assistantSend")}
             disabled={!draft.trim() || loading}
             onClick={() => void send(draft)}
-            className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-primary text-primary-foreground transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-primary text-on-primary transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ArrowUp className="size-4" aria-hidden />
           </button>

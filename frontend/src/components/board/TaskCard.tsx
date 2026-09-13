@@ -204,7 +204,7 @@ export function TaskCard({
             }}
             className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border transition-colors duration-150 ${
               selected
-                ? "border-primary bg-primary text-primary-foreground"
+                ? "border-primary bg-primary text-on-primary"
                 : "border-border-strong bg-surface hover:border-primary"
             }`}
           >

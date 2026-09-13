@@ -166,7 +166,7 @@ export function ActivitiesPage() {
               <Filter className="size-3.5" aria-hidden />
               {t("activity.filter")}
               {hasActiveFilters && (
-                <span className="ml-0.5 inline-flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+                <span className="ml-0.5 inline-flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-on-primary">
                   {[actorFilter, actionFilter, dateFrom, dateTo].filter(Boolean).length}
                 </span>
               )}

@@ -38,7 +38,7 @@ export function AiFloatingButton({
           aria-label={t("ai.assistantOpen")}
           aria-expanded={open}
           onClick={() => setOpen(true)}
-          className="group fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-6 z-50 flex size-13 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_8px_30px_rgba(0,0,0,0.35)] transition-transform duration-150 hover:scale-105 active:scale-95 lg:bottom-6"
+          className="group fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-6 z-50 flex size-13 cursor-pointer items-center justify-center rounded-full bg-primary text-on-primary shadow-[0_8px_30px_rgba(0,0,0,0.35)] transition-transform duration-150 hover:scale-105 active:scale-95 lg:bottom-6"
           style={{ width: "3.25rem", height: "3.25rem" }}
         >
           <Sparkles className="size-6 transition-transform duration-300 group-hover:rotate-12" aria-hidden />

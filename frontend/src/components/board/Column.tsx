@@ -221,7 +221,7 @@ export function Column({
             }}
             className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border transition-colors duration-150 ${
               allSelected
-                ? "border-primary bg-primary text-primary-foreground"
+                ? "border-primary bg-primary text-on-primary"
                 : someSelected
                   ? "border-primary bg-surface"
                   : "border-border-strong bg-surface hover:border-primary"

@@ -212,7 +212,7 @@ export function SubtaskSection({
                   }
                   className={`flex size-4 shrink-0 items-center justify-center rounded border transition-colors duration-150 disabled:opacity-50 ${
                     done
-                      ? "border-primary bg-primary text-primary-foreground"
+                      ? "border-primary bg-primary text-on-primary"
                       : "border-border-strong bg-surface hover:border-primary"
                   }`}
                 >
