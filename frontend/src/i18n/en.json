@@ -313,12 +313,12 @@
   }
  },
  "onboarding": {
-  "stepOf": "{{current}}/{{total}} bước",
+  "stepOf": "Step {{current}} of {{total}}",
   "next": "Next",
-  "done": "Xong",
+  "done": "Done",
   "skip": "Skip",
   "close": "Close tour",
-  "helpButton": "Hướng dẫn",
+  "helpButton": "Take the tour",
   "welcome": {
    "title": "Welcome to DevFlow 🎉",
    "desc": "This short tour shows you the essentials. Click Next to walk through the dashboard."
