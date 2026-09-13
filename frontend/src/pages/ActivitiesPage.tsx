@@ -290,9 +290,9 @@ export function ActivitiesPage() {
             {/* Grouped activities */}
             {[...grouped.entries()].map(([dateLabel, items]) => (
               <div key={dateLabel} className="mb-4">
-                <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {dateLabel === "today" ? t("activity.today") : dateLabel === "yesterday" ? t("activity.yesterday") : dateLabel}
-                </h3>
+                </h2>
                 <ul className="flex flex-col gap-2">
                   {items.map((activity) => (
                     <li
