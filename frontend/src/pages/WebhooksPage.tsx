@@ -363,7 +363,7 @@ export function WebhooksPage() {
                     <span>• {formatDate(webhook.createdAtUtc)}</span>
                   </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+                <div className="flex shrink-0 items-center gap-1 transition-opacity duration-150 group-focus-within:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
                   <button
                     type="button"
                     onClick={() => handleTest(webhook.id)}
@@ -477,7 +477,7 @@ export function WebhooksPage() {
                         </p>
                       )}
                     </div>
-                    <div className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+                    <div className="shrink-0 transition-opacity duration-150 group-focus-within:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
                       <Button
                         variant="outline"
                         size="sm"

@@ -243,7 +243,7 @@ export function TaskCard({
             onDelete(task);
           }}
           aria-label={t("taskCard.deleteAria", { title: task.title })}
-          className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-all duration-150 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+          className="shrink-0 rounded p-0.5 text-muted-foreground transition-all duration-150 hover:text-destructive focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
         >
           <svg viewBox="0 0 16 16" className="size-3.5" fill="currentColor" aria-hidden>
             <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -385,7 +385,7 @@ export function TaskCard({
             }}
             aria-label={t("board.addChildTaskAria")}
             title={t("board.addChildTask")}
-            className="rounded p-0.5 text-muted-foreground opacity-0 transition-all duration-150 hover:text-primary focus-visible:opacity-100 group-hover:opacity-100"
+            className="rounded p-0.5 text-muted-foreground transition-all duration-150 hover:text-primary focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
           >
             <Plus className="size-3" aria-hidden />
           </button>

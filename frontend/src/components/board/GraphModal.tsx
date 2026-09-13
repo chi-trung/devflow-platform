@@ -713,7 +713,7 @@ export function GraphModal({
                       aria-pressed={isLinkSource}
                       aria-label={t("graph.linkFromAria", { title: task.title })}
                       title={t("graph.linkFromAria", { title: task.title })}
-                      className={`flex w-6 shrink-0 items-center justify-center rounded-r-lg border-l border-border/60 text-muted-foreground opacity-0 transition-all duration-150 hover:bg-primary/10 hover:text-primary focus-visible:opacity-100 focus-visible:outline-none group-hover:opacity-100 disabled:opacity-30 ${
+                      className={`flex w-6 shrink-0 items-center justify-center rounded-r-lg border-l border-border/60 text-muted-foreground transition-all duration-150 hover:bg-primary/10 hover:text-primary focus-visible:opacity-100 focus-visible:outline-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 disabled:opacity-30 ${
                         isLinkSource ? "bg-primary/15 text-primary opacity-100" : ""
                       }`}
                     >
