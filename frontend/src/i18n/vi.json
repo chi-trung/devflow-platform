@@ -1321,6 +1321,7 @@
   "actionsGroup": "Hành động",
   "tasksGroup": "Các task",
   "paletteAria": "Bảng lệnh",
+  "searchInputAria": "Tìm kiếm lệnh hoặc công việc",
   "closePalette": "Đóng bảng lệnh",
   "navigateHint": "↑↓ di chuyển",
   "openHint": "↵ mở",

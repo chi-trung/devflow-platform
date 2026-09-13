@@ -1321,6 +1321,7 @@
   "actionsGroup": "Actions",
   "tasksGroup": "Tasks",
   "paletteAria": "Command palette",
+  "searchInputAria": "Command or task search",
   "closePalette": "Close palette",
   "navigateHint": "↑↓ navigate",
   "openHint": "↵ open",

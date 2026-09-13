@@ -462,6 +462,7 @@ export function CommandPalette({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("commandPalette.placeholder")}
+            aria-label={t("commandPalette.searchInputAria")}
             className="w-full bg-transparent py-3.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none"
           />
           <kbd className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
