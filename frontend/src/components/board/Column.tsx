@@ -219,7 +219,10 @@ export function Column({
             onClick={() => {
               onSelectAllInColumn(!allSelected);
             }}
-            className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border transition-colors duration-150 ${
+            // WCAG 2.5.8: the visual box stays 16px, but a 4px invisible
+            // margin around it (via ::before) grows the touch target to 24×24
+            // without nudging the header layout.
+            className={`relative mt-0.5 flex size-4 shrink-0 cursor-pointer items-center justify-center rounded border transition-colors duration-150 before:absolute before:-inset-1 before:content-[''] ${
               allSelected
                 ? "border-primary bg-primary text-on-primary"
                 : someSelected

@@ -202,7 +202,9 @@ export function TaskCard({
               event.stopPropagation();
               onToggleSelect(task.id);
             }}
-            className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border transition-colors duration-150 ${
+            // WCAG 2.5.8: the 16px visual box gets a 4px invisible ::before
+            // margin so touch users get a 24×24 target without layout change.
+            className={`relative mt-0.5 flex size-4 shrink-0 cursor-pointer items-center justify-center rounded border transition-colors duration-150 before:absolute before:-inset-1 before:content-[''] ${
               selected
                 ? "border-primary bg-primary text-on-primary"
                 : "border-border-strong bg-surface hover:border-primary"
