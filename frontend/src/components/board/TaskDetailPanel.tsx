@@ -95,7 +95,7 @@ function DefinitionOfDoneField({
         onChange={(event) => onChange(event.target.value)}
         rows={3}
         placeholder={`- [ ] ${t("board.dodPlaceholder")}`}
-        className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+        className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
       />
       {/* Rendered checklist preview */}
       {value.split("\n").some((l) => /^- \[.\]/.test(l)) && (
@@ -681,7 +681,7 @@ export function TaskDetailPanel({
                 onChange={(event) => setDescription(event.target.value)}
                 rows={3}
                 placeholder={t("task.addDetail")}
-                className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+                className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
               />
             </label>
 
@@ -1073,7 +1073,7 @@ export function TaskDetailPanel({
             aria-label={t("task.writeComment")}
             rows={2}
             maxLength={2000}
-            className="flex-1 resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            className="flex-1 resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
           />
           <Button
             type="submit"

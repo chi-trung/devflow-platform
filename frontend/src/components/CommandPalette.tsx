@@ -479,7 +479,7 @@ export function CommandPalette({
             aria-autocomplete="list"
             aria-controls="command-palette-results"
             aria-activedescendant={selected < results.length ? `cp-opt-${selected}` : undefined}
-            className="w-full bg-transparent py-3.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none"
+            className="w-full bg-transparent py-3.5 text-sm placeholder:text-muted-foreground focus:outline-none"
           />
           <kbd className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
             esc
@@ -555,7 +555,7 @@ export function CommandPalette({
                   placeholder={t("commandPalette.savedNamePlaceholder")}
                   maxLength={60}
                   aria-label={t("commandPalette.saveThisSearch")}
-                  className="w-full bg-transparent py-0.5 text-xs placeholder:text-muted-foreground/50 focus:outline-none"
+                  className="w-full bg-transparent py-0.5 text-xs placeholder:text-muted-foreground focus:outline-none"
                 />
                 <button
                   type="button"

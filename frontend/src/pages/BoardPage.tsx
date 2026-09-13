@@ -909,7 +909,7 @@ export function BoardPage() {
                 placeholder={t("board.filterTasks")}
                 data-board-search
                 aria-label={t("board.filterSearchHint")}
-                className="w-16 bg-transparent text-sm placeholder:text-muted-foreground/50 focus:outline-none sm:w-44"
+                className="w-16 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none sm:w-44"
               />
               {search && (
                 <button

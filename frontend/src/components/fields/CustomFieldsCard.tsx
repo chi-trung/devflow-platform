@@ -91,7 +91,7 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
           placeholder={t("field.fieldNamePlaceholder")}
           aria-label={t("field.fieldName")}
           maxLength={40}
-          className="min-w-28 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
+          className="min-w-28 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
         />
         <select
           value={fieldType}
@@ -114,7 +114,7 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
             placeholder={t("field.optionsPlaceholder")}
             aria-label={t("field.select")}
             maxLength={200}
-            className="min-w-32 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
+            className="min-w-32 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
           />
         )}
         <button

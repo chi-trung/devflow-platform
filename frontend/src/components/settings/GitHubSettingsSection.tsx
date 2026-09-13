@@ -87,7 +87,7 @@ export function GitHubSettingsSection({
                     : t("github.secretPlaceholder")
                 }
                 aria-label={t("github.webhookSecretTitle")}
-                className="min-w-0 flex-1 rounded-md border border-border bg-card px-2.5 py-1.5 font-mono text-xs placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
+                className="min-w-0 flex-1 rounded-md border border-border bg-card px-2.5 py-1.5 font-mono text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none"
               />
               <Button
                 type="submit"

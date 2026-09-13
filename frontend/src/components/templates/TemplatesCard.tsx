@@ -95,7 +95,7 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
           placeholder={t("template.namePlaceholder")}
           aria-label={t("templates.nameAria")}
           maxLength={60}
-          className="min-w-0 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
+          className="min-w-0 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
         />
         <select
           value={priority}

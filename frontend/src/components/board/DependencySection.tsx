@@ -157,7 +157,7 @@ export function DependencySection({
             placeholder={t("dependency.searchTasks")}
             aria-label={t("dependency.searchTasks")}
             autoFocus
-            className="mb-1.5 w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
+            className="mb-1.5 w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
           />
           <div className="flex flex-col">
             {candidates.length === 0 ? (

@@ -304,7 +304,7 @@ export function TimeTrackingSection({
           placeholder={t("timeTracking.whatDidYouDo")}
           aria-label={t("timeTracking.whatDidYouDo")}
           maxLength={500}
-          className="min-w-0 flex-1 resize-none rounded-md border border-border bg-surface px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
+          className="min-w-0 flex-1 resize-none rounded-md border border-border bg-surface px-2 py-1.5 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
         />
         <button
           type="submit"

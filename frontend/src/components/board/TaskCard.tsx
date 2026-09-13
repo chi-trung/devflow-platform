@@ -356,7 +356,7 @@ export function TaskCard({
               placeholder={t("board.childTaskPlaceholder")}
               aria-label={t("board.childTaskPlaceholder")}
               autoFocus
-              className="min-w-0 flex-1 rounded-md border border-border bg-surface px-1.5 py-1 text-xs placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
+              className="min-w-0 flex-1 rounded-md border border-border bg-surface px-1.5 py-1 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
             <button
               type="submit"

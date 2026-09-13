@@ -170,7 +170,7 @@ export function SubtaskSection({
           placeholder={t("subtask.addPlaceholder")}
           aria-label={t("subtask.addPlaceholder")}
           maxLength={200}
-          className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 py-1.5 text-xs placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+          className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 py-1.5 text-xs placeholder:text-muted-foreground transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
         />
         <button
           type="submit"

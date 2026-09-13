@@ -451,7 +451,7 @@ export function GraphModal({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("graph.filterPlaceholder")}
-              className="w-52 rounded-md border border-border bg-card py-1.5 pl-7 pr-2 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
+              className="w-52 rounded-md border border-border bg-card py-1.5 pl-7 pr-2 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
           </label>
 
