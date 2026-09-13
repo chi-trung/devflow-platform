@@ -227,4 +227,32 @@ describe("AppShell sidebar collapse", () => {
     );
     expect(document.title).toBe("Probe Project — DevFlow");
   });
+
+  it("moves focus into the page main on a fresh mount (WCAG 2.4.3)", () => {
+    // Every authed page renders its own AppShell, so each SPA navigation
+    // mounts a fresh shell into a document whose focus just fell back to
+    // <body> (the previous subtree was removed). Without catching that,
+    // screen readers never announce the new page. The main region is the
+    // same tabindex="-1" target the skip-link uses.
+    const { container } = renderShell("/workspaces/ws1", false);
+    expect(document.activeElement).toBe(
+      container.querySelector("main#devflow-content"),
+    );
+  });
+
+  it("does not steal focus from a page that focused a field itself", () => {
+    // Search pages and dialogs autofocus their first input; the route-change
+    // catch runs after child commits, so it must yield when the page already
+    // placed focus somewhere.
+    document.body.focus();
+    const { container } = render(
+      <MemoryRouter initialEntries={["/workspaces/ws1"]}>
+        <AppShell>
+          <input autoFocus aria-label="probe autofocus" />
+        </AppShell>
+      </MemoryRouter>,
+    );
+    const input = container.querySelector("input")!;
+    expect(document.activeElement).toBe(input);
+  });
 });

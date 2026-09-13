@@ -115,6 +115,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setDrawerOpen(false);
   }, [location.pathname]);
 
+  // WCAG 2.4.3 (Focus Order): a route change replaced the whole tree, and
+  // focus landed back on <body> — so a screen-reader user never heard the
+  // new page announced (the h1-mirror retitles the tab, but that is a
+  // visual-only signal). Move focus to the main region, the same target the
+  // skip-link uses, when nothing already claimed it: a page that
+  // autofocuses its first field (search, a create dialog) must win, and
+  // this runs after child effects — hence the "only if focus fell to body"
+  // guard, not "always".
+  useEffect(() => {
+    if (document.activeElement && document.activeElement !== document.body)
+      return;
+    document.getElementById("devflow-content")?.focus();
+  }, [location.pathname]);
+
   // WCAG 2.4.2 (Page Titled): the authed pages share one index.html title,
   // and only the board bothered to override it — so after visiting a board,
   // every other page kept showing the project's name. Rather than a title
