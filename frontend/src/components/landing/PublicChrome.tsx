@@ -71,8 +71,12 @@ export function PublicHeader({
 }
 
 export function FooterLink({ href, label }: { href: string; label: string }) {
+  // WCAG 2.5.8: a bare text-sm link is only 20px tall and the footer columns
+  // stack links 10px apart — too small and too close for the spacing
+  // exemption. min-h-6 + inline-flex lifts each target to the 24px floor
+  // without changing the footer's visual rhythm.
   const cls =
-    "text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground";
+    "inline-flex min-h-6 items-center text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground";
   // Internal routes use the router Link (client-side navigation); hash
   // anchors (/#features) stay as plain <a> so the browser's native
   // same-document hash scrolling still works, as do external URLs.
