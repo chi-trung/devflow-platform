@@ -99,7 +99,11 @@ html.light {
   --color-border-strong: #b9c4d1;
 
   --color-foreground: #16212c;
-  --color-muted-foreground: #5a6a7c;
+  /* AA floor for small text: #5a6a7c only clears ~3.4 on surfaces (column
+     titles, empty-column hints, filter placeholders). #4b5b6e clears 4.5
+     on card, page, and elevated backgrounds. Dark theme keeps #8b98a9
+     since #e6edf3 text on dark surfaces already clears AA. */
+  --color-muted-foreground: #4b5b6e;
 
   /* AA floor for text: the old #0d9488 only reached 3.49 on the page
      background and 3.74 on cards. #0f766e clears 5.1, white text on
