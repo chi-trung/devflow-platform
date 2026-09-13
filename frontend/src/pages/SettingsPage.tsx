@@ -276,6 +276,9 @@ export function SettingsPage() {
           className="flex flex-wrap gap-1 border-b border-border"
         >
           {SETTINGS_TABS.map(({ id, label }, index) => (
+            // aria-controls is scoped to the active tab: panels are
+            // conditionally mounted, so an inactive tab would otherwise
+            // point at an id that isn't in the DOM.
             <button
               key={id}
               ref={(el) => {
@@ -285,7 +288,7 @@ export function SettingsPage() {
               role="tab"
               id={`settings-tab-${id}`}
               aria-selected={tab === id}
-              aria-controls={`settings-panel-${id}`}
+              aria-controls={tab === id ? `settings-panel-${id}` : undefined}
               onKeyDown={(event) => onTabListKeyDown(event, index)}
               onClick={() => setTab(id)}
               className={`-mb-px cursor-pointer border-b-2 px-3 py-2 text-sm transition-colors duration-150 ${

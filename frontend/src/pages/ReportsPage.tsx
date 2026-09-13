@@ -184,6 +184,8 @@ export function ReportsPage() {
           className="mb-4 flex gap-1 border-b border-border"
         >
           {tabs.map(({ id, label, aria }, index) => (
+            // panels are conditionally mounted; an inactive tab must not
+            // aria-controls an id that isn't in the DOM.
             <button
               key={id}
               ref={(el) => {
@@ -193,7 +195,7 @@ export function ReportsPage() {
               role="tab"
               id={`reports-tab-${id}`}
               aria-selected={tab === id}
-              aria-controls={`reports-panel-${id}`}
+              aria-controls={tab === id ? `reports-panel-${id}` : undefined}
               onKeyDown={(event) => onTabListKeyDown(event, index)}
               aria-label={aria}
               onClick={() => setTab(id)}

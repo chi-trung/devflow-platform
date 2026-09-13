@@ -156,7 +156,9 @@ export function ActivitiesPage() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               aria-expanded={showFilters}
-              aria-controls="activity-filter-bar"
+              // the filter bar unmounts when collapsed; keep the pointer
+              // scoped to the expanded state so it never dangles
+              aria-controls={showFilters ? "activity-filter-bar" : undefined}
               className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                 showFilters || hasActiveFilters
                   ? "border-primary/30 bg-primary/5 text-primary"
