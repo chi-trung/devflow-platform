@@ -324,7 +324,7 @@ export function MilestonesPage() {
         ) : view === "timeline" ? (
           <MilestoneTimeline milestones={milestones} epics={epics} onSelect={handleEdit} />
         ) : (
-          <ul className="flex flex-col gap-3">
+          <ul role="list" className="flex flex-col gap-3">
             {milestones.map((milestone) => {
               const milestoneEpics = epics.filter((epic) => epic.milestoneId === milestone.id);
               const completed = milestoneEpics.filter((epic) => epic.completionPercent >= 100).length;

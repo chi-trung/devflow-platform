@@ -339,7 +339,7 @@ export function WebhooksPage() {
             }
           />
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul role="list" className="flex flex-col gap-2">
             {webhooks.map((webhook) => (
               <li
                 key={webhook.id}
@@ -449,7 +449,7 @@ export function WebhooksPage() {
                 description={t("outbox.dlqEmptyDescription")}
               />
             ) : (
-              <ul className="flex flex-col gap-2">
+              <ul role="list" className="flex flex-col gap-2">
                 {deadLetters.map((msg) => (
                   <li
                     key={msg.id}

@@ -216,7 +216,7 @@ export function LabelsPage() {
             }
           />
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul role="list" className="flex flex-col gap-2">
             {labels.map((label) => (
               <li
                 key={label.id}

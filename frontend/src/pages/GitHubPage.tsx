@@ -303,7 +303,7 @@ export function GitHubPage() {
             description={t("github.emptyPrsDescription")}
           />
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul role="list" className="flex flex-col gap-2">
             {prs.map((pr) => (
               <li
                 key={pr.id}

@@ -86,7 +86,7 @@ export function MyTasksPage() {
             title={t("myTasks.empty")}
           />
         ) : (
-          <ul className="space-y-2">
+          <ul role="list" className="space-y-2">
             {taskList.map((task) => (
               <li key={task.id}>
                 <Link

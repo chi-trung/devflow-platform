@@ -61,7 +61,7 @@ export function ChangelogPage() {
             <h2 className="mb-10 font-display text-2xl font-semibold tracking-tight">
               {t("changelog.shippedTitle")}
             </h2>
-            <ol className="relative space-y-12 border-l border-border pl-6 sm:pl-8">
+            <ol role="list" className="relative space-y-12 border-l border-border pl-6 sm:pl-8">
               {CHANGELOG_ENTRIES.map((entry) => (
                 <li key={entry.version} className="relative">
                   <span
@@ -90,7 +90,7 @@ export function ChangelogPage() {
                         <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-primary">
                           {t(`changelog.category.${kind}`)}
                         </p>
-                        <ul className="mt-2 space-y-1.5">
+                        <ul role="list" className="mt-2 space-y-1.5">
                           {items.map((item) => (
                             <li
                               key={item.en}

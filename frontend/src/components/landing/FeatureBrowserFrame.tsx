@@ -274,7 +274,7 @@ export function FeatureBrowserFrame() {
               <p className="mb-4 text-[15px] leading-relaxed text-muted-foreground">
                 {t(`landing.features.${key}.desc`)}
               </p>
-              <ul className="space-y-2">
+              <ul role="list" className="space-y-2">
                 {[1, 2, 3].map((bi) => (
                   <li key={bi} className="flex items-start gap-2.5 text-sm text-muted-foreground">
                     <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />

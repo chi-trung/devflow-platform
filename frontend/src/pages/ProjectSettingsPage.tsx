@@ -250,7 +250,7 @@ export function ProjectSettingsPage() {
             description={t("projectMember.emptyDescription")}
           />
         ) : (
-          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul role="list" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {members.map((member) => {
               const isSelf = member.userId === currentUser?.id;
               const isChangingRole = changingRoleMemberId === member.userId;

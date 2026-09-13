@@ -129,7 +129,7 @@ export function SprintBoard({
           </span>
         </header>
 
-        <ul className="flex flex-col gap-2">
+        <ul role="list" className="flex flex-col gap-2">
           {backlogTasks.map((task) => (
             <TaskRow key={task.id} task={task} />
           ))}
@@ -188,7 +188,7 @@ export function SprintBoard({
                 className="px-1"
               />
 
-              <ul className="flex flex-col gap-2">
+              <ul role="list" className="flex flex-col gap-2">
                 {sprintTasks.map((task) => (
                   <TaskRow key={task.id} task={task} />
                 ))}

@@ -58,7 +58,7 @@ export function ActivityFeed({ items, workspaceId }: ActivityFeedProps) {
         </p>
       ) : (
         <>
-          <ul className="min-h-[15rem] flex-1 space-y-1">
+          <ul role="list" className="min-h-[15rem] flex-1 space-y-1">
             {pageItems.map((item) => {
               const Icon = kindIcon(item.action);
               const target = item.target ? ` "${item.target}"` : "";

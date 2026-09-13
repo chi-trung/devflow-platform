@@ -140,7 +140,7 @@ export function PricingSection() {
           </p>
         </div>
         <p className="mb-6 text-sm text-muted-foreground">{PRICING.blurb[lang]}</p>
-        <ul className="mb-6 space-y-2.5">
+        <ul role="list" className="mb-6 space-y-2.5">
           {PRICING.bullets.map((b) => (
             <li key={b.en} className="flex items-start gap-2.5 text-sm">
               <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />

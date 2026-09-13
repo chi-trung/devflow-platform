@@ -434,7 +434,7 @@ export function SearchPage() {
             )}
 
             {activeTab === "tasks" && result.tasks.length > 0 && (
-              <ul className="flex flex-col gap-2">
+              <ul role="list" className="flex flex-col gap-2">
                 {result.tasks.map((task) => (
                   <SearchTaskRow key={task.id} task={task} workspaceId={workspaceId} />
                 ))}
@@ -442,7 +442,7 @@ export function SearchPage() {
             )}
 
             {activeTab === "projects" && result.projects.length > 0 && (
-              <ul className="flex flex-col gap-2">
+              <ul role="list" className="flex flex-col gap-2">
                 {result.projects.map((project) => (
                   <SearchProjectRow key={project.id} project={project} workspaceId={workspaceId} />
                 ))}
@@ -450,7 +450,7 @@ export function SearchPage() {
             )}
 
             {activeTab === "epics" && result.epics.length > 0 && (
-              <ul className="flex flex-col gap-2">
+              <ul role="list" className="flex flex-col gap-2">
                 {result.epics.map((epic) => (
                   <SearchEpicRow key={epic.id} epic={epic} workspaceId={workspaceId} />
                 ))}
@@ -458,7 +458,7 @@ export function SearchPage() {
             )}
 
             {activeTab === "labels" && result.labels.length > 0 && (
-              <ul className="flex flex-col gap-2">
+              <ul role="list" className="flex flex-col gap-2">
                 {result.labels.map((label) => (
                   <SearchLabelRow key={label.id} label={label} workspaceId={workspaceId} />
                 ))}
@@ -466,7 +466,7 @@ export function SearchPage() {
             )}
 
             {activeTab === "users" && result.users.length > 0 && (
-              <ul className="flex flex-col gap-2">
+              <ul role="list" className="flex flex-col gap-2">
                 {result.users.map((user) => (
                   <SearchUserRow key={user.id} user={user} />
                 ))}
@@ -474,7 +474,7 @@ export function SearchPage() {
             )}
 
             {activeTab === "comments" && result.comments.length > 0 && (
-              <ul className="flex flex-col gap-2">
+              <ul role="list" className="flex flex-col gap-2">
                 {result.comments.map((comment) => (
                   <SearchCommentRow key={comment.id} comment={comment} workspaceId={workspaceId} />
                 ))}

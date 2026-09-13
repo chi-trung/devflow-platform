@@ -258,7 +258,7 @@ export function TemplatesPage() {
             }
           />
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul role="list" className="flex flex-col gap-2">
             {templates.map((template) => (
               <li
                 key={template.id}

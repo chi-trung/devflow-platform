@@ -165,7 +165,7 @@ export function TaskDistribution({ data }: TaskDistributionProps) {
           </div>
 
           <div className="w-full min-w-0 space-y-4">
-            <ul className="grid grid-cols-1 gap-1.5">
+            <ul role="list" className="grid grid-cols-1 gap-1.5">
               {statusEntries.map(([status, count]) => (
                 <li key={status}>
                   <button

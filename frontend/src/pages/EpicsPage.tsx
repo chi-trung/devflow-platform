@@ -402,7 +402,7 @@ export function EpicsPage() {
             }
           />
         ) : (
-          <ul className="flex flex-col gap-3">
+          <ul role="list" className="flex flex-col gap-3">
             {epics.map((epic) => {
               const start = formatDate(epic.startDateUtc);
               const end = formatDate(epic.endDateUtc);
@@ -554,7 +554,7 @@ export function EpicsPage() {
                           {t("epic.noBlockers")}
                         </p>
                       ) : (
-                        <ul className="flex flex-col gap-1.5">
+                        <ul role="list" className="flex flex-col gap-1.5">
                           {blockedByEpics.map((blocker) => (
                             <li
                               key={blocker.id}

@@ -209,7 +209,7 @@ export function SavedSearchesPage() {
             description={t("savedSearch.emptyDescription")}
           />
         ) : (
-          <ul className="flex flex-col gap-3">
+          <ul role="list" className="flex flex-col gap-3">
             {searches.map((search) => (
               <li
                 key={search.id}

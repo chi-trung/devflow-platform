@@ -290,7 +290,7 @@ export function EpicRoadmap({ epics, milestones, onSelect, onMilestoneSelect }: 
               <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 {t("epic.roadmapUnscheduled")}
               </p>
-              <ul className="flex flex-wrap gap-2">
+              <ul role="list" className="flex flex-wrap gap-2">
                 {unscheduled.map(({ epic }) => (
                   <li key={epic.id}>
                     <button

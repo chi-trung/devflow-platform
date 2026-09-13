@@ -563,7 +563,7 @@ export function WorkspacePage() {
             ) : (
               <>
                 {activeProjects && activeProjects.length > 0 && (
-                  <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <ul role="list" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {activeProjects.map((project, index) => {
                       const percent =
                         project.total > 0
@@ -669,7 +669,7 @@ export function WorkspacePage() {
                     <h2 className="mb-4 font-display text-lg font-semibold tracking-tight">
                       {t("workspace.archivedProjects")}
                     </h2>
-                    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <ul role="list" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {archivedProjects.map((project, index) => {
                         return (
                           <li
@@ -783,7 +783,7 @@ export function WorkspacePage() {
               ) : !members ? (
                 <Skeleton className="h-16" />
               ) : (
-                <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <ul role="list" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {members.map((member) => {
                     const isSelf = member.userId === currentUserId;
                     const isChangingRole = changingRoleMemberId === member.userId;

@@ -240,7 +240,7 @@ export function MilestoneTimeline({ milestones, epics, onSelect }: MilestoneTime
               <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 {t("milestone.timelineUnscheduled")}
               </p>
-              <ul className="flex flex-wrap gap-2">
+              <ul role="list" className="flex flex-wrap gap-2">
                 {unscheduled.map((row) => (
                   <li key={row.milestone.id}>
                     <button

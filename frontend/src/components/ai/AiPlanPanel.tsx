@@ -205,7 +205,7 @@ export function AiPlanPanel({
               <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("ai.dod")}
               </p>
-              <ul className="space-y-0.5">
+              <ul role="list" className="space-y-0.5">
                 {plan.definitionOfDone.map((d, i) => (
                   <li
                     key={i}

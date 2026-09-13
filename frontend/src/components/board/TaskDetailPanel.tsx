@@ -99,7 +99,7 @@ function DefinitionOfDoneField({
       />
       {/* Rendered checklist preview */}
       {value.split("\n").some((l) => /^- \[.\]/.test(l)) && (
-        <ul className="mt-1 space-y-0.5">
+        <ul role="list" className="mt-1 space-y-0.5">
           {value.split("\n").map((line, i) => {
             const checked = /^- \[x\]/i.test(line);
             const isItem = /^- \[.\]/.test(line);

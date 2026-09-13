@@ -85,7 +85,7 @@ export function AiActionResults({
         <div className="rounded-lg border border-border bg-card p-3 text-sm text-foreground">
           <p className="whitespace-pre-line leading-relaxed">{summary}</p>
           {items.length > 0 && (
-            <ul className="mt-2 space-y-1">
+            <ul role="list" className="mt-2 space-y-1">
               {items.map((item, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <span

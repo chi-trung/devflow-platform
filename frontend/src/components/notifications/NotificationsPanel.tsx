@@ -270,7 +270,7 @@ export function NotificationsPanel({
                 </p>
               </div>
             ) : (
-              <ul className="flex flex-col divide-y divide-border/60">
+              <ul role="list" className="flex flex-col divide-y divide-border/60">
                 {filtered.map((notification) => (
                   <li key={notification.id}>
                     <NotificationItem

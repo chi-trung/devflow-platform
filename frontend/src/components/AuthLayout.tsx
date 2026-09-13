@@ -46,7 +46,7 @@ export function AuthLayout({
             <p className="font-display text-4xl font-semibold leading-tight tracking-tight text-balance">
               {t("workspace.authTagline")}
             </p>
-            <ul className="mt-6 space-y-3">
+            <ul role="list" className="mt-6 space-y-3">
               {HIGHLIGHT_KEYS.map((key) => (
                 <li key={key} className="flex items-center gap-3 text-sm">
                   <span className="flex size-5 items-center justify-center rounded-md bg-primary/15 text-primary-strong">

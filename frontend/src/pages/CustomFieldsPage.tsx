@@ -280,7 +280,7 @@ export function CustomFieldsPage() {
             }
           />
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul role="list" className="flex flex-col gap-2">
             {fields.map((field) => {
               const isEditing = editingId === field.id;
               const currentTypeLabel = FIELD_TYPES.find((ft) => ft.value === field.fieldType)?.labelKey;

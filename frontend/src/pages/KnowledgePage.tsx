@@ -364,7 +364,7 @@ export function KnowledgePage() {
                   </span>
                   <span className="h-px flex-1 bg-border" />
                 </h2>
-                <ul className="flex flex-col gap-3">
+                <ul role="list" className="flex flex-col gap-3">
                   {activeEntries.map((entry) => (
                     <KnowledgeEntryCard
                       key={entry.id}
@@ -389,7 +389,7 @@ export function KnowledgePage() {
                   </span>
                   <span className="h-px flex-1 bg-border" />
                 </h2>
-                <ul className="flex flex-col gap-3">
+                <ul role="list" className="flex flex-col gap-3">
                   {retiredEntries.map((entry) => (
                     <KnowledgeEntryCard
                       key={entry.id}

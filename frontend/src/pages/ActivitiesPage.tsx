@@ -300,7 +300,7 @@ export function ActivitiesPage() {
                 <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {dateLabel === "today" ? t("activity.today") : dateLabel === "yesterday" ? t("activity.yesterday") : dateLabel}
                 </h2>
-                <ul className="flex flex-col gap-2">
+                <ul role="list" className="flex flex-col gap-2">
                   {items.map((activity) => (
                     <li
                       key={activity.id}

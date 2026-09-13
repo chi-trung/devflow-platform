@@ -457,7 +457,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "lg:hidden" : ""}`}>
               {t("nav.workspaces")}
             </h2>
-            <ul className="space-y-1">
+            <ul role="list" className="space-y-1">
               {(workspaces ?? []).map((workspace) => {
                 const active = workspace.id === workspaceId;
                 return (
@@ -504,7 +504,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "lg:hidden" : ""}`}>
                 {t("nav.projects")}
               </h2>
-              <ul className="space-y-1">
+              <ul role="list" className="space-y-1">
                 {(projects ?? []).map((project) => {
                   const active = project.id === projectId;
                   return (
@@ -550,7 +550,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "lg:hidden" : ""}`}>
                 {t("nav.projectNav")}
               </h2>
-              <ul className="space-y-1">
+              <ul role="list" className="space-y-1">
                 {projectNavItems.map(({ to, icon: Icon, label, match }) => {
                   const active = match.test(location.pathname);
                   return (
@@ -580,7 +580,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <h2 className={`px-2 pb-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground ${railCollapsed ? "lg:hidden" : ""}`}>
                 {t("nav.personal")}
               </h2>
-              <ul className="space-y-1">
+              <ul role="list" className="space-y-1">
                 <li>
                   <Link
                     to={`/workspaces/${workspaceId}/my-tasks`}

@@ -274,7 +274,7 @@ export function NotificationsPage() {
           />
         ) : (
           <>
-            <ul className="flex flex-1 flex-col divide-y divide-border/60 overflow-y-auto rounded-xl border border-border bg-card">
+            <ul role="list" className="flex flex-1 flex-col divide-y divide-border/60 overflow-y-auto rounded-xl border border-border bg-card">
               {notifications.map((n) => (
                 <li key={n.id}>
                   <div className="group relative flex items-start gap-3 px-4 py-3">
