@@ -148,6 +148,7 @@ export function RegisterPage() {
         >
           <Input
             id="displayName"
+            autoComplete="name"
             placeholder="Dang Nguyen"
             value={form.displayName}
             onChange={(event) => update("displayName", event.target.value)}
