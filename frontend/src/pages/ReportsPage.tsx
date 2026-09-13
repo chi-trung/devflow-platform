@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -110,6 +110,22 @@ export function ReportsPage() {
     { id: "export", label: t("reports.tabExport"), aria: t("reports.exportTabAria") },
   ];
 
+  // Tablist keyboard support per WAI-ARIA authoring practice: Left/Right move
+  // between tabs (activation follows focus), Home/End jump to the ends.
+  const tabRefs = useRef<Partial<Record<ReportTab, HTMLButtonElement | null>>>({});
+  function onTabListKeyDown(event: React.KeyboardEvent, index: number) {
+    let next: number | null = null;
+    if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+    else if (event.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = tabs.length - 1;
+    if (next === null) return;
+    event.preventDefault();
+    const id = tabs[next].id;
+    setTab(id);
+    tabRefs.current[id]?.focus();
+  }
+
   return (
     <AppShell>
       <div className="mx-auto flex w-full max-w-6xl flex-col px-6 py-6">
@@ -164,12 +180,18 @@ export function ReportsPage() {
           aria-label={t("reports.title")}
           className="mb-4 flex gap-1 border-b border-border"
         >
-          {tabs.map(({ id, label, aria }) => (
+          {tabs.map(({ id, label, aria }, index) => (
             <button
               key={id}
+              ref={(el) => {
+                tabRefs.current[id] = el;
+              }}
               type="button"
               role="tab"
+              id={`reports-tab-${id}`}
               aria-selected={tab === id}
+              aria-controls={`reports-panel-${id}`}
+              onKeyDown={(event) => onTabListKeyDown(event, index)}
               aria-label={aria}
               onClick={() => setTab(id)}
               className={`-mb-px cursor-pointer border-b-2 px-3 py-2 text-sm transition-colors duration-150 ${
@@ -190,7 +212,13 @@ export function ReportsPage() {
         )}
 
         {tab === "charts" && (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div
+            role="tabpanel"
+            id={`reports-panel-${tab}`}
+            aria-labelledby={`reports-tab-${tab}`}
+            tabIndex={0}
+            className="grid grid-cols-1 gap-4 lg:grid-cols-2"
+          >
             <div className="lg:col-span-2">
               {burndownLoading ? (
                 <Skeleton className="h-72" />
@@ -234,7 +262,13 @@ export function ReportsPage() {
         )}
 
         {tab === "team" && (
-          <div className="flex flex-col gap-4">
+          <div
+            role="tabpanel"
+            id={`reports-panel-${tab}`}
+            aria-labelledby={`reports-tab-${tab}`}
+            tabIndex={0}
+            className="flex flex-col gap-4"
+          >
             {teamLoading ? (
               <Skeleton className="h-40" />
             ) : teamError ? (
@@ -246,7 +280,13 @@ export function ReportsPage() {
         )}
 
         {tab === "export" && (
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div
+            role="tabpanel"
+            id={`reports-panel-${tab}`}
+            aria-labelledby={`reports-tab-${tab}`}
+            tabIndex={0}
+            className="rounded-xl border border-border bg-card p-5"
+          >
             <div className="flex items-start gap-3">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Download className="size-4" aria-hidden />

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -104,6 +104,22 @@ export function SettingsPage() {
     { id: "security", label: t("settings.tabSecurity") },
   ];
 
+  // Tablist keyboard support per WAI-ARIA authoring practice: Left/Right move
+  // between tabs (activation follows focus), Home/End jump to the ends.
+  const tabRefs = useRef<Partial<Record<SettingsTab, HTMLButtonElement | null>>>({});
+  function onTabListKeyDown(event: React.KeyboardEvent, index: number) {
+    let next: number | null = null;
+    if (event.key === "ArrowRight") next = (index + 1) % SETTINGS_TABS.length;
+    else if (event.key === "ArrowLeft") next = (index - 1 + SETTINGS_TABS.length) % SETTINGS_TABS.length;
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = SETTINGS_TABS.length - 1;
+    if (next === null) return;
+    event.preventDefault();
+    const id = SETTINGS_TABS[next].id;
+    setTab(id);
+    tabRefs.current[id]?.focus();
+  }
+
   // Deep link /settings#notifications: switch to the notifications tab (the
   // section only exists there) and scroll to it once it has rendered.
   useEffect(() => {
@@ -111,7 +127,7 @@ export function SettingsPage() {
     setTab("notifications");
     const frame = requestAnimationFrame(() => {
       document
-        .getElementById("notifications")
+        .getElementById("settings-panel-notifications")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     return () => cancelAnimationFrame(frame);
@@ -259,12 +275,18 @@ export function SettingsPage() {
           aria-label={t("settings.title")}
           className="flex flex-wrap gap-1 border-b border-border"
         >
-          {SETTINGS_TABS.map(({ id, label }) => (
+          {SETTINGS_TABS.map(({ id, label }, index) => (
             <button
               key={id}
+              ref={(el) => {
+                tabRefs.current[id] = el;
+              }}
               type="button"
               role="tab"
+              id={`settings-tab-${id}`}
               aria-selected={tab === id}
+              aria-controls={`settings-panel-${id}`}
+              onKeyDown={(event) => onTabListKeyDown(event, index)}
               onClick={() => setTab(id)}
               className={`-mb-px cursor-pointer border-b-2 px-3 py-2 text-sm transition-colors duration-150 ${
                 tab === id
@@ -278,7 +300,13 @@ export function SettingsPage() {
         </div>
 
         {tab === "general" && (
-          <div className="flex flex-col gap-4">
+          <div
+            role="tabpanel"
+            id={`settings-panel-${tab}`}
+            aria-labelledby={`settings-tab-${tab}`}
+            tabIndex={0}
+            className="flex flex-col gap-4"
+          >
             <section
               aria-label={t("settings.account")}
               className="rounded-xl border border-border bg-surface p-5"
@@ -340,7 +368,10 @@ export function SettingsPage() {
 
         {tab === "notifications" && (
           <section
-            id="notifications"
+            id="settings-panel-notifications"
+            role="tabpanel"
+            aria-labelledby={`settings-tab-${tab}`}
+            tabIndex={0}
             aria-label={t("settings.notifications")}
             className="rounded-xl border border-border bg-surface p-5"
           >
@@ -407,7 +438,13 @@ export function SettingsPage() {
         )}
 
         {tab === "security" && (
-          <div className="flex flex-col gap-4">
+          <div
+            role="tabpanel"
+            id={`settings-panel-${tab}`}
+            aria-labelledby={`settings-tab-${tab}`}
+            tabIndex={0}
+            className="flex flex-col gap-4"
+          >
             <PATSection />
 
             <section
