@@ -292,10 +292,10 @@ export function EpicsPage() {
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="epicspage-nameLabel" className="mb-1 block text-sm font-medium">
                   {t("epic.nameLabel")}
                 </label>
-                <input
+                <input id="epicspage-nameLabel"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -305,10 +305,10 @@ export function EpicsPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="epicspage-descriptionLabel" className="mb-1 block text-sm font-medium">
                   {t("epic.descriptionLabel")}
                 </label>
-                <textarea
+                <textarea id="epicspage-descriptionLabel"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={t("epic.descriptionPlaceholder")}
@@ -317,10 +317,10 @@ export function EpicsPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="epicspage-startDate" className="mb-1 block text-sm font-medium">
                   {t("epic.startDate")}
                 </label>
-                <input
+                <input id="epicspage-startDate"
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
@@ -328,10 +328,10 @@ export function EpicsPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="epicspage-endDate" className="mb-1 block text-sm font-medium">
                   {t("epic.endDate")}
                 </label>
-                <input
+                <input id="epicspage-endDate"
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
@@ -339,10 +339,10 @@ export function EpicsPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="epicspage-milestoneLabel" className="mb-1 block text-sm font-medium">
                   {t("epic.milestoneLabel")}
                 </label>
-                <select
+                <select id="epicspage-milestoneLabel"
                   value={milestoneId}
                   onChange={(e) => setMilestoneId(e.target.value)}
                   className="w-full cursor-pointer rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"

@@ -210,8 +210,9 @@ export function KnowledgePage() {
         >
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">{t("knowledge.titleLabel")}</label>
+              <label htmlFor="knowledge-title" className="mb-1 block text-sm font-medium">{t("knowledge.titleLabel")}</label>
               <Input
+                id="knowledge-title"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -220,8 +221,9 @@ export function KnowledgePage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">{t("knowledge.bodyLabel")}</label>
+              <label htmlFor="knowledge-body" className="mb-1 block text-sm font-medium">{t("knowledge.bodyLabel")}</label>
               <textarea
+                id="knowledge-body"
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 placeholder={t("knowledge.bodyPlaceholder")}
@@ -231,8 +233,9 @@ export function KnowledgePage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-sm font-medium">{t("knowledge.typeLabel")}</label>
+                <label htmlFor="knowledge-type" className="mb-1 block text-sm font-medium">{t("knowledge.typeLabel")}</label>
                 <select
+                  id="knowledge-type"
                   value={type}
                   onChange={(e) => setType(e.target.value as KnowledgeType)}
                   className="w-full cursor-pointer rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
@@ -243,8 +246,9 @@ export function KnowledgePage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">{t("knowledge.tagsLabel")}</label>
+                <label htmlFor="knowledge-tags" className="mb-1 block text-sm font-medium">{t("knowledge.tagsLabel")}</label>
                 <Input
+                  id="knowledge-tags"
                   type="text"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
@@ -254,8 +258,9 @@ export function KnowledgePage() {
             </div>
             {editing && (
               <div>
-                <label className="mb-1 block text-sm font-medium">{t("knowledge.statusLabel")}</label>
+                <label htmlFor="knowledge-status" className="mb-1 block text-sm font-medium">{t("knowledge.statusLabel")}</label>
                 <select
+                  id="knowledge-status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value as KnowledgeStatus)}
                   className="w-full cursor-pointer rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
@@ -290,9 +295,10 @@ export function KnowledgePage() {
               {t("knowledge.supersedeMessage", { title: superseding?.title ?? "" })}
             </p>
             <div>
-              <label className="mb-1 block text-sm font-medium">{t("knowledge.supersedeEntryId")}</label>
+              <label htmlFor="knowledge-supersede-target" className="mb-1 block text-sm font-medium">{t("knowledge.supersedeEntryId")}</label>
               {supersedeCandidates.length > 0 ? (
                 <select
+                  id="knowledge-supersede-target"
                   value={supersedeTargetId}
                   onChange={(e) => setSupersedeTargetId(e.target.value)}
                   className="w-full cursor-pointer rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
@@ -306,6 +312,7 @@ export function KnowledgePage() {
                 </select>
               ) : (
                 <Input
+                  id="knowledge-supersede-target"
                   type="text"
                   value={supersedeTargetId}
                   onChange={(e) => setSupersedeTargetId(e.target.value)}

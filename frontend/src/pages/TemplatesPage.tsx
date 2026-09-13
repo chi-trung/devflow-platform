@@ -157,10 +157,10 @@ export function TemplatesPage() {
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="templatespage-name" className="mb-1 block text-sm font-medium">
                   {t("template.name")}
                 </label>
-                <input
+                <input id="templatespage-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -170,10 +170,10 @@ export function TemplatesPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="templatespage-titleLabel" className="mb-1 block text-sm font-medium">
                   {t("template.titleLabel")}
                 </label>
-                <input
+                <input id="templatespage-titleLabel"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -183,10 +183,10 @@ export function TemplatesPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="templatespage-descriptionLabel" className="mb-1 block text-sm font-medium">
                   {t("template.descriptionLabel")}
                 </label>
-                <textarea
+                <textarea id="templatespage-descriptionLabel"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={t("template.descriptionPlaceholder")}
@@ -195,10 +195,10 @@ export function TemplatesPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="templatespage-priorityLabel" className="mb-1 block text-sm font-medium">
                   {t("template.priorityLabel")}
                 </label>
-                <select
+                <select id="templatespage-priorityLabel"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
                   className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
@@ -210,10 +210,10 @@ export function TemplatesPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="templatespage-estimateLabel" className="mb-1 block text-sm font-medium">
                   {t("template.estimateLabel")}
                 </label>
-                <input
+                <input id="templatespage-estimateLabel"
                   type="number"
                   value={estimateMinutes}
                   onChange={(e) => setEstimateMinutes(e.target.value)}

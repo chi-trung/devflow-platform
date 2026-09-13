@@ -186,10 +186,11 @@ export function CustomFieldsPage() {
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="cf-create-name" className="mb-1 block text-sm font-medium">
                   {t("customField.nameLabel")}
                 </label>
                 <input
+                  id="cf-create-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -199,10 +200,11 @@ export function CustomFieldsPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="cf-create-type" className="mb-1 block text-sm font-medium">
                   {t("customField.typeLabel")}
                 </label>
                 <select
+                  id="cf-create-type"
                   value={fieldType}
                   onChange={(e) => setFieldType(e.target.value as FieldType)}
                   className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
@@ -216,10 +218,11 @@ export function CustomFieldsPage() {
               </div>
               {fieldType === "select" && (
                 <div className="sm:col-span-2">
-                  <label className="mb-1 block text-sm font-medium">
+                  <label htmlFor="cf-create-options" className="mb-1 block text-sm font-medium">
                     {t("customField.optionsLabel")}
                   </label>
                   <textarea
+                    id="cf-create-options"
                     value={options}
                     onChange={(e) => setOptions(e.target.value)}
                     placeholder={t("customField.optionsPlaceholder")}

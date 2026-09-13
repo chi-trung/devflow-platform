@@ -178,10 +178,11 @@ export function ActivitiesPage() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {/* Actor filter */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                <label htmlFor="activity-filter-actor" className="mb-1 block text-xs font-medium text-muted-foreground">
                   {t("activity.filterActor")}
                 </label>
                 <select
+                  id="activity-filter-actor"
                   value={actorFilter}
                   onChange={(e) => { setActorFilter(e.target.value); setCurrentPage(1); }}
                   className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -197,10 +198,11 @@ export function ActivitiesPage() {
 
               {/* Action filter */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                <label htmlFor="activity-filter-action" className="mb-1 block text-xs font-medium text-muted-foreground">
                   {t("activity.filterAction")}
                 </label>
                 <select
+                  id="activity-filter-action"
                   value={actionFilter}
                   onChange={(e) => { setActionFilter(e.target.value); setCurrentPage(1); }}
                   className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -216,10 +218,11 @@ export function ActivitiesPage() {
 
               {/* Date from */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                <label htmlFor="activity-date-from" className="mb-1 block text-xs font-medium text-muted-foreground">
                   {t("activity.dateFrom")}
                 </label>
                 <input
+                  id="activity-date-from"
                   type="date"
                   value={dateFrom}
                   onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1); }}
@@ -229,10 +232,11 @@ export function ActivitiesPage() {
 
               {/* Date to */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                <label htmlFor="activity-date-to" className="mb-1 block text-xs font-medium text-muted-foreground">
                   {t("activity.dateTo")}
                 </label>
                 <input
+                  id="activity-date-to"
                   type="date"
                   value={dateTo}
                   onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1); }}

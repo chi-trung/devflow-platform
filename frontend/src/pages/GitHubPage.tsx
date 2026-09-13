@@ -173,10 +173,10 @@ export function GitHubPage() {
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="githubpage-repoUrlLabel" className="mb-1 block text-sm font-medium">
                   {t("github.repoUrlLabel")}
                 </label>
-                <input
+                <input id="githubpage-repoUrlLabel"
                   type="url"
                   value={repoUrl}
                   onChange={(e) => setRepoUrl(e.target.value)}
@@ -231,10 +231,10 @@ export function GitHubPage() {
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="githubpage-prTitleLabel" className="mb-1 block text-sm font-medium">
                   {t("github.prTitleLabel")}
                 </label>
-                <input
+                <input id="githubpage-prTitleLabel"
                   type="text"
                   value={prTitle}
                   onChange={(e) => setPrTitle(e.target.value)}
@@ -244,10 +244,10 @@ export function GitHubPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="githubpage-prUrlLabel" className="mb-1 block text-sm font-medium">
                   {t("github.prUrlLabel")}
                 </label>
-                <input
+                <input id="githubpage-prUrlLabel"
                   type="url"
                   value={prUrl}
                   onChange={(e) => setPrUrl(e.target.value)}
@@ -257,10 +257,10 @@ export function GitHubPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="githubpage-prStatusLabel" className="mb-1 block text-sm font-medium">
                   {t("github.prStatusLabel")}
                 </label>
-                <select
+                <select id="githubpage-prStatusLabel"
                   value={prStatus}
                   onChange={(e) => setPrStatus(e.target.value)}
                   className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
@@ -271,10 +271,10 @@ export function GitHubPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="githubpage-prAuthorLabel" className="mb-1 block text-sm font-medium">
                   {t("github.prAuthorLabel")}
                 </label>
-                <input
+                <input id="githubpage-prAuthorLabel"
                   type="text"
                   value={prAuthor}
                   onChange={(e) => setPrAuthor(e.target.value)}

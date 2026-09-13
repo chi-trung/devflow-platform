@@ -180,10 +180,10 @@ export function ProjectSettingsPage() {
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_150px]">
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="projectsettingspage-addLabel" className="mb-1 block text-sm font-medium">
                   {t("projectMember.addLabel")}
                 </label>
-                <select
+                <select id="projectsettingspage-addLabel"
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
                   className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
@@ -200,10 +200,10 @@ export function ProjectSettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="projectsettingspage-roleLabel" className="mb-1 block text-sm font-medium">
                   {t("projectMember.roleLabel")}
                 </label>
-                <select
+                <select id="projectsettingspage-roleLabel"
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value as "Member" | "Manager")}
                   className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"

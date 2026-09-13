@@ -248,10 +248,10 @@ export function WebhooksPage() {
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="webhookspage-urlLabel" className="mb-1 block text-sm font-medium">
                   {t("webhook.urlLabel")}
                 </label>
-                <input
+                <input id="webhookspage-urlLabel"
                   type="url"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
@@ -282,10 +282,10 @@ export function WebhooksPage() {
                 </div>
               </div>
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="webhookspage-secretLabel" className="mb-1 block text-sm font-medium">
                   {t("webhook.secretLabel")}
                 </label>
-                <input
+                <input id="webhookspage-secretLabel"
                   type="text"
                   value={secret}
                   onChange={(e) => setSecret(e.target.value)}

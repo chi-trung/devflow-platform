@@ -130,10 +130,10 @@ export function LabelsPage() {
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="labelspage-nameLabel" className="mb-1 block text-sm font-medium">
                   {t("label.nameLabel")}
                 </label>
-                <input
+                <input id="labelspage-nameLabel"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}

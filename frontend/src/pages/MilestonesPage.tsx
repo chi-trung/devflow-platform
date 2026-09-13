@@ -234,10 +234,10 @@ export function MilestonesPage() {
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="milestonespage-nameLabel" className="mb-1 block text-sm font-medium">
                   {t("milestone.nameLabel")}
                 </label>
-                <input
+                <input id="milestonespage-nameLabel"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -247,10 +247,10 @@ export function MilestonesPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="milestonespage-descriptionLabel" className="mb-1 block text-sm font-medium">
                   {t("milestone.descriptionLabel")}
                 </label>
-                <textarea
+                <textarea id="milestonespage-descriptionLabel"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={t("milestone.descriptionPlaceholder")}
@@ -259,10 +259,10 @@ export function MilestonesPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="milestonespage-targetDate" className="mb-1 block text-sm font-medium">
                   {t("milestone.targetDate")}
                 </label>
-                <input
+                <input id="milestonespage-targetDate"
                   type="date"
                   value={targetDate}
                   onChange={(e) => setTargetDate(e.target.value)}
@@ -271,10 +271,10 @@ export function MilestonesPage() {
               </div>
               {editing && (
                 <div>
-                  <label className="mb-1 block text-sm font-medium">
+                  <label htmlFor="milestonespage-statusLabel" className="mb-1 block text-sm font-medium">
                     {t("milestone.statusLabel")}
                   </label>
-                  <select
+                  <select id="milestonespage-statusLabel"
                     value={status}
                     onChange={(e) => setStatus(e.target.value as MilestoneStatus)}
                     className="w-full cursor-pointer rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"

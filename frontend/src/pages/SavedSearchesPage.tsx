@@ -141,10 +141,10 @@ export function SavedSearchesPage() {
             </h2>
             <div className="grid gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="savedsearchespage-nameLabel" className="mb-1 block text-sm font-medium">
                   {t("savedSearch.nameLabel")}
                 </label>
-                <input
+                <input id="savedsearchespage-nameLabel"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -154,10 +154,11 @@ export function SavedSearchesPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="saved-search-query" className="mb-1 block text-sm font-medium">
                   Query
                 </label>
                 <input
+                  id="saved-search-query"
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -167,10 +168,11 @@ export function SavedSearchesPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="saved-search-filters" className="mb-1 block text-sm font-medium">
                   Filters JSON (optional)
                 </label>
                 <textarea
+                  id="saved-search-filters"
                   value={filtersJson}
                   onChange={(e) => setFiltersJson(e.target.value)}
                   placeholder='{"status":"InProgress"}'
