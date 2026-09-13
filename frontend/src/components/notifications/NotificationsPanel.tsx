@@ -32,6 +32,10 @@ export function NotificationsPanel({
   const { push } = useToast();
   const [filter, setFilter] = useState<NotificationFilter>("all");
   const [pendingCleanup, setPendingCleanup] = useState(false);
+  // Pointer activation leaves focus on the bell; keyboard activation must move
+  // it into the panel, because the portal renders at the end of <body> and Tab
+  // from the bell would walk the whole page before reaching the panel.
+  const openedByPointer = useRef(false);
 
   const handleIncoming = useCallback(
     (notification: IncomingNotification) => {
@@ -70,9 +74,23 @@ export function NotificationsPanel({
       }
     }
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        if (dropdownRef.current?.contains(document.activeElement)) {
+          // Focus is inside the portal (moved there by the open effect);
+          // return it to the bell so the keyboard user stays on the widget.
+          triggerRef.current?.focus();
+        }
+        setOpen(false);
+      }
     }
-    function onScroll() {
+    function onScroll(event: Event) {
+      // Capture lets the page scroll (the dropdown is position:fixed and would
+      // detach) close the panel, but the list has its own overflow-y-auto
+      // scroller: a capture listener fires for that too, and scrolling the
+      // list would otherwise close the panel mid-read. Only page scrolls
+      // outside the dropdown should dismiss it.
+      const target = event.target as Node | null;
+      if (target && dropdownRef.current?.contains(target)) return;
       setOpen(false);
     }
     document.addEventListener("pointerdown", onPointerDown);
@@ -84,6 +102,15 @@ export function NotificationsPanel({
       window.removeEventListener("scroll", onScroll, true);
     };
   }, []);
+
+  useEffect(() => {
+    if (open && !openedByPointer.current) {
+      dropdownRef.current?.querySelector<HTMLElement>(
+        "a[href], button:not([disabled])",
+      )?.focus();
+    }
+    openedByPointer.current = false;
+  }, [open]);
 
   function handleItemClick(notification: {
     id: string;
@@ -132,6 +159,9 @@ export function NotificationsPanel({
         onClick={() => {
           if (!open) refresh();
           setOpen((value) => !value);
+        }}
+        onPointerDown={() => {
+          openedByPointer.current = true;
         }}
         aria-label={`${t("notification.notifications")}${unreadCount > 0 ? ` ${t("notification.unreadSuffix", { count: unreadCount })}` : ""}`}
         aria-expanded={open}
