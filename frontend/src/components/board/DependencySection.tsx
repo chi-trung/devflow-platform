@@ -155,6 +155,7 @@ export function DependencySection({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("dependency.searchTasks")}
+            aria-label={t("dependency.searchTasks")}
             autoFocus
             className="mb-1.5 w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
           />

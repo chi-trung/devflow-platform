@@ -299,11 +299,13 @@ export function CustomFieldsPage() {
                           type="text"
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
+                          aria-label={t("field.fieldName")}
                           className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm focus:border-primary focus:outline-none"
                         />
                         <select
                           value={editFieldType}
                           onChange={(e) => setEditFieldType(e.target.value as FieldType)}
+                          aria-label={t("field.fieldType")}
                           className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm focus:border-primary focus:outline-none"
                         >
                           {FIELD_TYPES.map((ft) => (
@@ -318,6 +320,7 @@ export function CustomFieldsPage() {
                               value={editOptions}
                               onChange={(e) => setEditOptions(e.target.value)}
                               rows={2}
+                              aria-label={t("field.optionsPlaceholder")}
                               className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-sm focus:border-primary focus:outline-none"
                             />
                           </div>

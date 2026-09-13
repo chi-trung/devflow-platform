@@ -1070,6 +1070,7 @@ export function TaskDetailPanel({
             value={newComment}
             onChange={(event) => setNewComment(event.target.value)}
             placeholder={t("task.writeComment")}
+            aria-label={t("task.writeComment")}
             rows={2}
             maxLength={2000}
             className="flex-1 resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground/50 transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"

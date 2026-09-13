@@ -334,6 +334,7 @@ export function TaskCard({
               value={childTitle}
               onChange={(event) => setChildTitle(event.target.value)}
               placeholder={t("board.childTaskPlaceholder")}
+              aria-label={t("board.childTaskPlaceholder")}
               autoFocus
               className="min-w-0 flex-1 rounded-md border border-border bg-surface px-1.5 py-1 text-xs placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
             />
