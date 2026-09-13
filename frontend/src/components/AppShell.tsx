@@ -115,6 +115,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setDrawerOpen(false);
   }, [location.pathname]);
 
+  // WCAG 2.4.2 (Page Titled): the authed pages share one index.html title,
+  // and only the board bothered to override it — so after visiting a board,
+  // every other page kept showing the project's name. Rather than a title
+  // per page, mirror the page's own visible <h1>: it is already unique,
+  // already localized, and data-loaded headings (board/project names that
+  // start as a skeleton) update through the observer when they arrive.
+  useEffect(() => {
+    const main = document.getElementById("devflow-content");
+    if (!main) return;
+    function readTitle() {
+      const text = main?.querySelector("h1")?.textContent?.trim();
+      if (text) document.title = `${text} — DevFlow`;
+    }
+    readTitle();
+    const observer = new MutationObserver(readTitle);
+    observer.observe(main, { childList: true, subtree: true, characterData: true });
+    return () => observer.disconnect();
+  }, [location.pathname]);
+
   useEffect(() => {
     if (!drawerOpen) return;
     // The drawer is the app's modal on mobile and the rest of the chrome is

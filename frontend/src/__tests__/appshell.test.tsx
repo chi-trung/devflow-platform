@@ -184,8 +184,7 @@ describe("AppShell sidebar collapse", () => {
     expect(main?.getAttribute("tabindex")).toBe("-1");
   });
 
-  it("swaps the account trigger to icon-only when collapsed (no name overflow)", () => {
-    // Collapsed: the sidebar UserMenu renders compact (avatar initials + long
+  it("swaps the account trigger to icon-only when collapsed (no name overflow)", () => {    // Collapsed: the sidebar UserMenu renders compact (avatar initials + long
     // username/email hidden) so a long Gmail address can't stick out of the
     // narrow rail. The username "alice" and email "a@b.c" must be absent.
     renderShell("/workspaces/ws1", true);
@@ -197,5 +196,35 @@ describe("AppShell sidebar collapse", () => {
     renderShell("/workspaces/ws1", false);
     expect(screen.getByText("alice")).toBeTruthy();
     expect(screen.getByText("a@b.c")).toBeTruthy();
+  });
+
+  it("titles the document after the page h1 (WCAG 2.4.2)", () => {
+    // Authed pages share one SPA title; the shell mirrors the visible h1 so
+    // each page is findable in a tab list.
+    document.title = "stale previous page";
+    render(
+      <MemoryRouter initialEntries={["/workspaces/ws1"]}>
+        <AppShell>
+          <h1>Notification Center</h1>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    expect(document.title).toBe("Notification Center — DevFlow");
+  });
+
+  it("leaves the title alone while the page h1 is still a skeleton", () => {
+    // Boards render an empty/skeleton h1 until the project loads — must not
+    // title the document "— DevFlow" in that window.
+    document.title = "Probe Project — DevFlow";
+    render(
+      <MemoryRouter initialEntries={["/workspaces/ws1/projects/p1"]}>
+        <AppShell>
+          <h1>
+            <span aria-hidden />
+          </h1>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    expect(document.title).toBe("Probe Project — DevFlow");
   });
 });
