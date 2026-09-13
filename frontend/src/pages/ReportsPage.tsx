@@ -152,7 +152,10 @@ export function ReportsPage() {
           </div>
 
           {tab === "charts" && (
-            <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors duration-200 focus-within:border-primary">
+            // Two native date inputs measure ~250px together; on a 320px phone
+            // that is wider than the flex row, so cap the label and let the
+            // inputs shrink inside it instead of forcing a sideways scroll.
+            <label className="flex w-full max-w-full items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm transition-colors duration-200 focus-within:border-primary sm:w-auto">
               <CalendarRange className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
               <input
                 type="date"
@@ -160,16 +163,16 @@ export function ReportsPage() {
                 max={to || undefined}
                 onChange={(event) => setFrom(event.target.value)}
                 aria-label={t("reports.burndownStartDate")}
-                className="bg-transparent focus:outline-none"
+                className="w-0 min-w-0 flex-1 bg-transparent focus:outline-none"
               />
-              <span className="text-muted-foreground">→</span>
+              <span className="shrink-0 text-muted-foreground">→</span>
               <input
                 type="date"
                 value={to}
                 min={from || undefined}
                 onChange={(event) => setTo(event.target.value)}
                 aria-label={t("reports.burndownEndDate")}
-                className="bg-transparent focus:outline-none"
+                className="w-0 min-w-0 flex-1 bg-transparent focus:outline-none"
               />
             </label>
           )}
