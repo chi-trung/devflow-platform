@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthContext";
@@ -56,8 +56,7 @@ function validate(form: FormState, t: (key: string) => string): Partial<Record<k
 }
 
 export function RegisterPage() {
-  const { t } = useTranslation();
-  // Same as LoginPage: the route must own its title so a previous marketing
+  const { t } = useTranslation();  // Same as LoginPage: the route must own its title so a previous marketing
   // page's copy does not bleed through client-side navigation.
   usePageMeta("auth.createAccount", "auth.startManaging");
   const { register } = useAuth();
@@ -69,6 +68,18 @@ export function RegisterPage() {
   >({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Track which keys just went invalid so the submit handler can move focus
+  // to the first one. The fields render in this same order, so a fixed list
+  // keeps visual and focus order aligned without reading DOM positions.
+  const fieldOrder = useRef(["displayName", "username", "email", "password"] as const);
+
+  function focusFirstInvalid(errors: Partial<Record<keyof FormState, string>>) {
+    const firstKey = fieldOrder.current.find((key) => errors[key]);
+    if (!firstKey) return;
+    // Focus after the state flush so the input already carries its
+    // describedby error when the screen reader announces it.
+    requestAnimationFrame(() => document.getElementById(firstKey)?.focus());
+  }
 
   function update<K extends keyof FormState>(key: K, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -80,7 +91,10 @@ export function RegisterPage() {
 
     const errors = validate(form, t);
     setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    if (Object.keys(errors).length > 0) {
+      focusFirstInvalid(errors);
+      return;
+    }
 
     setSubmitting(true);
     try {
