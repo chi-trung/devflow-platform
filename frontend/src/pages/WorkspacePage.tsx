@@ -585,8 +585,12 @@ export function WorkspacePage() {
                                 className={`pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-br ${coverGradient(project.coverColor)}`}
                               />
                             )}
+                            {/* Touch devices have no hover, so the action pill hides
+                                only on fine pointers: visible on touch (backdrop
+                                keeps buttons readable over the cover), reveal on
+                                hover/focus for mouse/keyboard users. */}
                             {canManageProjects && (
-                              <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-md bg-card/90 p-0.5 backdrop-blur-sm">
+                              <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-md bg-card/90 p-0.5 backdrop-blur-sm transition-opacity duration-150 group-focus-within:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -597,7 +601,7 @@ export function WorkspacePage() {
                                   aria-label={t("workspace.editNamedAria", {
                                     name: project.name,
                                   })}
-                                  className="rounded p-1 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-primary focus-visible:opacity-100 group-hover:opacity-100"
+                                  className="rounded p-1 text-muted-foreground transition-opacity duration-150 hover:text-primary focus-visible:opacity-100"
                                 >
                                   <Pencil className="size-3.5" aria-hidden />
                                 </button>
@@ -611,7 +615,7 @@ export function WorkspacePage() {
                                   aria-label={t("workspace.archiveNamedAria", {
                                     name: project.name,
                                   })}
-                                  className="rounded p-1 text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+                                  className="rounded p-1 text-muted-foreground transition-opacity duration-150 hover:text-destructive focus-visible:opacity-100"
                                 >
                                   <Trash2 className="size-3.5" aria-hidden />
                                 </button>
