@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { HelpCircle, X } from "lucide-react";
 import { Button } from "../ui/Button";
 import { BrandMark } from "../ui/Logo";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 
 const FLAG_KEY = "devflow.onboardingDone";
 
@@ -97,6 +98,10 @@ export function OnboardingTour({
   );
   const [pageReady, setPageReady] = useState(false);
   const rafRef = useRef<number | null>(null);
+  // The card is a real modal (aria-modal, click-catcher overlay), so keyboard
+  // focus has to stay inside it: the trap pulls focus to the first control on
+  // open and returns it to whatever opened the tour on close.
+  const { ref: cardRef, onKeyDown: trapTab } = useFocusTrap<HTMLDivElement>(open);
 
   const finish = useCallback(() => {
     setOnboardingDone(userId);
@@ -290,9 +295,11 @@ export function OnboardingTour({
       {highlight}
 
       <div
+        ref={cardRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        onKeyDown={trapTab}
         className="fixed z-[90] w-[calc(100vw-2rem)] max-w-sm touch-manipulation rounded-xl border border-border bg-card p-5 shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise"
         style={{
           top: cardPos?.top ?? 16,
