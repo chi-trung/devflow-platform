@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   BrowserRouter,
   Route,
@@ -112,9 +113,14 @@ const NotFoundPage = lazy(() =>
 );
 
 function LoadingFallback() {
+  const { t } = useTranslation();
   return (
-    <div className="flex h-dvh items-center justify-center">
-      <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    <div className="flex h-dvh flex-col items-center justify-center gap-3" role="status">
+      <div
+        aria-hidden
+        className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
+      />
+      <span className="text-sm text-muted-foreground">{t("common.loading")}</span>
     </div>
   );
 }
