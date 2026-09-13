@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { ArrowLeft, Plus, X, Users } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
@@ -234,9 +235,7 @@ export function ProjectSettingsPage() {
 
         {membersError ? (
           <div className="mb-4">
-            <div className="rounded-xl border border-border bg-surface p-4 text-sm text-destructive">
-              {membersError}
-            </div>
+            <ErrorAlert message={membersError} />
           </div>
         ) : membersLoading ? (
           <div className="flex flex-col gap-3">
