@@ -147,7 +147,11 @@ export function ChangelogPage() {
             <h2 className="mb-6 font-display text-2xl font-semibold tracking-tight">
               {t("changelog.ctaTitle")}
             </h2>
-            <Link to="/register">
+            {/* inline-flex so the anchor box equals the button's 44px height:
+                a plain inline link reports a 22px line box, which fails the
+                WCAG 2.5.8 target-size check even though the painted button
+                is large. */}
+            <Link to="/register" className="inline-flex">
               <Button size="md" className="gap-2 px-8 py-3 text-base">
                 {t("landing.ctaButton")}
                 <ArrowRight className="size-4" aria-hidden />

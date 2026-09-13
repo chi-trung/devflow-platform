@@ -192,7 +192,11 @@ export function LandingPage() {
             <p className="mb-8 text-muted-foreground">
               {t("landing.ctaSubtitle")}
             </p>
-            <Link to="/register">
+            {/* inline-flex so the anchor box equals the button's 44px height:
+                a plain inline link reports a 22px line box, which fails the
+                WCAG 2.5.8 target-size check even though the painted button
+                is large. */}
+            <Link to="/register" className="inline-flex">
               <Button size="md" className="gap-2 px-8 py-3 text-base">
                 {t("landing.ctaButton")}
                 <ArrowRight className="size-4" aria-hidden />
