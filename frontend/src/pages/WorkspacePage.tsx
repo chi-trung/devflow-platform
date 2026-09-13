@@ -432,11 +432,14 @@ export function WorkspacePage() {
           <ErrorAlert message={wsError ?? t("workspace.notFound")} />
         ) : (
           <>
-            <div className="mb-8 flex items-end justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3">
+            {/* Wrap on phones: the name row + two action buttons measure over
+                300px at 320px wide. The "New project" button keeps its label
+                (icon-only would lose meaning) and drops to its own line. */}
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-3">
                   <EmojiTile emoji={workspace.emoji} size="lg" />
-                  <h1 className="font-display text-3xl font-semibold tracking-tight">
+                  <h1 className="break-words font-display text-3xl font-semibold tracking-tight">
                     {workspace.name}
                   </h1>
                   <Badge tone={workspace.role === "Member" ? "neutral" : "teal"}>
@@ -458,7 +461,7 @@ export function WorkspacePage() {
                   {workspace.description && ` — ${workspace.description}`}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2">
                 {!creating && (
                   <Button onClick={() => setCreating(true)}>
                   <Plus className="size-4" aria-hidden />
