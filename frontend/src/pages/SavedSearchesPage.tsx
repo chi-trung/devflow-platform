@@ -155,21 +155,21 @@ export function SavedSearchesPage() {
               </div>
               <div>
                 <label htmlFor="saved-search-query" className="mb-1 block text-sm font-medium">
-                  Query
+                  {t("savedSearch.queryLabel")}
                 </label>
                 <input
                   id="saved-search-query"
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search query"
+                  placeholder={t("savedSearch.queryPlaceholder")}
                   className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
                   required
                 />
               </div>
               <div>
                 <label htmlFor="saved-search-filters" className="mb-1 block text-sm font-medium">
-                  Filters JSON (optional)
+                  {t("savedSearch.filtersLabel")}
                 </label>
                 <textarea
                   id="saved-search-filters"
