@@ -155,6 +155,8 @@ export function ActivitiesPage() {
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
+              aria-expanded={showFilters}
+              aria-controls="activity-filter-bar"
               className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                 showFilters || hasActiveFilters
                   ? "border-primary/30 bg-primary/5 text-primary"
@@ -174,7 +176,7 @@ export function ActivitiesPage() {
 
         {/* Filter Bar */}
         {showFilters && (
-          <div className="mb-4 rounded-xl border border-border bg-card p-4">
+          <div id="activity-filter-bar" className="mb-4 rounded-xl border border-border bg-card p-4">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {/* Actor filter */}
               <div>
