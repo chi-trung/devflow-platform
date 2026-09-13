@@ -31,7 +31,10 @@ export function AuthLayout({
   const { t } = useTranslation();
   return (
     <div className="flex min-h-dvh">
-      <div className="relative hidden flex-1 flex-col justify-between overflow-hidden border-r border-border bg-surface p-10 lg:flex">
+      {/* `<aside>` = complementary landmark, so axe's `region` best-practice
+          stops flagging the branding column on /login and /register. No
+          aria-label: the panel is already distinct from <main> by role. */}
+      <aside className="relative hidden flex-1 flex-col justify-between overflow-hidden border-r border-border bg-surface p-10 lg:flex">
         <div
           aria-hidden
           className="pointer-events-none absolute -top-32 -left-32 size-96 rounded-full bg-primary/10 blur-3xl"
@@ -62,7 +65,7 @@ export function AuthLayout({
         <p className="relative z-10 font-mono text-xs text-muted-foreground">
           {t("workspace.authMotto")}
         </p>
-      </div>
+      </aside>
 
       <main className="flex flex-1 items-center justify-center p-6">
         <div className="w-full max-w-sm rise">

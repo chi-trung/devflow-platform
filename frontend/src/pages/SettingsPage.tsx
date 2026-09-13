@@ -326,7 +326,7 @@ export function SettingsPage() {
                 <h2 className="font-display font-semibold">{t("settings.account")}</h2>
                 <Link
                   to="/profile"
-                  className="ml-auto text-sm font-medium text-primary underline-offset-2 hover:underline"
+                  className="ml-auto inline-flex min-h-6 items-center text-sm font-medium text-primary underline-offset-2 hover:underline"
                 >
                   {t("settings.editProfile")}
                 </Link>
