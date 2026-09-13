@@ -163,8 +163,18 @@ export function TaskCard({
   return (
     <div
       draggable
+      tabIndex={0}
       data-task-id={task.id}
       onClick={() => onSelect(task.id)}
+      onKeyDown={(event) => {
+        // Cards are mouse-draggable; keyboard users open the drawer here and
+        // move the task from inside it. Ignore keys pressed on child controls.
+        if (event.target !== event.currentTarget) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect(task.id);
+        }
+      }}
       onDragStart={(event) => {
         event.dataTransfer.setData("text/plain", task.id);
         event.dataTransfer.effectAllowed = "move";
@@ -173,7 +183,7 @@ export function TaskCard({
       onDragEnd={(event) => {
         event.currentTarget.classList.remove("opacity-40");
       }}
-      className={`group cursor-grab rounded-lg border bg-card p-3 transition-all duration-200 hover:bg-elevated active:cursor-grabbing active:scale-[0.99] ${
+      className={`group cursor-grab rounded-lg border bg-card p-3 outline-none transition-all duration-200 hover:bg-elevated focus-visible:ring-2 focus-visible:ring-primary/60 active:cursor-grabbing active:scale-[0.99] ${
         selected
           ? "border-primary ring-1 ring-primary/40"
           : "border-border hover:border-border-strong"
