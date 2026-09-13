@@ -94,9 +94,12 @@ export function IntelligenceSection() {
           {/* ── Terminal mockup ── */}
           <BrowserFrame className="font-mono">
             {/* prompt line */}
+            {/* This line hardcodes a near-black background in both themes,
+                so its text must be hardcoded light too: the foreground
+                token flips with the theme and would vanish on black. */}
             <div className="mb-4 rounded-lg bg-[#0a0e14] px-3 py-2.5 text-[12.5px] leading-relaxed dark:bg-black/40">
               <span className="text-emerald-400">{t("landing.intel.terminalPrompt")}</span>{" "}
-              <span className="break-words text-foreground">{t("landing.intel.terminalQuery")}</span>
+              <span className="break-words text-[#e6edf3]">{t("landing.intel.terminalQuery")}</span>
             </div>
 
             {/* RAG tag */}
