@@ -130,10 +130,10 @@ export function TeamReportPanel({ workspaceId, projectId, className = "" }: Team
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/60 bg-surface">
-                <th className="px-3 py-2 text-left text-[11px] font-medium text-muted-foreground">{t("dashboard.member")}</th>
-                <th className="px-3 py-2 text-right text-[11px] font-medium text-muted-foreground">{t("dashboard.completed")}</th>
-                <th className="px-3 py-2 text-right text-[11px] font-medium text-muted-foreground">{t("dashboard.inProgress")}</th>
-                <th className="px-3 py-2 text-right text-[11px] font-medium text-muted-foreground">{t("dashboard.time")}</th>
+                <th scope="col" className="px-3 py-2 text-left text-[11px] font-medium text-muted-foreground">{t("dashboard.member")}</th>
+                <th scope="col" className="px-3 py-2 text-right text-[11px] font-medium text-muted-foreground">{t("dashboard.completed")}</th>
+                <th scope="col" className="px-3 py-2 text-right text-[11px] font-medium text-muted-foreground">{t("dashboard.inProgress")}</th>
+                <th scope="col" className="px-3 py-2 text-right text-[11px] font-medium text-muted-foreground">{t("dashboard.time")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">

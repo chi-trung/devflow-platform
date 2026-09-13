@@ -80,11 +80,11 @@ export function TeamReportCards({ data, members, className = "" }: TeamReportCar
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-elevated/50">
-              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">{t("reports.member")}</th>
-              <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">{t("reports.completed")}</th>
-              <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">{t("reports.inProgress")}</th>
-              <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">{t("reports.avgCycleTime")}</th>
-              <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">{t("reports.assigned")}</th>
+              <th scope="col" className="px-4 py-2.5 text-left font-medium text-muted-foreground">{t("reports.member")}</th>
+              <th scope="col" className="px-4 py-2.5 text-right font-medium text-muted-foreground">{t("reports.completed")}</th>
+              <th scope="col" className="px-4 py-2.5 text-right font-medium text-muted-foreground">{t("reports.inProgress")}</th>
+              <th scope="col" className="px-4 py-2.5 text-right font-medium text-muted-foreground">{t("reports.avgCycleTime")}</th>
+              <th scope="col" className="px-4 py-2.5 text-right font-medium text-muted-foreground">{t("reports.assigned")}</th>
             </tr>
           </thead>
           <tbody>
