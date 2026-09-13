@@ -8,7 +8,7 @@ const DAY_W = 26;
 const LABEL_W = 208;
 
 const statusTone: Record<MilestoneResponse["status"], string> = {
-  Planned: "bg-primary/10 text-primary",
+  Planned: "bg-primary/10 text-primary-strong",
   Active: "bg-amber-400/10 text-amber-300",
   Completed: "bg-teal-400/10 text-teal-300",
 };

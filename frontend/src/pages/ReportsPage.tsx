@@ -291,7 +291,7 @@ export function ReportsPage() {
             className="rounded-xl border border-border bg-card p-5"
           >
             <div className="flex items-start gap-3">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary-strong">
                 <Download className="size-4" aria-hidden />
               </span>
               <div>

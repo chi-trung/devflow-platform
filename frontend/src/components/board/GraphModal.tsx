@@ -468,7 +468,7 @@ export function GraphModal({
                 aria-pressed={direction === value}
                 className={`rounded px-2 py-1 font-mono text-[11px] uppercase tracking-wide transition-colors duration-150 ${
                   direction === value
-                    ? "bg-primary/15 text-primary"
+                    ? "bg-primary/15 text-primary-strong"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -713,8 +713,8 @@ export function GraphModal({
                       aria-pressed={isLinkSource}
                       aria-label={t("graph.linkFromAria", { title: task.title })}
                       title={t("graph.linkFromAria", { title: task.title })}
-                      className={`flex w-6 shrink-0 items-center justify-center rounded-r-lg border-l border-border/60 text-muted-foreground transition-all duration-150 hover:bg-primary/10 hover:text-primary focus-visible:opacity-100 focus-visible:outline-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 disabled:opacity-30 ${
-                        isLinkSource ? "bg-primary/15 text-primary opacity-100" : ""
+                      className={`flex w-6 shrink-0 items-center justify-center rounded-r-lg border-l border-border/60 text-muted-foreground transition-all duration-150 hover:bg-primary/10 hover:text-primary-strong focus-visible:opacity-100 focus-visible:outline-none [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 disabled:opacity-30 ${
+                        isLinkSource ? "bg-primary/15 text-primary-strong opacity-100" : ""
                       }`}
                     >
                       <Link2 className="size-3" aria-hidden />

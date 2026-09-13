@@ -281,7 +281,7 @@ export function WebhooksPage() {
                       onClick={() => toggleEvent(event)}
                       className={`rounded-lg border px-2.5 py-1.5 text-xs transition-colors duration-150 ${
                         selectedEvents.includes(event)
-                          ? "border-primary bg-primary/10 text-primary"
+                          ? "border-primary bg-primary/10 text-primary-strong"
                           : "border-border text-muted-foreground hover:border-border-strong"
                       }`}
                     >

@@ -149,7 +149,7 @@ export function PATSection() {
     <section aria-label={t("pat.title")} className="rounded-xl border border-border bg-surface p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary-strong">
             <Key className="size-4" aria-hidden />
           </span>
           <h2 className="font-display font-semibold">{t("pat.title")}</h2>
@@ -265,7 +265,7 @@ export function PATSection() {
                       onClick={() => toggleScope(scope.value)}
                       className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-150 ${
                         newScopes.has(scope.value)
-                          ? "border-primary bg-primary/10 text-primary"
+                          ? "border-primary bg-primary/10 text-primary-strong"
                           : "border-border text-muted-foreground hover:border-border-strong"
                       }`}
                     >

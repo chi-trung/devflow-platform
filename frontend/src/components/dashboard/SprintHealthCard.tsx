@@ -87,7 +87,7 @@ export function SprintHealthCard({ workspaceId, projectId, className = "" }: Spr
           <Flame className="size-4 text-primary" aria-hidden />
           {t("dashboard.sprintHealth")}
         </h3>
-        <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{sprint.name}</span>
+        <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary-strong">{sprint.name}</span>
       </div>
 
       <div className="mb-3 flex items-end gap-3">

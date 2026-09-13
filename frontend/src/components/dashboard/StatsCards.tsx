@@ -25,7 +25,7 @@ export function StatsCards({ data, className = "" }: StatsCardsProps) {
       value: data.totalTasks,
       sub: t("dashboard.completedPct", { pct: share(done, data.totalTasks) }),
       icon: Layers,
-      chip: "bg-primary/10 text-primary",
+      chip: "bg-primary/10 text-primary-strong",
       valueClass: "text-foreground",
     },
     {

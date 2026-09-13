@@ -81,7 +81,7 @@ function DocCardGrid({ cards }: { cards: DocCard[] }) {
             key={card.title.en}
             className="flex flex-col rounded-xl border border-border bg-card/60 p-6 transition-colors duration-200 hover:border-border-strong"
           >
-            <span className="mb-4 inline-flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <span className="mb-4 inline-flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary-strong">
               <Icon className="size-5" aria-hidden />
             </span>
             <h3 className="mb-2 font-semibold">{card.title[lang]}</h3>

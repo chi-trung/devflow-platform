@@ -14,8 +14,8 @@ const statusBadge: Record<string, string> = {
   Idea: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
   Planning: "bg-sky-500/10 text-sky-600 dark:text-sky-300",
   Approval: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
-  Ready: "bg-primary/10 text-primary",
-  InProgress: "bg-primary/10 text-primary",
+  Ready: "bg-primary/10 text-primary-strong",
+  InProgress: "bg-primary/10 text-primary-strong",
   Review: "bg-violet-500/10 text-violet-600 dark:text-violet-300",
   Done: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
 };
@@ -54,7 +54,7 @@ export function MyTasksPage() {
     <AppShell>
       <div className="mx-auto max-w-4xl px-6 py-8">
         <div className="mb-6 flex items-center gap-2.5">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary-strong">
             <ListTodo className="size-5" aria-hidden />
           </div>
           <div>

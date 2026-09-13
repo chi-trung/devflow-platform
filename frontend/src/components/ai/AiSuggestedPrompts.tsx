@@ -67,7 +67,7 @@ export function AiSuggestedPrompts({
             key={prompt.key ?? `fb-${i}`}
             type="button"
             onClick={() => onPick(t(prompt.key, prompt.args ?? {}))}
-            className="cursor-pointer rounded-full border border-border bg-elevated/60 px-2.5 py-1 text-xs text-foreground transition-colors duration-150 hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+            className="cursor-pointer rounded-full border border-border bg-elevated/60 px-2.5 py-1 text-xs text-foreground transition-colors duration-150 hover:border-primary/40 hover:bg-primary/10 hover:text-primary-strong"
           >
             {t(prompt.key, prompt.args ?? {})}
           </button>

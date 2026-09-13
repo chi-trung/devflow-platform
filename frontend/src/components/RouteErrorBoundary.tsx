@@ -47,7 +47,7 @@ function ChunkFallback({ error }: { error: Error }) {
   const { t } = useTranslation();
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center p-6 text-center">
-      <span className="mb-5 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+      <span className="mb-5 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary-strong">
         <RefreshCw className="size-7" aria-hidden />
       </span>
       <h1 className="font-display text-2xl font-semibold tracking-tight">

@@ -1117,7 +1117,7 @@ export function BoardPage() {
           >
             <span
               aria-live="polite"
-              className="rounded-md bg-primary/15 px-2 py-1 font-mono text-xs font-semibold text-primary"
+              className="rounded-md bg-primary/15 px-2 py-1 font-mono text-xs font-semibold text-primary-strong"
             >
               {t("board.selectedCount", { count: selectedIds.size })}
             </span>

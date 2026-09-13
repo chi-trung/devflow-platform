@@ -166,7 +166,7 @@ export function SprintBoard({
                 <span
                   className={`ml-auto shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[11px] ${
                     sprint.status === "Active"
-                      ? "bg-primary/10 text-primary"
+                      ? "bg-primary/10 text-primary-strong"
                       : sprint.status === "Completed"
                         ? "bg-elevated text-muted-foreground"
                         : "bg-violet-400/10 text-violet-300"

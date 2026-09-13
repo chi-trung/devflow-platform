@@ -73,7 +73,7 @@ export function DashboardCycleLeadChart({ workspaceId, projectId, className = ""
       label: `${t("dashboard.cycleTime")} ${t("dashboard.p50")}`,
       value: formatMetric(data.cycleTimeP50),
       unit: t("dashboard.days"),
-      chip: "bg-primary/10 text-primary",
+      chip: "bg-primary/10 text-primary-strong",
       valueClass: "text-foreground",
     },
     {
@@ -81,7 +81,7 @@ export function DashboardCycleLeadChart({ workspaceId, projectId, className = ""
       label: `${t("dashboard.cycleTime")} ${t("dashboard.p90")}`,
       value: formatMetric(data.cycleTimeP90),
       unit: t("dashboard.days"),
-      chip: "bg-primary/10 text-primary",
+      chip: "bg-primary/10 text-primary-strong",
       valueClass: "text-foreground",
     },
     {

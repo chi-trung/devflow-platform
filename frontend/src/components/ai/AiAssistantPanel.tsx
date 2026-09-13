@@ -214,7 +214,7 @@ export function AiAssistantPanel({
     >
       <header className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
+          <span className="flex size-7 items-center justify-center rounded-lg bg-primary/15 text-primary-strong">
             <Sparkles className="size-4" aria-hidden />
           </span>
           <div>

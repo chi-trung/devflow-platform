@@ -57,7 +57,7 @@ export function GitHubSettingsSection({
       className="rounded-xl border border-border bg-surface p-5"
     >
       <div className="mb-4 flex items-center gap-2.5">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary-strong">
           <GitBranch className="size-4" aria-hidden />
         </span>
         <h2 className="font-display font-semibold">{t("github.settingsTitle")}</h2>

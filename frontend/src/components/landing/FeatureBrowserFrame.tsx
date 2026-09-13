@@ -95,7 +95,7 @@ function AiMock() {
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10.5px] font-medium text-primary">
+        <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10.5px] font-medium text-primary-strong">
           {t("landing.mock.ai.gateApproved")}
         </span>
         <span className="inline-flex items-center gap-1 rounded-full border border-border bg-elevated px-2 py-0.5 text-[10.5px] font-medium text-muted-foreground">
@@ -208,7 +208,7 @@ function ReleasesMock() {
   return (
     <div className="space-y-2.5">
       <div className="flex flex-wrap items-center justify-between gap-1.5">
-        <span className="shrink-0 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">
+        <span className="shrink-0 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary-strong">
           {t("landing.mock.releases.version")}
         </span>
         <span className="min-w-0 truncate font-mono text-[10px] text-muted-foreground">{t("landing.mock.releases.target")}</span>

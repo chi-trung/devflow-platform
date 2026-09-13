@@ -93,7 +93,7 @@ export function EstimationModal({
               onClick={() => setSelected(points)}
               className={`rounded-lg border py-2 text-sm font-semibold transition-colors duration-150 ${
                 selected === points
-                  ? "border-primary bg-primary/10 text-primary"
+                  ? "border-primary bg-primary/10 text-primary-strong"
                   : "border-border hover:border-border-strong"
               }`}
             >

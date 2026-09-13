@@ -312,7 +312,7 @@ export function SettingsPage() {
               className="rounded-xl border border-border bg-surface p-5"
             >
               <div className="mb-4 flex items-center gap-2.5">
-                <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary-strong">
                   <UserRound className="size-4" aria-hidden />
                 </span>
                 <h2 className="font-display font-semibold">{t("settings.account")}</h2>
@@ -345,7 +345,7 @@ export function SettingsPage() {
               className="rounded-xl border border-border bg-surface p-5"
             >
               <div className="mb-4 flex items-center gap-2.5">
-                <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary-strong">
                   <Palette className="size-4" aria-hidden />
                 </span>
                 <h2 className="font-display font-semibold">{t("settings.appearance")}</h2>
@@ -376,7 +376,7 @@ export function SettingsPage() {
             className="rounded-xl border border-border bg-surface p-5"
           >
             <div className="mb-4 flex items-center gap-2.5">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary-strong">
                 <BellRing className="size-4" aria-hidden />
               </span>
               <h2 className="font-display font-semibold">{t("settings.notifications")}</h2>
@@ -505,7 +505,7 @@ function LanguageSection() {
       className="rounded-xl border border-border bg-surface p-5"
     >
       <div className="mb-4 flex items-center gap-2.5">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary-strong">
           <Globe className="size-4" aria-hidden />
         </span>
         <h2 className="font-display font-semibold">{t("settings.language")}</h2>
@@ -530,7 +530,7 @@ function LanguageSection() {
               }}
               className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors duration-150 ${
                 i18n.language === lang.code
-                  ? "border-primary bg-primary/10 text-primary"
+                  ? "border-primary bg-primary/10 text-primary-strong"
                   : "border-border text-muted-foreground hover:border-border-strong hover:text-foreground"
               }`}
             >

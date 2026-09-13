@@ -562,7 +562,7 @@ export function CommandPalette({
                   onClick={() => void handleSaveSearch()}
                   disabled={!savedName.trim() || savingSearch}
                   aria-label={t("commandPalette.saveThisSearch")}
-                  className="shrink-0 rounded-md border border-primary bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-medium text-primary disabled:opacity-40"
+                  className="shrink-0 rounded-md border border-primary bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-medium text-primary-strong disabled:opacity-40"
                 >
                   {savingSearch ? t("common.loading") : t("filter.save")}
                 </button>

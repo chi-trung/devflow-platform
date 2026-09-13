@@ -265,7 +265,7 @@ export function TaskCard({
               event.stopPropagation();
               setEstimationOpen(true);
             }}
-            className="flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary transition-colors duration-150 hover:bg-primary/20"
+            className="flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary-strong transition-colors duration-150 hover:bg-primary/20"
             title={t("estimation.title")}
             aria-label={t("taskCard.estimationAria", { points: task.storyPoints })}
           >

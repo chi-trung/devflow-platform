@@ -11,7 +11,7 @@ export function NotFoundPage() {
   usePageMeta("notFound.title", "notFound.description", true);
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center p-6 text-center">
-      <span className="mb-5 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+      <span className="mb-5 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary-strong">
         <Compass className="size-7" aria-hidden />
       </span>
       <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">

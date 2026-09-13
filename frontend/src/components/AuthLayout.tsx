@@ -49,7 +49,7 @@ export function AuthLayout({
             <ul className="mt-6 space-y-3">
               {HIGHLIGHT_KEYS.map((key) => (
                 <li key={key} className="flex items-center gap-3 text-sm">
-                  <span className="flex size-5 items-center justify-center rounded-md bg-primary/15 text-primary">
+                  <span className="flex size-5 items-center justify-center rounded-md bg-primary/15 text-primary-strong">
                     <Check className="size-3" aria-hidden />
                   </span>
                   {t(key)}

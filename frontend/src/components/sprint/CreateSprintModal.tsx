@@ -80,7 +80,7 @@ export function CreateSprintModal({
         className="relative w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-[0_24px_80px_rgba(0,0,0,0.7)] rise"
       >
         <div className="mb-4 flex items-center gap-2.5">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary-strong">
             <CalendarRange className="size-4" aria-hidden />
           </span>
           <h2 id="create-sprint-title" className="font-display font-semibold">

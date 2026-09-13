@@ -364,7 +364,7 @@ export function CustomFieldsPage() {
                         <div className="flex items-center gap-2">
                           <p className="truncate text-sm font-medium">{field.name}</p>
                           {field.isRequired && (
-                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary-strong">
                               {t("customField.requiredBadge")}
                             </span>
                           )}

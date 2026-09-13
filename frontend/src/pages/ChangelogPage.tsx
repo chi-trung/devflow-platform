@@ -69,7 +69,7 @@ export function ChangelogPage() {
                     aria-hidden
                   />
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="rounded-md bg-primary/10 px-2.5 py-1 font-mono text-sm font-semibold text-primary">
+                    <span className="rounded-md bg-primary/10 px-2.5 py-1 font-mono text-sm font-semibold text-primary-strong">
                       {entry.version}
                     </span>
                     <time
@@ -124,7 +124,7 @@ export function ChangelogPage() {
                 >
                   <div className="mb-3 flex items-center gap-2">
                     {item.status === "inProgress" ? (
-                      <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-primary">
+                      <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-primary-strong">
                         <Rocket className="size-3" aria-hidden />
                         {t("changelog.roadmapStatus.inProgress")}
                       </span>

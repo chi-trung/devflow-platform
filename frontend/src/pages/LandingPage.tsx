@@ -159,7 +159,7 @@ export function LandingPage() {
                   key={key}
                   className="relative flex flex-col items-center rounded-xl border border-border bg-card/60 p-8 text-center transition-colors duration-200 hover:border-border-strong"
                 >
-                  <span className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
+                  <span className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary-strong">
                     {icon}
                   </span>
                   <h3 className="mb-1 font-mono text-xs font-semibold uppercase tracking-wider text-primary">

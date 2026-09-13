@@ -4,7 +4,7 @@ interface BadgeProps {
 }
 
 const toneClasses = {
-  teal: "bg-primary/10 text-primary",
+  teal: "bg-primary/10 text-primary-strong",
   red: "bg-destructive/10 text-destructive",
   amber: "bg-amber-400/10 text-amber-300",
   violet: "bg-violet-400/10 text-violet-300",

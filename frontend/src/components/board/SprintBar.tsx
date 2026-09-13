@@ -209,7 +209,7 @@ export function SprintBar({
                 {fmt(active.startDateUtc)} – {fmt(active.endDateUtc)}
               </span>
               {velocity && (
-                <span className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">
+                <span className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary-strong">
                   <Gauge className="size-3" aria-hidden />
                   {t("reports.tasksDone", { done: velocity.completedTasks, total: velocity.totalTasks })}
                 </span>

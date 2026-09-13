@@ -419,7 +419,7 @@ export function EpicsPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                        <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary-strong">
                           <Zap className="size-3.5" aria-hidden />
                         </span>
                         <h3 className="truncate text-sm font-semibold">
@@ -462,7 +462,7 @@ export function EpicsPage() {
                         <span className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold ${
                           epic.completionPercent >= 100
                             ? "bg-teal-400/10 text-teal-600 dark:text-teal-300"
-                            : "bg-primary/10 text-primary"
+                            : "bg-primary/10 text-primary-strong"
                         }`}>
                           {t("epic.completionBadge", { pct: Math.round(epic.completionPercent) })}
                         </span>
@@ -498,7 +498,7 @@ export function EpicsPage() {
                         onClick={() => setDependencyEpicId((current) => current === epic.id ? null : epic.id)}
                         className={`rounded p-1.5 transition-colors duration-150 ${
                           dependencyEpicId === epic.id
-                            ? "bg-primary/10 text-primary"
+                            ? "bg-primary/10 text-primary-strong"
                             : "text-muted-foreground hover:text-foreground"
                         }`}
                         title={t("epic.blockedBy")}
