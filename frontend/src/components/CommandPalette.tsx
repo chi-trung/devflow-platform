@@ -18,6 +18,7 @@ import {
   searchWorkspace,
 } from "../lib/api";
 import { useApi } from "../hooks/useApi";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import { useAuth } from "../auth/AuthContext";
 import { useToast } from "./ui/ToastProvider";
 import type {
@@ -359,6 +360,10 @@ export function CommandPalette({
     dueFilter,
   ]);
 
+  // Modal palette: Tab stays inside it while open, and closing returns
+  // focus to whatever was focused before it launched.
+  const { ref: trapRef, onKeyDown: trapTab } = useFocusTrap<HTMLDivElement>(open);
+
   useEffect(() => {
     if (open) {
       setQuery("");
@@ -443,9 +448,17 @@ export function CommandPalette({
   let lastGroup = "";
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-label={t("commandPalette.paletteAria")}>
+    <div
+      ref={trapRef}
+      className="fixed inset-0 z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t("commandPalette.paletteAria")}
+      onKeyDown={trapTab}
+    >
       <button
         type="button"
+        tabIndex={-1}
         aria-label={t("commandPalette.closePalette")}
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-black/50"
