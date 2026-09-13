@@ -1590,6 +1590,7 @@
   "openMenuAria": "Open menu",
   "closeMenuAria": "Close menu",
   "primaryNavAria": "Primary navigation",
+  "sidebarNavAria": "Sidebar navigation",
   "menuDialogAria": "Menu",
   "skipToContent": "Skip to content",
   "emojiPicker": {

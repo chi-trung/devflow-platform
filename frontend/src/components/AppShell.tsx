@@ -436,7 +436,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        <nav className={`flex-1 space-y-6 overflow-y-auto px-3 pb-4 ${railCollapsed ? "lg:space-y-3 lg:px-2" : ""}`}>
+        <nav aria-label={t("ui.sidebarNavAria")} className={`flex-1 space-y-6 overflow-y-auto px-3 pb-4 ${railCollapsed ? "lg:space-y-3 lg:px-2" : ""}`}>
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
