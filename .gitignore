@@ -91,3 +91,6 @@ docs/sprint*/
 .claude/skills/
 .config/
 skills-lock.json
+
+# Scratch scan scripts (local only)
+frontend/tmp-scan*.mjs
