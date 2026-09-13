@@ -231,7 +231,11 @@ export function LabelsPage() {
                 <span className="flex-1 truncate text-sm font-medium">
                   {label.name}
                 </span>
-                <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+                {/* Touch devices have no hover, so the delete control would
+                    stay invisible there. Show it on coarse pointers and keep
+                    the hover reveal on fine pointers. Focus keeps it visible
+                    in both cases for keyboard users. */}
+                <div className="flex shrink-0 items-center gap-1 transition-opacity duration-150 group-focus-within:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
                   <button
                     type="button"
                     onClick={() => setPendingDelete(label)}
