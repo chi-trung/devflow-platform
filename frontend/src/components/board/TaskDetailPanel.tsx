@@ -594,7 +594,10 @@ export function TaskDetailPanel({
   return (
     <div
       ref={dialogRef}
-      className="fixed inset-0 z-40"
+      // z-50 like every other dialog in the app: the mobile bottom nav is
+      // z-40 and paints later, so a z-40 here left the comment form's Send
+      // button fully obscured at 375x720 (WCAG 2.4.10).
+      className="fixed inset-0 z-50"
       role="dialog"
       aria-modal="true"
       aria-label={t("board.detailsAria")}
