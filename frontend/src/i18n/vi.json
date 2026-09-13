@@ -1603,6 +1603,7 @@
  "taskCard": {
   "aria": "Task: {{title}}",
   "selectAria": "Chọn task {{title}}",
+  "estimationAria": "Ước lượng: {{points}} story point",
   "deleteAria": "Xóa task {{title}}",
   "overdue": "Quá hạn",
   "assigneeAria": "Được gán cho {{name}}"

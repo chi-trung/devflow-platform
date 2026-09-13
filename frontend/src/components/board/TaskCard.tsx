@@ -265,6 +265,7 @@ export function TaskCard({
             }}
             className="flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary transition-colors duration-150 hover:bg-primary/20"
             title={t("estimation.title")}
+            aria-label={t("taskCard.estimationAria", { points: task.storyPoints })}
           >
             <Hash className="size-3" aria-hidden />
             {task.storyPoints}
@@ -279,6 +280,7 @@ export function TaskCard({
               month: "short",
               day: "numeric",
             })}
+            {overdue && <span className="sr-only">, {t("taskCard.overdue")}</span>}
           </time>
         )}
         {isBlocked && (
@@ -310,6 +312,13 @@ export function TaskCard({
           >
             <prBadge.Icon className="size-3" aria-hidden />
             {prCount}
+            <span className="sr-only">
+              {t("github.prBadgeTitle", {
+                open: pr!.open,
+                merged: pr!.merged,
+                closed: pr!.closed,
+              })}
+            </span>
           </span>
         )}
         {reviewAge && (
@@ -318,7 +327,8 @@ export function TaskCard({
             className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold ${reviewAgeStyle}`}
           >
             <Clock className="size-3" aria-hidden />
-            {reviewAge}
+            <span aria-hidden>{reviewAge}</span>
+            <span className="sr-only">{t("task.inReviewFor", { age: reviewAge })}</span>
           </span>
         )}
         {(customFields ?? [])

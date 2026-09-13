@@ -1603,6 +1603,7 @@
  "taskCard": {
   "aria": "Task: {{title}}",
   "selectAria": "Select task {{title}}",
+  "estimationAria": "Estimate: {{points}} story points",
   "deleteAria": "Delete task {{title}}",
   "overdue": "Overdue",
   "assigneeAria": "Assigned to {{name}}"
