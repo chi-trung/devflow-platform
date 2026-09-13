@@ -580,7 +580,16 @@ export function CommandPalette({
           </div>
         )}
 
-        <ul ref={listRef} id="command-palette-results" role="listbox" className="max-h-80 overflow-y-auto p-2">
+        {/* role=listbox is an ARIA input-field role: it needs its own
+            accessible name, not just the aria-controls link from the search
+            box (axe aria-input-field-name, WCAG 4.1.2). */}
+        <ul
+          ref={listRef}
+          id="command-palette-results"
+          role="listbox"
+          aria-label={t("commandPalette.resultsListAria")}
+          className="max-h-80 overflow-y-auto p-2"
+        >
           {results.length === 0 && !searching && (
             <li role="presentation" className="px-3 py-8 text-center text-sm text-muted-foreground">
               {t("commandPalette.noResults")}

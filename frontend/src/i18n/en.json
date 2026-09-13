@@ -1333,6 +1333,7 @@
   "tasksGroup": "Tasks",
   "paletteAria": "Command palette",
   "searchInputAria": "Command or task search",
+  "resultsListAria": "Search results",
   "closePalette": "Close palette",
   "navigateHint": "↑↓ navigate",
   "openHint": "↵ open",
