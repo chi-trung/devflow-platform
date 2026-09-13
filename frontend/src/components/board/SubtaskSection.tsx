@@ -161,7 +161,7 @@ export function SubtaskSection({
         </div>
       )}
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
 
       <form onSubmit={addSubtask} className="flex items-center gap-2">
         <input

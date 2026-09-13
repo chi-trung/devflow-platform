@@ -147,7 +147,7 @@ export function DependencySection({
         </p>
       )}
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
 
       {pickerOpen && (
         <div className="rounded-lg border border-border bg-card p-2">

@@ -110,7 +110,7 @@ export function GitHubSignInButton() {
         )}
         {loading ? t("auth.redirecting") : t("auth.continueWithGitHub")}
       </button>
-      {error && <p className="text-center text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-center text-sm text-destructive">{error}</p>}
     </div>
   );
 }

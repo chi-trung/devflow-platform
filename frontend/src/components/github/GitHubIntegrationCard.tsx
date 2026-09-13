@@ -111,7 +111,7 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
         )}
       </div>
 
-      {error && <p className="mb-2 text-xs text-destructive">{error}</p>}
+      {error && <p role="alert" className="mb-2 text-xs text-destructive">{error}</p>}
 
       {!integration ? (
         <form onSubmit={handleLink} className="flex items-end gap-1.5">

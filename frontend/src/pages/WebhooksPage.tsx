@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { ArrowLeft, Plus, Trash2, Play, Globe, RefreshCw } from "lucide-react";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Link, useParams } from "react-router-dom";
@@ -232,9 +233,7 @@ export function WebhooksPage() {
 
         {error && (
           <div className="mb-4">
-            <div className="rounded-xl border border-border bg-surface p-4 text-sm text-destructive">
-              {error}
-            </div>
+            <ErrorAlert message={error} />
           </div>
         )}
 
@@ -433,9 +432,7 @@ export function WebhooksPage() {
 
             {dlqError && (
               <div className="mb-4">
-                <div className="rounded-xl border border-border bg-surface p-4 text-sm text-destructive">
-                  {dlqError}
-                </div>
+                <ErrorAlert message={dlqError} />
               </div>
             )}
 

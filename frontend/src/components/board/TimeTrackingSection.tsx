@@ -217,7 +217,7 @@ export function TimeTrackingSection({
         )}
       </div>
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
 
       <div className="flex items-center gap-2">
         <label className="flex flex-1 items-center gap-1.5 text-xs text-muted-foreground">

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { ArrowLeft, Activity, ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
@@ -265,9 +266,7 @@ export function ActivitiesPage() {
 
         {error && (
           <div className="mb-4">
-            <div className="rounded-xl border border-border bg-surface p-4 text-sm text-destructive">
-              {error}
-            </div>
+            <ErrorAlert message={error} />
           </div>
         )}
 

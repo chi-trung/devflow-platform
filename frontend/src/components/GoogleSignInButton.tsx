@@ -119,7 +119,7 @@ export function GoogleSignInButton() {
         )}
         {loading ? t("auth.redirecting") : t("auth.continueWithGoogle")}
       </button>
-      {error && <p className="text-center text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-center text-sm text-destructive">{error}</p>}
     </div>
   );
 }

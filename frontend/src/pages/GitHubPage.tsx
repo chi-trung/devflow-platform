@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { ArrowLeft, Link2, Unlink, Trash2, ExternalLink, Github } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
@@ -157,9 +158,7 @@ export function GitHubPage() {
 
         {error && (
           <div className="mb-4">
-            <div className="rounded-xl border border-border bg-surface p-4 text-sm text-destructive">
-              {error}
-            </div>
+            <ErrorAlert message={error} />
           </div>
         )}
 
