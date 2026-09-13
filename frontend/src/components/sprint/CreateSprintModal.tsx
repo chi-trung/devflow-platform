@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { CalendarRange, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { createSprint } from "../../lib/api";
@@ -27,6 +27,10 @@ export function CreateSprintModal({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  // The form-level ErrorAlert is the only text explaining why the name input
+  // goes red, so the input points at it and screen readers read the reason
+  // with the field instead of just "invalid".
+  const errorId = useId();
 
   useEffect(() => {
     nameRef.current?.focus();
@@ -101,6 +105,7 @@ export function CreateSprintModal({
               onChange={(event) => setName(event.target.value)}
               placeholder={t("sprint.sprintNamePlaceholder")}
               invalid={error !== null && !name.trim()}
+              aria-describedby={error && !name.trim() ? errorId : undefined}
               disabled={busy}
             />
           </label>
@@ -118,7 +123,7 @@ export function CreateSprintModal({
             {t("sprint.datesHint")}
           </p>
 
-          {error && <ErrorAlert message={error} />}
+          {error && <ErrorAlert message={error} id={errorId} />}
 
           <div className="mt-1 flex justify-end gap-2">
             <Button variant="ghost" onClick={onClose} disabled={busy}>

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyRound, UserRound } from "lucide-react";
 import { ApiError, changePassword, updateProfile } from "../lib/api";
@@ -29,6 +29,10 @@ export function ProfilePage() {
   const [username, setUsername] = useState(currentUser?.username ?? "");
   const [profileError, setProfileError] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
+  // The form-level ErrorAlert explains why the username input goes red, so
+  // the field points at it and screen readers get the reason, not just
+  // "invalid". Separate ids keep the profile and password alerts distinct.
+  const profileErrorId = useId();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -133,6 +137,7 @@ export function ProfilePage() {
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
                 invalid={profileError !== null && !username.trim()}
+                aria-describedby={profileError && !username.trim() ? profileErrorId : undefined}
                 disabled={savingProfile}
               />
             </label>

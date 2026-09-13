@@ -1,8 +1,9 @@
 import { AlertCircle } from "lucide-react";
 
-export function ErrorAlert({ message }: { message: string }) {
+export function ErrorAlert({ message, id }: { message: string; id?: string }) {
   return (
     <div
+      id={id}
       role="alert"
       className="flex items-start gap-2 rounded-lg border border-destructive/25 bg-destructive/5 px-3 py-2 text-sm text-destructive"
     >
