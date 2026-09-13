@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Sparkles } from "lucide-react";
 import { AiAssistantPanel } from "./AiAssistantPanel";
@@ -29,11 +29,24 @@ export function AiFloatingButton({
 }: AiFloatingButtonProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const wasOpen = useRef(false);
+
+  // The launcher unmounts while the panel is open (see {!open && ...} below),
+  // so on close React has no trigger node to restore focus to and the browser
+  // drops it to <body>: keyboard and screen reader users lose their place.
+  // Refocus the button after it remounts, but only on the open-to-closed
+  // transition so an initial page load does not steal focus.
+  useEffect(() => {
+    if (wasOpen.current && !open) buttonRef.current?.focus();
+    wasOpen.current = open;
+  }, [open]);
 
   return (
     <>
       {!open && (
         <button
+          ref={buttonRef}
           type="button"
           aria-label={t("ai.assistantOpen")}
           aria-expanded={open}
