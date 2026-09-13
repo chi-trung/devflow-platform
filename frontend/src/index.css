@@ -101,13 +101,17 @@ html.light {
   --color-foreground: #16212c;
   --color-muted-foreground: #5a6a7c;
 
-  --color-primary: #0d9488;
-  --color-primary-strong: #0f766e;
+  /* AA floor for text: the old #0d9488 only reached 3.49 on the page
+     background and 3.74 on cards. #0f766e clears 5.1, white text on
+     primary buttons clears 5.4, and strong drops another step so hover
+     darkens like the dark theme does. */
+  --color-primary: #0f766e;
+  --color-primary-strong: #115e59;
   --color-on-primary: #ffffff;
 
   --color-destructive: #dc2626;
 
-  --color-ring: #0d9488;
+  --color-ring: #0f766e;
 }
 
 html {
