@@ -586,7 +586,7 @@ export function WorkspacePage() {
                               />
                             )}
                             {canManageProjects && (
-                              <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
+                              <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-md bg-card/90 p-0.5 backdrop-blur-sm">
                                 <button
                                   type="button"
                                   onClick={(e) => {
