@@ -313,6 +313,10 @@ body {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    /* Duration alone does not stop a loop: the infinite shimmer, the floating
+       hero art and the pulsing glow would replay every 0.01ms forever. Pin
+       every animation to a single iteration so it settles and stays still. */
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
   /* The universal selector above can't reach the html element's own
