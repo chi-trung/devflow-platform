@@ -133,7 +133,12 @@ export function NotificationsPanel({
     const rect = triggerRef.current.getBoundingClientRect();
     const dropdownWidth = 320;
     const alignRight = rect.right + dropdownWidth > window.innerWidth;
-    const left = alignRight ? rect.right - dropdownWidth : rect.left;
+    let left = alignRight ? rect.right - dropdownWidth : rect.left;
+    // Keep the fixed-width panel inside the viewport: a trigger near the
+    // left edge (mobile header) made the right-aligned box hang off-screen
+    // at negative left, putting its filter tabs out of view entirely
+    // (WCAG 2.4.10 — focused controls with zero visible pixels).
+    left = Math.max(8, Math.min(left, window.innerWidth - dropdownWidth - 8));
     if (direction === "up") {
       return { position: "fixed" as const, left, bottom: window.innerHeight - rect.top + 8, zIndex: 80 };
     }
