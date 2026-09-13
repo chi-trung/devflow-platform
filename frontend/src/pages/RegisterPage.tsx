@@ -117,6 +117,7 @@ export function RegisterPage() {
           }
         }
         setFieldErrors(mapped);
+        focusFirstInvalid(mapped);
       } else {
         setFormError(
           err instanceof Error
