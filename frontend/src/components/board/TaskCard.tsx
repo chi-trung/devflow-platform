@@ -183,7 +183,7 @@ export function TaskCard({
       onDragEnd={(event) => {
         event.currentTarget.classList.remove("opacity-40");
       }}
-      className={`group cursor-grab rounded-lg border bg-card p-3 outline-none transition-all duration-200 hover:bg-elevated focus-visible:ring-2 focus-visible:ring-primary/60 active:cursor-grabbing active:scale-[0.99] ${
+      className={`group cursor-grab rounded-lg border bg-card p-3 outline-none transition-all duration-200 hover:bg-elevated focus-visible:ring-2 focus-visible:ring-primary/80 active:cursor-grabbing active:scale-[0.99] ${
         selected
           ? "border-primary ring-1 ring-primary/40"
           : "border-border hover:border-border-strong"
@@ -224,7 +224,7 @@ export function TaskCard({
             event.stopPropagation();
             onSelect(task.id);
           }}
-          className="min-w-0 flex-1 cursor-pointer truncate rounded text-left text-sm font-medium leading-snug focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          className="min-w-0 flex-1 cursor-pointer truncate rounded text-left text-sm font-medium leading-snug focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/80"
         >
           {task.title}
         </button>

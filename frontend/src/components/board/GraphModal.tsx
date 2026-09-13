@@ -685,7 +685,7 @@ export function GraphModal({
                             })
                           : t("graph.openTaskAria", { title: task.title })
                       }
-                      className="flex min-w-0 flex-1 cursor-pointer flex-col justify-center gap-0.5 px-2.5 py-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                      className="flex min-w-0 flex-1 cursor-pointer flex-col justify-center gap-0.5 px-2.5 py-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/80"
                     >
                       <span className="line-clamp-2 text-xs font-medium text-foreground">
                         {task.title}
