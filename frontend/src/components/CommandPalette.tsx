@@ -476,6 +476,9 @@ export function CommandPalette({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("commandPalette.placeholder")}
             aria-label={t("commandPalette.searchInputAria")}
+            aria-autocomplete="list"
+            aria-controls="command-palette-results"
+            aria-activedescendant={selected < results.length ? `cp-opt-${selected}` : undefined}
             className="w-full bg-transparent py-3.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none"
           />
           <kbd className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
@@ -577,14 +580,14 @@ export function CommandPalette({
           </div>
         )}
 
-        <ul ref={listRef} className="max-h-80 overflow-y-auto p-2">
+        <ul ref={listRef} id="command-palette-results" role="listbox" className="max-h-80 overflow-y-auto p-2">
           {results.length === 0 && !searching && (
-            <li className="px-3 py-8 text-center text-sm text-muted-foreground">
+            <li role="presentation" className="px-3 py-8 text-center text-sm text-muted-foreground">
               {t("commandPalette.noResults")}
             </li>
           )}
           {searching && (
-            <li className="flex items-center gap-2 px-3 py-2 font-mono text-[11px] text-muted-foreground">
+            <li role="presentation" className="flex items-center gap-2 px-3 py-2 font-mono text-[11px] text-muted-foreground">
               <Loader2 className="size-3 animate-spin" aria-hidden />
               {t("common.loading")}
             </li>
@@ -593,7 +596,7 @@ export function CommandPalette({
             const showGroup = command.group !== lastGroup;
             lastGroup = command.group;
             return (
-              <li key={command.id}>
+              <li key={command.id} role="presentation">
                 {showGroup && (
                   <p className="px-2 pb-1 pt-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                     {command.group}
@@ -601,6 +604,9 @@ export function CommandPalette({
                 )}
                 <button
                   type="button"
+                  id={`cp-opt-${index}`}
+                  role="option"
+                  aria-selected={index === selected}
                   onMouseEnter={() => setSelected(index)}
                   onClick={() => execute(command)}
                   className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm transition-colors duration-100 ${
