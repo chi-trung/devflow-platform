@@ -1896,5 +1896,10 @@
   "expires": "Hết hạn",
   "created": "Tạo lúc",
   "lastUsed": "Sử dụng lần cuối"
+ },
+ "api": {
+  "statusWarm": "API trực tuyến",
+  "statusWaking": "API đang khởi động lại",
+  "statusOffline": "Bạn đang ngoại tuyến"
  }
 }

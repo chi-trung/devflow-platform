@@ -1896,5 +1896,10 @@
   "expires": "Expires",
   "created": "Created",
   "lastUsed": "Last used"
+ },
+ "api": {
+  "statusWarm": "API online",
+  "statusWaking": "API is waking up",
+  "statusOffline": "You are offline"
  }
 }

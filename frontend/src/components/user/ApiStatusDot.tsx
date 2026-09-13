@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   getApiWarmth,
   startApiKeepalive,
@@ -18,23 +19,30 @@ interface ApiStatusDotProps {
 }
 
 export function ApiStatusDot({ className = "" }: ApiStatusDotProps) {
+  const { t } = useTranslation();
   const [warmth, setWarmth] = useState<ApiWarmth>(getApiWarmth);
 
   useEffect(() => startApiKeepalive(), []);
   useEffect(() => subscribeApiWarmth(setWarmth), []);
 
+  const statusText =
+    warmth === "warm"
+      ? t("api.statusWarm")
+      : warmth === "waking"
+        ? t("api.statusWaking")
+        : t("api.statusOffline");
+
+  // role=status only announces what the element contains, and the dot itself
+  // carries color plus animation that screen readers never see. The sr-only
+  // text is the announcement; the title keeps the mouse tooltip.
   return (
     <span
       role="status"
       aria-live="polite"
-      title={
-        warmth === "warm"
-          ? undefined
-          : warmth === "waking"
-            ? "API is waking up…"
-            : "You are offline"
-      }
+      title={statusText}
       className={`size-2 shrink-0 rounded-full ${DOT_COLOR[warmth]} ${className}`}
-    />
+    >
+      <span className="sr-only">{statusText}</span>
+    </span>
   );
 }
