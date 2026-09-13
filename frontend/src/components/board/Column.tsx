@@ -206,33 +206,35 @@ export function Column({
       className="group/column flex min-h-72 w-full flex-1 flex-col gap-2 rounded-xl border border-border bg-surface p-3 transition-colors duration-200 data-[drag-over=true]:border-primary/50 data-[drag-over=true]:bg-primary/5"
     >
       <header className="flex items-center gap-2 px-1 pb-1">
-        {(selectionMode || selectedIds) && onSelectAllInColumn && (
+        {(selectionMode || selectedIds) && onSelectAllInColumn && (() => {
+          const allSelected =
+            tasks.length > 0 && tasks.every((t) => selectedIds?.has(t.id));
+          const someSelected = tasks.some((t) => selectedIds?.has(t.id));
+          return (
           <button
             type="button"
             role="checkbox"
-            aria-checked={
-              tasks.length === 0
-                ? false
-                : tasks.every((t) => selectedIds?.has(t.id))
-                ? true
-                : false
-            }
+            aria-checked={allSelected ? true : someSelected ? "mixed" : false}
             aria-label={t("board.selectAllColumn", { title })}
             onClick={() => {
-              const allSelected = tasks.every((t) => selectedIds?.has(t.id));
               onSelectAllInColumn(!allSelected);
             }}
             className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border transition-colors duration-150 ${
-              tasks.length > 0 && tasks.every((t) => selectedIds?.has(t.id))
+              allSelected
                 ? "border-primary bg-primary text-primary-foreground"
-                : "border-border-strong bg-surface hover:border-primary"
+                : someSelected
+                  ? "border-primary bg-surface"
+                  : "border-border-strong bg-surface hover:border-primary"
             }`}
           >
-            {tasks.length > 0 && tasks.every((t) => selectedIds?.has(t.id)) && (
+            {allSelected ? (
               <Check className="size-3" strokeWidth={3} aria-hidden />
-            )}
+            ) : someSelected ? (
+              <span className="h-0.5 w-2 rounded-full bg-primary" aria-hidden />
+            ) : null}
           </button>
-        )}
+          );
+        })()}
         <Icon className={`size-4 ${meta.accent}`} aria-hidden />
         <h2 className="font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {title}

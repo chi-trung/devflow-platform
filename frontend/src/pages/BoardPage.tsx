@@ -1110,9 +1110,16 @@ export function BoardPage() {
 
       {selectedIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rise">
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
-            <span className="rounded-md bg-primary/15 px-2 py-1 font-mono text-xs font-semibold text-primary">
-              {selectedIds.size} {t("common.confirm")}
+          <div
+            role="toolbar"
+            aria-label={t("board.bulkActions")}
+            className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.35)]"
+          >
+            <span
+              aria-live="polite"
+              className="rounded-md bg-primary/15 px-2 py-1 font-mono text-xs font-semibold text-primary"
+            >
+              {t("board.selectedCount", { count: selectedIds.size })}
             </span>
             <select
               aria-label={t("board.bulkMoveToStatus")}
