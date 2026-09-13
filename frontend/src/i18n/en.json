@@ -1701,6 +1701,7 @@
   "roleLabel": "Role",
   "inviting": "Inviting…",
   "sendInvite": "Send invite",
+  "deleteWorkspaceAria": "Delete this workspace",
   "deleteWorkspaceTitle": "Delete workspace?",
   "archiveProjectTitle": "Archive project?",
   "archiveProjectMsg": "\"{{name}}\" will be archived and hidden from the board.",

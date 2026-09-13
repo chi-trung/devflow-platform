@@ -468,6 +468,7 @@ export function WorkspacePage() {
                 {workspace.role === "Owner" && (
                   <Button
                     variant="ghost"
+                    aria-label={t("workspace.deleteWorkspaceAria")}
                     className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => setPendingDeleteWorkspace(true)}
                   >

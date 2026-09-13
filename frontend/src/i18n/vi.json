@@ -1701,6 +1701,7 @@
   "roleLabel": "Vai trò",
   "inviting": "Đang mời…",
   "sendInvite": "Gửi lời mời",
+  "deleteWorkspaceAria": "Xóa không gian làm việc này",
   "deleteWorkspaceTitle": "Xóa không gian làm việc?",
   "archiveProjectTitle": "Lưu trữ dự án?",
   "archiveProjectMsg": "\"{{name}}\" sẽ được lưu trữ và ẩn khỏi bảng.",
