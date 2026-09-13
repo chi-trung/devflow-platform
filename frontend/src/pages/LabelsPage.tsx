@@ -143,7 +143,10 @@ export function LabelsPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label
+                  htmlFor="label-color-custom"
+                  className="mb-1 block text-sm font-medium"
+                >
                   {t("label.colorLabel")}
                 </label>
                 <div className="flex flex-wrap items-center gap-2">
@@ -165,6 +168,7 @@ export function LabelsPage() {
                 <div className="mt-2 flex items-center gap-2">
                   <Palette className="size-4 text-muted-foreground" aria-hidden />
                   <input
+                    id="label-color-custom"
                     type="color"
                     value={color}
                     onChange={(e) => setColor(e.target.value)}

@@ -261,10 +261,19 @@ export function WebhooksPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-sm font-medium">
+                {/* Buttons are not labelable, so a <label> here would dangle.
+                    A labelled group is the valid association. */}
+                <span
+                  id="webhook-events-label"
+                  className="mb-1 block text-sm font-medium"
+                >
                   {t("webhook.eventsLabel")}
-                </label>
-                <div className="flex flex-wrap gap-2">
+                </span>
+                <div
+                  role="group"
+                  aria-labelledby="webhook-events-label"
+                  className="flex flex-wrap gap-2"
+                >
                   {WEBHOOK_EVENTS.map((event) => (
                     <button
                       key={event}
