@@ -52,6 +52,7 @@ export function Avatar({
       </span>
       {online && (
         <span
+          role="img"
           aria-label="online"
           className={`absolute -right-0.5 -bottom-0.5 ${dotSize} rounded-full bg-emerald-500 ring-2 ring-surface`}
         />
