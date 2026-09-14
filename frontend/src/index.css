@@ -125,7 +125,10 @@ html.light {
      light surface (--color-elevated). The matching bg-*-400/10 tints
      and borders follow and just read firmer. emerald-400 stays put:
      the landing terminal mock hardcodes a dark background in both
-     themes and its prompt text sits on that. */
+     themes and its prompt text sits on that. The avatar palette sits
+     text on its own bg-*-400/15 tint, whose composited ground is
+     darker than elevated, so those two hues drop a step further to
+     clear 4.5 on the tint. */
   --color-amber-300: #92400e;
   --color-amber-400: #92400e;
   --color-amber-500: #92400e;
@@ -137,9 +140,9 @@ html.light {
   --color-teal-300: #115e59;
   --color-teal-400: #115e59;
   --color-teal-600: #115e59;
-  --color-violet-300: #7c3aed;
+  --color-violet-300: #6d28d9;
   --color-violet-400: #7c3aed;
-  --color-rose-300: #be123c;
+  --color-rose-300: #9f1239;
   --color-rose-400: #be123c;
   --color-emerald-300: #065f46;
   --color-emerald-500: #065f46;
