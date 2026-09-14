@@ -113,7 +113,15 @@ html.light {
   --color-primary-strong: #115e59;
   --color-on-primary: #ffffff;
 
-  --color-destructive: #dc2626;
+  /* Same AA floor applies to the destructive text color: #dc2626 was
+     picked for the dark theme's #f87171 counterpart and only reaches
+     4.18 on the danger-tinted card behind it (16px/14px normal-weight
+     "Danger Zone" heading and the outline danger button sit on
+     bg-destructive/10, composite #f4edef). #991b1b clears 4.5 on every
+     light ground × tint (/5–/20 worst case 4.77), keeps white text on
+     solid badges above AA (8.31 vs 4.83), and the Critical priority dot
+     clears 1.4.11's 3:1 non-text bar everywhere. Dark keeps #f87171. */
+  --color-destructive: #991b1b;
 
   --color-ring: #0f766e;
 
