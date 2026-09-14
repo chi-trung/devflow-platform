@@ -256,8 +256,16 @@ export function FeatureBrowserFrame() {
             key={key}
             className={`flex flex-col items-center gap-8 lg:gap-14 ${reverse ? "lg:flex-row-reverse" : "lg:flex-row"}`}
           >
-            {/* Mockup (58%) */}
-            <div className="w-full lg:w-[58%]">
+            {/* Mockup (58%). WCAG 1.3.2: the rows alternate visual order via
+                lg:flex-row-reverse, so on odd rows the copy block appears left
+                (read first by sight) while the mockup comes first in the DOM.
+                The mockups are decorative marketing illustrations — every text
+                inside them (landing.mock.*) is placeholder chrome, and the real
+                message is the copy block. aria-hidden keeps the accessible
+                reading order unambiguous (copy only) at every viewport, matching
+                the BrowserFrame dots it is already hidden behind. No focusable
+                element lives here, so this cannot trap focus (axe aria-hidden-focus). */}
+            <div className="w-full lg:w-[58%]" aria-hidden="true">
               <BrowserFrame>{<Mock />}</BrowserFrame>
             </div>
 
