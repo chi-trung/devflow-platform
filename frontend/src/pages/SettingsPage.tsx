@@ -331,18 +331,20 @@ export function SettingsPage() {
                   {t("settings.editProfile")}
                 </Link>
               </div>
-              <div className="flex items-center gap-3.5">
+              <div className="flex flex-wrap items-center gap-3.5">
                 <Avatar
                   name={currentUser?.username ?? "?"}
                   id={currentUser?.id}
                   size="md"
+                  className="shrink-0"
                 />
-                {/* flex-1 so the identity block claims the row's remaining
-                    width (without it the ellipsized children collapse the box
-                    to ~88px and the email clips even at 100% zoom); title
-                    exposes the full string when a long name/email still
-                    ellipsizes at 200% text (WCAG 1.4.4). */}
-                <div className="min-w-0 flex-1 leading-tight">
+                {/* flex-1 claims the row's remaining width; the 7rem floor
+                    (which scales with root font-size) forces a line break
+                    below the avatar at 200% text, when the doubled avatar,
+                    gaps and paddings would otherwise squeeze this block to
+                    ~88px (prod probe, 375x720); title exposes any string
+                    that still ellipsizes (WCAG 1.4.4). */}
+                <div className="min-w-[7rem] flex-1 leading-tight">
                   <p className="truncate text-sm font-medium" title={currentUser?.displayName || currentUser?.username}>
                     {currentUser?.displayName || currentUser?.username}
                   </p>

@@ -794,14 +794,16 @@ export function WorkspacePage() {
                         className="flex flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3"
                       >
                         {/* flex-wrap + shrink-0 chrome: at 200% text the
-                            avatar and role badge double in size and used to
-                            squeeze the identity block to ~27px (prod probe,
-                            375x720) — now the badge wraps below and the name
-                            keeps its line, and title exposes any string that
-                            still ellipsizes (WCAG 1.4.4). */}
+                            avatar, gaps and paddings all double in rem, and
+                            with a freely-shrinkable identity block the line
+                            "fit" by crushing it to ~27px — the 7rem floor
+                            (scaling with root font-size) makes the block
+                            wrap onto its own full-width line instead, where
+                            the strings show without clipping; title covers
+                            anything still longer (WCAG 1.4.4). */}
                         <div className="flex flex-wrap items-center gap-3">
                           <Avatar name={member.displayName || member.username} id={member.userId} size="md" className="shrink-0" />
-                          <div className="min-w-0 flex-1 leading-tight">
+                          <div className="min-w-[7rem] flex-1 leading-tight">
                             <p className="truncate text-sm font-medium" title={member.displayName || member.username}>
                               {member.displayName || member.username}
                             </p>
