@@ -9,21 +9,28 @@ const RADIUS = 62;
 const STROKE = 26;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
+// Chart colors resolve from the --chart-* tokens in index.css, which carry a
+// per-theme value set (dark-first in @theme, light overrides under html.light).
+// Hardcoded Tailwind status hues (sky-400 #38bdf8, amber #f59e0b, violet-400
+// #a78bfa, …) were tuned for dark grounds and measured 1.7-2.8:1 on the white
+// card in the live-DOM audit — below WCAG 1.4.11's 3:1 floor for graphical
+// objects. The tokens keep every donut arc, legend dot and priority bar at
+// ≥3:1 against BOTH its theme's card and elevated-track grounds.
 const STATUS_COLORS: Record<TaskStatus, string> = {
-  Idea: "#64748b",
-  Planning: "#38bdf8",
-  Approval: "#34d399",
-  Ready: "#0ea5e9",
-  InProgress: "#f59e0b",
-  Review: "#a78bfa",
-  Done: "#14b8a6",
+  Idea: "var(--chart-idea)",
+  Planning: "var(--chart-planning)",
+  Approval: "var(--chart-approval)",
+  Ready: "var(--chart-ready)",
+  InProgress: "var(--chart-in-progress)",
+  Review: "var(--chart-review)",
+  Done: "var(--chart-done)",
 };
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
-  Low: "#64748b",
-  Medium: "#38bdf8",
-  High: "#f59e0b",
-  Critical: "#ef4444",
+  Low: "var(--chart-low)",
+  Medium: "var(--chart-medium)",
+  High: "var(--chart-high)",
+  Critical: "var(--chart-critical)",
 };
 
 const PRIORITY_ORDER: TaskPriority[] = ["Low", "Medium", "High", "Critical"];

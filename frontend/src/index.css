@@ -88,6 +88,28 @@
   --color-destructive: #f87171;
 
   --color-ring: #2dd4bf;
+
+  /* Chart palette (1.4.11 non-text contrast, 3:1 floor). The donut arcs,
+     legend dots and priority bars in TaskDistribution are hardcoded hex,
+     so they ignore the html.light text-hue remap below — and Tailwind's
+     300/400 status steps are tuned for dark grounds. On white cards six
+     of them measured 1.9-2.8:1 (audited against the live prod DOM, both
+     themes). Each token gets a dark value (on #131a24 card / #182130
+     track) and a light value in html.light (on #fff / #e3e8ef) that all
+     clear 3:1 on BOTH grounds of their theme. The donut's empty track
+     circle stays incidental (it carries no information — the segments
+     do), like axis gridlines. */
+  --chart-idea: #64748b;
+  --chart-planning: #38bdf8;
+  --chart-approval: #10b981;
+  --chart-ready: #0ea5e9;
+  --chart-in-progress: #f59e0b;
+  --chart-review: #a78bfa;
+  --chart-done: #2dd4bf;
+  --chart-low: #64748b;
+  --chart-medium: #38bdf8;
+  --chart-high: #f59e0b;
+  --chart-critical: #ef4444;
 }
 
 html.light {
@@ -161,6 +183,25 @@ html.light {
   --color-green-600: #166534;
   --color-orange-500: #9a3412;
   --color-yellow-600: #854d0e;
+
+  /* Light counterparts of the chart tokens: same identities, dropped to
+     steps that clear 3:1 on white cards AND the #e3e8ef elevated track
+     (priority bars fill the track). Ready moves from sky to blue-600
+     because no single blue clears 3:1 on dark AND light — the dark side
+     keeps sky, the light side uses #2563eb (3.38 vs cardDark is not
+     needed; 5.17 on white, 4.20 on the track). Approval emerald-500,
+     Planning sky-700, Review violet-600, Done teal-700. */
+  --chart-idea: #64748b;
+  --chart-planning: #0369a1;
+  --chart-approval: #059669;
+  --chart-ready: #2563eb;
+  --chart-in-progress: #92400e;
+  --chart-review: #7c3aed;
+  --chart-done: #0f766e;
+  --chart-low: #64748b;
+  --chart-medium: #0369a1;
+  --chart-high: #92400e;
+  --chart-critical: #b91c1c;
 }
 
 html {
