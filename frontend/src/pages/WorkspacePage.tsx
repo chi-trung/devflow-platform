@@ -793,19 +793,27 @@ export function WorkspacePage() {
                         key={member.userId}
                         className="flex flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3"
                       >
-                        <div className="flex items-center gap-3">
-                          <Avatar name={member.displayName || member.username} id={member.userId} size="md" />
+                        {/* flex-wrap + shrink-0 chrome: at 200% text the
+                            avatar and role badge double in size and used to
+                            squeeze the identity block to ~27px (prod probe,
+                            375x720) — now the badge wraps below and the name
+                            keeps its line, and title exposes any string that
+                            still ellipsizes (WCAG 1.4.4). */}
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Avatar name={member.displayName || member.username} id={member.userId} size="md" className="shrink-0" />
                           <div className="min-w-0 flex-1 leading-tight">
-                            <p className="truncate text-sm font-medium">
+                            <p className="truncate text-sm font-medium" title={member.displayName || member.username}>
                               {member.displayName || member.username}
                             </p>
-                            <p className="truncate font-mono text-[11px] text-muted-foreground">
+                            <p className="truncate font-mono text-[11px] text-muted-foreground" title={member.email}>
                               {member.email}
                             </p>
                           </div>
-                          <Badge tone={member.role === "Member" ? "neutral" : "teal"}>
-                            {member.role}
-                          </Badge>
+                          <span className="ml-auto shrink-0">
+                            <Badge tone={member.role === "Member" ? "neutral" : "teal"}>
+                              {member.role}
+                            </Badge>
+                          </span>
                         </div>
                         {canManageMembers && (
                           <div className="flex items-center gap-2">

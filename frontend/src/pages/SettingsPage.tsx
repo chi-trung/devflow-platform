@@ -337,11 +337,16 @@ export function SettingsPage() {
                   id={currentUser?.id}
                   size="md"
                 />
-                <div className="min-w-0 leading-tight">
-                  <p className="truncate text-sm font-medium">
+                {/* flex-1 so the identity block claims the row's remaining
+                    width (without it the ellipsized children collapse the box
+                    to ~88px and the email clips even at 100% zoom); title
+                    exposes the full string when a long name/email still
+                    ellipsizes at 200% text (WCAG 1.4.4). */}
+                <div className="min-w-0 flex-1 leading-tight">
+                  <p className="truncate text-sm font-medium" title={currentUser?.displayName || currentUser?.username}>
                     {currentUser?.displayName || currentUser?.username}
                   </p>
-                  <p className="truncate font-mono text-[11px] text-muted-foreground">
+                  <p className="truncate font-mono text-[11px] text-muted-foreground" title={currentUser?.email}>
                     {currentUser?.email}
                   </p>
                 </div>
