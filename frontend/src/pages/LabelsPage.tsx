@@ -155,10 +155,11 @@ export function LabelsPage() {
                       type="button"
                       onClick={() => setColor(preset)}
                       aria-label={preset}
+                      aria-pressed={color === preset}
                       className={`size-7 rounded-full border-2 transition-all duration-150 ${
                         color === preset
-                          ? "border-foreground scale-110"
-                          : "border-transparent hover:scale-105"
+                          ? "border-foreground scale-110 ring-2 ring-foreground/35 ring-offset-2 ring-offset-card"
+                          : "border-[var(--label-swatch-ring)] hover:scale-105"
                       }`}
                       style={{ backgroundColor: preset }}
                     />

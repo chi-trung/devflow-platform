@@ -110,6 +110,20 @@
   --chart-medium: #38bdf8;
   --chart-high: #f59e0b;
   --chart-critical: #ef4444;
+
+  /* Edge ring for the LabelsPage preset swatches (1.4.11). Preset hexes
+     are stored verbatim into label records, so unlike --chart-* they
+     can't be swapped per theme — orange/amber/lime/emerald/cyan fill
+     1.98-2.80:1 on white cards in the live audit (dark grounds pass
+     with min 3.62, so dark keeps a transparent ring and only the
+     selected swatch shows an edge). Light instead delineates every
+     unselected swatch with a slate-500 border: 4.76:1 against the
+     white card makes each a perceivable object by its boundary, while
+     the brighter low-contrast presets still separate strongly from it.
+     The gray preset (#6b7280 ≈ slate-500) blends into the ring but it
+     already clears 3:1 on its own, so nothing is lost. Selected swatches
+     keep the darker foreground border, so the two states stay distinct. */
+  --label-swatch-ring: transparent;
 }
 
 html.light {
@@ -202,6 +216,12 @@ html.light {
   --chart-medium: #0369a1;
   --chart-high: #92400e;
   --chart-critical: #b91c1c;
+
+  /* See the dark declaration above: delineate low-contrast preset
+     swatches on white cards with a slate-500 edge (4.76:1 vs the card)
+     so each is a perceivable object by its boundary. Selected swatches
+     keep the darker foreground border + halo, staying distinct. */
+  --label-swatch-ring: #64748b;
 }
 
 html {
