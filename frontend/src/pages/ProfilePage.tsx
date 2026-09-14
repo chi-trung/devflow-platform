@@ -127,6 +127,7 @@ export function ProfilePage() {
               <Input
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
+                autoComplete="name"
                 placeholder={t("profile.displayNamePlaceholder")}
                 disabled={savingProfile}
               />
@@ -136,6 +137,7 @@ export function ProfilePage() {
               <Input
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
+                autoComplete="username"
                 invalid={profileError !== null && !username.trim()}
                 aria-describedby={profileError && !username.trim() ? profileErrorId : undefined}
                 disabled={savingProfile}
