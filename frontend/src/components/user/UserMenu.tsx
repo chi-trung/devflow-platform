@@ -155,11 +155,22 @@ export function UserMenu({
               name={currentUser?.username ?? "?"}
               id={currentUser?.id}
             />
+            {/* WCAG 1.4.4: the sidebar is fixed-width, so at 200% root
+                font-size these lines ellipsize (e.g. the username clips at
+                ~9 chars). The truncated strings have no other on-screen
+                source, so each carries a title to expose the full text on
+                hover — the standard remedy for chrome that must truncate. */}
             <span className="min-w-0 max-w-[120px] flex-1 leading-tight">
-              <span className="block truncate text-sm font-medium">
+              <span
+                className="block truncate text-sm font-medium"
+                title={currentUser?.username}
+              >
                 {currentUser?.username ?? t("auth.displayName")}
               </span>
-              <span className="block truncate font-mono text-[11px] text-muted-foreground">
+              <span
+                className="block truncate font-mono text-[11px] text-muted-foreground"
+                title={currentUser?.email}
+              >
                 {currentUser?.email}
               </span>
             </span>
