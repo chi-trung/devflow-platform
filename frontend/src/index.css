@@ -238,8 +238,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* WCAG 1.4.14: the selection band is the only cue distinguishing selected
+   text from its neighbours, so it needs 3:1 against every adjacent
+   unselected colour. The old color-mix(primary 30%, transparent) tint
+   measured 1.49-1.55 on light surfaces and 1.92-1.97 on dark (prod probe)
+   — well under. Solid primary + on-primary is the same pairing the buttons
+   already ship (clears 5.4 on white in light, ~9 in dark), and the text it
+   carries stays legible (1.4.3: 5.4 / ~9 against the band itself). */
 ::selection {
-  background-color: color-mix(in oklab, var(--color-primary) 30%, transparent);
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
 }
 
 *::-webkit-scrollbar {
