@@ -843,7 +843,7 @@ export function BoardPage() {
             <div className="flex items-center gap-2.5">
               {project?.emoji && <EmojiTile emoji={project.emoji} size="md" />}
               <h1 className="font-display text-2xl font-semibold tracking-tight">
-                {project?.name ?? <Skeleton className="h-8 w-48" />}
+                {project?.name ?? t("common.loading")}
               </h1>
               {project && <Badge tone="teal">{project.key}</Badge>}
             </div>
