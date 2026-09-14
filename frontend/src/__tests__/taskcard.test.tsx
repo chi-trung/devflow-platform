@@ -11,6 +11,12 @@ vi.mock("../lib/api", () => ({
   api: () => Promise.resolve({}),
 }));
 
+// The card pushes its "copied" status message through the toast live region
+// (WCAG 4.1.3); stub the hook so the test need not mount the provider.
+vi.mock("../components/ui/ToastProvider", () => ({
+  useToast: () => ({ push: () => {} }),
+}));
+
 function makeTask(overrides: Partial<TaskItemResponse> = {}): TaskItemResponse {
   return {
     id: "t1",

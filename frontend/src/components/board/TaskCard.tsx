@@ -5,6 +5,7 @@ import type { TaskItemResponse, WorkspaceMemberResponse, CustomFieldValueRespons
 import { Avatar } from "../ui/Avatar";
 import { EstimationModal } from "../estimation/EstimationModal";
 import { api } from "../../lib/api";
+import { useToast } from "../ui/ToastProvider";
 import { useAttachmentPreviews, ThumbnailStrip } from "./AttachmentThumbnails";
 
 const priorityDot: Record<TaskItemResponse["priority"], string> = {
@@ -65,6 +66,7 @@ export function TaskCard({
   onEstimationSaved,
 }: TaskCardProps) {
   const { t } = useTranslation();
+  const { push } = useToast();
   const assignee = members.find((m) => m.userId === task.assigneeId);
   const overdue =
     task.dueDateUtc !== null &&
@@ -92,6 +94,11 @@ export function TaskCard({
     try {
       await navigator.clipboard.writeText(taskKey);
       setKeyCopied(true);
+      // WCAG 4.1.3: the visual chip swap (text → aria-hidden Check icon)
+      // is invisible to screen readers, and while it's up the button even
+      // loses its text name. The toast routes the same message through the
+      // polite live region, like every other status message in the app.
+      push(t("task.keyCopied"));
       window.setTimeout(() => setKeyCopied(false), 1500);
     } catch {
       // clipboard unavailable — the chip still shows the key
