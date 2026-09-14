@@ -89,7 +89,11 @@ function DocCardGrid({ cards }: { cards: DocCard[] }) {
               {card.desc[lang]}
             </p>
             {card.code && (
-              <pre className="mb-4 overflow-x-auto rounded-lg bg-elevated p-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
+              <pre
+                tabIndex={0}
+                aria-label={card.title[lang]}
+                className="mb-4 overflow-x-auto rounded-lg bg-elevated p-3 font-mono text-[11px] leading-relaxed text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
                 {card.code.replace(/\$\{apiBase\}/g, API_BASE)}
               </pre>
             )}
