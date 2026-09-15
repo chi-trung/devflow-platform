@@ -10,9 +10,20 @@ public class BulkOperationsHandlerTests
 {
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly ITaskDependencyRepository _dependencyRepository = Substitute.For<ITaskDependencyRepository>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
     private readonly Guid _projectId = Guid.NewGuid();
+
+    public BulkOperationsHandlerTests()
+    {
+        // Unblocked project by default: bulk move tests exercise scoping,
+        // not the guard. Guard-specific behavior lives in blocked-move tests.
+        _dependencyRepository.GetAllByProjectIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(new List<DevFlow.Domain.Entities.TaskDependency>());
+        _dependencyRepository.GetDependencyTaskSnapshotsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(new List<DevFlow.Application.Features.Tasks.Dependencies.TaskStatusSnapshot>());
+    }
 
     [Fact]
     public async Task BulkMove_ShouldMoveOnlyTasksInProject()
@@ -23,7 +34,7 @@ public class BulkOperationsHandlerTests
         _taskItemRepository.GetByIdAsync(inProject.Id, Arg.Any<CancellationToken>()).Returns(inProject);
         _taskItemRepository.GetByIdAsync(otherProject.Id, Arg.Any<CancellationToken>()).Returns(otherProject);
 
-        var handler = new BulkMoveTasksHandler(_taskItemRepository, _unitOfWork);
+        var handler = new BulkMoveTasksHandler(_taskItemRepository, _unitOfWork, _dependencyRepository);
         var count = await handler.Handle(
             new BulkMoveTasksCommand(_workspaceId, _projectId, new List<Guid> { inProject.Id, otherProject.Id }, TaskItemStatus.Done),
             CancellationToken.None);
@@ -73,7 +84,7 @@ public class BulkOperationsHandlerTests
     [Fact]
     public async Task BulkMove_WithEmptyList_ShouldReturnZero()
     {
-        var handler = new BulkMoveTasksHandler(_taskItemRepository, _unitOfWork);
+        var handler = new BulkMoveTasksHandler(_taskItemRepository, _unitOfWork, _dependencyRepository);
         var count = await handler.Handle(
             new BulkMoveTasksCommand(_workspaceId, _projectId, new List<Guid>(), TaskItemStatus.Done),
             CancellationToken.None);

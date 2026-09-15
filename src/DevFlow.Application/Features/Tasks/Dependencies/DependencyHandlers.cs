@@ -75,6 +75,14 @@ public class GetProjectDependencyGraphHandler(
                 tasks[taskId] = task;
         }
 
+        // One source of truth for both the cyclic labels below and the
+        // blocked-move guards on the write paths: the same Evaluate() the
+        // guards run, so a card the board paints as blocked is exactly a card
+        // the server will refuse to move.
+        var evaluation = BlockedTaskMoves.Evaluate(
+            dependencies,
+            id => tasks.TryGetValue(id, out var t) ? t.Status : null);
+
         var nodes = tasks.Values
             .OrderBy(t => t.Title)
             .Select(t => new TaskGraphNode(
@@ -82,66 +90,18 @@ public class GetProjectDependencyGraphHandler(
                 t.Title,
                 t.Status.ToString(),
                 t.AssigneeId,
-                t.ProjectId))
+                t.ProjectId,
+                IsBlocked: evaluation.UnresolvedBlockersByTaskId.ContainsKey(t.Id)))
             .ToList();
-
-        var adjacency = new Dictionary<Guid, List<Guid>>();
-        foreach (var dep in dependencies)
-        {
-            if (!adjacency.ContainsKey(dep.BlockedTaskId))
-                adjacency[dep.BlockedTaskId] = new List<Guid>();
-            adjacency[dep.BlockedTaskId].Add(dep.BlockerTaskId);
-        }
-
-        var visited = new HashSet<Guid>();
-        var recursionStack = new HashSet<Guid>();
-        var cyclicNodeIds = new HashSet<Guid>();
-        var path = new List<Guid>();
-
-        void Dfs(Guid node)
-        {
-            visited.Add(node);
-            recursionStack.Add(node);
-            path.Add(node);
-
-            if (adjacency.TryGetValue(node, out var neighbors))
-            {
-                foreach (var neighbor in neighbors)
-                {
-                    if (!visited.Contains(neighbor))
-                    {
-                        Dfs(neighbor);
-                    }
-                    else if (recursionStack.Contains(neighbor))
-                    {
-                        var cycleStartIdx = path.IndexOf(neighbor);
-                        for (var i = cycleStartIdx; i < path.Count; i++)
-                        {
-                            cyclicNodeIds.Add(path[i]);
-                        }
-                        cyclicNodeIds.Add(neighbor);
-                    }
-                }
-            }
-
-            path.Remove(node);
-            recursionStack.Remove(node);
-        }
-
-        foreach (var nodeId in adjacency.Keys)
-        {
-            if (!visited.Contains(nodeId))
-                Dfs(nodeId);
-        }
 
         var edges = dependencies
             .Select(d => new DependencyGraphEdge(
                 d.BlockedTaskId,
                 d.BlockerTaskId,
-                cyclicNodeIds.Contains(d.BlockedTaskId) && cyclicNodeIds.Contains(d.BlockerTaskId)))
+                evaluation.CyclicNodeIds.Contains(d.BlockedTaskId) && evaluation.CyclicNodeIds.Contains(d.BlockerTaskId)))
             .ToList();
 
-        return new ProjectDependencyGraphResponse(nodes, edges, cyclicNodeIds.ToList());
+        return new ProjectDependencyGraphResponse(nodes, edges, evaluation.CyclicNodeIds.ToList());
     }
 }
 

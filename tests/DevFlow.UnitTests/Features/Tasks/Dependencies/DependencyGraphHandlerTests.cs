@@ -48,6 +48,29 @@ public class DependencyGraphHandlerTests
         Assert.Contains(result.Nodes, n => n.Id == taskC.Id);
         Assert.Contains(result.Edges, e => e.FromTaskId == taskA.Id && e.ToTaskId == taskB.Id);
         Assert.Contains(result.Edges, e => e.FromTaskId == taskC.Id && e.ToTaskId == taskB.Id);
+        // Blocked reflects unresolved non-cyclic blockers: A and C wait on
+        // B (Medium status), so exactly the two blocked-ers are flagged.
+        Assert.True(result.Nodes.Single(n => n.Id == taskA.Id).IsBlocked);
+        Assert.True(result.Nodes.Single(n => n.Id == taskC.Id).IsBlocked);
+        Assert.False(result.Nodes.Single(n => n.Id == taskB.Id).IsBlocked);
+    }
+
+    [Fact]
+    public async Task GetProjectDependencyGraph_ShouldNotFlagBlocked_WhenBlockerIsDone()
+    {
+        var taskA = TaskItem.Create(_projectId, "Task A", null, TaskItemPriority.Low);
+        var taskB = TaskItem.Create(_projectId, "Task B", null, TaskItemPriority.Medium);
+        taskB.ChangeStatus(TaskItemStatus.Done);
+
+        _dependencyRepository.GetAllByProjectIdAsync(_projectId, Arg.Any<CancellationToken>())
+            .Returns(new List<TaskDependency> { TaskDependency.Create(taskA.Id, taskB.Id) });
+        _taskItemRepository.GetByIdAsync(taskA.Id, Arg.Any<CancellationToken>()).Returns(taskA);
+        _taskItemRepository.GetByIdAsync(taskB.Id, Arg.Any<CancellationToken>()).Returns(taskB);
+
+        var handler = new GetProjectDependencyGraphHandler(_dependencyRepository, _taskItemRepository);
+        var result = await handler.Handle(new GetProjectDependencyGraphQuery(_workspaceId, _projectId), CancellationToken.None);
+
+        Assert.All(result.Nodes, n => Assert.False(n.IsBlocked));
     }
 
     [Fact]
@@ -93,6 +116,9 @@ public class DependencyGraphHandlerTests
         Assert.Equal(3, result.Edges.Count);
         Assert.Equal(3, result.CyclicNodeIds.Count);
         Assert.All(result.Edges, e => Assert.True(e.IsCyclic));
+        // Cycle members are exempt from the blocked flag — otherwise the
+        // guard would lock every task in a cycle out of status changes.
+        Assert.All(result.Nodes, n => Assert.False(n.IsBlocked));
     }
 
     [Fact]

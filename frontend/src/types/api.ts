@@ -204,6 +204,13 @@ export interface TaskGraphNode {
   status: TaskItemResponse["status"];
   assigneeId: string | null;
   projectId: string;
+  /**
+   * Server-computed: has at least one unresolved non-cyclic blocker. The
+   * write paths reject blocked status changes with 409, so this flag is the
+   * board's preview of that decision — optional because cached snapshots
+   * written before the flag existed simply lack it.
+   */
+  isBlocked?: boolean;
 }
 
 /**
