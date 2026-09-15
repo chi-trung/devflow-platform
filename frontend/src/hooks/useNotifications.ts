@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useToast } from "../components/ui/ToastProvider";
 import {
   getNotifications,
   markAllNotificationsRead as markAllReadApi,
@@ -77,6 +78,7 @@ export function useNotifications(
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation();
+  const { push } = useToast();
   const { currentUser } = useAuth();
   const currentUserRef = useRef(currentUser);
   currentUserRef.current = currentUser;
@@ -138,9 +140,12 @@ export function useNotifications(
       patchNotification(id, { isRead: true });
       void markReadApi(id).catch(() => {
         patchNotification(id, { isRead: false });
+        // The revert alone reads as a flicker: tell the user the click didn't
+        // stick. notification.markReadFailed exists in both locales.
+        push(t("notification.markReadFailed"), "error");
       });
     },
-    [patchNotification],
+    [patchNotification, push, t],
   );
 
   const markUnread = useCallback(
@@ -148,17 +153,21 @@ export function useNotifications(
       patchNotification(id, { isRead: false });
       void markUnreadApi(id).catch(() => {
         patchNotification(id, { isRead: true });
+        push(t("notification.markUnreadFailed"), "error");
       });
     },
-    [patchNotification],
+    [patchNotification, push, t],
   );
 
   const markAllRead = useCallback(() => {
     setNotifications((current) =>
       current.map((n) => (n.isRead ? n : { ...n, isRead: true })),
     );
-    void markAllReadApi().catch(() => void loadRef.current());
-  }, []);
+    void markAllReadApi().catch(() => {
+      void loadRef.current();
+      push(t("notification.markAllReadFailed"), "error");
+    });
+  }, [push, t]);
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.isRead).length,

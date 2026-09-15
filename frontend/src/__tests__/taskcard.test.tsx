@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, fireEvent, waitFor } from "@testing-library/react";
 import { TaskCard } from "../components/board/TaskCard";
 import type { TaskItemResponse } from "../types/api";
 
@@ -7,14 +7,16 @@ vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (k: string) => k }),
 }));
 
+const apiMock = vi.fn();
 vi.mock("../lib/api", () => ({
-  api: () => Promise.resolve({}),
+  api: (...args: unknown[]) => apiMock(...args),
 }));
 
 // The card pushes its "copied" status message through the toast live region
 // (WCAG 4.1.3); stub the hook so the test need not mount the provider.
+const push = vi.fn();
 vi.mock("../components/ui/ToastProvider", () => ({
-  useToast: () => ({ push: () => {} }),
+  useToast: () => ({ push }),
 }));
 
 function makeTask(overrides: Partial<TaskItemResponse> = {}): TaskItemResponse {
@@ -70,5 +72,46 @@ describe("TaskCard keyboard access", () => {
     // A click on the card body (outside the title) still opens it.
     fireEvent.click(container.querySelector('[data-task-id="t1"]')!);
     expect(onSelect).toHaveBeenCalledTimes(2);
+  });
+});
+
+// Regression: handleAddChild's catch used to be just a comment ("keep form
+// open on error"), so a failed subtask POST looked like a slow success that
+// simply never closed the card's inline form — the Add button un-spun and
+// nothing else happened.
+describe("TaskCard subtask creation failure feedback", () => {
+  beforeEach(() => {
+    push.mockClear();
+    apiMock.mockReset();
+  });
+
+  it("surfaces an error toast when the subtask POST rejects", async () => {
+    apiMock.mockRejectedValueOnce(new Error("offline"));
+    const { getByLabelText } = renderCard();
+    fireEvent.click(getByLabelText("board.addChildTaskAria"));
+    fireEvent.change(getByLabelText("board.childTaskPlaceholder"), {
+      target: { value: "Child probe" },
+    });
+    fireEvent.submit(getByLabelText("board.childTaskPlaceholder").closest("form")!);
+    await waitFor(() =>
+      expect(apiMock).toHaveBeenCalledWith(
+        "/workspaces/w1/projects/p1/tasks/t1/subtasks",
+        expect.objectContaining({ method: "POST" }),
+      ),
+    );
+    await waitFor(() => expect(push).toHaveBeenCalledWith("subtask.addFailed", "error"));
+  });
+
+  it("leaves the toast untouched when the subtask POST succeeds", async () => {
+    apiMock.mockResolvedValueOnce({});
+    const { getByLabelText } = renderCard();
+    fireEvent.click(getByLabelText("board.addChildTaskAria"));
+    fireEvent.change(getByLabelText("board.childTaskPlaceholder"), {
+      target: { value: "Child probe" },
+    });
+    fireEvent.submit(getByLabelText("board.childTaskPlaceholder").closest("form")!);
+    await waitFor(() => expect(apiMock).toHaveBeenCalledOnce());
+    // Success: no error toast of any kind.
+    expect(push).not.toHaveBeenCalled();
   });
 });
