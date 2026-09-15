@@ -7,6 +7,8 @@ import {
   linkGitHubRepo,
   unlinkGitHubRepo,
 } from "../../lib/api";
+import { Button } from "../ui/Button";
+import { ErrorAlert } from "../ui/ErrorAlert";
 import type {
   GitHubIntegrationResponse,
   PullRequestResponse,
@@ -38,20 +40,37 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
   const [repoUrl, setRepoUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Each half of the Promise.all used to carry its own .catch default, so a
+  // failed load showed the "link a repository" form / "no PRs" copy as if
+  // authoritative — the outer try/catch below could never even fire.
+  const [integrationFailed, setIntegrationFailed] = useState(false);
+  const [prsFailed, setPrsFailed] = useState(false);
 
   async function refresh() {
-    try {
-      const [integration, pulls] = await Promise.all([
-        getGitHubIntegration(workspaceId, projectId).catch(() => null),
-        getProjectPRs(workspaceId, projectId).catch(() => []),
-      ]);
-      setIntegration(integration ?? null);
-      setPrs(pulls);
-    } catch {
-      setError(t("github.loadFailed"));
-    } finally {
-      setLoaded(true);
+    // allSettled, not all: each list is independent, and a failed half must
+    // surface its own error without dragging the healthy half down.
+    const [integrationResult, pullsResult] = await Promise.allSettled([
+      getGitHubIntegration(workspaceId, projectId),
+      getProjectPRs(workspaceId, projectId),
+    ]);
+    if (integrationResult.status === "fulfilled") {
+      setIntegration(integrationResult.value ?? null);
+      setIntegrationFailed(false);
+    } else {
+      setIntegrationFailed(true);
     }
+    if (pullsResult.status === "fulfilled") {
+      setPrs(pullsResult.value);
+      setPrsFailed(false);
+    } else {
+      setPrsFailed(true);
+    }
+    setLoaded(true);
+  }
+
+  function handleRetry() {
+    setError(null);
+    void refresh();
   }
 
   useEffect(() => {
@@ -113,8 +132,21 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
 
       {error && <p role="alert" className="mb-2 text-xs text-destructive">{error}</p>}
 
+      {integrationFailed && (
+        <div className="mb-2 flex flex-col items-start gap-2">
+          <ErrorAlert message={t("github.loadFailed")} />
+          <Button variant="outline" size="sm" onClick={handleRetry}>
+            {t("common.retry")}
+          </Button>
+        </div>
+      )}
+
       {!integration ? (
-        <form onSubmit={handleLink} className="flex items-end gap-1.5">
+        <form
+          onSubmit={handleLink}
+          className="flex items-end gap-1.5"
+          hidden={integrationFailed}
+        >
           <input
             value={repoUrl}
             onChange={(event) => setRepoUrl(event.target.value)}
@@ -147,7 +179,14 @@ export function GitHubIntegrationCard({ workspaceId, projectId }: GitHubCardProp
               <GitPullRequest className="size-3" aria-hidden />
               {t("github.linkedPrs", { count: prs.length })}
             </p>
-            {prs.length === 0 ? (
+            {prsFailed ? (
+              <div className="flex flex-col items-start gap-2">
+                <ErrorAlert message={t("github.loadPrsFailed")} />
+                <Button variant="outline" size="sm" onClick={handleRetry}>
+                  {t("common.retry")}
+                </Button>
+              </div>
+            ) : prs.length === 0 ? (
               <p className="text-xs text-muted-foreground">{t("github.emptyPrs")}</p>
             ) : (
               prs.slice(0, 6).map((pr) => (

@@ -454,7 +454,9 @@
   "sprintHealth": "Sprint Health",
   "noActiveSprint": "No active sprint",
   "noActiveSprintDesc": "Start a sprint to track burndown progress.",
-  "remaining": "remaining"
+  "remaining": "remaining",
+  "sprintHealthLoadFailed": "Could not load sprint health.",
+  "burndownLoadFailed": "Could not load the burndown chart."
  },
  "board": {
   "backlog": "Backlog",
@@ -636,7 +638,9 @@
   "watchers": "Watchers",
   "watcherCount_one": "{{count}} watcher",
   "watcherCount_other": "{{count}} watchers",
-  "noWatchers": "No watchers yet"
+  "noWatchers": "No watchers yet",
+  "watchersLoadFailed": "Could not load watchers.",
+  "attachmentsLoadFailed": "Could not load attachments."
  },
  "filter": {
   "filters": "Filters",
@@ -1009,7 +1013,9 @@
   "created": "Field created",
   "createFailed": "Failed to create field.",
   "deleteFailed": "Failed to delete field.",
-  "deleteAria": "Delete field {{name}}"
+  "deleteAria": "Delete field {{name}}",
+  "loadFailed": "Could not load custom fields.",
+  "valueSaveFailed": "Could not save the field value. Please try again."
  },
  "github": {
   "title": "GitHub Integration",
@@ -1079,7 +1085,8 @@
   "patCreateFailed": "Failed to create token.",
   "patRevoked": "Token revoked",
   "patRevokeFailed": "Failed to revoke token.",
-  "revokePat": "Revoke token {{name}}"
+  "revokePat": "Revoke token {{name}}",
+  "loadPrsFailed": "Could not load pull requests."
  },
  "profile": {
   "accountDetails": "Account details",

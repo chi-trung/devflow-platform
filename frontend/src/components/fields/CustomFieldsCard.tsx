@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ListPlus, Trash2 } from "lucide-react";
 import { createCustomField, deleteCustomField, getCustomFields } from "../../lib/api";
 import { useToast } from "../ui/ToastProvider";
+import { ErrorAlert } from "../ui/ErrorAlert";
 import type { CustomFieldResponse } from "../../types/api";
 
 const FIELD_TYPES = ["text", "number", "date", "select"] as const;
@@ -22,23 +23,34 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
 
+  // List failure must not collapse into the "no fields" empty state — that
+  // invites recreating fields that already exist server-side.
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
+    setLoadError(false);
     getCustomFields(workspaceId, projectId)
       .then((loaded) => {
         if (!cancelled) setFields(loaded);
       })
       .catch(() => {
-        if (!cancelled) setFields([]);
+        if (!cancelled) setLoadError(true);
       });
     return () => {
       cancelled = true;
     };
-  }, [workspaceId, projectId]);
+  }, [workspaceId, projectId, reloadKey]);
 
   async function refresh() {
-    const fresh = await getCustomFields(workspaceId, projectId).catch(() => []);
-    setFields(fresh);
+    try {
+      const fresh = await getCustomFields(workspaceId, projectId);
+      setFields(fresh);
+    } catch {
+      // Keep the last good list; a failed background refresh must not
+      // wipe it into the "no fields" state.
+    }
   }
 
   async function handleCreate(event: FormEvent) {
@@ -126,7 +138,18 @@ export function CustomFieldsCard({ workspaceId, projectId, onChanged }: CustomFi
         </button>
       </form>
 
-      {!fields ? (
+      {loadError ? (
+        <div className="flex flex-col items-start gap-2">
+          <ErrorAlert message={t("field.loadFailed")} />
+          <button
+            type="button"
+            onClick={() => setReloadKey((n) => n + 1)}
+            className="rounded-md border border-border px-2 py-1 text-xs font-medium hover:border-primary"
+          >
+            {t("common.retry")}
+          </button>
+        </div>
+      ) : !fields ? (
         <p className="text-xs text-muted-foreground">{t("common.loading")}</p>
       ) : fields.length === 0 ? (
         <p className="text-xs text-muted-foreground">

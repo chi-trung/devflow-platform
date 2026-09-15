@@ -167,12 +167,14 @@ export function TaskDetailPanel({
 
   const [attachments, setAttachments] = useState<TaskAttachmentResponse[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(true);
+  const [attachmentsError, setAttachmentsError] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadQueue, setUploadQueue] = useState<{ file: File; progress: number; error: string | null }[]>([]);
   const [watching, setWatching] = useState(false);
   const [watchingLoading, setWatchingLoading] = useState(true);
   const [watchers, setWatchers] = useState<TaskWatcherResponse[]>([]);
   const [watchersLoading, setWatchersLoading] = useState(true);
+  const [watchersError, setWatchersError] = useState(false);
   const { push } = useToast();
 
   useEffect(() => {
@@ -198,12 +200,15 @@ export function TaskDetailPanel({
   useEffect(() => {
     let cancelled = false;
     setWatchersLoading(true);
+    setWatchersError(false);
     void getTaskWatchers(workspaceId, projectId, task.id)
       .then((data) => {
         if (!cancelled) setWatchers(data);
       })
       .catch(() => {
-        if (!cancelled) setWatchers([]);
+        // "No watchers" and "couldn't load watchers" are different claims;
+        // the old catch fabricated the first from the second.
+        if (!cancelled) setWatchersError(true);
       })
       .finally(() => {
         if (!cancelled) setWatchersLoading(false);
@@ -235,6 +240,7 @@ export function TaskDetailPanel({
     setCommentsLoading(true);
     setAttachmentsLoading(true);
     setCommentError(null);
+    setAttachmentsError(false);
 
     // Free-tier hosts (Render) cold-start in 1–3 s; the very first request
     // after a period of inactivity can fail with a connection error. Retry
@@ -290,7 +296,9 @@ export function TaskDetailPanel({
         if (!cancelled) setAttachments(atts);
       })
       .catch(() => {
-        // Attachments are secondary; don't block the panel on them.
+        // Attachments don't block the panel, but the failure must still be
+        // distinguishable from a genuinely empty attachment list.
+        if (!cancelled) setAttachmentsError(true);
       })
       .finally(() => {
         if (!cancelled) setAttachmentsLoading(false);
@@ -927,6 +935,8 @@ export function TaskDetailPanel({
               {t("task.watchers")}
               {watchersLoading ? (
                 <p className="text-xs text-muted-foreground">{t("task.loading")}</p>
+              ) : watchersError ? (
+                <p role="alert" className="text-xs text-destructive">{t("task.watchersLoadFailed")}</p>
               ) : watchers.length === 0 ? (
                 <p className="text-xs text-muted-foreground">{t("task.noWatchers")}</p>
               ) : (
@@ -1011,6 +1021,10 @@ export function TaskDetailPanel({
                 {attachmentsLoading ? (
                   <p className="text-xs text-muted-foreground">
                     {t("task.loading")}
+                  </p>
+                ) : attachmentsError && attachments.length === 0 ? (
+                  <p role="alert" className="text-xs text-destructive">
+                    {t("task.attachmentsLoadFailed")}
                   </p>
                 ) : attachments.length === 0 && uploadQueue.length === 0 ? (
                   <p className="text-xs text-muted-foreground">
