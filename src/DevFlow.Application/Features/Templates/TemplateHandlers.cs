@@ -34,15 +34,39 @@ public class CreateTemplateHandler(ITemplateRepository repo, IUnitOfWork uow) : 
     }
 }
 
+// IProjectEvent: applying a template writes a real TaskItem into the
+// project, so the board's tasks:* cache (and dashboard counts) must drop
+// with it — without the marker the new task stays invisible for the 30s
+// cache TTL. ActivityVerb stays empty → no activity-log entry.
 [RequireWorkspaceRole(WorkspaceRole.Member)]
-public sealed record ApplyTemplateCommand(Guid WorkspaceId, Guid ProjectId, Guid TemplateId) : IRequest<Guid>, IWorkspaceRequest;
+public sealed record ApplyTemplateCommand(Guid WorkspaceId, Guid ProjectId, Guid TemplateId) : IRequest<Guid>, IWorkspaceRequest, IProjectEvent;
 
-public class ApplyTemplateHandler(ITemplateRepository repo, ITaskItemRepository taskRepo, IUnitOfWork uow) : IRequestHandler<ApplyTemplateCommand, Guid>
+public class ApplyTemplateHandler(
+    ITemplateRepository repo,
+    ITaskItemRepository taskRepo,
+    IProjectRepository projectRepository,
+    IUnitOfWork uow) : IRequestHandler<ApplyTemplateCommand, Guid>
 {
     public async Task<Guid> Handle(ApplyTemplateCommand request, CancellationToken ct)
     {
+        // Route ids are attacker-shaped: pin the project to the workspace
+        // the behavior already checked membership for, and pin the
+        // template to the project so a foreign template id can't be
+        // probed/applied across projects.
+        var project = await projectRepository.GetByIdAsync(request.ProjectId, ct);
+
+        if (project is null || project.WorkspaceId != request.WorkspaceId)
+        {
+            throw new NotFoundException(nameof(Domain.Entities.Project), request.ProjectId);
+        }
+
         var template = await repo.GetByIdAsync(request.TemplateId, ct)
             ?? throw new NotFoundException(nameof(Domain.Entities.TaskTemplate), request.TemplateId);
+
+        if (template.ProjectId != request.ProjectId)
+        {
+            throw new NotFoundException(nameof(Domain.Entities.TaskTemplate), request.TemplateId);
+        }
 
         var task = Domain.Entities.TaskItem.Create(request.ProjectId, template.Title ?? template.Name, template.Description, template.Priority);
         if (template.EstimateMinutes.HasValue) task.SetEstimate(template.EstimateMinutes.Value);
