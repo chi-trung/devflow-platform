@@ -42,8 +42,10 @@ function deriveKey(name: string): string {
 }
 
 interface ProjectWithStats extends ProjectResponse {
-  total: number;
-  done: number;
+  // null = the per-project task stats are not (or no longer) known — not
+  // yet loaded, or the fetch failed. Zero would claim an empty project.
+  total: number | null;
+  done: number | null;
 }
 
 export function WorkspacePage() {
@@ -82,7 +84,9 @@ export function WorkspacePage() {
   }, [reload]);
   useWorkspaceEvents(workspaceId, handleWorkspaceEvent);
 
-  const [stats, setStats] = useState<Record<string, { total: number; done: number }>>({});
+  const [stats, setStats] = useState<
+    Record<string, { total: number; done: number } | null>
+  >({});
 
   useEffect(() => {
     if (!projectsRaw) return;
@@ -93,26 +97,31 @@ export function WorkspacePage() {
     }
     let cancelled = false;
 
+    // Promise.all was all-or-nothing: one failed task fetch left `stats`
+    // at its previous value and the `?? 0` consumers below then rendered
+    // "0/0 done · 0%" next to projects that do have tasks. Each project's
+    // stats now fail on their own, into an explicit null "unknown".
     Promise.all(
       projectList.map(async (project) => {
-        const tasksRaw = await api<unknown>(
-          `/workspaces/${workspaceId}/projects/${project.id}/tasks`,
-        );
-        const tasks = pagedItems<TaskItemResponse>(tasksRaw);
-        return [
-          project.id,
-          {
-            total: tasks.length,
-            done: tasks.filter((t) => t.status === "Done").length,
-          },
-        ] as const;
+        try {
+          const tasksRaw = await api<unknown>(
+            `/workspaces/${workspaceId}/projects/${project.id}/tasks`,
+          );
+          const tasks = pagedItems<TaskItemResponse>(tasksRaw);
+          return [
+            project.id,
+            {
+              total: tasks.length,
+              done: tasks.filter((t) => t.status === "Done").length,
+            },
+          ] as const;
+        } catch {
+          return [project.id, null] as const;
+        }
       }),
     )
       .then((entries) => {
         if (!cancelled) setStats(Object.fromEntries(entries));
-      })
-      .catch(() => {
-        // stats are decorative — board still works without them
       });
 
     return () => {
@@ -124,8 +133,8 @@ export function WorkspacePage() {
     () =>
       projects?.map((p) => ({
         ...p,
-        total: stats[p.id]?.total ?? 0,
-        done: stats[p.id]?.done ?? 0,
+        total: stats[p.id]?.total ?? null,
+        done: stats[p.id]?.done ?? null,
       })) ?? null,
     [projects, stats],
   );
@@ -565,9 +574,10 @@ export function WorkspacePage() {
                 {activeProjects && activeProjects.length > 0 && (
                   <ul role="list" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {activeProjects.map((project, index) => {
+                      const statsKnown = project.total !== null;
                       const percent =
-                        project.total > 0
-                          ? Math.round((project.done / project.total) * 100)
+                        project.total !== null && project.total > 0
+                          ? Math.round(((project.done ?? 0) / project.total) * 100)
                           : 0;
                       return (
                         <li
@@ -642,18 +652,28 @@ export function WorkspacePage() {
                             )}
                             <div className="mt-auto pt-4">
                               <div className="mb-1.5 flex justify-between font-mono text-[11px] text-muted-foreground">
-                                <span>
-                                  {t("workspace.progressDone", {
-                                    done: project.done,
-                                    total: project.total,
-                                  })}
-                                </span>
-                                <span>{percent}%</span>
+                                {statsKnown ? (
+                                  <>
+                                    <span>
+                                      {t("workspace.progressDone", {
+                                        done: project.done,
+                                        total: project.total,
+                                      })}
+                                    </span>
+                                    <span>{percent}%</span>
+                                  </>
+                                ) : (
+                                  // "—" is the honest render: 0/0 here once
+                                  // claimed an empty project over real tasks.
+                                  <span title={t("workspace.statsLoadFailed")}>
+                                    {t("workspace.progressUnknown")}
+                                  </span>
+                                )}
                               </div>
                               <div className="h-1.5 overflow-hidden rounded-full bg-elevated">
                                 <div
                                   className="h-full rounded-full bg-primary transition-all duration-500"
-                                  style={{ width: `${percent}%` }}
+                                  style={{ width: `${statsKnown ? percent : 0}%` }}
                                 />
                               </div>
                             </div>

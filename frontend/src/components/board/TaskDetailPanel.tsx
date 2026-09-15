@@ -172,6 +172,10 @@ export function TaskDetailPanel({
   const [uploadQueue, setUploadQueue] = useState<{ file: File; progress: number; error: string | null }[]>([]);
   const [watching, setWatching] = useState(false);
   const [watchingLoading, setWatchingLoading] = useState(true);
+  // A failed isWatchingTask GET used to fabricate `false` — a real watcher
+  // then saw "Watch", and clicking it POSTed a second watch and toasted a
+  // lie. Unknown must render as unknown, not as an actionable direction.
+  const [watchingUnknown, setWatchingUnknown] = useState(false);
   const [watchers, setWatchers] = useState<TaskWatcherResponse[]>([]);
   const [watchersLoading, setWatchersLoading] = useState(true);
   const [watchersError, setWatchersError] = useState(false);
@@ -220,12 +224,19 @@ export function TaskDetailPanel({
 
   useEffect(() => {
     let cancelled = false;
+    setWatchingUnknown(false);
     void isWatchingTask(workspaceId, projectId, task.id)
       .then((result) => {
-        if (!cancelled) setWatching(result);
+        if (!cancelled) {
+          setWatching(result);
+          setWatchingUnknown(false);
+        }
       })
       .catch(() => {
-        if (!cancelled) setWatching(false);
+        if (!cancelled) {
+          setWatching(false);
+          setWatchingUnknown(true);
+        }
       })
       .finally(() => {
         if (!cancelled) setWatchingLoading(false);
@@ -654,13 +665,15 @@ export function TaskDetailPanel({
           <button
             type="button"
             onClick={() => void toggleWatch()}
-            disabled={watchingLoading}
-            aria-label={watching ? t("task.unwatchAria") : t("task.watchAria")}
-            title={watching ? t("task.unwatch") : t("task.watch")}
+            disabled={watchingLoading || watchingUnknown}
+            aria-label={watchingUnknown ? t("task.watchUnknownAria") : watching ? t("task.unwatchAria") : t("task.watchAria")}
+            title={watchingUnknown ? t("task.watchUnknown") : watching ? t("task.unwatch") : t("task.watch")}
             className={`rounded p-1 transition-colors duration-150 ${
-              watching
-                ? "text-primary hover:text-primary"
-                : "text-muted-foreground hover:text-foreground"
+              watchingUnknown
+                ? "text-muted-foreground/60"
+                : watching
+                  ? "text-primary hover:text-primary"
+                  : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Eye className="size-4" aria-hidden />

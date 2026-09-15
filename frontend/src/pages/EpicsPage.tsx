@@ -47,6 +47,8 @@ export function EpicsPage() {
   const [dependencyEpicId, setDependencyEpicId] = useState<string | null>(null);
   const [blockedByIds, setBlockedByIds] = useState<string[]>([]);
   const [depsLoading, setDepsLoading] = useState(false);
+  const [depsError, setDepsError] = useState(false);
+  const [depsReloadKey, setDepsReloadKey] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pendingBlockerId, setPendingBlockerId] = useState("");
   const [addingBlocker, setAddingBlocker] = useState(false);
@@ -93,6 +95,7 @@ export function EpicsPage() {
     if (!dependencyEpicId) return;
     let cancelled = false;
     setDepsLoading(true);
+    setDepsError(false);
     setPickerOpen(false);
     setPendingBlockerId("");
     getEpicDependencies(workspaceId, projectId, dependencyEpicId)
@@ -100,7 +103,13 @@ export function EpicsPage() {
         if (!cancelled) setBlockedByIds(deps.map((d) => d.blockedByEpicId));
       })
       .catch(() => {
-        if (!cancelled) setBlockedByIds([]);
+        if (!cancelled) {
+          // The old catch fabricated [] — the dialog then claimed "No
+          // blockers" and the Add picker offered already-blocked epics
+          // back, POSTing duplicate dependency edges.
+          setBlockedByIds([]);
+          setDepsError(true);
+        }
       })
       .finally(() => {
         if (!cancelled) setDepsLoading(false);
@@ -108,7 +117,7 @@ export function EpicsPage() {
     return () => {
       cancelled = true;
     };
-  }, [workspaceId, projectId, dependencyEpicId]);
+  }, [workspaceId, projectId, dependencyEpicId, depsReloadKey]);
 
   async function handleAddBlocker() {
     if (!dependencyEpicId || !pendingBlockerId) return;
@@ -549,6 +558,17 @@ export function EpicsPage() {
 
                       {depsLoading ? (
                         <Skeleton className="h-12 w-full" />
+                      ) : depsError ? (
+                        <div className="flex flex-col items-start gap-2">
+                          <ErrorAlert message={t("epic.blockersLoadFailed")} />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setDepsReloadKey((n) => n + 1)}
+                          >
+                            {t("common.retry")}
+                          </Button>
+                        </div>
                       ) : blockedByEpics.length === 0 ? (
                         <p className="rounded-lg border border-dashed border-border bg-card/40 px-3 py-2.5 text-sm text-muted-foreground">
                           {t("epic.noBlockers")}
@@ -578,7 +598,7 @@ export function EpicsPage() {
                         </ul>
                       )}
 
-                      {isAdmin && !pickerOpen && (
+                      {isAdmin && !depsError && !pickerOpen && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -590,7 +610,7 @@ export function EpicsPage() {
                         </Button>
                       )}
 
-                      {isAdmin && pickerOpen && (
+                      {isAdmin && !depsError && pickerOpen && (
                         <div className="mt-2 flex items-center gap-2">
                           <select
                             value={pendingBlockerId}

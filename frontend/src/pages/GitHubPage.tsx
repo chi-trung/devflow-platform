@@ -35,22 +35,34 @@ export function GitHubPage() {
   const [prUrl, setPrUrl] = useState("");
   const [prStatus, setPrStatus] = useState("open");
   const [prAuthor, setPrAuthor] = useState("");
+  // The old Promise.all was all-or-nothing: a PR-list failure left
+  // `integration` at its null initial, so the page showed the "link a
+  // repository" form for a project that IS linked — and its submit POSTs
+  // linkGitHubRepo over the real binding. Track each half separately.
+  const [integrationUnknown, setIntegrationUnknown] = useState(false);
+  const [prsFailed, setPrsFailed] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try {
-      const [integrationData, prsData] = await Promise.all([
-        getGitHubIntegration(workspaceId, projectId),
-        getProjectPRs(workspaceId, projectId),
-      ]);
-      setIntegration(integrationData);
-      setPrs(prsData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("github.loadFailed"));
-    } finally {
-      setLoading(false);
+    const [integrationResult, prsResult] = await Promise.allSettled([
+      getGitHubIntegration(workspaceId, projectId),
+      getProjectPRs(workspaceId, projectId),
+    ]);
+    if (integrationResult.status === "fulfilled") {
+      setIntegration(integrationResult.value);
+      setIntegrationUnknown(false);
+    } else {
+      setIntegrationUnknown(true);
+      setError(integrationResult.reason instanceof Error ? integrationResult.reason.message : t("github.loadFailed"));
     }
+    if (prsResult.status === "fulfilled") {
+      setPrs(prsResult.value);
+      setPrsFailed(false);
+    } else {
+      setPrsFailed(true);
+    }
+    setLoading(false);
   }, [workspaceId, projectId, t]);
 
   useEffect(() => {
@@ -163,6 +175,21 @@ export function GitHubPage() {
         )}
 
         {!integration ? (
+          integrationUnknown ? (
+            // "Unknown" is not "not linked": offering the link form here
+            // lets a submit overwrite a binding the server still holds.
+            <div className="mb-6 rounded-xl border border-border bg-card p-5">
+              <ErrorAlert message={t("github.integrationUnknown")} />
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => void loadData()}
+              >
+                {t("common.retry")}
+              </Button>
+            </div>
+          ) : (
           <form
             onSubmit={handleLink}
             className="mb-6 rounded-xl border border-border bg-card p-5"
@@ -191,6 +218,7 @@ export function GitHubPage() {
               </Button>
             </div>
           </form>
+          )
         ) : (
           <div className="mb-6 rounded-xl border border-border bg-card p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -295,6 +323,17 @@ export function GitHubPage() {
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-20 w-full" />
             ))}
+          </div>
+        ) : prsFailed ? (
+          <div className="flex flex-col items-start gap-2">
+            <ErrorAlert message={t("github.loadPrsFailed")} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void loadData()}
+            >
+              {t("common.retry")}
+            </Button>
           </div>
         ) : prs.length === 0 ? (
           <EmptyState
