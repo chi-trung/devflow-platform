@@ -11,10 +11,13 @@ public sealed class LabelsController(ISender sender) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Labels.LabelResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetLabels(Guid projectId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetLabels(
+        Guid workspaceId,
+        Guid projectId,
+        CancellationToken cancellationToken)
     {
         var labels = await sender.Send(
-            new Application.Features.Labels.GetLabelsQuery(projectId),
+            new Application.Features.Labels.GetLabelsQuery(workspaceId, projectId),
             cancellationToken);
 
         return Ok(labels);
@@ -25,12 +28,13 @@ public sealed class LabelsController(ISender sender) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateLabel(
+        Guid workspaceId,
         Guid projectId,
         CreateLabelRequest request,
         CancellationToken cancellationToken)
     {
         var label = await sender.Send(
-            new Application.Features.Labels.CreateLabelCommand(projectId, request.Name, request.Color),
+            new Application.Features.Labels.CreateLabelCommand(workspaceId, projectId, request.Name, request.Color),
             cancellationToken);
 
         return StatusCode(StatusCodes.Status201Created, label);
@@ -40,12 +44,13 @@ public sealed class LabelsController(ISender sender) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteLabel(
+        Guid workspaceId,
         Guid projectId,
         Guid labelId,
         CancellationToken cancellationToken)
     {
         await sender.Send(
-            new Application.Features.Labels.DeleteLabelCommand(projectId, labelId),
+            new Application.Features.Labels.DeleteLabelCommand(workspaceId, projectId, labelId),
             cancellationToken);
 
         return NoContent();
@@ -54,13 +59,14 @@ public sealed class LabelsController(ISender sender) : ControllerBase
     [HttpPost("tasks/{taskId:guid}/assign/{labelId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> AssignLabelToTask(
+        Guid workspaceId,
         Guid projectId,
         Guid taskId,
         Guid labelId,
         CancellationToken cancellationToken)
     {
         await sender.Send(
-            new Application.Features.Labels.AssignLabelToTaskCommand(projectId, taskId, labelId),
+            new Application.Features.Labels.AssignLabelToTaskCommand(workspaceId, projectId, taskId, labelId),
             cancellationToken);
 
         return NoContent();
@@ -69,13 +75,14 @@ public sealed class LabelsController(ISender sender) : ControllerBase
     [HttpDelete("tasks/{taskId:guid}/remove/{labelId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> RemoveLabelFromTask(
+        Guid workspaceId,
         Guid projectId,
         Guid taskId,
         Guid labelId,
         CancellationToken cancellationToken)
     {
         await sender.Send(
-            new Application.Features.Labels.RemoveLabelFromTaskCommand(projectId, taskId, labelId),
+            new Application.Features.Labels.RemoveLabelFromTaskCommand(workspaceId, projectId, taskId, labelId),
             cancellationToken);
 
         return NoContent();
