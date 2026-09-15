@@ -15,4 +15,11 @@ public interface IGitHubRepository
     Task<IReadOnlyList<PullRequest>> GetPullRequestsByProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
 
     Task AddPullRequestAsync(PullRequest pullRequest, CancellationToken cancellationToken = default);
+
+    /// <summary>Scoped to <paramref name="projectId"/> on purpose: a caller
+    /// who guesses a PR id from another project must get a miss, not a delete.
+    /// Ids are never authorization.</summary>
+    Task<PullRequest?> GetPullRequestByIdAsync(Guid projectId, Guid pullRequestId, CancellationToken cancellationToken = default);
+
+    void RemovePullRequest(PullRequest pullRequest);
 }

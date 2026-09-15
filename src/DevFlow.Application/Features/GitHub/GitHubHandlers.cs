@@ -154,6 +154,30 @@ public class AddPullRequestHandler(
     }
 }
 
+// Delete one manually-added pull request row
+[RequireWorkspaceRole(WorkspaceRole.Member)]
+public sealed record DeletePullRequestCommand(
+    Guid WorkspaceId,
+    Guid ProjectId,
+    Guid PullRequestId) : IRequest, IWorkspaceRequest;
+
+public class DeletePullRequestHandler(
+    IGitHubRepository gitHubRepository,
+    IUnitOfWork unitOfWork)
+    : IRequestHandler<DeletePullRequestCommand>
+{
+    public async Task Handle(DeletePullRequestCommand request, CancellationToken ct)
+    {
+        // The lookup is scoped to ProjectId so a foreign PR id misses here
+        // rather than deleting another project's row.
+        var pr = await gitHubRepository.GetPullRequestByIdAsync(request.ProjectId, request.PullRequestId, ct)
+            ?? throw new NotFoundException("Pull request", request.PullRequestId);
+
+        gitHubRepository.RemovePullRequest(pr);
+        await unitOfWork.SaveChangesAsync(ct);
+    }
+}
+
 // Update the webhook signing secret for an integration
 [RequireWorkspaceRole(WorkspaceRole.Admin)]
 public sealed record UpdateGitHubWebhookSecretCommand(

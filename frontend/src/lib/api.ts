@@ -774,6 +774,20 @@ export function getProjectPRs(
   );
 }
 
+/** Removes a single pull-request row. Deliberately NOT
+ * `unlinkGitHubRepo` — that endpoint drops the whole integration
+ * (every PR + the repo binding) for one row's delete click. */
+export async function deletePR(
+  workspaceId: string,
+  projectId: string,
+  prId: string,
+): Promise<void> {
+  await api(
+    `/workspaces/${workspaceId}/projects/${projectId}/github/prs/${prId}`,
+    { method: "DELETE" },
+  );
+}
+
 export async function updateGitHubWebhookSecret(
   workspaceId: string,
   projectId: string,
