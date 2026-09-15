@@ -456,7 +456,8 @@
   "noActiveSprintDesc": "Bắt đầu sprint để theo dõi tiến độ burndown.",
   "remaining": "còn lại",
   "sprintHealthLoadFailed": "Không tải được trạng thái sprint.",
-  "burndownLoadFailed": "Không tải được biểu đồ burndown."
+  "burndownLoadFailed": "Không tải được biểu đồ burndown.",
+  "projectsLoadFailed": "Không tải được danh sách project của workspace này."
  },
  "board": {
   "backlog": "Chờ xử lý",
@@ -640,7 +641,9 @@
   "watcherCount_other": "{{count}} người theo dõi",
   "noWatchers": "Chưa có người theo dõi",
   "watchersLoadFailed": "Không tải được danh sách người theo dõi.",
-  "attachmentsLoadFailed": "Không tải được tệp đính kèm."
+  "attachmentsLoadFailed": "Không tải được tệp đính kèm.",
+  "watchUnknown": "Không xác định được trạng thái theo dõi",
+  "watchUnknownAria": "Không xác định được trạng thái theo dõi — hãy thử tải lại task"
  },
  "filter": {
   "filters": "Bộ lọc",
@@ -1086,7 +1089,8 @@
   "patRevoked": "Đã thu hồi token",
   "patRevokeFailed": "Không thu hồi được token.",
   "revokePat": "Thu hồi token {{name}}",
-  "loadPrsFailed": "Không tải được danh sách pull request."
+  "loadPrsFailed": "Không tải được danh sách pull request.",
+  "integrationUnknown": "Không kiểm tra được repo đã liên kết hay chưa. Hãy thử lại trước khi liên kết — liên kết ngay lúc này có thể ghi đè liên kết hiện có."
  },
  "profile": {
   "accountDetails": "Chi tiết tài khoản",
@@ -1439,7 +1443,8 @@
   "blockerAdded": "Đã thêm ràng buộc",
   "blockerAddFailed": "Không thêm được ràng buộc",
   "blockerRemoved": "Đã gỡ ràng buộc",
-  "blockerRemoveFailed": "Không gỡ được ràng buộc"
+  "blockerRemoveFailed": "Không gỡ được ràng buộc",
+  "blockersLoadFailed": "Không tải được danh sách block của epic này."
  },
  "milestone": {
   "title": "Milestones",
@@ -1751,7 +1756,9 @@
   "authMotto": "lập kế hoạch · xây dựng · review · triển khai",
   "editWorkspaceTitle": "Chỉnh sửa workspace",
   "wsNameLabel": "Tên workspace",
-  "wsDescriptionLabel": "Mô tả"
+  "wsDescriptionLabel": "Mô tả",
+  "statsLoadFailed": "Không tải được thống kê task",
+  "progressUnknown": "Không có tiến độ"
  },
  "label": {
   "title": "Nhãn",

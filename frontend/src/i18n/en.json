@@ -456,7 +456,8 @@
   "noActiveSprintDesc": "Start a sprint to track burndown progress.",
   "remaining": "remaining",
   "sprintHealthLoadFailed": "Could not load sprint health.",
-  "burndownLoadFailed": "Could not load the burndown chart."
+  "burndownLoadFailed": "Could not load the burndown chart.",
+  "projectsLoadFailed": "Could not load projects for this workspace."
  },
  "board": {
   "backlog": "Backlog",
@@ -640,7 +641,9 @@
   "watcherCount_other": "{{count}} watchers",
   "noWatchers": "No watchers yet",
   "watchersLoadFailed": "Could not load watchers.",
-  "attachmentsLoadFailed": "Could not load attachments."
+  "attachmentsLoadFailed": "Could not load attachments.",
+  "watchUnknown": "Watch status unavailable",
+  "watchUnknownAria": "Watch status unavailable — retry loading the task"
  },
  "filter": {
   "filters": "Filters",
@@ -1086,7 +1089,8 @@
   "patRevoked": "Token revoked",
   "patRevokeFailed": "Failed to revoke token.",
   "revokePat": "Revoke token {{name}}",
-  "loadPrsFailed": "Could not load pull requests."
+  "loadPrsFailed": "Could not load pull requests.",
+  "integrationUnknown": "Could not check whether a repository is linked. Retry before linking — linking now could overwrite the existing binding."
  },
  "profile": {
   "accountDetails": "Account details",
@@ -1439,7 +1443,8 @@
   "blockerAdded": "Dependency added",
   "blockerAddFailed": "Failed to add dependency",
   "blockerRemoved": "Dependency removed",
-  "blockerRemoveFailed": "Failed to remove dependency"
+  "blockerRemoveFailed": "Failed to remove dependency",
+  "blockersLoadFailed": "Could not load this epic's blockers."
  },
  "milestone": {
   "title": "Milestones",
@@ -1751,7 +1756,9 @@
   "authMotto": "plan · build · review · ship",
   "editWorkspaceTitle": "Edit workspace",
   "wsNameLabel": "Workspace name",
-  "wsDescriptionLabel": "Description"
+  "wsDescriptionLabel": "Description",
+  "statsLoadFailed": "Task stats could not be loaded",
+  "progressUnknown": "Progress unavailable"
  },
  "label": {
   "title": "Labels",

@@ -96,6 +96,11 @@ export function DashboardPage() {
 
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
+  // A failed projects GET used to silently empty the list: the project
+  // selector just vanished and the workspace read as "no projects" even
+  // when projects exist. Unknown must render as unknown, with a retry.
+  const [projectsFailed, setProjectsFailed] = useState(false);
+  const [projectsReloadKey, setProjectsReloadKey] = useState(0);
 
   const displayName = currentUser?.displayName ?? currentUser?.username ?? "";
   const hour = new Date().getHours();
@@ -125,6 +130,7 @@ export function DashboardPage() {
     // SprintHealthCard / stats don't fire requests for a project that belongs
     // to the old workspace (would 404 in the console while projects load).
     setSelectedProjectId("");
+    setProjectsFailed(false);
     let cancelled = false;
     void api<unknown>(`/workspaces/${selectedWsId}/projects`)
       .then((raw) => {
@@ -135,12 +141,15 @@ export function DashboardPage() {
         }
       })
       .catch(() => {
-        if (!cancelled) setProjects([]);
+        if (!cancelled) {
+          setProjects([]);
+          setProjectsFailed(true);
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [selectedWsId]);
+  }, [selectedWsId, projectsReloadKey]);
 
   const {
     data: dashboard,
@@ -217,7 +226,7 @@ export function DashboardPage() {
               on narrow screens (overflowing its fixed height). Desktop fits
               within max-w-5xl so the mouse wheel never hits the scroll row. */}
           <div className="no-scrollbar flex h-[38px] items-center gap-2 overflow-x-auto">
-            {selectedWsId && projects.length > 0 && (
+            {selectedWsId && !projectsFailed && projects.length > 0 && (
               <select
                 data-tour="project-select"
                 aria-label={t("dashboard.project")}
@@ -231,6 +240,18 @@ export function DashboardPage() {
                   </option>
                 ))}
               </select>
+            )}
+            {selectedWsId && projectsFailed && (
+              <div className="flex shrink-0 items-center gap-2">
+                <ErrorAlert message={t("dashboard.projectsLoadFailed")} />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setProjectsReloadKey((n) => n + 1)}
+                >
+                  {t("common.retry")}
+                </Button>
+              </div>
             )}
             {selectedWsId && workspaces.length > 0 && (
               <select
