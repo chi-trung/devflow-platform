@@ -3,12 +3,18 @@ import { History, X } from "lucide-react";
 import { useFocusTrap } from "../../hooks/useFocusTrap";
 import type { ActivityResponse } from "../../types/api";
 import { Avatar } from "../ui/Avatar";
+import { Button } from "../ui/Button";
+import { ErrorAlert } from "../ui/ErrorAlert";
 
 interface ActivityDrawerProps {
   open: boolean;
   onClose: () => void;
   activities: ActivityResponse[] | null;
   loading: boolean;
+  /** Load failed (drawer fetches lazily on open, so a failure is silent
+   * unless it's shown — "no activity" would be a lie). */
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 export function ActivityDrawer({
@@ -16,6 +22,8 @@ export function ActivityDrawer({
   onClose,
   activities,
   loading,
+  error = null,
+  onRetry,
 }: ActivityDrawerProps) {
   const { t } = useTranslation();
   // Mounted once per board and hidden by returning null, so the trap gates
@@ -59,6 +67,20 @@ export function ActivityDrawer({
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {error !== null && (
+            // A failed fetch must not launder into "no activity yet". Stale
+            // rows (if any) stay visible below the notice, with a retry.
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <ErrorAlert message={t("activity.loadFailed")} />
+              </div>
+              {onRetry && (
+                <Button size="sm" variant="outline" onClick={onRetry}>
+                  {t("common.retry")}
+                </Button>
+              )}
+            </div>
+          )}
           {loading && !activities ? (
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
@@ -72,9 +94,12 @@ export function ActivityDrawer({
               ))}
             </div>
           ) : !activities || activities.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              {t("activity.noActivity")}
-            </div>
+            error === null && (
+              // An empty list is only truthful when the fetch succeeded.
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                {t("activity.noActivity")}
+              </div>
+            )
           ) : (
             activities.map((act) => {
               const dateStr = new Date(act.createdAtUtc).toLocaleString([], {

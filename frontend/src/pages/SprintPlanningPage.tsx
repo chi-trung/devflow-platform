@@ -98,10 +98,9 @@ export function SprintPlanningPage() {
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/tasks`),
     [workspaceId, projectId],
   );
-  const taskData = useMemo(
-    () => pagedItems<TaskItemResponse>(taskDataRaw),
-    [taskDataRaw],
-  );
+  // Backlog load failed with nothing cached: task counts, the planning board
+  // and the "no tasks yet" empty state would all present 0 tasks as truth.
+  const backlogUnknown = error !== null && taskDataRaw === null;
 
   const [tasks, setTasks] = useState<TaskItemResponse[]>([]);
   const [boardError, setBoardError] = useState<string | null>(null);
@@ -248,7 +247,9 @@ export function SprintPlanningPage() {
     }
   }
 
-  const pageLoading = sprintsLoading || (loading && !taskData);
+  // pagedItems always returns an array, so `loading && !taskData` never fired
+  // — the skeleton was dead code and the page flashed empty while loading.
+  const pageLoading = sprintsLoading || loading;
 
   return (
     <AppShell>
@@ -285,7 +286,25 @@ export function SprintPlanningPage() {
 
         {(error ?? sprintsError ?? boardError) && (
           <div className="mb-4">
-            <ErrorAlert message={error ?? sprintsError ?? boardError ?? ""} />
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <ErrorAlert
+                  message={error ?? sprintsError ?? boardError ?? ""}
+                />
+              </div>
+              {(error ?? sprintsError) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    reload();
+                    reloadSprints();
+                  }}
+                >
+                  {t("common.retry")}
+                </Button>
+              )}
+            </div>
           </div>
         )}
 
@@ -342,18 +361,26 @@ export function SprintPlanningPage() {
                   <p className="text-sm text-muted-foreground">{active.goal}</p>
                 )}
                 <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3">
-                  <SprintProgress
-                    total={
-                      tasks.filter((t) => t.sprintId === active.id).length
-                    }
-                    completed={
-                      tasks.filter(
-                        (t) =>
-                          t.sprintId === active.id && t.status === "Done",
-                      ).length
-                    }
-                    className="min-w-48 flex-1"
-                  />
+                  {backlogUnknown ? (
+                    // Progress is computed from the task list; with the
+                    // backlog unknown, 0/n is not a number we can show.
+                    <span className="min-w-48 flex-1 font-mono text-xs text-muted-foreground">
+                      {t("sprint.progressUnknown")}
+                    </span>
+                  ) : (
+                    <SprintProgress
+                      total={
+                        tasks.filter((t) => t.sprintId === active.id).length
+                      }
+                      completed={
+                        tasks.filter(
+                          (t) =>
+                            t.sprintId === active.id && t.status === "Done",
+                        ).length
+                      }
+                      className="min-w-48 flex-1"
+                    />
+                  )}
                   {canManage && (
                     <Button
                       size="sm"
@@ -365,7 +392,9 @@ export function SprintPlanningPage() {
                     </Button>
                   )}
                 </div>
-                {active.startDateUtc && active.endDateUtc && (
+                {active.startDateUtc &&
+                  active.endDateUtc &&
+                  !backlogUnknown && (
                   <BurndownChart
                     className="mt-4"
                     startDateUtc={active.startDateUtc}
@@ -395,13 +424,17 @@ export function SprintPlanningPage() {
                         <h3 className="text-sm font-semibold">{sprint.name}</h3>
                         <Badge tone="violet">{t("sprint.planned")}</Badge>
                         <span className="ml-auto font-mono text-[11px] text-muted-foreground">
-                          {t("sprint.tasksCount", {
-                            count: tasks.filter(
-                              (task) => task.sprintId === sprint.id,
-                            ).length,
-                          })}
+                          {backlogUnknown
+                            ? t("sprint.tasksUnknown")
+                            : t("sprint.tasksCount", {
+                                count: tasks.filter(
+                                  (task) => task.sprintId === sprint.id,
+                                ).length,
+                              })}
                         </span>
-                        {canManage && startingId !== sprint.id && (
+                        {canManage &&
+                          startingId !== sprint.id &&
+                          !backlogUnknown && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -471,19 +504,35 @@ export function SprintPlanningPage() {
               <h2 className="mb-2 px-1 font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {t("sprint.planWork")}
               </h2>
-              <p className="mb-3 px-1 text-sm text-muted-foreground">
-                {t("sprint.planWorkDesc")}
-              </p>
-              <SprintBoard
-                tasks={tasks}
-                sprints={planning}
-                onAssign={(taskId, sprintId) =>
-                  void handleAssign(taskId, sprintId)
-                }
-                onRemove={(taskId, sprintId) =>
-                  void handleRemoveFromSprint(taskId, sprintId)
-                }
-              />
+              {backlogUnknown ? (
+                // The planning board IS the task list — rendering it over an
+                // unknown backlog would show an empty board and invite
+                // "move everything in" actions based on nothing.
+                <div className="flex items-start gap-2">
+                  <div className="flex-1">
+                    <ErrorAlert message={t("sprint.backlogLoadFailed")} />
+                  </div>
+                  <Button size="sm" variant="outline" onClick={reload}>
+                    {t("common.retry")}
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <p className="mb-3 px-1 text-sm text-muted-foreground">
+                    {t("sprint.planWorkDesc")}
+                  </p>
+                  <SprintBoard
+                    tasks={tasks}
+                    sprints={planning}
+                    onAssign={(taskId, sprintId) =>
+                      void handleAssign(taskId, sprintId)
+                    }
+                    onRemove={(taskId, sprintId) =>
+                      void handleRemoveFromSprint(taskId, sprintId)
+                    }
+                  />
+                </>
+              )}
             </section>
 
             {completed.length > 0 && (
@@ -520,10 +569,16 @@ export function SprintPlanningPage() {
                             {fmt(sprint.endDateUtc)}
                           </p>
                         )}
-                        <SprintProgress
-                          total={sprintTasks.length}
-                          completed={done}
-                        />
+                        {backlogUnknown ? (
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {t("sprint.progressUnknown")}
+                          </span>
+                        ) : (
+                          <SprintProgress
+                            total={sprintTasks.length}
+                            completed={done}
+                          />
+                        )}
                       </div>
                     );
                   })}
@@ -531,7 +586,7 @@ export function SprintPlanningPage() {
               </section>
             )}
 
-            {tasks.length === 0 && allSprints.length > 0 && (
+            {tasks.length === 0 && allSprints.length > 0 && !backlogUnknown && (
               <div className="mt-6">
                 <EmptyState
                   icon={<SquareKanban className="size-8 text-muted-foreground" aria-hidden />}

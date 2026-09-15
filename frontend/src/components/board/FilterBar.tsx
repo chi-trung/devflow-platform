@@ -36,6 +36,16 @@ interface FilterBarProps {
   projectId: string;
   members: WorkspaceMemberResponse[];
   labels: LabelResponse[];
+  /** Members list failed with nothing cached — the dropdown would otherwise
+   * render as "this workspace has no people". */
+  membersFailed?: boolean;
+  onRetryMembers?: () => void;
+  /** Labels list failed with nothing cached (see membersFailed). */
+  labelsFailed?: boolean;
+  onRetryLabels?: () => void;
+  /** Blocked state is unknown (dependency graph unavailable) — the
+   * blocked-only toggle can't answer its question, so it's disabled. */
+  blockedUnknown?: boolean;
   current: BoardFilterState;
   onChange: (patch: Partial<BoardFilterState>) => void;
 }
@@ -44,6 +54,11 @@ export function FilterBar({
   projectId,
   members,
   labels,
+  membersFailed = false,
+  onRetryMembers,
+  labelsFailed = false,
+  onRetryLabels,
+  blockedUnknown = false,
   current,
   onChange,
 }: FilterBarProps) {
@@ -159,12 +174,26 @@ export function FilterBar({
       >
         <option value="">{t("filter.allAssignees")}</option>
         <option value="none">{t("filter.unassigned")}</option>
+        {membersFailed && (
+          // An empty option list would read as "this workspace has nobody".
+          <option disabled>{t("filter.membersLoadFailed")}</option>
+        )}
         {members.map((member) => (
           <option key={member.userId} value={member.userId}>
             {member.displayName || member.username}
           </option>
         ))}
       </select>
+      {membersFailed && onRetryMembers && (
+        <button
+          type="button"
+          onClick={onRetryMembers}
+          aria-label={t("filter.retryMembers")}
+          className="shrink-0 rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-medium text-foreground transition-colors duration-150 hover:border-primary"
+        >
+          {t("common.retry")}
+        </button>
+      )}
 
       <select
         aria-label={t("filter.filterByPriority")}
@@ -186,12 +215,25 @@ export function FilterBar({
         className={inputClass}
       >
         <option value="">{t("filter.anyLabel")}</option>
+        {labelsFailed && (
+          <option disabled>{t("filter.labelsLoadFailed")}</option>
+        )}
         {labels.map((label) => (
           <option key={label.id} value={label.id}>
             {label.name}
           </option>
         ))}
       </select>
+      {labelsFailed && onRetryLabels && (
+        <button
+          type="button"
+          onClick={onRetryLabels}
+          aria-label={t("filter.retryLabels")}
+          className="shrink-0 rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-medium text-foreground transition-colors duration-150 hover:border-primary"
+        >
+          {t("common.retry")}
+        </button>
+      )}
 
       <select
         aria-label={t("filter.filterByPr")}
@@ -233,8 +275,9 @@ export function FilterBar({
         type="button"
         onClick={() => onChange({ blockedOnly: !current.blockedOnly })}
         aria-pressed={current.blockedOnly}
-        title={t("filter.showBlockedOnly")}
-        className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm transition-all duration-200 active:scale-[0.98] ${
+        disabled={blockedUnknown}
+        title={blockedUnknown ? t("filter.blockedUnavailable") : t("filter.showBlockedOnly")}
+        className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${
           current.blockedOnly
             ? "border-destructive/50 bg-destructive/10 text-destructive"
             : "border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground"
