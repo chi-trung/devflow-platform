@@ -1321,7 +1321,11 @@
   "cleanupMessage": "Thao tác này sẽ xóa vĩnh viễn tất cả thông báo bạn đã đọc.",
   "cleanupConfirm": "Dọn dẹp",
   "settings": "Cài đặt thông báo",
-  "loadFailed": "Tải thông báo thất bại."
+  "loadFailed": "Tải thông báo thất bại.",
+  "markReadFailed": "Không đánh dấu thông báo là đã đọc được.",
+  "markUnreadFailed": "Không đánh dấu thông báo là chưa đọc được.",
+  "markAllReadFailed": "Không đánh dấu tất cả thông báo là đã đọc được.",
+  "deleteFailed": "Không xoá được thông báo."
  },
  "notificationPage": {
   "filterAll": "Tất cả",
@@ -1338,7 +1342,8 @@
   "bulkDeleteConfirm": "Xóa tất cả đã đọc",
   "markAsUnread": "Đánh dấu chưa đọc",
   "delete": "Xóa",
-  "deleteAria": "Xóa thông báo {{id}}"
+  "deleteAria": "Xóa thông báo {{id}}",
+  "bulkDeleteFailed": "Không xoá được các thông báo đã đọc."
  },
  "userMenu": {
   "profile": "Hồ sơ",

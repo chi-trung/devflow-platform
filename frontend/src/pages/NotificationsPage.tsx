@@ -127,8 +127,8 @@ export function NotificationsPage() {
       setNotifications((current) =>
         current.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
       );
-    } catch {
-      // ignore
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("notification.markReadFailed"));
     }
   }
 
@@ -138,8 +138,8 @@ export function NotificationsPage() {
       setNotifications((current) =>
         current.map((n) => (n.id === id ? { ...n, isRead: false } : n)),
       );
-    } catch {
-      // ignore
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("notification.markUnreadFailed"));
     }
   }
 
@@ -149,8 +149,8 @@ export function NotificationsPage() {
       setNotifications((current) =>
         current.map((n) => ({ ...n, isRead: true })),
       );
-    } catch {
-      // ignore
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("notification.markAllReadFailed"));
     }
   }
 
@@ -160,8 +160,8 @@ export function NotificationsPage() {
       await deleteNotification(id);
       setNotifications((current) => current.filter((n) => n.id !== id));
       setTotalCount((c) => c - 1);
-    } catch {
-      // ignore
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("notification.deleteFailed"));
     } finally {
       setDeletingId(null);
     }
@@ -173,8 +173,11 @@ export function NotificationsPage() {
       setNotifications((current) => current.filter((n) => !n.isRead));
       setTotalCount((c) => c - notifications.filter((n) => n.isRead).length);
       setPendingBulkDelete(false);
-    } catch {
-      // ignore
+    } catch (err) {
+      // Close the dialog first: an error rendered behind an open ConfirmDialog
+      // is unreachable (same lesson as the GitHub unlink flow in #224).
+      setPendingBulkDelete(false);
+      setError(err instanceof Error ? err.message : t("notificationPage.bulkDeleteFailed"));
     }
   }
 
@@ -248,8 +251,11 @@ export function NotificationsPage() {
         </div>
 
         {error && (
-          <div className="mb-4">
-            <ErrorAlert message={error} />
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <ErrorAlert id="notifications-load-error" message={error} />
+            <Button variant="outline" size="sm" onClick={() => fetchNotifications(page, filter)}>
+              {t("common.retry")}
+            </Button>
           </div>
         )}
 
@@ -259,7 +265,7 @@ export function NotificationsPage() {
               <Skeleton key={i} className="h-16 w-full" />
             ))}
           </div>
-        ) : notifications.length === 0 ? (
+        ) : notifications.length === 0 && !error ? (
           <EmptyState
             icon={<Bell className="size-8 text-muted-foreground/60" aria-hidden />}
             illustration={<EmptyNotificationsIllustration className="size-24" />}

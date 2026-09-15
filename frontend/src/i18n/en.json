@@ -1321,7 +1321,11 @@
   "cleanupMessage": "This will permanently remove all notifications you have already read.",
   "cleanupConfirm": "Clean up",
   "settings": "Notification settings",
-  "loadFailed": "Failed to load notifications."
+  "loadFailed": "Failed to load notifications.",
+  "markReadFailed": "Failed to mark notification as read.",
+  "markUnreadFailed": "Failed to mark notification as unread.",
+  "markAllReadFailed": "Failed to mark all notifications as read.",
+  "deleteFailed": "Failed to delete the notification."
  },
  "notificationPage": {
   "filterAll": "All",
@@ -1338,7 +1342,8 @@
   "bulkDeleteConfirm": "Delete all read",
   "markAsUnread": "Mark as unread",
   "delete": "Delete",
-  "deleteAria": "Delete notification {{id}}"
+  "deleteAria": "Delete notification {{id}}",
+  "bulkDeleteFailed": "Failed to delete read notifications."
  },
  "userMenu": {
   "profile": "Profile",
