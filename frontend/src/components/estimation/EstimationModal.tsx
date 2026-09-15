@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { X, Check } from "lucide-react";
 import { useFocusTrap } from "../../hooks/useFocusTrap";
 import { Button } from "../ui/Button";
+import { useToast } from "../ui/ToastProvider";
 import { setTaskEstimation } from "../../lib/api";
 
 const FIBONACCI = [1, 2, 3, 5, 8, 13, 21] as const;
@@ -27,6 +28,7 @@ export function EstimationModal({
   onSaved,
 }: EstimationModalProps) {
   const { t } = useTranslation();
+  const { push } = useToast();
   const [selected, setSelected] = useState<number | null>(currentEstimate);
   const [saving, setSaving] = useState(false);
   // Rendered per card with an `open` flag; the trap follows the flag so
@@ -51,7 +53,10 @@ export function EstimationModal({
       onSaved(selected);
       onClose();
     } catch {
-      // keep modal open on error
+      // The modal already stays open on failure so the pick isn't lost, but
+      // that alone looks like a no-op: the Save button just un-disables. Say
+      // the request failed. estimation.saveFailed exists in both locales.
+      push(t("estimation.saveFailed"), "error");
     } finally {
       setSaving(false);
     }

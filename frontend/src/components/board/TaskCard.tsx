@@ -161,7 +161,10 @@ export function TaskCard({
       setShowChildForm(false);
       onEstimationSaved?.(task.id, null);
     } catch {
-      // keep form open on error
+      // Keep the form open so the typed title isn't lost, but the quiet
+      // un-spin of the Add button alone looks like success-with-a-glitch —
+      // say the POST failed. subtask.addFailed exists in both locales.
+      push(t("subtask.addFailed"), "error");
     } finally {
       setAddingChild(false);
     }
