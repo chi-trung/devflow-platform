@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { ExternalLink, GitBranch, GitPullRequest, Loader2, PlusCircle } from "lucide-react";
 import { createTaskPullRequest, getGitHubIntegration, getProjectPRs } from "../../lib/api";
 import type { PullRequestResponse } from "../../types/api";
+import { Button } from "../ui/Button";
+import { ErrorAlert } from "../ui/ErrorAlert";
 import { useToast } from "../ui/ToastProvider";
 
 // Canonical casing is PascalCase (backend normalizes it). Lowercase keys
@@ -41,6 +43,11 @@ export function TaskPullRequests({ workspaceId, projectId, taskId }: TaskPullReq
   const { t } = useTranslation();
   const { push } = useToast();
   const [prs, setPrs] = useState<PullRequestResponse[] | null>(null);
+  // Established fail-closed convention: a load that errored while nothing was
+  // ever cached. `prs === null` alone cannot tell "still loading" from
+  // "failed", and laundering the error into setPrs([]) rendered a false
+  // "(0 PRs)" - indistinguishable from a task with no linked PRs.
+  const [prsFailed, setPrsFailed] = useState(false);
   const [repoLinked, setRepoLinked] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -51,10 +58,15 @@ export function TaskPullRequests({ workspaceId, projectId, taskId }: TaskPullReq
       .then((all) => {
         if (!cancelled) {
           setPrs(all.filter((pr) => pr.linkedTaskId === taskId));
+          setPrsFailed(false);
         }
       })
       .catch(() => {
-        if (!cancelled) setPrs([]);
+        // Keep prs null (never []) and mark the failure - the header count and
+        // the self-hide below both depend on distinguishing unknown from empty.
+        if (!cancelled) {
+          setPrsFailed(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -64,6 +76,10 @@ export function TaskPullRequests({ workspaceId, projectId, taskId }: TaskPullReq
   useEffect(reload, [workspaceId, projectId, taskId]);
 
   // The create button only makes sense when a repo is linked for this project.
+  // A failed probe leaves repoLinked false: the button stays hidden, which is
+  // an absence of action rather than a claim, so no separate failure state is
+  // needed here - but it must not be the reason the whole section disappears
+  // when the PR list itself also failed (see the self-hide gate below).
   useEffect(() => {
     let cancelled = false;
     getGitHubIntegration(workspaceId, projectId)
@@ -90,7 +106,11 @@ export function TaskPullRequests({ workspaceId, projectId, taskId }: TaskPullReq
     }
   }
 
-  if (prs !== null && prs.length === 0 && !repoLinked) return null;
+  // Self-hide only what we can prove empty. Before the list failed state
+  // existed, a failed GET /github/prs laundered into prs=[] and this gate
+  // deleted the section entirely whenever the integration probe had also
+  // failed - two silent failures compounding into "nothing to show here".
+  if (!prsFailed && prs !== null && prs.length === 0 && !repoLinked) return null;
 
   return (
     <section className="space-y-2">
@@ -98,7 +118,9 @@ export function TaskPullRequests({ workspaceId, projectId, taskId }: TaskPullReq
         <h3 className="flex items-center gap-1.5 text-sm font-medium">
           <GitPullRequest className="size-4 text-muted-foreground" aria-hidden />
           {t("github.linkedPrs")}{" "}
-          <span className="font-mono text-xs text-muted-foreground">({prs?.length ?? 0})</span>
+          <span className="font-mono text-xs text-muted-foreground">
+            ({prsFailed ? "—" : (prs?.length ?? 0)})
+          </span>
         </h3>
         {repoLinked && (
           <button
@@ -119,7 +141,14 @@ export function TaskPullRequests({ workspaceId, projectId, taskId }: TaskPullReq
 
       {createError && <p role="alert" className="text-xs text-destructive">{createError}</p>}
 
-      {!prs ? (
+      {prsFailed ? (
+        <div className="space-y-2">
+          <ErrorAlert id="task-prs-load-error" message={t("github.loadPrsFailed")} />
+          <Button variant="outline" size="sm" onClick={reload}>
+            {t("common.retry")}
+          </Button>
+        </div>
+      ) : !prs ? (
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Loader2 className="size-3 animate-spin" aria-hidden />
           {t("common.loading")}
