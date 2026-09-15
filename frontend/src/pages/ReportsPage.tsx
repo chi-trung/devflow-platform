@@ -13,6 +13,7 @@ import { api, exportTasks, getBurndown, getTeamReport, getVelocity, getCycleLead
 import { useApi } from "../hooks/useApi";
 import { useToast } from "../components/ui/ToastProvider";
 import { AppShell } from "../components/AppShell";
+import { Button } from "../components/ui/Button";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { BurndownChartApi } from "../components/reporting/BurndownChartApi";
@@ -22,10 +23,35 @@ import { VelocityTrendChart } from "../components/reporting/VelocityTrendChart";
 import { TeamReportCards } from "../components/reporting/TeamReportCards";
 import type {
   ProjectResponse,
+  TeamReportResponse,
   WorkspaceMemberResponse,
 } from "../types/api";
 
 type ReportTab = "charts" | "team" | "export";
+
+// Every report section shares one failure affordance: the server message plus a
+// retry wired to the reload its own useApi already exposed. Before this, an
+// errored chart had no way to recover short of changing the date range or
+// reloading the page.
+function ReportError({
+  id,
+  message,
+  onRetry,
+}: {
+  id: string;
+  message: string;
+  onRetry: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <ErrorAlert id={id} message={message} />
+      <Button variant="outline" size="sm" onClick={onRetry}>
+        {t("common.retry")}
+      </Button>
+    </div>
+  );
+}
 
 function isoDaysAgo(days: number): string {
   const d = new Date();
@@ -40,39 +66,64 @@ export function ReportsPage() {
   const [from, setFrom] = useState(isoDaysAgo(29));
   const [to, setTo] = useState(isoDaysAgo(0));
 
-  const { data: project } = useApi<ProjectResponse>(
-    () => api(`/workspaces/${workspaceId}/projects/${projectId}`),
-    [workspaceId, projectId],
-  );
+  // Fail-closed convention (waves 2-8): error !== null && data === null means
+  // "failed with nothing cached" - the only shape that justifies a fallback
+  // render. Dropping `error` here left the h1 skeleton stuck forever on a
+  // failed project load, and a failed members list silently degraded the team
+  // table to fallback names with no way to recover.
+  const { data: project, error: projectError, reload: reloadProject } =
+    useApi<ProjectResponse>(
+      () => api(`/workspaces/${workspaceId}/projects/${projectId}`),
+      [workspaceId, projectId],
+    );
+  const projectFailed = projectError !== null && project === null;
 
-  const { data: members } = useApi<WorkspaceMemberResponse[]>(
-    () => api(`/workspaces/${workspaceId}/members`),
-    [workspaceId],
-  );
+  const { data: members, error: membersError, reload: reloadMembers } =
+    useApi<WorkspaceMemberResponse[]>(
+      () => api(`/workspaces/${workspaceId}/members`),
+      [workspaceId],
+    );
+  const membersFailed = membersError !== null && members === null;
 
-  // Charts data loads with the page (the charts tab is the default); team data
-  // only feeds the team tab, so it's fetched lazily when that tab opens.
-  const { data: burndown, error: burndownError, loading: burndownLoading } =
-    useApi(() => getBurndown(workspaceId, projectId, from, to), [
-      workspaceId,
-      projectId,
-      from,
-      to,
-    ]);
+  const {
+    data: burndown,
+    error: burndownError,
+    loading: burndownLoading,
+    reload: reloadBurndown,
+  } = useApi(() => getBurndown(workspaceId, projectId, from, to), [
+    workspaceId,
+    projectId,
+    from,
+    to,
+  ]);
 
-  const { data: velocity, error: velocityError, loading: velocityLoading } =
+  const { data: velocity, error: velocityError, loading: velocityLoading, reload: reloadVelocity } =
     useApi(() => getVelocity(workspaceId, projectId), [workspaceId, projectId]);
 
-  const { data: cycleLead, error: cycleLeadError, loading: cycleLeadLoading } =
-    useApi(() => getCycleLeadTime(workspaceId, projectId), [workspaceId, projectId]);
+  const {
+    data: cycleLead,
+    error: cycleLeadError,
+    loading: cycleLeadLoading,
+    reload: reloadCycleLead,
+  } = useApi(() => getCycleLeadTime(workspaceId, projectId), [workspaceId, projectId]);
 
-  const { data: velocityHistory, error: velocityHistoryError, loading: velocityHistoryLoading } =
-    useApi(() => getVelocityHistory(workspaceId, projectId), [workspaceId, projectId]);
+  const {
+    data: velocityHistory,
+    error: velocityHistoryError,
+    loading: velocityHistoryLoading,
+    reload: reloadVelocityHistory,
+  } = useApi(() => getVelocityHistory(workspaceId, projectId), [workspaceId, projectId]);
 
-  const { data: team, error: teamError, loading: teamLoading } = useApi(
-    () => (tab === "team" ? getTeamReport(workspaceId) : Promise.resolve(undefined)),
-    [workspaceId, tab],
-  );
+  // Charts data loads with the page (the charts tab is the default); team data
+  // only feeds the team tab, so it's fetched lazily when that tab opens. The
+  // off-tab stub resolves null (not undefined) on purpose: null is the hook's
+  // "nothing cached" sentinel, so a team fetch that fails after a tab switch
+  // still reads as failed rather than slipping past the === null gate.
+  const { data: team, error: teamError, loading: teamLoading, reload: reloadTeam } =
+    useApi<TeamReportResponse | null>(
+      () => (tab === "team" ? getTeamReport(workspaceId) : Promise.resolve(null)),
+      [workspaceId, tab],
+    );
 
   const rangeError =
     from && to && new Date(from) > new Date(to)
@@ -142,10 +193,24 @@ export function ReportsPage() {
             <h1 className="font-display text-2xl font-semibold tracking-tight">
               {project ? (
                 t("reports.titleWithName", { name: project.name })
+              ) : projectFailed ? (
+                // A failed load must not keep the shimmer spinning forever:
+                // fall back to the generic (true) title so the page never
+                // claims a project name it does not have.
+                t("reports.title")
               ) : (
                 <Skeleton className="h-8 w-56" />
               )}
             </h1>
+            {projectFailed && projectError && (
+              <div className="mt-2">
+                <ReportError
+                  id="reports-project-error"
+                  message={projectError}
+                  onRetry={reloadProject}
+                />
+              </div>
+            )}
             <p className="mt-0.5 text-sm text-muted-foreground">
               {t("reports.description")}
             </p>
@@ -228,7 +293,7 @@ export function ReportsPage() {
               {burndownLoading ? (
                 <Skeleton className="h-72" />
               ) : burndownError ? (
-                <ErrorAlert message={burndownError} />
+                <ReportError id="reports-burndown-error" message={burndownError} onRetry={reloadBurndown} />
               ) : burndown ? (
                 <BurndownChartApi data={burndown} />
               ) : null}
@@ -238,7 +303,7 @@ export function ReportsPage() {
               {velocityLoading ? (
                 <Skeleton className="h-64" />
               ) : velocityError ? (
-                <ErrorAlert message={velocityError} />
+                <ReportError id="reports-velocity-error" message={velocityError} onRetry={reloadVelocity} />
               ) : velocity ? (
                 <VelocityChart data={velocity} />
               ) : null}
@@ -248,7 +313,11 @@ export function ReportsPage() {
               {velocityHistoryLoading ? (
                 <Skeleton className="h-64" />
               ) : velocityHistoryError ? (
-                <ErrorAlert message={velocityHistoryError} />
+                <ReportError
+                  id="reports-velocity-history-error"
+                  message={velocityHistoryError}
+                  onRetry={reloadVelocityHistory}
+                />
               ) : velocityHistory ? (
                 <VelocityTrendChart data={velocityHistory} />
               ) : null}
@@ -258,7 +327,7 @@ export function ReportsPage() {
               {cycleLeadLoading ? (
                 <Skeleton className="h-72" />
               ) : cycleLeadError ? (
-                <ErrorAlert message={cycleLeadError} />
+                <ReportError id="reports-cycle-lead-error" message={cycleLeadError} onRetry={reloadCycleLead} />
               ) : cycleLead ? (
                 <CycleLeadTimeChart data={cycleLead} />
               ) : null}
@@ -277,9 +346,18 @@ export function ReportsPage() {
             {teamLoading ? (
               <Skeleton className="h-40" />
             ) : teamError ? (
-              <ErrorAlert message={teamError} />
+              <ReportError id="reports-team-error" message={teamError} onRetry={reloadTeam} />
             ) : team ? (
-              <TeamReportCards data={team} members={members ?? []} />
+              <>
+                {membersFailed && membersError && (
+                  <ReportError
+                    id="reports-members-error"
+                    message={membersError}
+                    onRetry={reloadMembers}
+                  />
+                )}
+                <TeamReportCards data={team} members={members ?? []} />
+              </>
             ) : null}
           </div>
         )}
