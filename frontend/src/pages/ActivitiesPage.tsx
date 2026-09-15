@@ -64,6 +64,7 @@ export function ActivitiesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [members, setMembers] = useState<WorkspaceMemberResponse[]>([]);
+  const [membersError, setMembersError] = useState<string | null>(null);
 
   // Filters
   const [actorFilter, setActorFilter] = useState<string>("");
@@ -75,13 +76,22 @@ export function ActivitiesPage() {
 
   const PAGE_SIZE = 25;
 
-  // Load members for actor dropdown
-  useEffect(() => {
+  // Load members for actor dropdown. A failure must be visible: the
+  // alternative is a dropdown stuck at "All members" that can never offer a
+  // person to filter by, with no hint of why.
+  const loadActors = useCallback(async () => {
     if (!workspaceId) return;
-    api<WorkspaceMemberResponse[]>(`/workspaces/${workspaceId}/members`)
-      .then(setMembers)
-      .catch(() => {});
-  }, [workspaceId]);
+    setMembersError(null);
+    try {
+      setMembers(await api<WorkspaceMemberResponse[]>(`/workspaces/${workspaceId}/members`));
+    } catch {
+      setMembersError(t("activity.actorsLoadFailed"));
+    }
+  }, [workspaceId, t]);
+
+  useEffect(() => {
+    void loadActors();
+  }, [loadActors]);
 
   const loadActivities = useCallback(async () => {
     setLoading(true);
@@ -200,6 +210,16 @@ export function ActivitiesPage() {
                     </option>
                   ))}
                 </select>
+                {membersError && (
+                  <div className="mt-2 flex items-start gap-2">
+                    <div className="flex-1">
+                      <ErrorAlert id="activities-actors-error" message={membersError} />
+                    </div>
+                    <Button size="sm" variant="outline" onClick={loadActors}>
+                      {t("common.retry")}
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Action filter */}

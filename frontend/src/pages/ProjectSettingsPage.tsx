@@ -36,6 +36,7 @@ export function ProjectSettingsPage() {
   const [membersError, setMembersError] = useState<string | null>(null);
   const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMemberResponse[]>([]);
   const [workspaceMembersLoading, setWorkspaceMembersLoading] = useState(true);
+  const [workspaceMembersError, setWorkspaceMembersError] = useState<string | null>(null);
 
   const [inviting, setInviting] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -64,15 +65,20 @@ export function ProjectSettingsPage() {
 
   const loadWorkspaceMembers = useCallback(async () => {
     setWorkspaceMembersLoading(true);
+    setWorkspaceMembersError(null);
     try {
       const data = await api<WorkspaceMemberResponse[]>(`/workspaces/${workspaceId}/members`);
       setWorkspaceMembers(data);
     } catch {
-      // non-blocking
+      // Non-blocking for the page itself, but NOT silent: an empty roster
+      // reads as "every workspace member is already on this project", which
+      // just disables the Add-member button with no reason. Name the failed
+      // load and offer a retry (CustomFieldsSection pattern).
+      setWorkspaceMembersError(t("projectMember.workspaceLoadFailed"));
     } finally {
       setWorkspaceMembersLoading(false);
     }
-  }, [workspaceId]);
+  }, [workspaceId, t]);
 
   useEffect(() => {
     loadMembers();
@@ -172,6 +178,20 @@ export function ProjectSettingsPage() {
             )}
           </div>
         </div>
+
+        {workspaceMembersError && (
+          <div className="mb-4 flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert
+                id="projectsettingspage-workspacemembers-error"
+                message={workspaceMembersError}
+              />
+            </div>
+            <Button size="sm" variant="outline" onClick={loadWorkspaceMembers}>
+              {t("common.retry")}
+            </Button>
+          </div>
+        )}
 
         {inviting && (
           <form
