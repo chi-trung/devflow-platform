@@ -6,6 +6,8 @@ import { Bell, CheckCheck, ExternalLink, Settings, Trash2 } from "lucide-react";
 import { useNotifications } from "../../hooks/useNotifications";
 import type { IncomingNotification } from "../../lib/realtime";
 import { deleteAllReadNotifications } from "../../lib/api";
+import { Button } from "../ui/Button";
+import { ErrorAlert } from "../ui/ErrorAlert";
 import { useToast } from "../ui/ToastProvider";
 import { NotificationItem } from "./NotificationItem";
 import { Dialog } from "../ui/Dialog";
@@ -48,10 +50,16 @@ export function NotificationsPanel({
     notifications,
     unreadCount,
     loading,
+    error,
     refresh,
     markRead,
     markAllRead,
   } = useNotifications(workspaceId, true, { onIncoming: handleIncoming });
+
+  // Fail-closed convention: the error only replaces the list when nothing was
+  // ever loaded. With data cached, a failed background poll keeps showing it
+  // (useNotifications holds the last known list deliberately).
+  const loadFailed = error !== null && notifications.length === 0;
 
   const filtered = useMemo(() => {
     if (filter === "unread") return notifications.filter((n) => !n.isRead);
@@ -151,8 +159,10 @@ export function NotificationsPanel({
       await deleteAllReadNotifications();
       refresh();
       push(t("notification.cleanupConfirm"));
-    } catch {
-      // ignore
+    } catch (err) {
+      // The dialog is already closed, so a toast is the only reachable place
+      // to say the destructive action failed.
+      push(err instanceof Error ? err.message : t("notificationPage.bulkDeleteFailed"), "error");
     }
   }
 
@@ -250,6 +260,15 @@ export function NotificationsPanel({
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="skeleton h-10 w-full" />
                 ))}
+              </div>
+            ) : loadFailed && error ? (
+              // A failed first load is not an empty inbox: say so, with the
+              // refresh the bell trigger already performs.
+              <div className="flex flex-col gap-2 p-3">
+                <ErrorAlert id="notifications-panel-error" message={error} />
+                <Button variant="outline" size="sm" onClick={refresh}>
+                  {t("common.retry")}
+                </Button>
               </div>
             ) : allRead && filter !== "unread" ? (
               <div className="flex flex-col items-center gap-1.5 px-6 py-10 text-center">

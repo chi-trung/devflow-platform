@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   getNotifications,
   markAllNotificationsRead as markAllReadApi,
@@ -65,6 +66,8 @@ export function useNotifications(
   notifications: AppNotification[];
   unreadCount: number;
   loading: boolean;
+  /** Message from the last failed load, or null when the last load succeeded. */
+  error: string | null;
   refresh: () => void;
   markRead: (id: string) => void;
   markUnread: (id: string) => void;
@@ -72,6 +75,8 @@ export function useNotifications(
 } {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(enabled);
+  const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
   const { currentUser } = useAuth();
   const currentUserRef = useRef(currentUser);
   currentUserRef.current = currentUser;
@@ -90,13 +95,17 @@ export function useNotifications(
     try {
       const result = await getNotifications({ pageSize: MAX_ITEMS });
       setNotifications(result.items.map(fromApi));
-    } catch {
+      setError(null);
+    } catch (err) {
       // If the API fails (e.g. offline), keep the last known list and let the
-      // 60s poll recover. Never fabricate notifications from activities.
+      // 60s poll recover. Never fabricate notifications from activities. The
+      // error is surfaced (not swallowed) so a first-load failure renders as
+      // an error instead of a fake-empty list.
+      setError(err instanceof Error ? err.message : t("notification.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [enabled]);
+  }, [enabled, t]);
 
   useEffect(() => {
     void load();
@@ -160,6 +169,7 @@ export function useNotifications(
     notifications,
     unreadCount,
     loading,
+    error,
     refresh: () => void load(),
     markRead,
     markUnread,
