@@ -672,6 +672,8 @@
   "loadPreset": "Load filter preset",
   "presetName": "Preset name",
   "deletePresetAria": "Delete preset {{name}}",
+  "savePresetFailed": "Couldn't save the filter preset to this browser.",
+  "deletePresetFailed": "Couldn't delete the filter preset from this browser.",
   "clearFilter": "Clear filter"
  },
  "sprint": {
@@ -1186,6 +1188,7 @@
   "shortcutsOff": "Single-key shortcuts off",
   "syncedToAccount": "Synced to your account.",
   "prefsSaveFailed": "Couldn't save notification preferences.",
+  "prefsLoadFailed": "Couldn't load your notification preferences.",
   "inAppNotifications": "In-app notifications",
   "inAppDesc": "Control which events show a notification inside DevFlow.",
   "emailOnStatusChanged": "Status changed",
@@ -1902,6 +1905,7 @@
   "revoked": "Token revoked",
   "revokeFailed": "Failed to revoke token.",
   "createFailed": "Failed to create token.",
+  "listFailed": "Couldn't load your tokens.",
   "expires": "Expires",
   "created": "Created",
   "lastUsed": "Last used"

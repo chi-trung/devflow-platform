@@ -4,6 +4,7 @@ import { Key, Plus, Trash2, X } from "lucide-react";
 import { useFocusTrap } from "../../hooks/useFocusTrap";
 import { Button } from "../ui/Button";
 import { ConfirmDialog } from "../ConfirmDialog";
+import { ErrorAlert } from "../ui/ErrorAlert";
 import {
   API_BASE,
   createPat,
@@ -58,15 +59,22 @@ export function PATSection() {
     return () => window.removeEventListener("keydown", onKey);
   }, [showCreate, createdToken]);
 
+  // A failed list must not fall through to the "no tokens yet" empty
+  // state — that reads as "nothing exists" and hides a server-side
+  // problem. Surface the error and offer a retry instead.
+  const [listError, setListError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setListError(false);
     void listPats()
       .then((items) => {
         if (!cancelled) setPats(items);
       })
       .catch(() => {
-        if (!cancelled) setPats([]);
+        if (!cancelled) setListError(true);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -74,7 +82,7 @@ export function PATSection() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retryKey]);
 
   function toggleScope(value: string) {
     setNewScopes((current) => {
@@ -177,6 +185,16 @@ export function PATSection() {
           {[0, 1].map((index) => (
             <div key={index} className="skeleton h-12 w-full" />
           ))}
+        </div>
+      ) : listError ? (
+        <div className="flex flex-col items-start gap-2 py-4">
+          <ErrorAlert message={t("pat.listFailed")} />
+          <Button
+            variant="outline"
+            onClick={() => setRetryKey((n) => n + 1)}
+          >
+            {t("common.retry")}
+          </Button>
         </div>
       ) : pats.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">

@@ -8,6 +8,7 @@ import {
   type BoardFilterState,
 } from "../../lib/api";
 import type { LabelResponse, WorkspaceMemberResponse } from "../../types/api";
+import { useToast } from "../ui/ToastProvider";
 
 const inputClass =
   "w-full max-w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none sm:w-auto";
@@ -47,6 +48,7 @@ export function FilterBar({
   onChange,
 }: FilterBarProps) {
   const { t } = useTranslation();
+  const { push } = useToast();
   const [version, setVersion] = useState(0);
   const [presetName, setPresetName] = useState("");
   const [activePreset, setActivePreset] = useState<string | null>(null);
@@ -82,14 +84,23 @@ export function FilterBar({
   function handleSave() {
     const name = presetName.trim();
     if (!name || isDefault) return;
-    saveFilterPreset(projectId, name, current);
+    // localStorage writes fail under quota or private-mode blocks. If the
+    // preset never landed, marking it active would show a filter state the
+    // user cannot reload after a refresh — so report and bail out instead.
+    if (!saveFilterPreset(projectId, name, current)) {
+      push(t("filter.savePresetFailed"), "error");
+      return;
+    }
     setVersion((v) => v + 1);
     setActivePreset(name);
     setPresetName("");
   }
 
   function handleDelete(name: string) {
-    deleteFilterPreset(projectId, name);
+    if (!deleteFilterPreset(projectId, name)) {
+      push(t("filter.deletePresetFailed"), "error");
+      return;
+    }
     setVersion((v) => v + 1);
     if (activePreset === name) setActivePreset(null);
   }

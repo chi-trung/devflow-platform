@@ -272,10 +272,10 @@ export function SearchPage() {
               className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
             >
               <option value="">{t("search.allPriorities")}</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Critical">Critical</option>
+              <option value="Low">{t("task.low")}</option>
+              <option value="Medium">{t("task.medium")}</option>
+              <option value="High">{t("task.high")}</option>
+              <option value="Critical">{t("task.critical")}</option>
             </select>
             <select
               aria-label={t("search.assigneeLabel")}

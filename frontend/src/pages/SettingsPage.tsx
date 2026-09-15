@@ -22,6 +22,7 @@ import { Avatar } from "../components/ui/Avatar";
 import { Button } from "../components/ui/Button";
 import { ThemeToggle } from "../components/ui/ThemeToggle";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { PATSection } from "../components/settings/PATSection";
 import {
   areCharacterShortcutsEnabled,
@@ -65,11 +66,13 @@ function EmailEventRow({
   hint,
   checked,
   onChange,
+  disabled = false,
 }: {
   label: string;
   hint: string;
   checked: boolean;
   onChange: (value: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-4">
@@ -81,6 +84,7 @@ function EmailEventRow({
         checked={checked}
         onChange={onChange}
         label={label}
+        disabled={disabled}
       />
     </div>
   );
@@ -138,30 +142,23 @@ export function SettingsPage() {
     return () => cancelAnimationFrame(frame);
   }, [location.hash]);
 
+  // A failed prefs load must NOT fabricate all-enabled defaults: the
+  // toggles below PUT the whole 14-field object back on every change, so
+  // defaults rendered as real state would silently overwrite the user's
+  // stored choices. Fail closed — show an error, keep switches dead.
+  const [prefsError, setPrefsError] = useState(false);
+  const [prefsRetry, setPrefsRetry] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
+    setPrefsLoading(true);
+    setPrefsError(false);
     getNotificationPreferences()
       .then((loaded) => {
         if (!cancelled) setPrefs(loaded);
       })
       .catch(() => {
-        if (!cancelled)
-          setPrefs({
-            emailOnAssignment: true,
-            emailOnMention: true,
-            emailOnSprintStarted: true,
-            inAppOnAssignment: true,
-            inAppOnMention: true,
-            inAppOnSprintStarted: true,
-            emailOnStatusChanged: true,
-            inAppOnStatusChanged: true,
-            emailOnCommentAdded: true,
-            inAppOnCommentAdded: true,
-            emailOnRoleChanged: true,
-            inAppOnRoleChanged: true,
-            emailOnRemovedFromWorkspace: true,
-            inAppOnRemovedFromWorkspace: true,
-          });
+        if (!cancelled) setPrefsError(true);
       })
       .finally(() => {
         if (!cancelled) setPrefsLoading(false);
@@ -169,7 +166,7 @@ export function SettingsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [prefsRetry]);
 
   const emailNotifications = prefs
     ? prefs.emailOnAssignment ||
@@ -398,6 +395,19 @@ export function SettingsPage() {
               <h2 className="font-display font-semibold">{t("settings.notifications")}</h2>
             </div>
 
+            {prefsError && (
+              <div className="mb-4 flex flex-col gap-2">
+                <ErrorAlert message={t("settings.prefsLoadFailed")} />
+                <Button
+                  variant="outline"
+                  className="self-start"
+                  onClick={() => setPrefsRetry((n) => n + 1)}
+                >
+                  {t("common.retry")}
+                </Button>
+              </div>
+            )}
+
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium">{t("settings.emailNotifications")}</p>
@@ -407,7 +417,7 @@ export function SettingsPage() {
               </div>
               <Switch
                 checked={emailNotifications}
-                disabled={prefsLoading}
+                disabled={prefsLoading || prefsError || !prefs}
                 onChange={handleMasterEmailToggle}
                 label={t("settings.emailNotifications")}
               />
@@ -441,7 +451,8 @@ export function SettingsPage() {
                     key={event.key}
                     label={event.label}
                     hint={event.hint}
-                    checked={prefs ? prefs[event.key] : true}
+                    checked={prefs ? prefs[event.key] : false}
+                    disabled={prefsLoading || prefsError || !prefs}
                     onChange={(value) => handlePrefToggle(event.key, value)}
                   />
                 ))}
