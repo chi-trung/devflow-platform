@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { CalendarClock, ListTodo, Boxes } from "lucide-react";
 import { AppShell } from "../components/AppShell";
+import { Button } from "../components/ui/Button";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
 import { EmptyTasksIllustration } from "../components/illustrations/EmptyStateIllustrations";
@@ -43,12 +44,17 @@ export function MyTasksPage() {
     data: tasks,
     loading,
     error,
+    reload,
   } = useApi<MyTaskItem[]>(
     () => (workspaceId ? getMyTasks(workspaceId) : Promise.resolve([])),
     [workspaceId],
   );
 
   const taskList = tasks ?? [];
+  // A failed fetch leaves tasks null. Rendering the empty list below it
+  // would claim "you have no tasks" over an unknown — so the failure
+  // replaces the list instead of accompanying it.
+  const loadFailed = error !== null && tasks === null;
 
   return (
     <AppShell>
@@ -67,7 +73,9 @@ export function MyTasksPage() {
           </div>
         </div>
 
-        {error && (
+        {error && !loadFailed && (
+          // Refresh failed over existing data — keep the list, note the error.
+          // A first-load failure is shown in place of the list below instead.
           <div className="mb-4">
             <ErrorAlert message={error} />
           </div>
@@ -78,6 +86,15 @@ export function MyTasksPage() {
             <Skeleton className="h-16" />
             <Skeleton className="h-16" />
             <Skeleton className="h-16" />
+          </div>
+        ) : loadFailed ? (
+          <div className="flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert message={error ?? ""} />
+            </div>
+            <Button size="sm" variant="outline" onClick={reload}>
+              {t("common.retry")}
+            </Button>
           </div>
         ) : taskList.length === 0 ? (
           <EmptyState

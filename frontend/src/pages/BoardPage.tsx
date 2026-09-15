@@ -177,13 +177,17 @@ export function BoardPage() {
     { snapshotKey: `board:project:${workspaceId}:${projectId}` },
   );
 
-  const { data: members } = useApi<WorkspaceMemberResponse[]>(
+  const { data: members, error: membersError, reload: reloadMembers } = useApi<WorkspaceMemberResponse[]>(
     () => api(`/workspaces/${workspaceId}/members`),
     [workspaceId],
     { snapshotKey: `board:members:${workspaceId}` },
   );
 
-  const { data: sprintsRaw, reload: reloadSprints } = useApi<unknown>(
+  const {
+    data: sprintsRaw,
+    error: sprintsError,
+    reload: reloadSprints,
+  } = useApi<unknown>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/sprints`),
     [workspaceId, projectId],
     { snapshotKey: `board:sprints:${workspaceId}:${projectId}` },
@@ -193,7 +197,7 @@ export function BoardPage() {
     [sprintsRaw],
   );
 
-  const { data: labelsRaw } = useApi<unknown>(
+  const { data: labelsRaw, error: labelsError, reload: reloadLabels } = useApi<unknown>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}/labels`),
     [workspaceId, projectId],
     { snapshotKey: `board:labels:${workspaceId}:${projectId}` },
@@ -202,6 +206,10 @@ export function BoardPage() {
     () => pagedItems<LabelResponse>(labelsRaw),
     [labelsRaw],
   );
+  // Failure with nothing cached: the label list is unknown, so `label:`
+  // filters and the label dropdown cannot be evaluated at all.
+  const labelsFailed = labelsError !== null && labelsRaw === null;
+  const membersFailed = membersError !== null && members === null;
 
   const { data: epics } = useApi<EpicResponse[]>(
     () => getEpics(workspaceId, projectId),
@@ -213,7 +221,12 @@ export function BoardPage() {
   // field, so "blocked" badges/filters derive from these unresolved edges.
   // Deferred past first paint: blocked badges appear moments later and the
   // initial board doesn't wait on this heavyweight graph query.
-  const { data: depGraph, reload: reloadDepGraph } = useApi(
+  const {
+    data: depGraph,
+    error: depGraphError,
+    loading: depGraphLoading,
+    reload: reloadDepGraph,
+  } = useApi(
     async () =>
       deferredReady ? await getProjectDependencyGraph(workspaceId, projectId) : null,
     [workspaceId, projectId, deferredReady],
@@ -226,6 +239,14 @@ export function BoardPage() {
     }
     return ids;
   }, [depGraph]);
+  // The blocked-move guard below is the ONLY enforcement — the server accepts
+  // any status transition from ReorderTasks without consulting dependencies
+  // (verified in ReorderTasksCommandHandler / TaskItem.ChangeStatus). So while
+  // the graph is absent, loading, or the last refresh failed (possibly over a
+  // stale snapshot), blocked state is UNKNOWN and cross-status moves are
+  // paused instead of silently allowed.
+  const blockedStateUnknown =
+    depGraph === null || depGraphLoading || depGraphError !== null;
 
   const {
     data: tasksRaw,
@@ -250,6 +271,7 @@ export function BoardPage() {
   // one fewer heavyweight request on every board mount.
   const {
     data: activitiesRaw,
+    error: activitiesError,
     loading: activitiesLoading,
     reload: reloadActivities,
   } = useApi<unknown>(
@@ -261,7 +283,10 @@ export function BoardPage() {
     { snapshotKey: `board:activities:${workspaceId}:${projectId}` },
   );
   const activities = useMemo(
-    () => pagedItems<ActivityResponse>(activitiesRaw),
+    // Keep null when the drawer's fetch never resolved — the drawer renders
+    // "no activity" for an empty array, and passing `?? []` on a failed
+    // first load would launder the error into an empty timeline.
+    () => (activitiesRaw === null ? null : pagedItems<ActivityResponse>(activitiesRaw)),
     [activitiesRaw],
   );
 
@@ -346,6 +371,9 @@ export function BoardPage() {
   // `label:<name>` matches by name (case-insensitive, any label whose name
   // contains the token). Falls back to id match so chips cleared from the
   // dropdown still parse; no match → sentinel that filters everything out.
+  // While the label LIST is unknown (failed with nothing cached) a match
+  // can't be evaluated — the empty id list filters everything out, which is
+  // only honest when paired with the "can't filter" notice below.
   const operatorLabelIds = parsedSearch.label
     ? (labels ?? [])
         .filter(
@@ -355,6 +383,19 @@ export function BoardPage() {
         )
         .map((label) => label.id)
     : [];
+  // Search-driven filters that the failed lists make unevaluable. Each one
+  // still filters (showing everything would be its own lie), but the board
+  // says plainly that the empty result is unknown state, not "no matches".
+  const labelFilterUnknown = labelsFailed && parsedSearch.label !== "";
+  // `assignee:<name>` resolves through the members roster, so a failed roster
+  // turns every hit into the "no-match" sentinel. `assignee:me` is exempt —
+  // it resolves through the current user, who is never missing.
+  const assigneeFilterUnknown =
+    membersFailed &&
+    parsedSearch.assignee !== "" &&
+    parsedSearch.assignee !== "me";
+  const blockedFilterUnknown =
+    blockedStateUnknown && (blockedOnly || parsedSearch.blockedOnly);
 
   const visibleTasks = tasks
     .filter((task) =>
@@ -682,6 +723,17 @@ export function BoardPage() {
     const task = tasks.find((t) => t.id === taskId);
     if (!task || (!beforeTaskId && task.status === status)) return;
 
+    // Fail closed: the client guard is the only thing stopping a blocked task
+    // from being moved (the server accepts any transition). While the graph
+    // is unknown we cannot tell blocked from clear, so pause cross-status
+    // moves rather than silently permitting a forbidden one. Same-column
+    // reorders are unaffected because they change no status.
+    if (task.status !== status && blockedStateUnknown) {
+      setBoardError(t("board.blockedStateLoadFailed"));
+      push(t("board.couldntMoveTask"), "error");
+      return;
+    }
+
     if (blockedTaskIds.has(taskId) && task.status !== status) {
       const message = t("board.blockedMoveDetail", { title: task.title });
       setBoardError(message);
@@ -959,7 +1011,21 @@ export function BoardPage() {
           </div>
         </div>
 
-        {sprints && sprints.length >= 0 && (
+        {sprintsError && sprintsRaw === null ? (
+          // pagedItems gives an empty array on failure, which SprintBar would
+          // happily render as "no sprints" — indistinguishable from the truth.
+          // Show the failure and a retry instead.
+          <div className="mb-3">
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <ErrorAlert message={t("board.sprintsLoadFailed")} />
+              </div>
+              <Button size="sm" variant="outline" onClick={reloadSprints}>
+                {t("common.retry")}
+              </Button>
+            </div>
+          </div>
+        ) : (
           <SprintBar
             sprints={sprints}
             canManage={canManageSprints}
@@ -978,6 +1044,11 @@ export function BoardPage() {
           projectId={projectId}
           members={members ?? []}
           labels={labels ?? []}
+          membersFailed={membersFailed}
+          onRetryMembers={reloadMembers}
+          labelsFailed={labelsFailed}
+          onRetryLabels={reloadLabels}
+          blockedUnknown={blockedStateUnknown}
           current={{
             sprint: sprintFilter,
             search,
@@ -1013,6 +1084,56 @@ export function BoardPage() {
         {boardError && (
           <div className="mb-4">
             <ErrorAlert message={boardError} />
+          </div>
+        )}
+
+        {depGraphError !== null && (
+          // Say up front why cross-status drags are refusing to run instead
+          // of letting each drop fail mysteriously through the moveTask gate.
+          <div className="mb-4">
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <ErrorAlert message={t("board.blockedStateLoadFailed")} />
+              </div>
+              <Button size="sm" variant="outline" onClick={reloadDepGraph}>
+                {t("common.retry")}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {blockedFilterUnknown && !(depGraphError !== null) && (
+          // The graph is merely absent/loading (not errored), yet a
+          // blocked-only filter is active — say the result is unknowable
+          // rather than presenting it as "no blocked tasks".
+          <div className="mb-4">
+            <ErrorAlert message={t("board.blockedFilterUnknown")} />
+          </div>
+        )}
+
+        {labelFilterUnknown && (
+          <div className="mb-4">
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <ErrorAlert message={t("board.labelFilterUnknown")} />
+              </div>
+              <Button size="sm" variant="outline" onClick={reloadLabels}>
+                {t("common.retry")}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {assigneeFilterUnknown && (
+          <div className="mb-4">
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <ErrorAlert message={t("board.assigneeFilterUnknown")} />
+              </div>
+              <Button size="sm" variant="outline" onClick={reloadMembers}>
+                {t("common.retry")}
+              </Button>
+            </div>
           </div>
         )}
 
@@ -1247,8 +1368,10 @@ export function BoardPage() {
       <ActivityDrawer
         open={activityOpen}
         onClose={() => setActivityOpen(false)}
-        activities={activities ?? null}
+        activities={activities}
         loading={activitiesLoading}
+        error={activitiesError}
+        onRetry={reloadActivities}
       />
     </AppShell>
   );

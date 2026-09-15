@@ -3,6 +3,8 @@ import { Tags } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
 import { getTaskFieldValues } from "../../lib/api";
 import type { CustomFieldValueResponse } from "../../types/api";
+import { Button } from "../ui/Button";
+import { ErrorAlert } from "../ui/ErrorAlert";
 
 interface CustomFieldsSectionProps {
   workspaceId: string;
@@ -16,7 +18,12 @@ export function CustomFieldsSection({
   taskId,
 }: CustomFieldsSectionProps) {
   const { t } = useTranslation();
-  const { data: fields } = useApi<CustomFieldValueResponse[]>(
+  const {
+    data: fields,
+    error,
+    loading,
+    reload,
+  } = useApi<CustomFieldValueResponse[]>(
     () => getTaskFieldValues(workspaceId, projectId, taskId),
     [workspaceId, projectId, taskId],
   );
@@ -24,6 +31,30 @@ export function CustomFieldsSection({
   const visible = (fields ?? []).filter(
     (field) => field.value != null && field.value !== "",
   );
+
+  if (loading && fields === null) return null;
+
+  // A failed fetch leaves `fields` null — indistinguishable from "this task
+  // has no custom values", which the section would hide silently. Say the
+  // values are unknown and offer a retry instead of vanishing.
+  if (error !== null && fields === null) {
+    return (
+      <section className="space-y-2">
+        <h3 className="flex items-center gap-1.5 text-sm font-medium">
+          <Tags className="size-4 text-muted-foreground" aria-hidden />
+          {t("taskDetail.customFields")}
+        </h3>
+        <div className="flex items-start gap-2">
+          <div className="flex-1">
+            <ErrorAlert message={t("taskDetail.customFieldsLoadFailed")} />
+          </div>
+          <Button size="sm" variant="outline" onClick={reload}>
+            {t("common.retry")}
+          </Button>
+        </div>
+      </section>
+    );
+  }
 
   if (visible.length === 0) return null;
 

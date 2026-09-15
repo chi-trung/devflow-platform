@@ -545,7 +545,12 @@
   "swimlaneByEpic": "Epic",
   "swimlaneGroupBy": "Nhóm theo",
   "swimlaneUnassigned": "Chưa gán",
-  "swimlaneNoEpic": "Không có epic"
+  "swimlaneNoEpic": "Không có epic",
+  "blockedStateLoadFailed": "Không tải được trạng thái task bị chặn nên tạm dừng di chuyển giữa các cột.",
+  "sprintsLoadFailed": "Không tải được danh sách sprint.",
+  "blockedFilterUnknown": "Trạng thái bị chặn không xác định nên kết quả chỉ-task-bị-chặn có thể sai.",
+  "labelFilterUnknown": "Không tải được danh sách nhãn nên tìm kiếm theo nhãn không khớp được.",
+  "assigneeFilterUnknown": "Không tải được danh sách thành viên nên tìm kiếm theo người được giao không khớp được."
  },
  "taskStatus": {
   "Idea": "Idea",
@@ -681,7 +686,12 @@
   "deletePresetAria": "Xóa preset {{name}}",
   "savePresetFailed": "Không lưu được bộ lọc vào trình duyệt này.",
   "deletePresetFailed": "Không xóa được bộ lọc khỏi trình duyệt này.",
-  "clearFilter": "Xóa điều kiện lọc"
+  "clearFilter": "Xóa điều kiện lọc",
+  "membersLoadFailed": "Không tải được thành viên",
+  "labelsLoadFailed": "Không tải được nhãn",
+  "blockedUnavailable": "Không khả dụng - chưa tải được trạng thái chặn",
+  "retryMembers": "Thử tải lại thành viên",
+  "retryLabels": "Thử tải lại nhãn"
  },
  "sprint": {
   "sprintPlanning": "Lên kế hoạch Sprint",
@@ -770,7 +780,10 @@
   "editSave": "Lưu",
   "editFailed": "Không thể cập nhật sprint.",
   "saving": "Đang lưu…",
-  "editNamedAria": "Chỉnh sửa {{name}}"
+  "editNamedAria": "Chỉnh sửa {{name}}",
+  "progressUnknown": "Không xác định được tiến độ",
+  "tasksUnknown": "không xác định số task",
+  "backlogLoadFailed": "Backlog không tải được nên không có gì được liệt kê bên dưới."
  },
  "activity": {
   "title": "Nhật ký hoạt động",
@@ -849,7 +862,8 @@
  },
  "taskDetail": {
   "customFields": "Trường tùy chỉnh",
-  "noCustomFields": "Chưa có giá trị trường tùy chỉnh nào cho task này."
+  "noCustomFields": "Chưa có giá trị trường tùy chỉnh nào cho task này.",
+  "customFieldsLoadFailed": "Không tải được giá trị các trường tùy chỉnh."
  },
  "timeTracking": {
   "timeTracking": "Theo dõi thời gian",
@@ -1358,7 +1372,9 @@
   "savedSearchSaveFailed": "Không lưu được tìm kiếm.",
   "savedSearchDeleted": "Đã xoá tìm kiếm đã lưu.",
   "savedSearchDeleteFailed": "Không xoá được tìm kiếm đã lưu.",
-  "deleteSavedAria": "Xoá tìm kiếm đã lưu {{name}}"
+  "deleteSavedAria": "Xoá tìm kiếm đã lưu {{name}}",
+  "loadFailed": "Tìm kiếm thất bại. Thử lại.",
+  "projectsLoadFailed": "Một số kết quả không xác định được vì danh sách dự án tải thất bại."
  },
  "import": {
   "title": "Nhập task từ file",

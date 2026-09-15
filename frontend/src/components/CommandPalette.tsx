@@ -69,6 +69,7 @@ export function CommandPalette({
     null,
   );
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
   const [dueFilter, setDueFilter] = useState("");
@@ -102,7 +103,7 @@ export function CommandPalette({
     () => pagedItems<WorkspaceResponse>(workspacesRaw),
     [workspacesRaw],
   );
-  const { data: projectsRaw } = useApi<unknown>(
+  const { data: projectsRaw, error: projectsError } = useApi<unknown>(
     () =>
       open && workspaceId
         ? api(`/workspaces/${workspaceId}/projects`)
@@ -113,6 +114,13 @@ export function CommandPalette({
     () => pagedItems<ProjectResponse>(projectsRaw),
     [projectsRaw],
   );
+  // Task/epic/label hits are resolved to routes through the project key →
+  // id map. If the project list failed with nothing cached, every hit drops
+  // and the palette claims "no results" for a search that found some.
+  const projectsFailed = projectsError !== null && projectsRaw === null;
+  // Only misleading once a search actually returned hits — a failed search
+  // or a too-short query has no hidden hits to account for.
+  const hitsUnresolvable = projectsFailed && remoteResults !== null;
 
   const dueRange = useMemo((): { dueAfter?: string; dueBefore?: string } => {
     if (!dueFilter) return {};
@@ -136,11 +144,13 @@ export function CommandPalette({
     ) {
       setRemoteResults(null);
       setSearching(false);
+      setSearchError(null);
       return;
     }
 
     let cancelled = false;
     setSearching(true);
+    setSearchError(null);
     const timer = window.setTimeout(() => {
       searchWorkspace(workspaceId, keyword, {
         status: statusFilter || undefined,
@@ -153,8 +163,15 @@ export function CommandPalette({
             setSearching(false);
           }
         })
-        .catch(() => {
-          if (!cancelled) setSearching(false);
+        .catch((err) => {
+          if (cancelled) return;
+          setSearching(false);
+          // Drop the previous query's hits: leaving them up would present
+          // results for something the user already retyped over.
+          setRemoteResults(null);
+          setSearchError(
+            err instanceof Error ? err.message : t("commandPalette.loadFailed"),
+          );
         });
     }, 300);
 
@@ -162,7 +179,7 @@ export function CommandPalette({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [open, query, workspaceId, statusFilter, priorityFilter, dueRange]);
+  }, [open, query, workspaceId, statusFilter, priorityFilter, dueRange, t]);
 
   function savedSearchTargetPath(): string {
     try {
@@ -590,7 +607,20 @@ export function CommandPalette({
           aria-label={t("commandPalette.resultsListAria")}
           className="max-h-80 overflow-y-auto p-2"
         >
-          {results.length === 0 && !searching && (
+          {!searching && searchError && (
+            <li role="alert" className="px-3 py-8 text-center text-sm text-destructive">
+              {searchError}
+            </li>
+          )}
+          {hitsUnresolvable && (
+            // The search found hits, but task/epic/label rows route through
+            // the project map, which failed to load — claiming "no results"
+            // here would hide hits the palette couldn't resolve.
+            <li role="alert" className="px-3 py-8 text-center text-sm text-destructive">
+              {t("commandPalette.projectsLoadFailed")}
+            </li>
+          )}
+          {results.length === 0 && !searching && !searchError && !hitsUnresolvable && (
             <li role="presentation" className="px-3 py-8 text-center text-sm text-muted-foreground">
               {t("commandPalette.noResults")}
             </li>

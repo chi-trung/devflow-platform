@@ -545,7 +545,12 @@
   "swimlaneByEpic": "Epic",
   "swimlaneGroupBy": "Group by",
   "swimlaneUnassigned": "Unassigned",
-  "swimlaneNoEpic": "No epic"
+  "swimlaneNoEpic": "No epic",
+  "blockedStateLoadFailed": "Couldn't load which tasks are blocked, so moving between columns is paused.",
+  "sprintsLoadFailed": "Failed to load sprints.",
+  "blockedFilterUnknown": "Blocked state is unknown, so blocked-only results may be wrong.",
+  "labelFilterUnknown": "Labels couldn't be loaded, so label searches can't be matched.",
+  "assigneeFilterUnknown": "Members couldn't be loaded, so assignee searches can't be matched."
  },
  "taskStatus": {
   "Idea": "Idea",
@@ -681,7 +686,12 @@
   "deletePresetAria": "Delete preset {{name}}",
   "savePresetFailed": "Couldn't save the filter preset to this browser.",
   "deletePresetFailed": "Couldn't delete the filter preset from this browser.",
-  "clearFilter": "Clear filter"
+  "clearFilter": "Clear filter",
+  "membersLoadFailed": "Failed to load members",
+  "labelsLoadFailed": "Failed to load labels",
+  "blockedUnavailable": "Unavailable - blocked state hasn't loaded",
+  "retryMembers": "Retry loading members",
+  "retryLabels": "Retry loading labels"
  },
  "sprint": {
   "sprintPlanning": "Sprint Planning",
@@ -770,11 +780,15 @@
   "editSave": "Save",
   "editFailed": "Failed to update sprint.",
   "saving": "Saving…",
-  "editNamedAria": "Edit {{name}}"
+  "editNamedAria": "Edit {{name}}",
+  "progressUnknown": "Progress unknown",
+  "tasksUnknown": "task count unknown",
+  "backlogLoadFailed": "The backlog failed to load, so nothing is listed below."
  },
  "taskDetail": {
   "customFields": "Custom Fields",
-  "noCustomFields": "No custom field values set for this task."
+  "noCustomFields": "No custom field values set for this task.",
+  "customFieldsLoadFailed": "Couldn't load custom field values."
  },
  "activity": {
   "title": "Activity Log",
@@ -1358,7 +1372,9 @@
   "savedSearchSaveFailed": "Couldn't save search.",
   "savedSearchDeleted": "Saved search removed.",
   "savedSearchDeleteFailed": "Couldn't remove saved search.",
-  "deleteSavedAria": "Delete saved search {{name}}"
+  "deleteSavedAria": "Delete saved search {{name}}",
+  "loadFailed": "Search failed. Try again.",
+  "projectsLoadFailed": "Some results couldn't be resolved because projects failed to load."
  },
  "import": {
   "title": "Import tasks",
