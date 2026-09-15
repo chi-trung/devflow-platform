@@ -128,12 +128,15 @@ export function ProjectSettingsPage() {
   async function handleConfirmRemove() {
     const member = pendingRemove;
     if (!member) return;
+    // Close the dialog first: on failure the toast renders behind the open
+    // z-[70] overlay (the toast container is only z-[60]) and the dialog stays
+    // modal to AT — the user never learns the removal failed.
+    setPendingRemove(null);
     setRemovingMemberId(member.userId);
     try {
       await removeProjectMember(workspaceId, projectId, member.userId);
       setMembers((current) => current.filter((m) => m.userId !== member.userId));
       push(t("projectMember.removeSuccess", { name: member.displayName || member.username }));
-      setPendingRemove(null);
     } catch {
       push(t("projectMember.removeFailed"), "error");
     } finally {
