@@ -114,8 +114,11 @@ export function LabelsPage() {
         </div>
 
         {error && (
-          <div className="mb-4">
-            <ErrorAlert message={error} />
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <ErrorAlert id="labels-load-error" message={error} />
+            <Button variant="outline" size="sm" onClick={loadLabels}>
+              {t("common.retry")}
+            </Button>
           </div>
         )}
 
@@ -202,7 +205,7 @@ export function LabelsPage() {
               <Skeleton key={i} className="h-14 w-full" />
             ))}
           </div>
-        ) : labels.length === 0 ? (
+        ) : labels.length === 0 && !error ? (
           <EmptyState
             icon={<Palette className="size-8 text-muted-foreground" aria-hidden />}
             title={t("label.emptyTitle")}

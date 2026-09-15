@@ -4,6 +4,7 @@ import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { ArrowLeft, Activity, ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
+import { Button } from "../components/ui/Button";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
 import { EmptyChartIllustration } from "../components/illustrations/EmptyStateIllustrations";
@@ -264,9 +265,15 @@ export function ActivitiesPage() {
           </div>
         )}
 
-        {error && (
-          <div className="mb-4">
-            <ErrorAlert message={error} />
+        {error && pageData !== null && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            {/* A failed refetch keeps the last page visible; only the
+                never-loaded case (pageData === null) renders the full
+                ErrorAlert card below, so the two never double up. */}
+            <ErrorAlert id="activities-refresh-error" message={error} />
+            <Button variant="outline" size="sm" onClick={loadActivities}>
+              {t("common.retry")}
+            </Button>
           </div>
         )}
 
@@ -277,10 +284,15 @@ export function ActivitiesPage() {
             ))}
           </div>
         ) : pageData === null ? (
-          <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
-            {t("activity.loadFailed")}
+          // Nothing ever loaded: honest failure, with the retry the dead-end
+          // card never offered.
+          <div className="flex flex-wrap items-center gap-2">
+            <ErrorAlert id="activities-load-error" message={error ?? t("activity.loadFailed")} />
+            <Button variant="outline" size="sm" onClick={loadActivities}>
+              {t("common.retry")}
+            </Button>
           </div>
-        ) : activities.length === 0 ? (
+        ) : activities.length === 0 && !error ? (
           <EmptyState
             icon={<Activity className="size-8 text-muted-foreground" aria-hidden />}
             illustration={<EmptyChartIllustration className="size-24" />}
