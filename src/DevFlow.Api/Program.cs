@@ -289,12 +289,19 @@ app.Use(async (context, next) =>
 });
 
 // Apply pending EF Core migrations so a fresh database (e.g. a managed
-// cloud instance) is ready on first boot.
+// cloud instance) is ready on first boot. Guarded on IsRelational because
+// the integration-test host can run against the non-relational InMemory
+// provider (when Docker is unavailable), where Database.Migrate() has no
+// meaning and would throw on startup. Production and CI both configure the
+// Npgsql relational provider, so this branch runs unchanged for them.
 using (var scope = app.Services.CreateScope())
 {
     var database = scope.ServiceProvider
         .GetRequiredService<DevFlow.Infrastructure.Persistence.DevFlowDbContext>();
-    database.Database.Migrate();
+    if (database.Database.IsRelational())
+    {
+        database.Database.Migrate();
+    }
 }
 
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();

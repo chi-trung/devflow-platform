@@ -7,16 +7,21 @@
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="ClosedXML" Version="0.105.1" />
-    <PackageReference Include="EFCore.NamingConventions" Version="8.0.3" />
+    <PackageReference Include="EFCore.NamingConventions" Version="9.0.0" />
     <PackageReference Include="FluentValidation" Version="11.12.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.12.0" />
     <PackageReference Include="MediatR" Version="12.5.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.30" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.20" />
+    <!-- Pin the provider's transitive Relational to match Core: NamingConventions
+         and Npgsql.EntityFrameworkCore.PostgreSQL only declare a 9.0.1 floor, so
+         NuGet otherwise resolves Relational 9.0.1 against Core 9.0.20 and the
+         test projects hit an assembly-version split (MSB3277/CS1705). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.20" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.*" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.*" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.20" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageReference Include="StackExchange.Redis" Version="2.13.17" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
   </ItemGroup>
