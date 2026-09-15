@@ -672,6 +672,8 @@
   "loadPreset": "Tải bộ lọc đã lưu",
   "presetName": "Tên bộ lọc",
   "deletePresetAria": "Xóa preset {{name}}",
+  "savePresetFailed": "Không lưu được bộ lọc vào trình duyệt này.",
+  "deletePresetFailed": "Không xóa được bộ lọc khỏi trình duyệt này.",
   "clearFilter": "Xóa điều kiện lọc"
  },
  "sprint": {
@@ -1044,7 +1046,7 @@
   "emptyPrs": "Chưa có pull request nào được liên kết",
   "emptyPrsDescription": "Liên kết kho và thêm pull request để theo dõi tại đây.",
   "deletePrTitle": "Xóa pull request?",
-  "deletePrMessage": "This will remove \"{{title}}\" from the project.",
+  "deletePrMessage": "Thao tác này sẽ loại bỏ \"{{title}}\" khỏi dự án.",
   "deletePrConfirm": "Xóa",
   "deletePr": "Xóa PR",
   "viewPr": "Xem PR",
@@ -1186,6 +1188,7 @@
   "shortcutsOff": "Đã tắt phím đơn",
   "syncedToAccount": "Đồng bộ với tài khoản của bạn.",
   "prefsSaveFailed": "Không lưu được tuỳ chọn thông báo.",
+  "prefsLoadFailed": "Không tải được tuỳ chọn thông báo của bạn.",
   "inAppNotifications": "Thông báo trong ứng dụng",
   "inAppDesc": "Kiểm soát sự kiện nào hiển thị thông báo trong DevFlow.",
   "emailOnStatusChanged": "Trạng thái thay đổi",
@@ -1902,6 +1905,7 @@
   "revoked": "Đã thu hồi token",
   "revokeFailed": "Không thu hồi được token.",
   "createFailed": "Không tạo được token.",
+  "listFailed": "Không tải được danh sách token.",
   "expires": "Hết hạn",
   "created": "Tạo lúc",
   "lastUsed": "Sử dụng lần cuối"

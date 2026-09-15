@@ -1440,23 +1440,30 @@ export function saveFilterPreset(
   projectId: string,
   name: string,
   state: BoardFilterState,
-): void {
+): boolean {
   const presets = loadFilterPresets(projectId);
   presets[name] = state;
   try {
     localStorage.setItem(filterPresetsKey(projectId), JSON.stringify(presets));
-  } catch {}
+    return true;
+  } catch {
+    // Quota or privacy mode: the caller must NOT mark the preset active.
+    return false;
+  }
 }
 
 export function deleteFilterPreset(
   projectId: string,
   name: string,
-): void {
+): boolean {
   const presets = loadFilterPresets(projectId);
   delete presets[name];
   try {
     localStorage.setItem(filterPresetsKey(projectId), JSON.stringify(presets));
-  } catch {}
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function getWebhooks(workspaceId: string): Promise<WebhookResponse[]> {

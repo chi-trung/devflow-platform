@@ -264,9 +264,9 @@ export function GitHubPage() {
                   onChange={(e) => setPrStatus(e.target.value)}
                   className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none"
                 >
-                  <option value="open">Open</option>
-                  <option value="closed">Closed</option>
-                  <option value="merged">Merged</option>
+                  <option value="open">{t("filter.prOpen")}</option>
+                  <option value="closed">{t("filter.prClosed")}</option>
+                  <option value="merged">{t("filter.prMerged")}</option>
                 </select>
               </div>
               <div>
