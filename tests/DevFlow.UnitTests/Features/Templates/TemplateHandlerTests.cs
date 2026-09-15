@@ -11,10 +11,19 @@ public class TemplateHandlerTests
 {
     private readonly ITemplateRepository _templateRepository = Substitute.For<ITemplateRepository>();
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
+    private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
     private readonly Guid _projectId = Guid.NewGuid();
+
+    public TemplateHandlerTests()
+    {
+        // Default: the route's project lives in the claimed workspace.
+        _projectRepository
+            .GetByIdAsync(_projectId, Arg.Any<CancellationToken>())
+            .Returns(Project.Create(_workspaceId, "DevFlow", "DEV", null));
+    }
 
     [Fact]
     public async Task Create_ShouldPersistTemplate_AndReturnId()
@@ -51,7 +60,7 @@ public class TemplateHandlerTests
         var template = TaskTemplate.Create(_projectId, "Bug report", "Bug", "Description", TaskItemPriority.High, 60);
         _templateRepository.GetByIdAsync(template.Id, Arg.Any<CancellationToken>()).Returns(template);
 
-        var handler = new ApplyTemplateHandler(_templateRepository, _taskItemRepository, _unitOfWork);
+        var handler = new ApplyTemplateHandler(_templateRepository, _taskItemRepository, _projectRepository, _unitOfWork);
         var id = await handler.Handle(new ApplyTemplateCommand(_workspaceId, _projectId, template.Id), CancellationToken.None);
 
         Assert.NotEqual(Guid.Empty, id);
@@ -65,9 +74,38 @@ public class TemplateHandlerTests
     {
         _templateRepository.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns((TaskTemplate?)null);
 
-        var handler = new ApplyTemplateHandler(_templateRepository, _taskItemRepository, _unitOfWork);
+        var handler = new ApplyTemplateHandler(_templateRepository, _taskItemRepository, _projectRepository, _unitOfWork);
 
         await Assert.ThrowsAsync<NotFoundException>(
             () => handler.Handle(new ApplyTemplateCommand(_workspaceId, _projectId, Guid.NewGuid()), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Apply_ShouldThrowNotFound_WhenProjectInOtherWorkspace()
+    {
+        var template = TaskTemplate.Create(_projectId, "Bug report", "Bug", null, TaskItemPriority.High, 60);
+        _templateRepository.GetByIdAsync(template.Id, Arg.Any<CancellationToken>()).Returns(template);
+        _projectRepository
+            .GetByIdAsync(_projectId, Arg.Any<CancellationToken>())
+            .Returns(Project.Create(Guid.NewGuid(), "Foreign", "FRN", null));
+
+        var handler = new ApplyTemplateHandler(_templateRepository, _taskItemRepository, _projectRepository, _unitOfWork);
+
+        await Assert.ThrowsAsync<NotFoundException>(
+            () => handler.Handle(new ApplyTemplateCommand(_workspaceId, _projectId, template.Id), CancellationToken.None));
+        await _taskItemRepository.DidNotReceive().AddAsync(Arg.Any<TaskItem>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Apply_ShouldThrowNotFound_WhenTemplateBelongsToOtherProject()
+    {
+        var foreignTemplate = TaskTemplate.Create(Guid.NewGuid(), "Other", "Bug", null, TaskItemPriority.High, 60);
+        _templateRepository.GetByIdAsync(foreignTemplate.Id, Arg.Any<CancellationToken>()).Returns(foreignTemplate);
+
+        var handler = new ApplyTemplateHandler(_templateRepository, _taskItemRepository, _projectRepository, _unitOfWork);
+
+        await Assert.ThrowsAsync<NotFoundException>(
+            () => handler.Handle(new ApplyTemplateCommand(_workspaceId, _projectId, foreignTemplate.Id), CancellationToken.None));
+        await _taskItemRepository.DidNotReceive().AddAsync(Arg.Any<TaskItem>(), Arg.Any<CancellationToken>());
     }
 }

@@ -7,6 +7,8 @@ namespace DevFlow.Application.Features.Auth.UpdateProfile;
 
 public sealed class UpdateProfileCommandHandler(
     IUserRepository userRepository,
+    IWorkspaceRepository workspaceRepository,
+    ICacheService cacheService,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateProfileCommand>
 {
     public async Task Handle(UpdateProfileCommand command, CancellationToken cancellationToken)
@@ -26,5 +28,18 @@ public sealed class UpdateProfileCommandHandler(
 
         user.UpdateProfile(command.DisplayName, command.Username);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Member rosters embed each member's username/displayName and are
+        // cached per workspace under an untagged key (2-min TTL) that only
+        // the invite/remove/role handlers drop. A rename used to stay
+        // invisible to assignee pickers and member lists until the TTL
+        // expired — mirror their RemoveAsync for every workspace the user
+        // belongs to.
+        var memberships = await workspaceRepository.GetForUserAsync(command.UserId, cancellationToken);
+
+        foreach (var (workspace, _) in memberships)
+        {
+            await cacheService.RemoveAsync($"workspace-members:{workspace.Id}", cancellationToken);
+        }
     }
 }

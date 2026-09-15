@@ -1,4 +1,5 @@
 using DevFlow.Application.Common.Authorization;
+using DevFlow.Application.Common.Behaviors;
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Sprints;
@@ -8,13 +9,19 @@ using MediatR;
 
 namespace DevFlow.Application.Features.Sprints.Update;
 
+// IProjectEvent: a sprint rename/goal edit changes what velocity-history
+// and the board report. Both are cached under the project:{ProjectId}
+// tag, so CacheInvalidationBehavior's RemoveByTagAsync now drops them on
+// write — previously the GET after a rename kept showing the old sprint
+// name until the 30s TTL expired. ActivityVerb stays empty → the handler
+// already writes no activity row (matches the sprint rename precedent).
 [RequireWorkspaceRole(WorkspaceRole.Admin)]
 public sealed record UpdateSprintCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     Guid SprintId,
     string Name,
-    string? Goal) : IRequest<SprintResponse>, IWorkspaceRequest;
+    string? Goal) : IRequest<SprintResponse>, IWorkspaceRequest, IProjectEvent;
 
 public sealed class UpdateSprintCommandHandler(
     IProjectRepository projectRepository,
