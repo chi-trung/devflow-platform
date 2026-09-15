@@ -32,7 +32,9 @@ import { useWorkspaceEvents } from "../hooks/useWorkspaceEvents";
 import { useAuth } from "../auth/AuthContext";
 import { Avatar } from "./ui/Avatar";
 import { BrandMark, Logo } from "./ui/Logo";
+import { Button } from "./ui/Button";
 import { EmojiTile } from "./ui/EmojiCover";
+import { ErrorAlert } from "./ui/ErrorAlert";
 import { CommandPalette } from "./CommandPalette";
 import { AiFloatingButton } from "./ai/AiFloatingButton";
 import type { AiPageContext } from "./ai/AiSuggestedPrompts";
@@ -220,12 +222,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const {
     data: workspacesRaw,
+    error: workspacesError,
     reload: reloadWorkspaces,
   } = useApi<unknown>(() => api("/workspaces"), []);
   const workspaces = useMemo(
     () => pagedItems<WorkspaceResponse>(workspacesRaw),
     [workspacesRaw],
   );
+  // useApi keeps the previous data on failure, so "failed with nothing
+  // cached" is error && raw === null — `!workspaces.length` would be a lie.
+  const workspacesFailed = workspacesError !== null && workspacesRaw === null;
 
   // Refresh the workspace sidebar when a workspace-level event arrives
   // (e.g. a workspace created elsewhere or via AI) — no F5 needed.
@@ -235,6 +241,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useWorkspaceEvents(workspaceId, handleWorkspaceEvent);
   const {
     data: projectsRaw,
+    error: projectsError,
     reload: reloadProjects,
   } = useApi<unknown>(
     () =>
@@ -247,6 +254,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     () => pagedItems<ProjectResponse>(projectsRaw),
     [projectsRaw],
   );
+  const projectsFailed = projectsError !== null && projectsRaw === null;
 
   // After AI executes actions, refresh the workspace/project sidebars so
   // newly created entities appear without a manual F5.
@@ -369,9 +377,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       onClick: () =>
         navigate(
           localStorage.getItem(BOARD_PATH_KEY) ??
-            (workspaceId && projects?.length
-              ? `/workspaces/${workspaceId}/projects/${projects[0].id}`
-              : "/"),
+            // Failed project list: jumping to "/" would claim "you have no
+            // projects". Send the user to the workspace page, which shows
+            // its own error state instead.
+            (projectsFailed && workspaceId
+              ? `/workspaces/${workspaceId}`
+              : workspaceId && projects?.length
+                ? `/workspaces/${workspaceId}/projects/${projects[0].id}`
+                : "/"),
         ),
     },
     {
@@ -524,7 +537,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </li>
                 );
               })}
-              {!workspaces && (
+              {workspacesFailed && (
+                /* Intentionally NOT lg:hidden: hiding the failure behind the
+                   collapsed rail's icon mode would rebuild the exact lie
+                   this branch removes (silent "no workspaces"). */
+                <li className="space-y-1.5 px-2 py-1">
+                  <ErrorAlert
+                    message={t("nav.workspacesLoadFailed")}
+                    id="sidebar-workspaces-error"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={reloadWorkspaces}
+                  >
+                    {t("common.retry")}
+                  </Button>
+                </li>
+              )}
+              {workspacesRaw === null && !workspacesFailed && (
                 <li className={`space-y-1.5 px-2 py-1 ${railCollapsed ? "lg:hidden" : ""}`}>
                   <div className="skeleton h-6 w-full" />
                   <div className="skeleton h-6 w-4/5" />
@@ -575,6 +606,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </li>
                   );
                 })}
+                {projectsFailed && (
+                  <li className="space-y-1.5 px-2 py-1">
+                    <ErrorAlert
+                      message={t("nav.projectsLoadFailed")}
+                      id="sidebar-projects-error"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={reloadProjects}
+                    >
+                      {t("common.retry")}
+                    </Button>
+                  </li>
+                )}
               </ul>
             </section>
           )}

@@ -368,6 +368,8 @@
   "searchPlaceholder": "Tìm kiếm…",
   "workspaces": "Workspaces",
   "projects": "Dự án",
+  "workspacesLoadFailed": "Không tải được danh sách workspace",
+  "projectsLoadFailed": "Không tải được danh sách project",
   "epics": "Epics",
   "milestones": "Milestones",
   "knowledge": "Kiến thức",

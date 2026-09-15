@@ -368,6 +368,8 @@
   "searchPlaceholder": "Search…",
   "workspaces": "Workspaces",
   "projects": "Projects",
+  "workspacesLoadFailed": "Couldn't load workspaces",
+  "projectsLoadFailed": "Couldn't load projects",
   "epics": "Epics",
   "milestones": "Milestones",
   "knowledge": "Knowledge",
