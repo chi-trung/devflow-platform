@@ -11,6 +11,7 @@ import { GoogleSignInButton } from "../components/GoogleSignInButton";
 import { GitHubSignInButton } from "../components/GitHubSignInButton";
 import { ApiError } from "../lib/api";
 import { usePageMeta } from "../lib/seo";
+import { useSocialProviders } from "../hooks/useSocialProviders";
 
 interface FormState {
   displayName: string;
@@ -61,6 +62,7 @@ export function RegisterPage() {
   usePageMeta("auth.createAccount", "auth.startManaging");
   const { register } = useAuth();
   const navigate = useNavigate();
+  const providers = useSocialProviders();
 
   const [form, setForm] = useState<FormState>(initialForm);
   const [fieldErrors, setFieldErrors] = useState<
@@ -205,11 +207,13 @@ export function RegisterPage() {
           {submitting ? t("auth.creatingAccount") : t("auth.createAccountBtn")}
         </Button>
 
-        <div className="relative flex items-center gap-2">
-          <span className="h-px flex-1 bg-border" />
-          <span className="text-xs text-muted-foreground">{t("auth.or")}</span>
-          <span className="h-px flex-1 bg-border" />
-        </div>
+        {providers.any && (
+          <div className="relative flex items-center gap-2">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">{t("auth.or")}</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+        )}
 
         <GoogleSignInButton />
         <GitHubSignInButton />

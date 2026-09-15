@@ -207,9 +207,11 @@ export function EpicsPage() {
   async function handleDelete() {
     const epic = pendingDelete;
     if (!epic) return;
+    // Close the dialog first: on failure the page error banner renders
+    // behind the open overlay and is never seen.
+    setPendingDelete(null);
     try {
       await deleteEpic(workspaceId, projectId, epic.id);
-      setPendingDelete(null);
       loadEpics();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("epic.deleteFailed"));

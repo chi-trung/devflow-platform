@@ -130,9 +130,11 @@ export function CustomFieldsPage() {
   async function handleDelete() {
     const field = pendingDelete;
     if (!field) return;
+    // Close the dialog first: on failure the page error banner renders
+    // behind the open overlay and is never seen.
+    setPendingDelete(null);
     try {
       await deleteCustomField(workspaceId, projectId, field.id);
-      setPendingDelete(null);
       loadFields();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("customField.deleteFailed"));

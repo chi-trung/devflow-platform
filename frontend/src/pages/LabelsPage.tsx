@@ -74,9 +74,12 @@ export function LabelsPage() {
   async function handleDelete() {
     const label = pendingDelete;
     if (!label) return;
+    // Close the dialog first: on failure the page error banner renders
+    // behind the open overlay and is never seen. BoardPage and GitHubPage
+    // already confirm-then-close; match them so the retry banner is reachable.
+    setPendingDelete(null);
     try {
       await deleteLabel(workspaceId, projectId, label.id);
-      setPendingDelete(null);
       loadLabels();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("label.deleteFailed"));

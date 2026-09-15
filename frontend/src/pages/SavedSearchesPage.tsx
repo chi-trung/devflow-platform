@@ -75,9 +75,11 @@ export function SavedSearchesPage() {
   async function handleDelete() {
     const search = pendingDelete;
     if (!search) return;
+    // Close the dialog first: on failure the page error banner renders
+    // behind the open overlay and is never seen.
+    setPendingDelete(null);
     try {
       await deleteSavedSearch(search.id);
-      setPendingDelete(null);
       loadSearches();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("savedSearch.deleteFailed"));

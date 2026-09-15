@@ -11,6 +11,7 @@ import { GoogleSignInButton } from "../components/GoogleSignInButton";
 import { GitHubSignInButton } from "../components/GitHubSignInButton";
 import { ApiError } from "../lib/api";
 import { usePageMeta } from "../lib/seo";
+import { useSocialProviders } from "../hooks/useSocialProviders";
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -20,6 +21,7 @@ export function LoginPage() {
   usePageMeta("auth.welcomeBack", "auth.signInToAccount");
   const { login } = useAuth();
   const navigate = useNavigate();
+  const providers = useSocialProviders();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -89,11 +91,13 @@ export function LoginPage() {
           {submitting ? t("auth.signingIn") : t("auth.signIn")}
         </Button>
 
-        <div className="relative flex items-center gap-2">
-          <span className="h-px flex-1 bg-border" />
-          <span className="text-xs text-muted-foreground">{t("auth.or")}</span>
-          <span className="h-px flex-1 bg-border" />
-        </div>
+        {providers.any && (
+          <div className="relative flex items-center gap-2">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">{t("auth.or")}</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+        )}
 
         <GoogleSignInButton />
         <GitHubSignInButton />

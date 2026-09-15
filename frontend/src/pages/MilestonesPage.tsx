@@ -133,9 +133,11 @@ export function MilestonesPage() {
   async function handleDelete() {
     const milestone = pendingDelete;
     if (!milestone) return;
+    // Close the dialog first: on failure the page error banner renders
+    // behind the open overlay and is never seen.
+    setPendingDelete(null);
     try {
       await deleteMilestone(workspaceId, projectId, milestone.id);
-      setPendingDelete(null);
       push(t("milestone.deleted"));
       loadData();
     } catch (err) {
