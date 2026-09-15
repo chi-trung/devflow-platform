@@ -70,7 +70,13 @@ export function SprintPlanningPage() {
     [workspaceId, projectId],
   );
 
-  const { data: members } = useApi<WorkspaceMemberResponse[]>(
+  // A failed roster read must not collapse to undefined -> canManage false,
+  // which silently removes New Sprint / Start / Complete from a real admin.
+  const {
+    data: members,
+    error: membersError,
+    reload: reloadMembers,
+  } = useApi<WorkspaceMemberResponse[]>(
     () => api(`/workspaces/${workspaceId}/members`),
     [workspaceId],
   );
@@ -305,6 +311,20 @@ export function SprintPlanningPage() {
                 </Button>
               )}
             </div>
+          </div>
+        )}
+
+        {membersError && (
+          <div className="mb-4 flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert
+                id="sprintplanningpage-members-error"
+                message={t("common.membersLoadFailed")}
+              />
+            </div>
+            <Button size="sm" variant="outline" onClick={reloadMembers}>
+              {t("common.retry")}
+            </Button>
           </div>
         )}
 

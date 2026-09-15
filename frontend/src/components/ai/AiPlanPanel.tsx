@@ -33,17 +33,27 @@ export function AiPlanPanel({
   const [generating, setGenerating] = useState(false);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadTick, setLoadTick] = useState(0);
 
   const loadPlan = useCallback(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setLoadError(null);
     getLatestAiPlan(workspaceId, projectId, taskId)
       .then((data) => {
         if (!cancelled) setPlan(data);
       })
       .catch(() => {
-        if (!cancelled) setPlan(null);
+        if (!cancelled) {
+          // Unknown is NOT "no plan yet": without this the panel renders the
+          // fresh-task state, hiding Apply/Regenerate for a plan that exists
+          // and offering only "Ask AI to plan", whose generate would
+          // overwrite it. Name the failed read and allow a retry.
+          setPlan(null);
+          setLoadError(t("ai.planLoadFailed"));
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -51,12 +61,12 @@ export function AiPlanPanel({
     return () => {
       cancelled = true;
     };
-  }, [workspaceId, projectId, taskId]);
+  }, [workspaceId, projectId, taskId, t]);
 
   useEffect(() => {
     const cleanup = loadPlan();
     return cleanup;
-  }, [loadPlan, taskId]);
+  }, [loadPlan, taskId, loadTick]);
 
   async function generate() {
     setGenerating(true);
@@ -118,8 +128,23 @@ export function AiPlanPanel({
 
       {error && <ErrorAlert message={error} />}
 
+      {loadError && (
+        <div className="flex items-start gap-2">
+          <div className="flex-1">
+            <ErrorAlert id="aiplanpanel-load-error" message={loadError} />
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setLoadTick((n) => n + 1)}
+          >
+            {t("common.retry")}
+          </Button>
+        </div>
+      )}
+
       {/* Generate button when no plan exists */}
-      {!loading && !plan && !generating && (
+      {!loading && !plan && !generating && !loadError && (
         <Button onClick={generate}>
           <Sparkles className="mr-1.5 size-4" aria-hidden />
           {t("ai.askAiToPlan")}

@@ -1822,18 +1822,20 @@ export async function updateTemplate(
 // POST .../ai/plan                 body { taskId } -> AiPlanResponse
 // POST .../ai/{planId}/apply       -> AiPlanResponse
 
+// The endpoint answers 204 (api() yields undefined) when a task genuinely has
+// no plan — that maps to null below. A failed request must NOT collapse into
+// the same null: the panel would claim "no plan yet, generate one" (whose only
+// button overwrites/duplicates) and hide Apply/Regenerate for a plan that
+// exists. Real failures now reject so the panel can say so.
 export async function getLatestAiPlan(
   workspaceId: string,
   projectId: string,
   taskId: string,
 ): Promise<AiPlanResponse | null> {
-  try {
-    return await api<AiPlanResponse>(
-      `/workspaces/${workspaceId}/projects/${projectId}/ai/plans/${taskId}/latest`,
-    );
-  } catch {
-    return null;
-  }
+  const plan = await api<AiPlanResponse | undefined>(
+    `/workspaces/${workspaceId}/projects/${projectId}/ai/plans/${taskId}/latest`,
+  );
+  return plan ?? null;
 }
 
 export async function planAiTask(

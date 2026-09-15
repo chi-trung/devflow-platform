@@ -55,7 +55,14 @@ export function EpicsPage() {
   const [removingBlockerId, setRemovingBlockerId] = useState<string | null>(null);
 
   const { currentUser } = useAuth();
-  const { data: members = [] } = useApi<WorkspaceMemberResponse[]>(
+  // The roster must expose its error: a failed read used to collapse to [] ->
+  // myRole undefined -> isAdmin false, so delete-epic and blocker management
+  // vanished for a real admin with no explanation.
+  const {
+    data: members,
+    error: membersError,
+    reload: reloadMembers,
+  } = useApi<WorkspaceMemberResponse[]>(
     () => api(`/workspaces/${workspaceId}/members`),
     [workspaceId],
   );
@@ -290,6 +297,20 @@ export function EpicsPage() {
         {error && (
           <div className="mb-4">
             <ErrorAlert message={error} />
+          </div>
+        )}
+
+        {membersError && (
+          <div className="mb-4 flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert
+                id="epicspage-members-error"
+                message={t("common.membersLoadFailed")}
+              />
+            </div>
+            <Button size="sm" variant="outline" onClick={reloadMembers}>
+              {t("common.retry")}
+            </Button>
           </div>
         )}
 

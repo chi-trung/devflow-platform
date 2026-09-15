@@ -830,6 +830,7 @@
   "applying": "Applying…",
   "regenerate": "Regenerate",
   "planFailed": "Failed to generate the plan. Check that the AI planner is configured.",
+  "planLoadFailed": "Failed to load the saved plan.",
   "applyFailed": "Failed to apply the plan.",
   "assistant": "AI Assistant",
   "assistantSubtitle": "Do anything with natural language",
@@ -1593,6 +1594,7 @@
   "edit": "Edit",
   "refresh": "Refresh",
   "loadError": "A new version just shipped. Reload to get it.",
+  "membersLoadFailed": "Failed to load workspace members. Admin actions are unavailable.",
   "unexpectedError": "Something broke while rendering this page."
  },
  "graph": {

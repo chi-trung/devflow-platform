@@ -30,7 +30,13 @@ export function KnowledgePage() {
   const { workspaceId = "", projectId = "" } = useParams<{ workspaceId: string; projectId: string }>();
 
   const { currentUser } = useAuth();
-  const { data: members = [] } = useApi<WorkspaceMemberResponse[]>(
+  // A failed roster read must not collapse to [] -> isAdmin false, which
+  // silently removes the delete control from every entry card for a real admin.
+  const {
+    data: members,
+    error: membersError,
+    reload: reloadMembers,
+  } = useApi<WorkspaceMemberResponse[]>(
     () => api(`/workspaces/${workspaceId}/members`),
     [workspaceId],
   );
@@ -202,6 +208,20 @@ export function KnowledgePage() {
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <ErrorAlert id="knowledge-load-error" message={error} />
             <Button variant="outline" size="sm" onClick={loadData}>
+              {t("common.retry")}
+            </Button>
+          </div>
+        )}
+
+        {membersError && (
+          <div className="mb-4 flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert
+                id="knowledgepage-members-error"
+                message={t("common.membersLoadFailed")}
+              />
+            </div>
+            <Button size="sm" variant="outline" onClick={reloadMembers}>
               {t("common.retry")}
             </Button>
           </div>
