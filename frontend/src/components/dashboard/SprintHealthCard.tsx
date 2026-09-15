@@ -4,6 +4,8 @@ import { Timer, Flame } from "lucide-react";
 import { api, pagedItems } from "../../lib/api";
 import { Skeleton } from "../ui/Skeleton";
 import { EmptyState } from "../ui/EmptyState";
+import { ErrorAlert } from "../ui/ErrorAlert";
+import { Button } from "../ui/Button";
 import type { SprintResponse, BurndownResponse } from "../../types/api";
 
 interface SprintHealthCardProps {
@@ -17,13 +19,22 @@ export function SprintHealthCard({ workspaceId, projectId, className = "" }: Spr
   const [sprint, setSprint] = useState<SprintResponse | null>(null);
   const [burndown, setBurndown] = useState<BurndownResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  // The single .catch(() => {}) used to collapse BOTH GETs into fake
+  // success: a sprints failure rendered the "No active sprint" empty state
+  // and a burndown-only failure rendered 0/0 tasks + 0% as real numbers.
+  const [error, setError] = useState(false);
+  const [burndownFailed, setBurndownFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setError(false);
+    setBurndownFailed(false);
     // /sprints returns a PagedResult ({ items, totalCount, ... }), not a flat
     // array — unwrap through pagedItems or sprints.find crashes the dashboard.
-    api<unknown>(`/workspaces/${workspaceId}/projects/${projectId}/sprints`)
-      .then((raw) => {
+    void api<unknown>(`/workspaces/${workspaceId}/projects/${projectId}/sprints`)
+      .then(async (raw) => {
         const sprints = pagedItems<SprintResponse>(raw);
         if (cancelled) return;
         const active = sprints.find((s) => s.status === "Active");
@@ -33,23 +44,44 @@ export function SprintHealthCard({ workspaceId, projectId, className = "" }: Spr
           // full ISO timestamps ("2026-09-04T00:00:00+00:00") — interpolated
           // raw, the "+" offset becomes a space server-side and binding 400s.
           // Send the yyyy-mm-dd portion only.
-          return api<BurndownResponse>(
-            `/workspaces/${workspaceId}/projects/${projectId}/reporting/burndown?startDate=${active.startDateUtc.slice(0, 10)}&endDate=${active.endDateUtc.slice(0, 10)}`,
-          );
+          try {
+            const bd = await api<BurndownResponse>(
+              `/workspaces/${workspaceId}/projects/${projectId}/reporting/burndown?startDate=${active.startDateUtc.slice(0, 10)}&endDate=${active.endDateUtc.slice(0, 10)}`,
+            );
+            if (!cancelled) setBurndown(bd);
+          } catch {
+            // The sprint header stays truthful; only the progress figures are
+            // unknown — render them as unavailable, never as 0/0.
+            if (!cancelled) setBurndownFailed(true);
+          }
         }
       })
-      .then((bd) => {
-        if (!cancelled && bd) setBurndown(bd);
+      .catch(() => {
+        if (!cancelled) setError(true);
       })
-      .catch(() => {})
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [workspaceId, projectId]);
+  }, [workspaceId, projectId, reloadKey]);
 
   if (loading) {
     return <Skeleton className={`h-full min-h-[267px] ${className}`} />;
+  }
+
+  if (error) {
+    return (
+      <div className={`flex h-full min-h-[267px] flex-col items-start justify-center gap-2 rounded-xl border border-border bg-card p-5 ${className}`}>
+        <ErrorAlert message={t("dashboard.sprintHealthLoadFailed")} />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setReloadKey((n) => n + 1)}
+        >
+          {t("common.retry")}
+        </Button>
+      </div>
+    );
   }
 
   if (!sprint) {
@@ -79,6 +111,37 @@ export function SprintHealthCard({ workspaceId, projectId, className = "" }: Spr
   const daysLeft = endMs > now ? Math.ceil((endMs - now) / 86_400_000) : 0;
   const totalDays = endMs > startMs ? Math.ceil((endMs - startMs) / 86_400_000) : 1;
   const daysElapsed = Math.max(0, totalDays - daysLeft);
+
+  if (burndownFailed) {
+    // Sprint identity is known real data; progress figures are not. Render
+    // the header without fabricating a 0% burndown.
+    return (
+      <div className={`flex h-full min-h-[267px] flex-col rounded-xl border border-border bg-card p-5 ${className}`}>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="inline-flex items-center gap-1.5 font-display text-sm font-semibold">
+            <Flame className="size-4 text-primary" aria-hidden />
+            {t("dashboard.sprintHealth")}
+          </h3>
+          <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary-strong">{sprint.name}</span>
+        </div>
+        <div className="my-auto">
+          <ErrorAlert message={t("dashboard.burndownLoadFailed")} />
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => setReloadKey((n) => n + 1)}
+          >
+            {t("common.retry")}
+          </Button>
+        </div>
+        <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+          <span>—</span>
+          <span>{daysElapsed}/{totalDays} {t("dashboard.days")}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`rounded-xl border border-border bg-card p-5 h-full ${className}`}>

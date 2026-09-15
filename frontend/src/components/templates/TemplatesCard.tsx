@@ -8,6 +8,7 @@ import {
   getTemplates,
 } from "../../lib/api";
 import { useToast } from "../ui/ToastProvider";
+import { ErrorAlert } from "../ui/ErrorAlert";
 import type { TemplateResponse } from "../../types/api";
 
 interface TemplatesCardProps {
@@ -24,19 +25,25 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
 
+  // Same class as PATSection: a failed list must not render "No templates"
+  // as if it were the truth.
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
+    setLoadError(false);
     getTemplates(workspaceId, projectId)
       .then((loaded) => {
         if (!cancelled) setTemplates(loaded);
       })
       .catch(() => {
-        if (!cancelled) setTemplates([]);
+        if (!cancelled) setLoadError(true);
       });
     return () => {
       cancelled = true;
     };
-  }, [workspaceId, projectId]);
+  }, [workspaceId, projectId, reloadKey]);
 
   async function handleCreate(event: FormEvent) {
     event.preventDefault();
@@ -119,7 +126,18 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
         </button>
       </form>
 
-      {!templates ? (
+      {loadError ? (
+        <div className="flex flex-col items-start gap-2">
+          <ErrorAlert message={t("template.loadFailed")} />
+          <button
+            type="button"
+            onClick={() => setReloadKey((n) => n + 1)}
+            className="rounded-md border border-border px-2 py-1 text-xs font-medium hover:border-primary"
+          >
+            {t("common.retry")}
+          </button>
+        </div>
+      ) : !templates ? (
         <p className="text-xs text-muted-foreground">{t("common.loading")}</p>
       ) : templates.length === 0 ? (
         <p className="text-xs text-muted-foreground">{t("template.noTemplates")}</p>

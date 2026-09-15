@@ -454,7 +454,9 @@
   "sprintHealth": "Sức khỏe Sprint",
   "noActiveSprint": "Không có sprint đang chạy",
   "noActiveSprintDesc": "Bắt đầu sprint để theo dõi tiến độ burndown.",
-  "remaining": "còn lại"
+  "remaining": "còn lại",
+  "sprintHealthLoadFailed": "Không tải được trạng thái sprint.",
+  "burndownLoadFailed": "Không tải được biểu đồ burndown."
  },
  "board": {
   "backlog": "Chờ xử lý",
@@ -636,7 +638,9 @@
   "watchers": "Người theo dõi",
   "watcherCount_one": "{{count}} người theo dõi",
   "watcherCount_other": "{{count}} người theo dõi",
-  "noWatchers": "Chưa có người theo dõi"
+  "noWatchers": "Chưa có người theo dõi",
+  "watchersLoadFailed": "Không tải được danh sách người theo dõi.",
+  "attachmentsLoadFailed": "Không tải được tệp đính kèm."
  },
  "filter": {
   "filters": "Bộ lọc",
@@ -1009,7 +1013,9 @@
   "created": "Đã tạo trường",
   "createFailed": "Không tạo được trường.",
   "deleteFailed": "Không xóa được trường.",
-  "deleteAria": "Xóa trường {{name}}"
+  "deleteAria": "Xóa trường {{name}}",
+  "loadFailed": "Không tải được các trường tùy chỉnh.",
+  "valueSaveFailed": "Không lưu được giá trị trường. Vui lòng thử lại."
  },
  "github": {
   "title": "Tích hợp GitHub",
@@ -1079,7 +1085,8 @@
   "patCreateFailed": "Không tạo được token.",
   "patRevoked": "Đã thu hồi token",
   "patRevokeFailed": "Không thu hồi được token.",
-  "revokePat": "Thu hồi token {{name}}"
+  "revokePat": "Thu hồi token {{name}}",
+  "loadPrsFailed": "Không tải được danh sách pull request."
  },
  "profile": {
   "accountDetails": "Chi tiết tài khoản",

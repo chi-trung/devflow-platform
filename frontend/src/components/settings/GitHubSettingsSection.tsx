@@ -9,6 +9,7 @@ import {
 import type { GitHubIntegrationResponse } from "../../types/api";
 import { useToast } from "../ui/ToastProvider";
 import { Button } from "../ui/Button";
+import { ErrorAlert } from "../ui/ErrorAlert";
 
 interface GitHubSettingsSectionProps {
   workspaceId: string;
@@ -23,14 +24,27 @@ export function GitHubSettingsSection({
   const { push } = useToast();
 
   const [integration, setIntegration] = useState<GitHubIntegrationResponse | null>(null);
+  // A rejected GET is not "not linked" — without this the webhook config
+  // silently vanished for an actually-linked repo on a transient failure.
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [secretInput, setSecretInput] = useState("");
   const [savingSecret, setSavingSecret] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoadError(false);
     getGitHubIntegration(workspaceId, projectId)
-      .then((integrationData) => setIntegration(integrationData ?? null))
-      .catch(() => setIntegration(null));
-  }, [workspaceId, projectId]);
+      .then((integrationData) => {
+        if (!cancelled) setIntegration(integrationData ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setLoadError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId, projectId, reloadKey]);
 
   async function handleSaveSecret(event: FormEvent) {
     event.preventDefault();
@@ -64,6 +78,18 @@ export function GitHubSettingsSection({
       </div>
 
       <div className="flex flex-col gap-5">
+        {loadError && (
+          <div className="flex flex-col items-start gap-2">
+            <ErrorAlert message={t("github.loadFailed")} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReloadKey((n) => n + 1)}
+            >
+              {t("common.retry")}
+            </Button>
+          </div>
+        )}
         {integration && (
           <div>
             <h3 className="mb-2 flex items-center gap-1.5 text-sm font-medium">
