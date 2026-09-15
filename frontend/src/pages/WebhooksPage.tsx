@@ -129,9 +129,11 @@ export function WebhooksPage() {
   async function handleDelete() {
     const webhook = pendingDelete;
     if (!webhook) return;
+    // Close the dialog first: on failure the page error banner renders
+    // behind the open overlay and is never seen.
+    setPendingDelete(null);
     try {
       await deleteWebhook(workspaceId, webhook.id);
-      setPendingDelete(null);
       loadWebhooks();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("webhook.deleteFailed"));

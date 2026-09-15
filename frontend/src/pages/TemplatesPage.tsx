@@ -94,9 +94,11 @@ export function TemplatesPage() {
   async function handleDelete() {
     const template = pendingDelete;
     if (!template) return;
+    // Close the dialog first: on failure the page error banner renders
+    // behind the open overlay and is never seen.
+    setPendingDelete(null);
     try {
       await deleteTemplate(workspaceId, projectId, template.id);
-      setPendingDelete(null);
       loadTemplates();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("template.deleteFailed"));

@@ -17,6 +17,22 @@ let cachedConfig: OAuthConfig | null = null;
 // GitHubSignInButton each fire their own request while the config is still in
 // flight, and a boot prefetch would race both of them.
 let configRequest: Promise<OAuthConfig | null> | null = null;
+// Listeners get the resolved config (or null when the fetch failed). Login and
+// register pages subscribe so the "or" divider can appear in the same render
+// pass as the provider buttons instead of on a later one.
+const configListeners = new Set<(config: OAuthConfig | null) => void>();
+
+/** Subscribes to the next OAuth config resolution. Returns an unsubscribe fn. */
+export function subscribeOAuthConfig(listener: (config: OAuthConfig | null) => void): () => void {
+  configListeners.add(listener);
+  return () => {
+    configListeners.delete(listener);
+  };
+}
+
+function notifyOAuthConfig(config: OAuthConfig | null): void {
+  for (const listener of [...configListeners]) listener(config);
+}
 
 /**
  * Fire-and-forget the config fetch so it is warm before an auth page renders.
@@ -43,9 +59,13 @@ export async function getOAuthConfig(): Promise<OAuthConfig | null> {
   configRequest ??= api<OAuthConfig>("/auth/oauth/config")
     .then((config) => {
       cachedConfig = config;
+      notifyOAuthConfig(config);
       return config;
     })
-    .catch(() => null)
+    .catch(() => {
+      notifyOAuthConfig(null);
+      return null;
+    })
     .finally(() => {
       configRequest = null;
     });

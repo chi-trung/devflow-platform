@@ -156,9 +156,11 @@ export function KnowledgePage() {
   async function handleDelete() {
     const entry = pendingDelete;
     if (!entry) return;
+    // Close the dialog first: on failure the page error banner renders
+    // behind the open overlay and is never seen.
+    setPendingDelete(null);
     try {
       await deleteKnowledgeEntry(workspaceId, projectId, entry.id);
-      setPendingDelete(null);
       push(t("knowledge.deleted"));
       loadData();
     } catch (err) {
