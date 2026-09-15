@@ -3,10 +3,13 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import "./i18n";
 import { initTheme } from "./lib/theme";
-import { prefetchOAuthConfig } from "./lib/oauth";
+import { prefetchOAuthConfig, reconcileOAuthCallback } from "./lib/oauth";
 import App from "./App.tsx";
 
 initTheme();
+// Drop a provider callback nobody can claim (dead ?code=, consent ?error=)
+// before any route renders it, so one-time params never sit in the URL.
+reconcileOAuthCallback();
 // Start the OAuth provider-config fetch while the entry chunk is still
 // warming up. The login/register cards only show the Google/GitHub buttons
 // after this config resolves, so a late answer grows the card after first

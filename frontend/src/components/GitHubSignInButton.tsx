@@ -5,7 +5,9 @@ import {
   buildGitHubAuthUrl,
   completeOAuthExchange,
   getOAuthConfig,
+  OAuthCancelledError,
   peekOAuthConfig,
+  stripOAuthCallbackParams,
 } from "../lib/oauth";
 
 /**
@@ -37,7 +39,11 @@ export function GitHubSignInButton() {
   useEffect(() => {
     let cancelled = false;
     void getOAuthConfig().then((config) => {
-      if (!cancelled && config?.gitHubEnabled) setEnabled(true);
+      if (cancelled) return;
+      // A failed fetch is unknown, not unconfigured: only a real config with
+      // gitHubEnabled flips the button on (the null-lie stays invisible until
+      // a click, where the honest "couldn't load" path runs instead).
+      if (config?.gitHubEnabled) setEnabled(true);
     });
     return () => {
       cancelled = true;
@@ -46,10 +52,21 @@ export function GitHubSignInButton() {
 
   // If we landed here with ?code= (GitHub redirect back), finish the exchange.
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get("code");
-    if (!code) return;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const denial = params.get("error");
+    if (!code && !denial) return;
     if (sessionStorage.getItem("devflow.oauthProvider") !== "github") return;
     let cancelled = false;
+    if (denial && !code) {
+      // Consent denied: GitHub lands with ?error=access_denied and no code.
+      // Clear the pending tag so reconcileOAuthCallback stops claiming this
+      // landing, then say it was cancelled and drop the dead params.
+      sessionStorage.removeItem("devflow.oauthProvider");
+      stripOAuthCallbackParams();
+      setError(t("auth.signInCancelled"));
+      return;
+    }
     setLoading(true);
     void completeOAuthExchange()
       .then((response) => {
@@ -63,10 +80,17 @@ export function GitHubSignInButton() {
         window.location.href = safeRedirect;
       })
       .catch((err: unknown) => {
-        if (!cancelled) {
+        if (cancelled) return;
+        if (err instanceof OAuthCancelledError) {
+          // The pending tag was ours but no code survived the round-trip
+          // (consent denied lands as ?error=access_denied): say cancelled,
+          // and drop the dead callback params off the URL.
+          stripOAuthCallbackParams();
+          setError(t("auth.signInCancelled"));
+        } else {
           setError(err instanceof Error ? err.message : t("auth.somethingWrong"));
-          setLoading(false);
         }
+        setLoading(false);
       });
     return () => {
       cancelled = true;
@@ -76,7 +100,14 @@ export function GitHubSignInButton() {
   const handleClick = useCallback(async () => {
     setError(null);
     const config = await getOAuthConfig();
-    if (!config?.gitHubEnabled) {
+    if (!config) {
+      // The config fetch failed — we do not know whether GitHub is on. Saying
+      // "not configured" would be a claim we cannot support (prod has GitHub
+      // enabled; a network hiccup would rewrite that as a setting).
+      setError(t("auth.configUnavailable"));
+      return;
+    }
+    if (!config.gitHubEnabled) {
       setError(t("auth.githubNotConfigured"));
       return;
     }

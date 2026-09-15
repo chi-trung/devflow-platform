@@ -1165,6 +1165,8 @@
   "redirecting": "Đang chuyển hướng…",
   "googleNotConfigured": "Đăng nhập Google chưa được cấu hình.",
   "githubNotConfigured": "Đăng nhập GitHub chưa được cấu hình.",
+  "configUnavailable": "Không tải được tuỳ chọn đăng nhập. Kiểm tra kết nối và thử lại.",
+  "signInCancelled": "Đăng nhập đã bị huỷ.",
   "displayNameRequired": "Tên hiển thị là bắt buộc.",
   "displayNameMax": "Tên hiển thị phải dưới 100 ký tự.",
   "usernameRequired": "Tên người dùng là bắt buộc.",
