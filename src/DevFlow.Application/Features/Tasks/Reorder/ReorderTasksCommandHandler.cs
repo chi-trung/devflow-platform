@@ -1,5 +1,6 @@
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Tasks.Dependencies;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
 using MediatR;
@@ -9,7 +10,8 @@ namespace DevFlow.Application.Features.Tasks.Reorder;
 public sealed class ReorderTasksCommandHandler(
     ITaskItemRepository taskItemRepository,
     IProjectRepository projectRepository,
-    IUnitOfWork unitOfWork) : IRequestHandler<ReorderTasksCommand>
+    IUnitOfWork unitOfWork,
+    ITaskDependencyRepository dependencyRepository) : IRequestHandler<ReorderTasksCommand>
 {
     public async Task Handle(ReorderTasksCommand command, CancellationToken cancellationToken)
     {
@@ -23,6 +25,15 @@ public sealed class ReorderTasksCommandHandler(
         {
             throw new NotFoundException(nameof(Project), command.ProjectId);
         }
+
+        // Blocked-move enforcement. A drag that crosses columns is a status
+        // change and is rejected while the task has unresolved non-cyclic
+        // blockers; same-column drops change no status and stay free. The
+        // project edge set is loaded once for the whole batch, and because
+        // the guard throws before SaveChanges, one blocked card rejects the
+        // entire reorder — no partial batch can slip past.
+        var blockedMoves = await BlockedTaskMoves.EvaluateAsync(
+            dependencyRepository, command.ProjectId, cancellationToken);
 
         foreach (var item in command.Tasks)
         {
@@ -39,6 +50,11 @@ public sealed class ReorderTasksCommandHandler(
 
             if (Enum.TryParse<TaskItemStatus>(item.Status, true, out var status))
             {
+                if (status != task.Status)
+                {
+                    blockedMoves.ThrowIfBlocked(task.Id, task.Title);
+                }
+
                 task.ChangeStatus(status);
             }
 

@@ -234,17 +234,34 @@ export function BoardPage() {
   );
   const blockedTaskIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const edge of depGraph?.edges ?? []) {
-      if (!edge.isCyclic) ids.add(edge.fromTaskId);
+    const graph = depGraph;
+    if (!graph) return ids;
+    if (graph.nodes.some((node) => typeof node.isBlocked === "boolean")) {
+      // Fresh payload: the server computed blocked-ness with the exact rule
+      // its 409 guard enforces (unresolved non-cyclic blockers, Done and
+      // unresolvable blockers exempt). Consume it — client and server can
+      // then never disagree about which cards are blocked.
+      for (const node of graph.nodes) {
+        if (node.isBlocked) ids.add(node.id);
+      }
+      return ids;
+    }
+    // Rollout window only: a cached snapshot predating isBlocked. Derive the
+    // same rule from edges; an endpoint missing from the snapshot stays
+    // treated as unresolved (fail closed until the graph refetches).
+    const statusById = new Map(graph.nodes.map((node) => [node.id, node.status]));
+    for (const edge of graph.edges) {
+      if (edge.isCyclic) continue;
+      const blockerStatus = statusById.get(edge.toTaskId);
+      if (blockerStatus === undefined || blockerStatus !== "Done") ids.add(edge.fromTaskId);
     }
     return ids;
   }, [depGraph]);
-  // The blocked-move guard below is the ONLY enforcement — the server accepts
-  // any status transition from ReorderTasks without consulting dependencies
-  // (verified in ReorderTasksCommandHandler / TaskItem.ChangeStatus). So while
-  // the graph is absent, loading, or the last refresh failed (possibly over a
-  // stale snapshot), blocked state is UNKNOWN and cross-status moves are
-  // paused instead of silently allowed.
+  // While the graph is absent, loading, or the last refresh failed (possibly
+  // over a stale snapshot), blocked state is UNKNOWN client-side. The server
+  // now rejects blocked moves with 409 (BlockedTaskMoves guards update,
+  // reorder and bulk), so pausing here is a UX choice — it stops a drag that
+  // is about to fail rather than animating the card and then bouncing it.
   const blockedStateUnknown =
     depGraph === null || depGraphLoading || depGraphError !== null;
 
@@ -723,11 +740,11 @@ export function BoardPage() {
     const task = tasks.find((t) => t.id === taskId);
     if (!task || (!beforeTaskId && task.status === status)) return;
 
-    // Fail closed: the client guard is the only thing stopping a blocked task
-    // from being moved (the server accepts any transition). While the graph
-    // is unknown we cannot tell blocked from clear, so pause cross-status
-    // moves rather than silently permitting a forbidden one. Same-column
-    // reorders are unaffected because they change no status.
+    // Fail closed while the graph is unknown. The server now rejects blocked
+    // cross-status moves with 409, so this guard is a UX choice: without a
+    // fresh graph we cannot tell blocked from clear, so pausing the drag
+    // beats animating a move that is about to bounce off the server.
+    // Same-column reorders are unaffected because they change no status.
     if (task.status !== status && blockedStateUnknown) {
       setBoardError(t("board.blockedStateLoadFailed"));
       push(t("board.couldntMoveTask"), "error");
@@ -1251,15 +1268,35 @@ export function BoardPage() {
             <select
               aria-label={t("board.bulkMoveToStatus")}
               value={bulkStatus}
+              disabled={blockedStateUnknown}
+              title={blockedStateUnknown ? t("board.bulkBlockedStateLoadFailed") : undefined}
               onChange={(event) => {
                 const status = event.target.value;
                 setBulkStatus(status);
-                if (status)
-                  void runBulk(
-                    () =>
-                      bulkMoveTasks(workspaceId, projectId, [...selectedIds], status as TaskItemResponse["status"]),
-                    t("board.movedTasksCount", { count: selectedIds.size }),
+                if (!status) return;
+                // The 409 from the server is the authoritative gate, but a
+                // bulk call is all-or-nothing: one blocked selection
+                // bounces the whole batch, so name the offenders before
+                // sending anything.
+                if (blockedStateUnknown) {
+                  setBoardError(t("board.bulkBlockedStateLoadFailed"));
+                  return;
+                }
+                const offenders = [...selectedIds].filter((id) => blockedTaskIds.has(id));
+                if (offenders.length > 0) {
+                  const title = tasks.find((task) => task.id === offenders[0])?.title ?? offenders[0];
+                  setBoardError(
+                    offenders.length === 1
+                      ? t("board.blockedMoveDetail", { title })
+                      : t("board.bulkBlockedMoveDetail", { count: offenders.length }),
                   );
+                  return;
+                }
+                void runBulk(
+                  () =>
+                    bulkMoveTasks(workspaceId, projectId, [...selectedIds], status as TaskItemResponse["status"]),
+                  t("board.movedTasksCount", { count: selectedIds.size }),
+                );
               }}
               className="rounded-md border border-border bg-card px-2 py-1.5 text-xs focus:border-primary focus:outline-none"
             >

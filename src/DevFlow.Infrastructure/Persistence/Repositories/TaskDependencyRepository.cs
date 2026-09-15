@@ -24,6 +24,21 @@ public sealed class TaskDependencyRepository(DevFlowDbContext dbContext) : ITask
             .ContinueWith(t => (IReadOnlyList<TaskDependency>)t.Result, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<DevFlow.Application.Features.Tasks.Dependencies.TaskStatusSnapshot>> GetDependencyTaskSnapshotsAsync(
+        Guid projectId, CancellationToken cancellationToken = default)
+    {
+        // Same edge membership as GetAllByProjectIdAsync, projected onto the
+        // tasks that endpoint can surface: every task in the project touched
+        // by at least one edge. The soft-delete query filter on TaskItems
+        // applies here for free, so a deleted blocker simply has no snapshot
+        // and the guard treats it as unresolvable (exempt).
+        return await dbContext.TaskItems
+            .Where(t => t.ProjectId == projectId &&
+                dbContext.TaskDependencies.Any(td => td.BlockedTaskId == t.Id || td.BlockerTaskId == t.Id))
+            .Select(t => new DevFlow.Application.Features.Tasks.Dependencies.TaskStatusSnapshot(t.Id, t.Title, t.Status))
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<bool> ExistsAsync(Guid blockedTaskId, Guid blockerTaskId, CancellationToken cancellationToken = default)
     {
         return dbContext.TaskDependencies

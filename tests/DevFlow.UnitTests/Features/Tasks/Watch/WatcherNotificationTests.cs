@@ -24,6 +24,7 @@ public class WatcherNotificationTests
     private readonly IKnowledgeRepository _knowledgeRepository = Substitute.For<IKnowledgeRepository>();
     private readonly IUserContext _userContext = Substitute.For<IUserContext>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly ITaskDependencyRepository _dependencyRepository = Substitute.For<ITaskDependencyRepository>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
     private readonly Guid _actorId = Guid.NewGuid();
@@ -41,6 +42,10 @@ public class WatcherNotificationTests
         _taskItemRepository.GetByIdAsync(_task.Id, Arg.Any<CancellationToken>()).Returns(_task);
         _watcherRepository.GetByTaskAsync(_task.Id, Arg.Any<CancellationToken>())
             .Returns(new[] { TaskWatcher.Create(_task.Id, _watcherId) });
+        _dependencyRepository.GetAllByProjectIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(new List<TaskDependency>());
+        _dependencyRepository.GetDependencyTaskSnapshotsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(new List<DevFlow.Application.Features.Tasks.Dependencies.TaskStatusSnapshot>());
     }
 
     [Fact]
@@ -101,7 +106,7 @@ public class WatcherNotificationTests
         var handler = new UpdateTaskItemCommandHandler(
             _projectRepository, _taskItemRepository, _workspaceRepository,
             _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository,
-            _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork);
+            _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork, _dependencyRepository);
 
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, _task.Id, "Watched task", null,
@@ -123,7 +128,7 @@ public class WatcherNotificationTests
         var handler = new UpdateTaskItemCommandHandler(
             _projectRepository, _taskItemRepository, _workspaceRepository,
             _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository,
-            _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork);
+            _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork, _dependencyRepository);
 
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, _task.Id, "Watched task", null,

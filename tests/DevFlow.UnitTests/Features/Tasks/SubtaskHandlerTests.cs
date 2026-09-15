@@ -24,6 +24,7 @@ public class SubtaskHandlerTests
     private readonly IKnowledgeRepository _knowledgeRepository = Substitute.For<IKnowledgeRepository>();
     private readonly IUserContext _userContext = Substitute.For<IUserContext>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly ITaskDependencyRepository _dependencyRepository = Substitute.For<ITaskDependencyRepository>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
     private readonly Project _project;
@@ -33,6 +34,10 @@ public class SubtaskHandlerTests
         _project = Project.Create(_workspaceId, "DevFlow Core", "DEV", null);
         _projectRepository.GetByIdAsync(_project.Id, Arg.Any<CancellationToken>()).Returns(_project);
         _userContext.UserId.Returns(Guid.NewGuid());
+        _dependencyRepository.GetAllByProjectIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(new List<TaskDependency>());
+        _dependencyRepository.GetDependencyTaskSnapshotsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(new List<DevFlow.Application.Features.Tasks.Dependencies.TaskStatusSnapshot>());
     }
 
     [Fact]
@@ -135,7 +140,8 @@ public class SubtaskHandlerTests
             _activityLogRepository,
             _knowledgeRepository,
             _userContext,
-            _unitOfWork);
+            _unitOfWork,
+            _dependencyRepository);
 
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, last.Id,
@@ -174,7 +180,8 @@ public class SubtaskHandlerTests
             _activityLogRepository,
             _knowledgeRepository,
             _userContext,
-            _unitOfWork);
+            _unitOfWork,
+            _dependencyRepository);
 
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, completing.Id,

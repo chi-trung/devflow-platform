@@ -2,6 +2,7 @@ using DevFlow.Application.Common.Authorization;
 using DevFlow.Application.Common.Behaviors;
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Tasks.Dependencies;
 using DevFlow.Domain.Enums;
 using MediatR;
 
@@ -22,17 +23,33 @@ public sealed record BulkMoveTasksCommand(
 
 public class BulkMoveTasksHandler(
     ITaskItemRepository taskItemRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ITaskDependencyRepository dependencyRepository)
     : IRequestHandler<BulkMoveTasksCommand, int>
 {
     public async Task<int> Handle(BulkMoveTasksCommand request, CancellationToken ct)
     {
+        // Blocked-move enforcement: a bulk status change is rejected while any
+        // selected task still has unresolved non-cyclic blockers. Foreign or
+        // missing ids keep their existing silent skip (bulk is best-effort by
+        // contract), but a task that would actually move is checked against
+        // the project's edge set, loaded once for the whole batch. Because
+        // the guard throws before SaveChanges, no partial bulk move commits.
+        var blockedMoves = request.TaskIds.Count > 0
+            ? await BlockedTaskMoves.EvaluateAsync(dependencyRepository, request.ProjectId, ct)
+            : new BlockedTaskMoves.Evaluation(new Dictionary<Guid, IReadOnlyList<Guid>>(), new HashSet<Guid>());
+
         var count = 0;
         foreach (var taskId in request.TaskIds)
         {
             var task = await taskItemRepository.GetByIdAsync(taskId, ct);
             if (task != null && task.ProjectId == request.ProjectId)
             {
+                if (task.Status != request.NewStatus)
+                {
+                    blockedMoves.ThrowIfBlocked(task.Id, task.Title);
+                }
+
                 task.ChangeStatus(request.NewStatus);
                 count++;
             }

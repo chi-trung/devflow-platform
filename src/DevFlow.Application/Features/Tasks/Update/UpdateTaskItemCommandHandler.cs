@@ -2,6 +2,7 @@ using DevFlow.Application.Common.Authorization;
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Email;
+using DevFlow.Application.Features.Tasks.Dependencies;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
 using MediatR;
@@ -21,7 +22,8 @@ public sealed class UpdateTaskItemCommandHandler(
     IActivityLogRepository activityLog,
     IKnowledgeRepository knowledgeRepository,
     IUserContext userContext,
-    IUnitOfWork unitOfWork) : IRequestHandler<UpdateTaskItemCommand>
+    IUnitOfWork unitOfWork,
+    ITaskDependencyRepository dependencyRepository) : IRequestHandler<UpdateTaskItemCommand>
 {
     public async Task Handle(UpdateTaskItemCommand command, CancellationToken cancellationToken)
     {
@@ -55,6 +57,18 @@ public sealed class UpdateTaskItemCommandHandler(
 
         var oldAssigneeId = task.AssigneeId;
         var oldStatus = task.Status;
+
+        // Blocked-move enforcement: a real status transition is rejected while
+        // the task has unresolved non-cyclic blockers. Same-status saves (edit
+        // title, change priority) are not moves and are never guarded, so the
+        // dependency load below stays off the hot edit path. Checked before any
+        // mutation so a rejected request leaves the entity untouched.
+        if (command.Status != oldStatus)
+        {
+            var evaluation = await BlockedTaskMoves.EvaluateAsync(
+                dependencyRepository, command.ProjectId, cancellationToken);
+            evaluation.ThrowIfBlocked(task.Id, command.Title);
+        }
 
         task.UpdateDetails(command.Title, command.Description, command.Priority, command.DueDateUtc);
         task.ChangeStatus(command.Status);
