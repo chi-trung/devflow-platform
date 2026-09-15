@@ -87,10 +87,20 @@ public sealed class DevFlowWebApplicationFactory : WebApplicationFactory<Program
         {
             if (externalConnectionString is null && !IsDockerAvailable)
             {
-                var descriptor = services.SingleOrDefault(
-                    d => d.ServiceType == typeof(DbContextOptions<DevFlowDbContext>));
+                // EF9 registers AddDbContext option actions as cumulative
+                // IDbContextOptionsConfiguration<TContext> descriptors in
+                // addition to DbContextOptions<TContext>, and it now hard-fails
+                // when two providers end up in one service provider
+                // (Npgsql.EntityFrameworkCore.PostgreSQL + InMemory). Removing
+                // only the options descriptor — the EF8 recipe — leaves the app's
+                // UseNpgsql(...) action registered, so strip both before
+                // re-registering the InMemory provider.
+                var optionDescriptors = services
+                    .Where(d => d.ServiceType == typeof(DbContextOptions<DevFlowDbContext>)
+                        || d.ServiceType == typeof(Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptionsConfiguration<DevFlowDbContext>))
+                    .ToList();
 
-                if (descriptor is not null)
+                foreach (var descriptor in optionDescriptors)
                 {
                     services.Remove(descriptor);
                 }
