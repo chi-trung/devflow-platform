@@ -52,6 +52,33 @@ describe("delete handlers close the dialog before awaiting", () => {
   }
 });
 
+// The member-removal flows show their failure as a toast, and the toast
+// container is z-[60] while the Dialog overlay is z-[70]: with the dialog
+// still open the toast renders behind the darkened modal, aria-modal keeping
+// AT out of the page. Same source-order lock as the delete handlers.
+describe("remove-member handlers close the dialog before awaiting", () => {
+  const CASES: Array<[page: string, handler: string, closeCall: string, awaitRe: RegExp]> = [
+    ["ProjectSettingsPage", "handleConfirmRemove", "setPendingRemove(null);", /await removeProjectMember\(/],
+    ["WorkspacePage", "confirmRemoveMember", "setPendingRemoveMember(null);", /await removeWorkspaceMember\(/],
+  ];
+  for (const [page, handler, closeCall, awaitRe] of CASES) {
+    it(`${page}.${handler}: dialog closes before the mutation request`, () => {
+      const content = source(page);
+      const start = content.search(new RegExp(`function ${handler}\\(`));
+      expect(start, `${page} lost ${handler}`).toBeGreaterThan(-1);
+      const body = content.slice(start, start + 1200);
+      const closed = body.indexOf(closeCall);
+      const awaited = body.search(awaitRe);
+      expect(closed, `${page} never closes the dialog in ${handler}`).toBeGreaterThanOrEqual(0);
+      expect(awaited, `${page} ${handler} has no mutation await`).toBeGreaterThanOrEqual(0);
+      expect(
+        closed,
+        `${page} ${handler} awaits while the dialog is open — the failure toast lands behind the overlay`,
+      ).toBeLessThan(awaited);
+    });
+  }
+});
+
 describe("auth pages gate the or-divider on enabled providers", () => {
   for (const page of ["LoginPage", "RegisterPage"]) {
     it(`${page}: divider is behind providers.any and the hook is wired`, () => {

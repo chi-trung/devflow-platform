@@ -304,6 +304,10 @@ export function WorkspacePage() {
   async function confirmRemoveMember() {
     const member = pendingRemoveMember;
     if (!member) return;
+    // Close the dialog before the request: a failure toast at z-[60] sits
+    // behind the open z-[70] modal overlay and is never seen. Same reason
+    // deleteWorkspace/deleteProject above close theirs in onConfirm first.
+    setPendingRemoveMember(null);
     setRemovingMemberId(member.userId);
     try {
       await removeWorkspaceMember(workspaceId, member.userId);
@@ -312,7 +316,6 @@ export function WorkspacePage() {
           name: member.displayName || member.username,
         }),
       );
-      setPendingRemoveMember(null);
       reloadMembers();
     } catch (err) {
       push(
