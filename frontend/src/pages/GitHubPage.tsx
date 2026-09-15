@@ -11,6 +11,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { GitHubSettingsSection } from "../components/settings/GitHubSettingsSection";
 import {
   addPR,
+  deletePR,
   getGitHubIntegration,
   linkGitHubRepo,
   unlinkGitHubRepo,
@@ -29,6 +30,9 @@ export function GitHubPage() {
   const [addingPr, setAddingPr] = useState(false);
   const [pendingUnlink, setPendingUnlink] = useState(false);
   const [pendingDeletePr, setPendingDeletePr] = useState<PullRequestResponse | null>(null);
+  // ConfirmDialog has no busy prop; without this a double-click on either
+  // destructive confirm fires the mutation twice.
+  const [mutating, setMutating] = useState(false);
 
   const [repoUrl, setRepoUrl] = useState("");
   const [prTitle, setPrTitle] = useState("");
@@ -85,15 +89,21 @@ export function GitHubPage() {
   }
 
   async function handleUnlink() {
+    if (mutating) return;
+    setMutating(true);
     setLinking(true);
     try {
       await unlinkGitHubRepo(workspaceId, projectId);
       setPendingUnlink(false);
       loadData();
     } catch (err) {
+      // Close the dialog so the page error banner is actually visible —
+      // it renders behind the open overlay otherwise.
+      setPendingUnlink(false);
       setError(err instanceof Error ? err.message : t("github.unlinkFailed"));
     } finally {
       setLinking(false);
+      setMutating(false);
     }
   }
 
@@ -122,13 +132,22 @@ export function GitHubPage() {
 
   async function handleDeletePr() {
     const pr = pendingDeletePr;
-    if (!pr) return;
+    if (!pr || mutating) return;
+    setMutating(true);
     try {
-      await unlinkGitHubRepo(workspaceId, projectId);
+      // Row-scoped delete. This used to call unlinkGitHubRepo, which drops
+      // the entire integration (repo binding + every PR) for one row's
+      // delete click.
+      await deletePR(workspaceId, projectId, pr.id);
       setPendingDeletePr(null);
       loadData();
     } catch (err) {
+      // Close the dialog so the error banner is reachable (it renders
+      // behind the open overlay otherwise).
+      setPendingDeletePr(null);
       setError(err instanceof Error ? err.message : t("github.deletePrFailed"));
+    } finally {
+      setMutating(false);
     }
   }
 

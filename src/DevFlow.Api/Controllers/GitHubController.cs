@@ -82,6 +82,22 @@ public sealed class GitHubController(ISender sender) : ControllerBase
         return StatusCode(StatusCodes.Status201Created, result);
     }
 
+    [HttpDelete("prs/{prId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeletePR(
+        Guid workspaceId,
+        Guid projectId,
+        Guid prId,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.GitHub.DeletePullRequestCommand(workspaceId, projectId, prId),
+            cancellationToken);
+
+        return NoContent();
+    }
+
     [HttpPut("webhook-secret")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

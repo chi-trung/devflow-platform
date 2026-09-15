@@ -40,4 +40,15 @@ public sealed class GitHubRepository(DevFlowDbContext dbContext) : IGitHubReposi
     {
         await dbContext.PullRequests.AddAsync(pullRequest, cancellationToken);
     }
+
+    public async Task<PullRequest?> GetPullRequestByIdAsync(Guid projectId, Guid pullRequestId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.PullRequests
+            .FirstOrDefaultAsync(pr => pr.Id == pullRequestId && pr.ProjectId == projectId, cancellationToken);
+    }
+
+    public void RemovePullRequest(PullRequest pullRequest)
+    {
+        dbContext.PullRequests.Remove(pullRequest);
+    }
 }
