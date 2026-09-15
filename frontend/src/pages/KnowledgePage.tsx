@@ -197,8 +197,11 @@ export function KnowledgePage() {
         </div>
 
         {error && (
-          <div className="mb-4">
-            <ErrorAlert message={error} />
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <ErrorAlert id="knowledge-load-error" message={error} />
+            <Button variant="outline" size="sm" onClick={loadData}>
+              {t("common.retry")}
+            </Button>
           </div>
         )}
 
@@ -338,7 +341,7 @@ export function KnowledgePage() {
               <Skeleton key={i} className="h-28 w-full" />
             ))}
           </div>
-        ) : entries.length === 0 ? (
+        ) : entries.length === 0 && !error ? (
           <EmptyState
             icon={<BookOpen className="size-8 text-muted-foreground" aria-hidden />}
             title={t("knowledge.emptyTitle")}

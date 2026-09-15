@@ -232,8 +232,11 @@ export function WebhooksPage() {
         </div>
 
         {error && (
-          <div className="mb-4">
-            <ErrorAlert message={error} />
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <ErrorAlert id="webhooks-load-error" message={error} />
+            <Button variant="outline" size="sm" onClick={loadWebhooks}>
+              {t("common.retry")}
+            </Button>
           </div>
         )}
 
@@ -324,7 +327,7 @@ export function WebhooksPage() {
               <Skeleton key={i} className="h-20 w-full" />
             ))}
           </div>
-        ) : webhooks.length === 0 ? (
+        ) : webhooks.length === 0 && !error ? (
           <EmptyState
             icon={<Globe className="size-8 text-muted-foreground" aria-hidden />}
             title={t("webhook.emptyTitle")}
@@ -431,8 +434,11 @@ export function WebhooksPage() {
             </div>
 
             {dlqError && (
-              <div className="mb-4">
-                <ErrorAlert message={dlqError} />
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <ErrorAlert id="webhooks-dlq-error" message={dlqError} />
+                <Button variant="outline" size="sm" onClick={loadDeadLetters}>
+                  {t("common.retry")}
+                </Button>
               </div>
             )}
 
@@ -442,7 +448,7 @@ export function WebhooksPage() {
                   <Skeleton key={i} className="h-20 w-full" />
                 ))}
               </div>
-            ) : deadLetters.length === 0 ? (
+            ) : deadLetters.length === 0 && !dlqError ? (
               <EmptyState
                 icon={<Globe className="size-8 text-muted-foreground" aria-hidden />}
                 title={t("outbox.dlqEmpty")}

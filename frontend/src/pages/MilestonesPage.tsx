@@ -218,8 +218,11 @@ export function MilestonesPage() {
         </div>
 
         {error && (
-          <div className="mb-4">
-            <ErrorAlert message={error} />
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <ErrorAlert id="milestones-load-error" message={error} />
+            <Button variant="outline" size="sm" onClick={loadData}>
+              {t("common.retry")}
+            </Button>
           </div>
         )}
 
@@ -307,7 +310,7 @@ export function MilestonesPage() {
               <Skeleton key={i} className="h-24 w-full" />
             ))}
           </div>
-        ) : milestones.length === 0 ? (
+        ) : milestones.length === 0 && !error ? (
           <EmptyState
             icon={<MilestoneIcon className="size-8 text-muted-foreground" aria-hidden />}
             title={t("milestone.emptyTitle")}

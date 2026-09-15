@@ -170,8 +170,11 @@ export function CustomFieldsPage() {
         </div>
 
         {error && (
-          <div className="mb-4">
-            <ErrorAlert message={error} />
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <ErrorAlert id="custom-fields-load-error" message={error} />
+            <Button variant="outline" size="sm" onClick={loadFields}>
+              {t("common.retry")}
+            </Button>
           </div>
         )}
 
@@ -265,7 +268,7 @@ export function CustomFieldsPage() {
               <Skeleton key={i} className="h-14 w-full" />
             ))}
           </div>
-        ) : fields.length === 0 ? (
+        ) : fields.length === 0 && !error ? (
           <EmptyState
             icon={<Plus className="size-8 text-muted-foreground" aria-hidden />}
             title={t("customField.emptyTitle")}
