@@ -5,7 +5,9 @@ import {
   buildGoogleAuthUrl,
   completeOAuthExchange,
   getOAuthConfig,
+  OAuthCancelledError,
   peekOAuthConfig,
+  stripOAuthCallbackParams,
 } from "../lib/oauth";
 
 /**
@@ -32,7 +34,11 @@ export function GoogleSignInButton() {
   useEffect(() => {
     let cancelled = false;
     void getOAuthConfig().then((config) => {
-      if (!cancelled && config?.googleEnabled) setEnabled(true);
+      if (cancelled) return;
+      // A failed fetch is unknown, not unconfigured: only a real config with
+      // googleEnabled flips the button on (the null-lie stays invisible until
+      // a click, where the honest "couldn't load" path runs instead).
+      if (config?.googleEnabled) setEnabled(true);
     });
     return () => {
       cancelled = true;
@@ -41,12 +47,23 @@ export function GoogleSignInButton() {
 
   // If we landed here with ?code= (Google redirect back), finish the exchange.
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get("code");
-    if (!code) return;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const denial = params.get("error");
+    if (!code && !denial) return;
     // Only claim the exchange when Google started this flow — the GitHub
     // button is mounted beside this one and the one-time code is single-use.
     if (sessionStorage.getItem("devflow.oauthProvider") !== "google") return;
     let cancelled = false;
+    if (denial && !code) {
+      // Consent denied: Google lands with ?error=access_denied and no code.
+      // Clear the pending tag so reconcileOAuthCallback stops claiming this
+      // landing, then say it was cancelled and drop the dead params.
+      sessionStorage.removeItem("devflow.oauthProvider");
+      stripOAuthCallbackParams();
+      setError(t("auth.signInCancelled"));
+      return;
+    }
     setLoading(true);
     void completeOAuthExchange()
       .then((response) => {
@@ -60,10 +77,17 @@ export function GoogleSignInButton() {
         window.location.href = safeRedirect;
       })
       .catch((err: unknown) => {
-        if (!cancelled) {
+        if (cancelled) return;
+        if (err instanceof OAuthCancelledError) {
+          // The pending tag was ours but no code survived the round-trip
+          // (consent denied lands as ?error=access_denied): say cancelled,
+          // and drop the dead callback params off the URL.
+          stripOAuthCallbackParams();
+          setError(t("auth.signInCancelled"));
+        } else {
           setError(err instanceof Error ? err.message : t("auth.somethingWrong"));
-          setLoading(false);
         }
+        setLoading(false);
       });
     return () => {
       cancelled = true;
@@ -73,7 +97,14 @@ export function GoogleSignInButton() {
   const handleClick = useCallback(async () => {
     setError(null);
     const config = await getOAuthConfig();
-    if (!config?.googleEnabled) {
+    if (!config) {
+      // The config fetch failed — we do not know whether Google is on. Saying
+      // "not configured" would be a claim we cannot support (prod has Google
+      // enabled; a network hiccup would rewrite that as a setting).
+      setError(t("auth.configUnavailable"));
+      return;
+    }
+    if (!config.googleEnabled) {
       setError(t("auth.googleNotConfigured"));
       return;
     }

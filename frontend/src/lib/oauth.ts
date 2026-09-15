@@ -143,11 +143,51 @@ export async function buildGitHubAuthUrl(config: OAuthConfig): Promise<string> {
   return `https://github.com/login/oauth/authorize?${params.toString()}`;
 }
 
+/** Thrown when the ?code= vanished between the effect's check and the
+ *  exchange (the boot-time reconciliation strips dead callback params before
+ *  React mounts). Distinct from an expired session so callers can clear the
+ *  URL without claiming the provider's redirect actually reached us. */
+export class OAuthCancelledError extends Error {
+  constructor() {
+    super("Sign-in did not complete.");
+    this.name = "OAuthCancelledError";
+  }
+}
+
+/** Params an OAuth provider may leave on the redirect landing: the exchange
+ *  credentials and the consent-error pair. Unrelated query params survive. */
+const CALLBACK_PARAMS = ["code", "state", "error", "error_description", "scope", "session_state"];
+
+/** Removes leftover callback params from the address bar and session history
+ *  (replaceState: no new entry, no reload). A spent or dead ?code= must not
+ *  sit in the URL — it is a credential, and history would keep replaying it. */
+export function stripOAuthCallbackParams(): void {
+  const params = new URLSearchParams(window.location.search);
+  CALLBACK_PARAMS.forEach((key) => params.delete(key));
+  const query = params.toString();
+  const url = window.location.pathname + (query ? `?${query}` : "") + window.location.hash;
+  window.history.replaceState(window.history.state, "", url);
+}
+
+/** Runs before React mounts. A callback URL no tab can claim (hand-pasted
+ *  link, a second visit to a stale URL, sessionStorage gone with the tab)
+ *  would otherwise leave one-time credentials in the address bar and session
+ *  history forever — nothing reads them, so no code path ever clears them.
+ *  A claimable landing keeps its params for the button effects to exchange
+ *  the code or report the cancellation. */
+export function reconcileOAuthCallback(): void {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has("code") && !params.has("error")) return;
+  const provider = sessionStorage.getItem("devflow.oauthProvider");
+  if (provider === "google" || provider === "github") return;
+  stripOAuthCallbackParams();
+}
+
 /** Parses ?code= off the current URL and exchanges it for a DevFlow session. */
 export async function completeOAuthExchange(): Promise<LoginResponse | null> {
   const params = new URLSearchParams(window.location.search);
   const code = params.get("code");
-  if (!code) return null;
+  if (!code) throw new OAuthCancelledError();
 
   const provider =
     sessionStorage.getItem("devflow.oauthProvider") ?? "google";

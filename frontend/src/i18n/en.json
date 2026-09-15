@@ -1165,6 +1165,8 @@
   "redirecting": "Redirecting…",
   "googleNotConfigured": "Google sign-in is not configured.",
   "githubNotConfigured": "GitHub sign-in is not configured.",
+  "configUnavailable": "Couldn't load the sign-in options. Check your connection and try again.",
+  "signInCancelled": "Sign-in was cancelled.",
   "displayNameRequired": "Display name is required.",
   "displayNameMax": "Display name must be at most 100 characters.",
   "usernameRequired": "Username is required.",
