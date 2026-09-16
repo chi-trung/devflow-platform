@@ -416,3 +416,65 @@ describe("BoardPage custom-fields read", () => {
     expect(gate, "banner order drifted").toBeLessThan(sprintBar);
   });
 });
+
+// Wave-20 hunts the two shapes the BoardPage wave could not see, because they
+// were never useApi destructures:
+//  - EpicsPage's loadEpics Promise.all kept its lists at [] on failure AND
+//    rendered EmptyState ("no epics yet") as a confident claim, while its
+//    banner was a dead-end with no retry (MilestonesPage already gates
+//    `milestones.length === 0 && !error` and wires onClick={loadData});
+//  - CommandPalette's hitsUnresolvable row named the failure but stranded the
+//    user with no way out — projectsError was exposed, reload never destructured.
+describe("EpicsPage load failure stops claiming the backlog is empty", () => {
+  const content = source("EpicsPage");
+
+  it("the load-error banner has a stable id and a retry wired back to loadEpics", () => {
+    const gate = content.indexOf("{error && (");
+    const alert = content.indexOf('id="epicspage-load-error"');
+    const retry = content.indexOf("onClick={loadEpics}");
+    expect(gate, "load-error banner was removed").toBeGreaterThanOrEqual(0);
+    expect(alert, "load-error ErrorAlert lost its stable id").toBeGreaterThan(gate);
+    expect(retry, "load-error banner has no retry").toBeGreaterThan(gate);
+    expect(content.slice(gate, gate + 400)).toMatch(/common\.retry/);
+  });
+
+  it("EmptyState is gated on !error so a failed load never says 'no epics yet'", () => {
+    expect(
+      content,
+      "the epics empty state lost its !error gate",
+    ).toMatch(/epics\.length === 0 && !error/);
+    expect(
+      content,
+      "regressed to the ungated `epics.length === 0 ?` branch",
+    ).not.toMatch(/\) : epics\.length === 0 \? \(\s*\n\s*<EmptyState/);
+    const gate = content.indexOf("{error && (");
+    const empty = content.indexOf("epics.length === 0 && !error");
+    expect(empty, "banner/empty-state order drifted").toBeGreaterThan(gate);
+  });
+});
+
+describe("CommandPalette hitsUnresolvable row is not a dead end", () => {
+  const content = readFileSync(join(COMPONENTS, "CommandPalette.tsx"), "utf8");
+
+  it("the projects destructure exposes reload next to error", () => {
+    expect(
+      content,
+      "projects fetch regressed to omitting reload from its destructure",
+    ).not.toMatch(
+      /const\s*\{\s*data:\s*projectsRaw,\s*error:\s*projectsError\s*\}\s*=\s*useApi/,
+    );
+    expect(content).toMatch(
+      /data:\s*projectsRaw,[\s\S]{0,200}?error:\s*projectsError,[\s\S]{0,200}?reload:\s*reloadProjects/,
+    );
+  });
+
+  it("the failure row keeps listbox semantics with an inline retry", () => {
+    const gate = content.indexOf("{hitsUnresolvable && (");
+    expect(gate, "hitsUnresolvable row was removed").toBeGreaterThanOrEqual(0);
+    const block = content.slice(gate, gate + 1400);
+    expect(block, "row lost role=alert").toMatch(/<li[\s\S]*role="alert"/);
+    expect(block, "row lost its retry wiring").toMatch(/onClick=\{reloadProjects\}/);
+    expect(block, "row lost its i18n key").toMatch(/commandPalette\.projectsLoadFailed/);
+    expect(block, "retry button lost its label").toMatch(/common\.retry/);
+  });
+});

@@ -295,8 +295,11 @@ export function EpicsPage() {
           </div>
 
         {error && (
-          <div className="mb-4">
-            <ErrorAlert message={error} />
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <ErrorAlert id="epicspage-load-error" message={error} />
+            <Button variant="outline" size="sm" onClick={loadEpics}>
+              {t("common.retry")}
+            </Button>
           </div>
         )}
 
@@ -410,7 +413,10 @@ export function EpicsPage() {
               <Skeleton key={i} className="h-24 w-full" />
             ))}
           </div>
-        ) : epics.length === 0 ? (
+        ) : epics.length === 0 && !error ? (
+          // Same gate MilestonesPage ships: with `error` set, an empty list is
+          // unknown, not "none exist" — the banner above names the failure and
+          // the list branch below renders as-is (empty, but no false claim).
           <EmptyState
             icon={<Flag className="size-8 text-muted-foreground" aria-hidden />}
             title={t("epic.emptyTitle")}
