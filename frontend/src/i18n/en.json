@@ -553,6 +553,10 @@
   "bulkBlockedMoveDetail_one": "{{count}} selected task is blocked — resolve its blockers first.",
   "bulkBlockedMoveDetail_other": "{{count}} selected tasks are blocked — resolve their blockers first.",
   "sprintsLoadFailed": "Failed to load sprints.",
+  "projectLoadFailed": "Failed to load this project. The board title and key are unavailable.",
+  "projectNameUnavailable": "Project unavailable",
+  "epicsLoadFailed": "Failed to load epics. Epic swimlanes are grouped, but labeled with raw identifiers.",
+  "customFieldsLoadFailed": "Failed to load custom field values. The chips on cards are hidden.",
   "blockedFilterUnknown": "Blocked state is unknown, so blocked-only results may be wrong.",
   "labelFilterUnknown": "Labels couldn't be loaded, so label searches can't be matched.",
   "assigneeFilterUnknown": "Members couldn't be loaded, so assignee searches can't be matched."

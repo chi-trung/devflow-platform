@@ -171,11 +171,19 @@ export function BoardPage() {
   // fetches start only once the board's first paint is committed.
   const [deferredReady, setDeferredReady] = useState(false);
 
-  const { data: project } = useApi<ProjectResponse>(
+  const {
+    data: project,
+    error: projectError,
+    reload: reloadProject,
+  } = useApi<ProjectResponse>(
     () => api(`/workspaces/${workspaceId}/projects/${projectId}`),
     [workspaceId, projectId],
     { snapshotKey: `board:project:${workspaceId}:${projectId}` },
   );
+  // Nothing cached and the read failed: the <h1> used to render
+  // `project?.name ?? t("common.loading")` forever, so a board whose project
+  // fetch 5xx'd sat on "Loading…" with no explanation and no retry.
+  const projectFailed = projectError !== null && project === null;
 
   const { data: members, error: membersError, reload: reloadMembers } = useApi<WorkspaceMemberResponse[]>(
     () => api(`/workspaces/${workspaceId}/members`),
@@ -211,11 +219,19 @@ export function BoardPage() {
   const labelsFailed = labelsError !== null && labelsRaw === null;
   const membersFailed = membersError !== null && members === null;
 
-  const { data: epics } = useApi<EpicResponse[]>(
+  const {
+    data: epics,
+    error: epicsError,
+    reload: reloadEpics,
+  } = useApi<EpicResponse[]>(
     () => getEpics(workspaceId, projectId),
     [workspaceId, projectId],
     { snapshotKey: `board:epics:${workspaceId}:${projectId}` },
   );
+  // Column's epic swimlane label falls back to the raw epicId GUID when the
+  // list is empty - grouping still works, but lanes read as random hex. The
+  // failure must be named, not silently presented as odd lane titles.
+  const epicsFailed = epicsError !== null && epics === null;
 
   // Project-wide dependency graph — the task list response has no isBlocked
   // field, so "blocked" badges/filters derive from these unresolved edges.
@@ -313,11 +329,18 @@ export function BoardPage() {
   // paint: field chips are secondary content on cards. (Not snapshotted —
   // a Map doesn't survive the JSON round-trip, and being deferred it costs
   // the first paint nothing.)
-  const { data: customFieldsByTaskId } = useApi(
+  const {
+    data: customFieldsByTaskId,
+    error: customFieldsError,
+    reload: reloadCustomFields,
+  } = useApi(
     async () =>
       deferredReady ? await getProjectTaskFieldValues(workspaceId, projectId) : null,
     [workspaceId, projectId, deferredReady],
   );
+  // The `?? undefined` handoff below used to swallow a failed read into "no
+  // field values", silently dropping every custom-field chip off the cards.
+  const customFieldsFailed = customFieldsError !== null && customFieldsByTaskId === null;
 
   const [tasks, setTasks] = useState<TaskItemResponse[]>([]);
   const [boardError, setBoardError] = useState<string | null>(null);
@@ -912,7 +935,8 @@ export function BoardPage() {
             <div className="flex items-center gap-2.5">
               {project?.emoji && <EmojiTile emoji={project.emoji} size="md" />}
               <h1 className="font-display text-2xl font-semibold tracking-tight">
-                {project?.name ?? t("common.loading")}
+                {project?.name ??
+                  (projectFailed ? t("board.projectNameUnavailable") : t("common.loading"))}
               </h1>
               {project && <Badge tone="teal">{project.key}</Badge>}
             </div>
@@ -1027,6 +1051,56 @@ export function BoardPage() {
             </div>
           </div>
         </div>
+
+        {projectFailed && (
+          // The h1 can't say "Loading..." forever when the fetch already
+          // failed - name it and offer the retry, matching the sprints block.
+          <div className="mb-3">
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <ErrorAlert
+                  id="boardpage-project-error"
+                  message={t("board.projectLoadFailed")}
+                />
+              </div>
+              <Button size="sm" variant="outline" onClick={reloadProject}>
+                {t("common.retry")}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {epicsFailed && swimlaneMode === "epic" && (
+          <div className="mb-3">
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <ErrorAlert
+                  id="boardpage-epics-error"
+                  message={t("board.epicsLoadFailed")}
+                />
+              </div>
+              <Button size="sm" variant="outline" onClick={reloadEpics}>
+                {t("common.retry")}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {customFieldsFailed && (
+          <div className="mb-3">
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <ErrorAlert
+                  id="boardpage-customfields-error"
+                  message={t("board.customFieldsLoadFailed")}
+                />
+              </div>
+              <Button size="sm" variant="outline" onClick={reloadCustomFields}>
+                {t("common.retry")}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {sprintsError && sprintsRaw === null ? (
           // pagedItems gives an empty array on failure, which SprintBar would
