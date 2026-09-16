@@ -46,9 +46,14 @@ export function AiAssistantPanel({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
-  /** Index (within its message's actions) of the pending action currently
-   * being accepted — disables both buttons on that card while in flight. */
-  const [pendingAccepting, setPendingAccepting] = useState<number | null>(null);
+  /** (message, action) position of the pending action currently being
+   * accepted — disables both buttons on exactly that card while in flight.
+   * A bare action index is not enough: the same index can exist in several
+   * messages at once. */
+  const [pendingAccepting, setPendingAccepting] = useState<{
+    message: number;
+    action: number;
+  } | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -116,22 +121,27 @@ export function AiAssistantPanel({
     }
   };
 
-  /** Replaces the action at `index` in the LAST assistant message with `next` —
-   * used to reflect the result of an accept/reject on the pending card. */
-  function replaceLastAction(index: number, next: ExecutedAction) {
+  /** Writes the accept/reject outcome into the exact card the user acted
+   * on — addressed by (message, action), never by "last assistant message". */
+  function replaceAction(
+    messageIndex: number,
+    actionIndex: number,
+    next: ExecutedAction,
+  ) {
     setMessages((prev) => {
+      const target = prev[messageIndex];
+      if (!target || target.role !== "assistant" || !target.result) return prev;
+      const actions = [...target.result.actions];
+      // The card may have been rejected (status flipped to skipped) or the
+      // panel remounted while the request was in flight — never write past
+      // the end of a different-shaped actions array.
+      if (actionIndex < 0 || actionIndex >= actions.length) return prev;
+      actions[actionIndex] = next;
       const copy = [...prev];
-      for (let i = copy.length - 1; i >= 0; i--) {
-        if (copy[i].role === "assistant" && copy[i].result) {
-          const actions = [...copy[i].result!.actions];
-          actions[index] = next;
-          copy[i] = {
-            ...copy[i],
-            result: { ...copy[i].result!, actions },
-          };
-          break;
-        }
-      }
+      copy[messageIndex] = {
+        ...target,
+        result: { ...target.result, actions },
+      };
       return copy;
     });
   }
@@ -139,17 +149,21 @@ export function AiAssistantPanel({
   /** Runs a single accepted action through the confirm endpoint. The card
    * stays disabled until the request settles; on failure the action stays
    * pending so the user can retry. */
-  async function handleAccept(action: AiExecuteActionContract, index: number) {
+  async function handleAccept(
+    action: AiExecuteActionContract,
+    messageIndex: number,
+    actionIndex: number,
+  ) {
     if (loading || pendingAccepting !== null) return;
-    setPendingAccepting(index);
+    setPendingAccepting({ message: messageIndex, action: actionIndex });
     try {
       const result = await aiExecuteConfirm(workspaceId, projectId, action);
-      replaceLastAction(index, result);
+      replaceAction(messageIndex, actionIndex, result);
       if (result.status === "success") {
         onTaskChanged?.();
       }
     } catch {
-      replaceLastAction(index, {
+      replaceAction(messageIndex, actionIndex, {
         type: action.type,
         label: action.title ?? action.type,
         entityId: null,
@@ -164,28 +178,25 @@ export function AiAssistantPanel({
 
   /** Rejects a pending action — removes it from the review list locally
    * (marking it skipped) so it is never executed. */
-  function handleReject(index: number) {
+  function handleReject(messageIndex: number, actionIndex: number) {
     if (loading || pendingAccepting !== null) return;
     setMessages((prev) => {
+      const target = prev[messageIndex];
+      if (!target || target.role !== "assistant" || !target.result) return prev;
+      const actions = [...target.result.actions];
+      const current = actions[actionIndex];
+      if (!current || current.status !== "pending") return prev;
+      actions[actionIndex] = {
+        ...current,
+        status: "skipped",
+        message: current.message,
+        contract: null,
+      };
       const copy = [...prev];
-      for (let i = copy.length - 1; i >= 0; i--) {
-        if (copy[i].role === "assistant" && copy[i].result) {
-          const actions = [...copy[i].result!.actions];
-          const current = actions[index];
-          if (!current || current.status !== "pending") break;
-          actions[index] = {
-            ...current,
-            status: "skipped",
-            message: current.message,
-            contract: null,
-          };
-          copy[i] = {
-            ...copy[i],
-            result: { ...copy[i].result!, actions },
-          };
-          break;
-        }
-      }
+      copy[messageIndex] = {
+        ...target,
+        result: { ...target.result, actions },
+      };
       return copy;
     });
   }
@@ -257,9 +268,15 @@ export function AiAssistantPanel({
                 actions={message.result?.actions ?? []}
                 error={message.result?.error ?? null}
                 replyItems={message.result?.replyItems ?? null}
-                onAccept={(action, actionIndex) => void handleAccept(action, actionIndex)}
-                onReject={handleReject}
-                pendingAccepting={pendingAccepting}
+                onAccept={(action, actionIndex) =>
+                  void handleAccept(action, i, actionIndex)
+                }
+                onReject={(actionIndex) => handleReject(i, actionIndex)}
+                pendingAccepting={
+                  pendingAccepting?.message === i
+                    ? pendingAccepting.action
+                    : null
+                }
               />
             </div>
           ),
