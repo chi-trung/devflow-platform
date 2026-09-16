@@ -729,3 +729,25 @@ describe("knowledge page save failure is named where the user can see it", () =>
     ).toMatch(/setSuperseding\(null\);\s*\n\s*try \{\s*\n\s*await supersedeKnowledgeEntry/);
   });
 });
+
+describe("subtask detach holds one click in flight", () => {
+  const sub = readFileSync(
+    join(COMPONENTS, "board", "SubtaskSection.tsx"),
+    "utf8",
+  );
+
+  it("detach guards before the un-parenting DELETE", () => {
+    const window = sub.slice(
+      sub.indexOf("async function detach"),
+      sub.indexOf("async function detach") + 1400,
+    );
+    expect(
+      window,
+      "a double-click sends a second DELETE whose handler answers 409 after the row already detached",
+    ).toMatch(/if \(detachingId\) return;\s*\n\s*setDetachingId\(subtask\.id\);[\s\S]*method: "DELETE"/);
+    expect(
+      sub,
+      "detach button lost its disabled wiring",
+    ).toMatch(/disabled=\{detachingId !== null\}/);
+  });
+});
