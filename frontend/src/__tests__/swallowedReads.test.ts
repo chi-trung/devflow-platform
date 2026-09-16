@@ -315,3 +315,104 @@ describe("AiPlanPanel does not launder a failed plan read into 'no plan yet'", (
     ).toMatch(/!loading && !plan && !generating && !loadError/);
   });
 });
+
+// Wave-19: BoardPage's three reads that kept discarding their error. Unlike
+// the role-derivation sites, nothing here hides a control - the failure
+// masquerades as a benign UI state instead: the <h1> froze on "Loading…"
+// forever, epic swimlane lanes fell back to raw GUID labels, and custom-field
+// chips silently vanished from every card. Each must expose error + reload,
+// derive a null-guarded failed flag, and render a retryable banner in the
+// board's banner column above the SprintBar.
+describe("BoardPage project read", () => {
+  const content = source("BoardPage");
+
+  it("destructure exposes error + reload (no bare `data: project`)", () => {
+    expect(
+      content,
+      "project fetch regressed to discarding its error",
+    ).not.toMatch(/const\s*\{\s*data:\s*project\s*\}\s*=\s*useApi/);
+    expect(content).toMatch(
+      /data:\s*project,[\s\S]{0,200}?error:\s*projectError,[\s\S]{0,200}?reload:\s*reloadProject/,
+    );
+  });
+
+  it("the h1 stops faking progress when the read already failed", () => {
+    expect(content).toMatch(
+      /project\?\.name \?\?\s*\(projectFailed \? t\("board\.projectNameUnavailable"\) : t\("common\.loading"\)\)/,
+    );
+  });
+
+  it("a failed project read renders a retryable banner", () => {
+    const flag = content.indexOf(
+      "const projectFailed = projectError !== null && project === null;",
+    );
+    const gate = content.indexOf("{projectFailed && (");
+    const alert = content.indexOf('id="boardpage-project-error"');
+    const retry = content.indexOf("onClick={reloadProject}");
+    expect(flag, "projectFailed null-guard lost").toBeGreaterThanOrEqual(0);
+    expect(gate, "project banner was removed").toBeGreaterThan(flag);
+    expect(alert, "project ErrorAlert lost its stable id").toBeGreaterThan(gate);
+    expect(retry, "project error has no retry wired").toBeGreaterThan(gate);
+  });
+});
+
+describe("BoardPage epics read", () => {
+  const content = source("BoardPage");
+
+  it("destructure exposes error + reload + null-guarded failed flag", () => {
+    expect(
+      content,
+      "epics fetch regressed to discarding its error",
+    ).not.toMatch(/const\s*\{\s*data:\s*epics\s*\}\s*=\s*useApi/);
+    expect(content).toMatch(
+      /data:\s*epics,[\s\S]{0,200}?error:\s*epicsError,[\s\S]{0,200}?reload:\s*reloadEpics/,
+    );
+    expect(content).toMatch(
+      /const\s+epicsFailed\s*=\s*epicsError\s*!==\s*null\s*&&\s*epics\s*===\s*null/,
+    );
+  });
+
+  it("the lane-label failure is named while epic swimlanes are active", () => {
+    const gate = content.indexOf("{epicsFailed && swimlaneMode === \"epic\" && (");
+    const alert = content.indexOf('id="boardpage-epics-error"');
+    const retry = content.indexOf("onClick={reloadEpics}");
+    // Gating on swimlaneMode is deliberate: GUID lane labels only occur in
+    // epic mode, and a banner for a harmless state would be dishonest noise.
+    expect(gate, "epics banner removed or lost its swimlaneMode gate").toBeGreaterThanOrEqual(0);
+    expect(alert, "epics ErrorAlert lost its stable id").toBeGreaterThan(gate);
+    expect(retry, "epics error has no retry wired").toBeGreaterThan(gate);
+    expect(content).toMatch(/board\.epicsLoadFailed/);
+  });
+});
+
+describe("BoardPage custom-fields read", () => {
+  const content = source("BoardPage");
+
+  it("destructure exposes error + reload + null-guarded failed flag", () => {
+    expect(
+      content,
+      "customFields fetch regressed to discarding its error",
+    ).not.toMatch(/const\s*\{\s*data:\s*customFieldsByTaskId\s*\}\s*=\s*useApi/);
+    expect(content).toMatch(
+      /data:\s*customFieldsByTaskId,[\s\S]{0,200}?error:\s*customFieldsError,[\s\S]{0,200}?reload:\s*reloadCustomFields/,
+    );
+    expect(content).toMatch(
+      /const\s+customFieldsFailed\s*=\s*customFieldsError\s*!==\s*null\s*&&\s*customFieldsByTaskId\s*===\s*null/,
+    );
+  });
+
+  it("the chip-loss renders a retryable banner above the board", () => {
+    const gate = content.indexOf("{customFieldsFailed && (");
+    const alert = content.indexOf('id="boardpage-customfields-error"');
+    const retry = content.indexOf("onClick={reloadCustomFields}");
+    const sprintBar = content.indexOf("<SprintBar");
+    expect(gate, "customFields banner was removed").toBeGreaterThanOrEqual(0);
+    expect(alert, "customFields ErrorAlert lost its stable id").toBeGreaterThan(gate);
+    expect(retry, "customFields error has no retry wired").toBeGreaterThan(gate);
+    expect(content).toMatch(/board\.customFieldsLoadFailed/);
+    // Banners belong in the banner column, above the board area they explain.
+    const projectGate = content.indexOf("{projectFailed && (");
+    expect(projectGate, "project banner missing anchor for order check").toBeGreaterThanOrEqual(0);
+    expect(gate, "banner order drifted").toBeLessThan(sprintBar);
+  });
+});
