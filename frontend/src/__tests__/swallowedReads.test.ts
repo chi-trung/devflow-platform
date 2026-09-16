@@ -478,3 +478,48 @@ describe("CommandPalette hitsUnresolvable row is not a dead end", () => {
     expect(block, "retry button lost its label").toMatch(/common\.retry/);
   });
 });
+
+// Wave-21 keeps the dead-end class going: WorkspacePage replaced two whole
+// regions with a BARE <ErrorAlert message=... /> — the reload was already in
+// both useApi destructures, the banner just never offered it.
+describe("WorkspacePage load banners offer the reload they already have", () => {
+  const content = source("WorkspacePage");
+
+  const DEAD_ENDS: Array<{
+    label: string;
+    alertId: string;
+    bare: RegExp;
+    retry: string;
+  }> = [
+    {
+      label: "projects",
+      alertId: "workspacepage-projects-error",
+      bare: /<ErrorAlert message=\{projError\} \/>/,
+      retry: "onClick={reload}",
+    },
+    {
+      label: "members",
+      alertId: "workspacepage-members-error",
+      bare: /<ErrorAlert message=\{membersError\} \/>/,
+      retry: "onClick={reloadMembers}",
+    },
+  ];
+
+  describe.each(DEAD_ENDS)("$label read", ({ alertId, bare, retry }) => {
+    it(`the ${alertId} banner wires a retry and is not a bare dead end`, () => {
+      expect(content, `bare <ErrorAlert> is back for ${alertId}`).not.toMatch(bare);
+      const alert = content.indexOf(`id="${alertId}"`);
+      expect(alert, "banner lost its stable id").toBeGreaterThan(-1);
+      const block = content.slice(alert, alert + 400);
+      expect(block, "banner lost its retry wiring").toMatch(
+        new RegExp(retry.replace(/[{}]/g, "\\$&")),
+      );
+      expect(block, "retry button lost its label").toMatch(/common\.retry/);
+    });
+  });
+
+  it("both destructures still expose the reload the banners call", () => {
+    expect(content).toMatch(/error:\s*projError,[\s\S]{0,120}?reload,/);
+    expect(content).toMatch(/error:\s*membersError,[\s\S]{0,120}?reload:\s*reloadMembers/);
+  });
+});

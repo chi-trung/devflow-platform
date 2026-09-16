@@ -556,7 +556,16 @@ export function WorkspacePage() {
                 ))}
               </div>
             ) : projError ? (
-              <ErrorAlert message={projError} />
+              // The bare alert was a dead end: the reload was already wired
+              // into the destructure, users just never saw an exit.
+              <div className="flex items-start gap-2">
+                <div className="flex-1">
+                  <ErrorAlert id="workspacepage-projects-error" message={projError} />
+                </div>
+                <Button size="sm" variant="outline" onClick={reload}>
+                  {t("common.retry")}
+                </Button>
+              </div>
             ) : !withStats || withStats.length === 0 ? (
               <div className="rise">
                 <EmptyState
@@ -802,7 +811,14 @@ export function WorkspacePage() {
               )}
 
               {membersError ? (
-                <ErrorAlert message={membersError} />
+                <div className="flex items-start gap-2">
+                  <div className="flex-1">
+                    <ErrorAlert id="workspacepage-members-error" message={membersError} />
+                  </div>
+                  <Button size="sm" variant="outline" onClick={reloadMembers}>
+                    {t("common.retry")}
+                  </Button>
+                </div>
               ) : !members ? (
                 <Skeleton className="h-16" />
               ) : (
