@@ -164,11 +164,23 @@ export function TaskDetailPanel({
   const [newComment, setNewComment] = useState("");
   const [commentError, setCommentError] = useState<string | null>(null);
   const [postingComment, setPostingComment] = useState(false);
+  // Deleting a comment is a DELETE that drops the row; a second click after
+  // the first succeeded hits the handler's null-check NotFound and paints an
+  // error under the comment list that just worked. One delete in flight.
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(
+    null,
+  );
 
   const [attachments, setAttachments] = useState<TaskAttachmentResponse[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(true);
   const [attachmentsError, setAttachmentsError] = useState(false);
   const [uploading, setUploading] = useState(false);
+  // Same double-DELETE shape for attachments: the handler NotFound-checks the
+  // attachment id, so a click after the row already dropped surfaces a 404
+  // toast over a successful delete.
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState<
+    string | null
+  >(null);
   const [uploadQueue, setUploadQueue] = useState<{ file: File; progress: number; error: string | null }[]>([]);
   const [watching, setWatching] = useState(false);
   const [watchingLoading, setWatchingLoading] = useState(true);
@@ -449,6 +461,8 @@ export function TaskDetailPanel({
   }
 
   async function deleteAttachment(att: TaskAttachmentResponse) {
+    if (deletingAttachmentId) return;
+    setDeletingAttachmentId(att.id);
     try {
       await api(
         `/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/attachments/${att.id}`,
@@ -458,6 +472,8 @@ export function TaskDetailPanel({
       push(t("task.attachmentRemoved"));
     } catch {
       push(t("board.removeAttachmentFailed"), "error");
+    } finally {
+      setDeletingAttachmentId(null);
     }
   }
 
@@ -522,6 +538,8 @@ export function TaskDetailPanel({
   }
 
   async function deleteComment(comment: CommentResponse) {
+    if (deletingCommentId) return;
+    setDeletingCommentId(comment.id);
     setCommentError(null);
     try {
       await api(
@@ -533,6 +551,8 @@ export function TaskDetailPanel({
       setCommentError(
         err instanceof Error ? err.message : t("board.deleteCommentFailed"),
       );
+    } finally {
+      setDeletingCommentId(null);
     }
   }
 
@@ -837,8 +857,9 @@ export function TaskDetailPanel({
                             <button
                               type="button"
                               onClick={() => void deleteComment(comment)}
+                              disabled={deletingCommentId !== null}
                               aria-label={t("task.deleteComment")}
-                              className="text-xs text-muted-foreground hover:text-destructive"
+                              className="text-xs text-muted-foreground hover:text-destructive disabled:opacity-40"
                             >
                               {t("task.deleteComment")}
                             </button>
@@ -1081,8 +1102,9 @@ export function TaskDetailPanel({
                         <button
                           type="button"
                           onClick={() => void deleteAttachment(att)}
+                          disabled={deletingAttachmentId !== null}
                           title={t("common.delete")}
-                          className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-destructive"
+                          className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-destructive disabled:opacity-40"
                         >
                           <Trash2 className="size-3.5" />
                         </button>
