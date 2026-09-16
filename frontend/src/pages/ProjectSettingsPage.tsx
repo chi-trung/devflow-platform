@@ -26,7 +26,15 @@ export function ProjectSettingsPage() {
   const { workspaceId = "", projectId = "" } = useParams();
   const { currentUser } = useAuth();
 
-  const { data: workspace } = useApi<WorkspaceResponse>(
+  // canManage below derives from this role, so a failed read used to hide the
+  // Add-member button and every per-member role/remove control with no
+  // explanation - the same defect the sibling roster banner (wave-16) closes,
+  // one layer up.
+  const {
+    data: workspace,
+    error: workspaceError,
+    reload: reloadWorkspace,
+  } = useApi<WorkspaceResponse>(
     () => api(`/workspaces/${workspaceId}`),
     [workspaceId],
   );
@@ -178,6 +186,20 @@ export function ProjectSettingsPage() {
             )}
           </div>
         </div>
+
+        {workspaceError && (
+          <div className="mb-4 flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert
+                id="projectsettingspage-workspacerole-error"
+                message={t("projectMember.workspaceRoleLoadFailed")}
+              />
+            </div>
+            <Button size="sm" variant="outline" onClick={reloadWorkspace}>
+              {t("common.retry")}
+            </Button>
+          </div>
+        )}
 
         {workspaceMembersError && (
           <div className="mb-4 flex items-start gap-2">

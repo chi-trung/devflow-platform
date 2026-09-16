@@ -54,7 +54,14 @@ export function SearchPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("tasks");
   const [searchPage, setSearchPage] = useState(1);
 
-  const { data: membersRaw } = useApi<WorkspaceMemberResponse[]>(
+  // Every option source must expose its error: a failed read used to render as
+  // an empty dropdown, indistinguishable from a workspace with no members, no
+  // labels, or no saved searches — so filters silently became unusable.
+  const {
+    data: membersRaw,
+    error: membersError,
+    reload: reloadMembers,
+  } = useApi<WorkspaceMemberResponse[]>(
     () => api(`/workspaces/${workspaceId}/members`),
     [workspaceId],
   );
@@ -62,7 +69,11 @@ export function SearchPage() {
 
   // /workspaces/{id}/projects returns a PagedResult ({ items, totalCount }),
   // not a flat array — unwrap or projects[0] crashes ("not a function").
-  const { data: projectsRaw } = useApi<unknown>(
+  const {
+    data: projectsRaw,
+    error: projectsError,
+    reload: reloadProjects,
+  } = useApi<unknown>(
     () => api(`/workspaces/${workspaceId}/projects`),
     [workspaceId],
   );
@@ -73,7 +84,11 @@ export function SearchPage() {
 
   const selectedProjectId = projects[0]?.id ?? "";
 
-  const { data: labelsRaw } = useApi<LabelResponse[] | null>(
+  const {
+    data: labelsRaw,
+    error: labelsError,
+    reload: reloadLabels,
+  } = useApi<LabelResponse[] | null>(
     // The project list arrives a beat after mount; fetching with the
     // empty placeholder id builds /projects//labels and 404s.
     () =>
@@ -86,7 +101,11 @@ export function SearchPage() {
   );
   const labels = labelsRaw ?? [];
 
-  const { data: savedSearchesRaw } = useApi<SavedSearchResponse[]>(
+  const {
+    data: savedSearchesRaw,
+    error: savedSearchesError,
+    reload: reloadSavedSearches,
+  } = useApi<SavedSearchResponse[]>(
     () => getSavedSearches(),
     [],
   );
@@ -238,6 +257,62 @@ export function SearchPage() {
         {error && (
           <div className="mb-4">
             <ErrorAlert message={error} />
+          </div>
+        )}
+
+        {membersError && (
+          <div className="mb-4 flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert
+                id="searchpage-members-error"
+                message={t("search.membersLoadFailed")}
+              />
+            </div>
+            <Button size="sm" variant="outline" onClick={reloadMembers}>
+              {t("common.retry")}
+            </Button>
+          </div>
+        )}
+
+        {projectsError && (
+          <div className="mb-4 flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert
+                id="searchpage-projects-error"
+                message={t("search.projectsLoadFailed")}
+              />
+            </div>
+            <Button size="sm" variant="outline" onClick={reloadProjects}>
+              {t("common.retry")}
+            </Button>
+          </div>
+        )}
+
+        {labelsError && (
+          <div className="mb-4 flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert
+                id="searchpage-labels-error"
+                message={t("search.labelsLoadFailed")}
+              />
+            </div>
+            <Button size="sm" variant="outline" onClick={reloadLabels}>
+              {t("common.retry")}
+            </Button>
+          </div>
+        )}
+
+        {savedSearchesError && (
+          <div className="mb-4 flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert
+                id="searchpage-savedsearches-error"
+                message={t("search.savedSearchesLoadFailed")}
+              />
+            </div>
+            <Button size="sm" variant="outline" onClick={reloadSavedSearches}>
+              {t("common.retry")}
+            </Button>
           </div>
         )}
 

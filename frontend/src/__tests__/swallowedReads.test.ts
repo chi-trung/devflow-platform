@@ -153,6 +153,136 @@ describe.each(ROSTER_PAGES)(
   },
 );
 
+// Wave-18 pushes the class into its option-source and role-derived variants:
+//  - SearchPage's four filter feeds (`membersRaw`/`projectsRaw`/`labelsRaw`/
+//    `savedSearchesRaw` laundered failures into `?? []`, so dropdowns silently
+//    offered nothing and users concluded "no members/labels/saved searches");
+//  - CommandPalette's Saved group (a failed read vanished the whole group —
+//    now a `<li role="alert">` row with inline retry, the hitsUnresolvable
+//    shape, because a bare div would break listbox semantics);
+//  - ProjectSettingsPage/WebhooksPage: the workspace ROLE fetch itself —
+//    canManage/isAdmin derive from `workspace?.role`, so a failed read hid the
+//    Add-member button (PSP) and the entire dead-letter section (Webhooks) for
+//    real admins. The banner must sit OUTSIDE the region the flag gates.
+const COMPONENTS = join(__dirname, "..", "components");
+
+const SEARCH_FEEDS: Array<{
+  raw: string;
+  err: string;
+  reload: string;
+  alertId: string;
+}> = [
+  { raw: "membersRaw", err: "membersError", reload: "reloadMembers", alertId: "searchpage-members-error" },
+  { raw: "projectsRaw", err: "projectsError", reload: "reloadProjects", alertId: "searchpage-projects-error" },
+  { raw: "labelsRaw", err: "labelsError", reload: "reloadLabels", alertId: "searchpage-labels-error" },
+  {
+    raw: "savedSearchesRaw",
+    err: "savedSearchesError",
+    reload: "reloadSavedSearches",
+    alertId: "searchpage-savedsearches-error",
+  },
+];
+
+describe.each(SEARCH_FEEDS)(
+  "SearchPage $raw feed surfaces its own failure",
+  ({ raw, err, reload, alertId }) => {
+    const content = source("SearchPage");
+
+    it("the useApi destructure keeps error + reload", () => {
+      const start = content.search(new RegExp(`data:\\s*${raw}\\b`));
+      expect(start, `${raw} destructure was renamed`).toBeGreaterThan(-1);
+      const block = content.slice(start, start + 200);
+      expect(block, `${raw} discards its error`).toMatch(new RegExp(`error:\\s*${err}`));
+      expect(block, `${raw} has no reload wired`).toMatch(new RegExp(`reload:\\s*${reload}`));
+    });
+
+    it("the error renders with a retry, above the filter form it belongs to", () => {
+      const gate = content.indexOf(`{${err} && (`);
+      const alert = content.indexOf(`id="${alertId}"`);
+      const retry = content.indexOf(`onClick={${reload}}`);
+      const form = content.indexOf("<form onSubmit={handleSearch}");
+      expect(gate, `${err} banner was removed`).toBeGreaterThanOrEqual(0);
+      expect(alert, `${err} ErrorAlert lost its stable id`).toBeGreaterThan(gate);
+      expect(retry, `${err} has no retry wired to ${reload}`).toBeGreaterThan(gate);
+      // All four feeds are filter controls INSIDE the form; the banner block
+      // sits above it so the error is announced while the form is still empty.
+      expect(gate, `${err} banner drifted inside the search form`).toBeLessThan(form);
+    });
+  },
+);
+
+describe("CommandPalette names a failed saved-searches read instead of dropping the group", () => {
+  const content = readFileSync(join(COMPONENTS, "CommandPalette.tsx"), "utf8");
+
+  it("the saved-searches destructure keeps error + reload and derives a failure flag", () => {
+    expect(content, "savedRaw discards its error again").toMatch(
+      /data:\s*savedRaw,[\s\S]{0,200}?error:\s*savedError,[\s\S]{0,200}?reload:\s*reloadSaved/,
+    );
+    expect(content, "no distinct failure flag (needs error AND raw === null)").toMatch(
+      /const\s+savedSearchesFailed\s*=\s*savedError\s*!==\s*null\s*&&\s*savedRaw\s*===\s*null/,
+    );
+  });
+
+  it("the failure row keeps listbox semantics with an inline retry", () => {
+    const gate = content.indexOf("{savedSearchesFailed && (");
+    expect(gate, "saved-searches failure row was removed").toBeGreaterThanOrEqual(0);
+    const block = content.slice(gate, gate + 700);
+    expect(block, "row lost role=alert").toMatch(/<li[\s\S]*role="alert"/);
+    expect(block, "row lost its retry wiring").toMatch(/onClick=\{reloadSaved\}/);
+    expect(block, "row lost its i18n key").toMatch(/commandPalette\.savedSearchesLoadFailed/);
+  });
+});
+
+describe("workspace-role reads stop hiding admin surfaces (wave-18)", () => {
+  it("ProjectSettingsPage exposes the role fetch error above the canManage regions", () => {
+    const content = source("ProjectSettingsPage");
+    expect(content, "workspace fetch discards its error again").toMatch(
+      /data:\s*workspace,[\s\S]{0,200}?error:\s*workspaceError,[\s\S]{0,200}?reload:\s*reloadWorkspace/,
+    );
+    const gate = content.indexOf("{workspaceError && (");
+    const alert = content.indexOf('id="projectsettingspage-workspacerole-error"');
+    const retry = content.indexOf("onClick={reloadWorkspace}");
+    // The big hidden surface is the per-member role/remove block. (The
+    // header's Add-member button sits above the banner in source, but the
+    // banner is its SIBLING outside every canManage conditional, so it
+    // renders in exactly the failure that hides them.)
+    // Per-member role/remove controls: the JSX gate is "{canManage && (" on
+    // its own line — indentation-agnostic so a formatting sweep can't break it,
+    // and anchored on the following <div> so the useMemo's `const canManage =`
+    // can't match.
+    const memberAdmin = content.search(/\{canManage && \(\s*\n\s*<div\b/);
+    expect(gate, "role-error banner was removed").toBeGreaterThanOrEqual(0);
+    expect(alert, "role ErrorAlert lost its stable id").toBeGreaterThan(gate);
+    expect(retry, "role error has no retry wired").toBeGreaterThan(gate);
+    expect(memberAdmin, "per-member admin gate renamed; re-check reachability").toBeGreaterThan(-1);
+    expect(
+      gate,
+      "role-error banner sits behind canManage — unreachable exactly when needed",
+    ).toBeLessThan(memberAdmin);
+    expect(content, "banner lost its i18n key").toMatch(/projectMember\.workspaceRoleLoadFailed/);
+  });
+
+  it("WebhooksPage exposes the role fetch error outside the isAdmin DLQ section", () => {
+    const content = source("WebhooksPage");
+    expect(content, "workspace fetch discards its error again").toMatch(
+      /data:\s*workspace,[\s\S]{0,200}?error:\s*workspaceError,[\s\S]{0,200}?reload:\s*reloadWorkspace/,
+    );
+    const gate = content.indexOf("{workspaceError && (");
+    const alert = content.indexOf('id="webhooks-workspacerole-error"');
+    const retry = content.indexOf("onClick={reloadWorkspace}");
+    const dlqGate = content.indexOf("{isAdmin && (");
+    expect(gate, "role-error banner was removed").toBeGreaterThanOrEqual(0);
+    expect(alert, "role ErrorAlert lost its stable id").toBeGreaterThan(gate);
+    expect(retry, "role error has no retry wired").toBeGreaterThan(gate);
+    expect(dlqGate, "DLQ admin gate renamed; re-check reachability").toBeGreaterThan(-1);
+    expect(
+      gate,
+      "role-error banner sits behind isAdmin — the dead-letter tools are hidden with it",
+    ).toBeLessThan(dlqGate);
+    expect(content, "banner lost its i18n key").toMatch(/webhook\.roleLoadFailed/);
+  });
+});
+
 describe("AiPlanPanel does not launder a failed plan read into 'no plan yet'", () => {
   const content = readFileSync(
     join(__dirname, "..", "components", "ai", "AiPlanPanel.tsx"),

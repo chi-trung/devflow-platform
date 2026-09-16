@@ -50,7 +50,14 @@ export function WebhooksPage() {
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [secret, setSecret] = useState("");
 
-  const { data: workspace } = useApi<WorkspaceResponse>(
+  // isAdmin below gates the whole dead-letter section, so a failed role read
+  // hides the replay/purge troubleshooting tooling from a real admin with no
+  // explanation - same swallowed-read class as the roster sites (wave-17).
+  const {
+    data: workspace,
+    error: workspaceError,
+    reload: reloadWorkspace,
+  } = useApi<WorkspaceResponse>(
     () => api(`/workspaces/${workspaceId}`),
     [workspaceId],
   );
@@ -237,6 +244,15 @@ export function WebhooksPage() {
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <ErrorAlert id="webhooks-load-error" message={error} />
             <Button variant="outline" size="sm" onClick={loadWebhooks}>
+              {t("common.retry")}
+            </Button>
+          </div>
+        )}
+
+        {workspaceError && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <ErrorAlert id="webhooks-workspacerole-error" message={t("webhook.roleLoadFailed")} />
+            <Button variant="outline" size="sm" onClick={reloadWorkspace}>
               {t("common.retry")}
             </Button>
           </div>
