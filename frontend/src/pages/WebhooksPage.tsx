@@ -20,7 +20,11 @@ import {
   purgeDeadLetterMessages,
   testWebhook,
 } from "../lib/api";
-import type { WebhookResponse, DeadLetterMessageDto } from "../types/api";
+import type {
+  WebhookResponse,
+  WebhookTestResponse,
+  DeadLetterMessageDto,
+} from "../types/api";
 import { useApi } from "../hooks/useApi";
 import type { WorkspaceResponse } from "../types/api";
 
@@ -44,11 +48,23 @@ export function WebhooksPage() {
   const [creating, setCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<WebhookResponse | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
+  /** Per-webhook fingerprint of the last completed test-fire verdict, so a
+   * 200-OK transport that delivered nothing (delivered:false, HTTP error
+   * status, connection failure) can never read as success. testingId gates
+   * concurrent fires per row; the map below is written only on settle. */
+  const [testVerdicts, setTestVerdicts] = useState<Record<string, WebhookTestResponse>>({});
   const [saving, setSaving] = useState(false);
 
   const [url, setUrl] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [secret, setSecret] = useState("");
+
+  // The dead-letter list is admin-only server-side, but a never-fetched []
+  // renders the same EmptyState as a genuinely empty queue. Track fetch state
+  // explicitly so the page tells those two apart, and seed the one fetch on
+  // mount — a queued admin arriving from the sidebar must see what is queued,
+  // not an invitation to assume nothing is.
+  const [dlqFetched, setDlqFetched] = useState(false);
 
   // isAdmin below gates the whole dead-letter section, so a failed role read
   // hides the replay/purge troubleshooting tooling from a real admin with no
@@ -88,6 +104,13 @@ export function WebhooksPage() {
     loadWebhooks();
   }, [loadWebhooks]);
 
+  // One DLQ fetch per workspace mount; isAdmin gates RENDER below, not the
+  // fetch, so role-read latency never decides what the queue holds.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    void loadDeadLetters();
+  }, [workspaceId]);
+
   function resetForm() {
     setUrl("");
     setSelectedEvents([]);
@@ -123,9 +146,30 @@ export function WebhooksPage() {
   }
 
   async function handleTest(webhookId: string) {
+    // One in-flight test per row: a second click while the POST is out would
+    // overwrite the first verdict and, on a slow endpoint, stack signatures.
+    if (testingId !== null) return;
     setTestingId(webhookId);
     try {
-      await testWebhook(workspaceId, webhookId);
+      const verdict = await testWebhook(workspaceId, webhookId);
+      setTestVerdicts((prev) => ({ ...prev, [webhookId]: verdict }));
+      if (verdict.delivered) {
+        push(
+          t("webhook.testDelivered", {
+            statusCode: verdict.statusCode,
+            latencyMs: verdict.latencyMs,
+          }),
+        );
+      } else {
+        push(
+          t("webhook.testUndelivered", {
+            detail: verdict.error ?? t("webhook.testFailed"),
+            statusCode: verdict.statusCode,
+            latencyMs: verdict.latencyMs,
+          }),
+          "error",
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("webhook.testFailed"));
     } finally {
@@ -157,6 +201,7 @@ export function WebhooksPage() {
       setDlqError(err instanceof Error ? err.message : t("outbox.dlqLoadFailed"));
     } finally {
       setDlqLoading(false);
+      setDlqFetched(true);
     }
   }
 
@@ -382,6 +427,33 @@ export function WebhooksPage() {
                     </span>
                     <span>• {formatDate(webhook.createdAtUtc)}</span>
                   </div>
+                  {/* a11y-ok: the delivery verdict is the announced control
+                      result of the adjacent Test button (role="status",
+                      announced once per fire), never an auto-firing assertive
+                      banner over the list. */}
+                  {testVerdicts[webhook.id] && (
+                    <p
+                      role="status"
+                      aria-label={t("webhook.testVerdict")}
+                      className={`mt-1 truncate text-xs ${
+                        testVerdicts[webhook.id].delivered
+                          ? "text-primary-strong"
+                          : "text-destructive"
+                      }`}
+                    >
+                      {testVerdicts[webhook.id].delivered
+                        ? t("webhook.testDelivered", {
+                            statusCode: testVerdicts[webhook.id].statusCode,
+                            latencyMs: testVerdicts[webhook.id].latencyMs,
+                          })
+                        : t("webhook.testUndelivered", {
+                            detail:
+                              testVerdicts[webhook.id].error ?? t("webhook.testFailed"),
+                            statusCode: testVerdicts[webhook.id].statusCode,
+                            latencyMs: testVerdicts[webhook.id].latencyMs,
+                          })}
+                    </p>
+                  )}
                 </div>
                 <div className="flex shrink-0 items-center gap-1 transition-opacity duration-150 group-focus-within:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
                   <button
@@ -466,11 +538,15 @@ export function WebhooksPage() {
                   <Skeleton key={i} className="h-20 w-full" />
                 ))}
               </div>
-            ) : deadLetters.length === 0 && !dlqError ? (
+            ) : !dlqFetched || (deadLetters.length === 0 && !dlqError) ? (
               <EmptyState
                 icon={<Globe className="size-8 text-muted-foreground" aria-hidden />}
                 title={t("outbox.dlqEmpty")}
-                description={t("outbox.dlqEmptyDescription")}
+                description={t(
+                  dlqFetched
+                    ? "outbox.dlqEmptyDescription"
+                    : "outbox.dlqPendingDescription",
+                )}
               />
             ) : (
               <ul role="list" className="flex flex-col gap-2">
