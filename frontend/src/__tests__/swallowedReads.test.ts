@@ -630,3 +630,43 @@ describe("DashboardPage workspaces banner got the reload it had", () => {
     expect(block, "retry button lost its label").toMatch(/common\.retry/);
   });
 });
+
+// Wave-24: the false-absence half of the class inside the task panel. Both
+// components clear/reuse a single `error` state for load AND mutation (the
+// wave-22 exemption against uniform retry buttons), but their list catches
+// still leave the array empty on failure - so the "nothing here" line rendered
+// underneath the failure banner, claiming an absence that was never observed.
+// The fix is the gate only (EpicsPage's wave-20 shape); the loads already
+// re-run on panel mount/task switch.
+describe("task panel lists stop claiming absence under their own failure", () => {
+  const tdp = readFileSync(
+    join(COMPONENTS, "board", "TaskDetailPanel.tsx"),
+    "utf8",
+  );
+  const tts = readFileSync(
+    join(COMPONENTS, "board", "TimeTrackingSection.tsx"),
+    "utf8",
+  );
+
+  it("TaskDetailPanel gates 'No comments' on !commentError", () => {
+    expect(
+      tdp,
+      "un-gated empty-comments branch is back",
+    ).not.toMatch(/\) : comments\.length === 0 \? \(\s*\n\s*<p/);
+    expect(
+      tdp,
+      "comments empty-state lost its error gate",
+    ).toMatch(/comments\.length === 0 && !commentError/);
+  });
+
+  it("TimeTrackingSection gates 'No time logged' on !error", () => {
+    expect(
+      tts,
+      "un-gated empty-entries branch is back",
+    ).not.toMatch(/\) : entries\.length === 0 \? \(\s*\n\s*<p/);
+    expect(
+      tts,
+      "entries empty-state lost its error gate",
+    ).toMatch(/entries\.length === 0 && !error/);
+  });
+});

@@ -796,7 +796,11 @@ export function TaskDetailPanel({
                       <Skeleton key={i} className="h-16 w-full rounded-lg" />
                     ))}
                   </div>
-                ) : comments.length === 0 ? (
+                ) : comments.length === 0 && !commentError ? (
+                  // Same gate EpicsPage ships: when the comments fetch failed
+                  // the list is still [] (the catch never clears data it never
+                  // got), and "No comments yet" under the error banner states
+                  // an absence that was never observed.
                   <p className="text-sm text-muted-foreground">
                     {t("task.noComments")}
                   </p>
