@@ -543,7 +543,14 @@ export function BoardPage() {
     }
   }, [deepLinkTaskId, tasks, setSearchParams]);
 
-  // Saved-search handoff from the command palette (?fs=<json>).
+  // Saved-search handoff from the command palette (?fs=<json>). The palette
+  // targets lastBoardPath first, so when the user is ALREADY on this board
+  // the navigation only swaps the query — the route does not remount. With
+  // the old `[]` deps the closure kept the mount-time fsParam (null), the
+  // effect never re-ran, and the saved search was silently dropped with
+  // `?fs=` dead in the URL. Keying on fsParam fires it on every handoff;
+  // stripping the param below flips fsParam back to null, and the early
+  // return keeps that pass inert.
   const fsParam = searchParams.get("fs");
   useEffect(() => {
     if (!fsParam) return;
@@ -577,8 +584,9 @@ export function BoardPage() {
       },
       { replace: true },
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // fsParam is the only dependency that matters; the setters below are
+    // useState/setSearchParams identities that never change.
+  }, [fsParam, setSearchParams]);
 
   // Keyboard shortcuts: n=new, / or f=focus filter, ?=help,
   // Ctrl+A=select visible, Delete=bulk delete, Esc=step back.
