@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { X, Paperclip, Download, Trash2, BookmarkPlus, Eye, RefreshCw, CheckSquare, Square } from "lucide-react";
-import { api, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask, uploadTaskAttachment, getTaskWatchers, pagedItems } from "../../lib/api";
+import { api, API_BASE, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask, uploadTaskAttachment, getTaskWatchers, pagedItems } from "../../lib/api";
 import { AttachmentRowThumb } from "./AttachmentThumbnails";
 import { Button } from "../ui/Button";
 import { ErrorAlert } from "../ui/ErrorAlert";
@@ -436,9 +436,12 @@ export function TaskDetailPanel({
   }
 
   async function downloadAttachment(att: TaskAttachmentResponse) {
+    // NOTE (wave-33): root-relative /api/v1 would fetch the Vercel SPA's
+    // index.html rewrite in prod (not the Render backend) — resolve against
+    // the shared API base exactly like every other attachment call site.
     try {
       const res = await fetch(
-        `/api/v1/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/attachments/${att.id}/download`,
+        `${API_BASE}/api/v1/workspaces/${workspaceId}/projects/${projectId}/tasks/${task.id}/attachments/${att.id}/download`,
         {
           headers: {
             Authorization: `Bearer ${tokens.access}`,

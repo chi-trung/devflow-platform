@@ -1350,11 +1350,17 @@ export async function uploadTaskAttachment(
   const formData = new FormData();
   formData.append("file", file);
 
+  // NOTE (wave-33): must go through BASE (${API_BASE}/api/v1), not a
+  // root-relative /api/v1 path. In dev BASE collapses to /api/v1 so the Vite
+  // proxy still forwards to localhost:5217, but in prod a root-relative path
+  // hits the Vercel SPA itself (vercel.json rewrites /(.*) -> /index.html,
+  // probed 200 text/html) instead of the Render backend — uploads silently
+  // posted index.html bytes and never created an attachment.
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open(
       "POST",
-      `/api/v1/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/attachments`,
+      `${BASE}/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/attachments`,
     );
 
     xhr.upload.addEventListener("progress", (event) => {
@@ -1399,9 +1405,12 @@ export async function getAttachmentObjectUrl(
   taskId: string,
   attachmentId: string,
 ): Promise<string | null> {
+  // NOTE (wave-33): same BASE reasoning as uploadTaskAttachment above — a
+  // root-relative /api/v1 download would fetch Vercel's index.html rewrite and
+  // paint it as a fake attachment instead of the real backend bytes.
   try {
     const res = await fetch(
-      `/api/v1/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/attachments/${attachmentId}/download`,
+      `${BASE}/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/attachments/${attachmentId}/download`,
       {
         headers: tokens.access
           ? { Authorization: `Bearer ${tokens.access}` }
