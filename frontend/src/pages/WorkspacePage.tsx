@@ -58,6 +58,7 @@ export function WorkspacePage() {
     data: workspace,
     error: wsError,
     loading: wsLoading,
+    reload: reloadWorkspace,
   } = useApi<WorkspaceResponse>(
     () => api(`/workspaces/${workspaceId}`),
     [workspaceId],
@@ -441,7 +442,24 @@ export function WorkspacePage() {
         {wsLoading ? (
           <Skeleton className="h-20" />
         ) : wsError || !workspace ? (
-          <ErrorAlert message={wsError ?? t("workspace.notFound")} />
+          // Two different states share this branch: a failed *read* (retry is
+          // the right exit, the fetch is transient) and a 404 that resolved to
+          // "not found" (retry can't fix a workspace you can't see - the only
+          // honest exit is the back link above). Offer the button only where
+          // it actually does something.
+          <div className="flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert
+                id="workspacepage-workspace-error"
+                message={wsError ?? t("workspace.notFound")}
+              />
+            </div>
+            {wsError && (
+              <Button size="sm" variant="outline" onClick={reloadWorkspace}>
+                {t("common.retry")}
+              </Button>
+            )}
+          </div>
         ) : (
           <>
             {/* Wrap on phones: the name row + two action buttons measure over
