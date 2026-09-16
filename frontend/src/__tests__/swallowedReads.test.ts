@@ -595,3 +595,38 @@ describe("wave-22 load banners stop dead-ending their regions", () => {
     );
   });
 });
+
+// Wave-23: DashboardPage's workspaces read. `error` at the top destructure is
+// provably load-only (DashboardPage has no setError), and the failed list
+// feeds every downstream surface, so the bare banner was the last stranded
+// region in the useApi family - the sibling dashboard-error block a few lines
+// above already ships retryable.
+describe("DashboardPage workspaces banner got the reload it had", () => {
+  const content = source("DashboardPage");
+
+  it("the workspaces destructure exposes error and reload together", () => {
+    const start = content.search(/useApi<unknown>\(\(\) => api\("\/workspaces"\)/);
+    expect(start, "workspaces useApi call was renamed").toBeGreaterThan(-1);
+    const window = content.slice(Math.max(0, start - 220), start);
+    expect(window, "workspaces error is not destructured").toMatch(
+      /error,/,
+    );
+    expect(window, "workspaces reload is not destructured").toMatch(
+      /reload,/,
+    );
+  });
+
+  it("the banner is retryable, not a bare dead end", () => {
+    expect(
+      content,
+      "bare <ErrorAlert message={error} /> is back",
+    ).not.toMatch(/: error \?\s*\n\s*<ErrorAlert message=\{error\} \/>\s*\n\s*\) : !workspaces/);
+    const alert = content.indexOf('id="dashboardpage-workspaces-error"');
+    expect(alert, "banner lost its stable id").toBeGreaterThan(-1);
+    const block = content.slice(alert, alert + 1400);
+    expect(block, "banner lost its retry wiring").toMatch(
+      /onClick=\{reload\}/,
+    );
+    expect(block, "retry button lost its label").toMatch(/common\.retry/);
+  });
+});

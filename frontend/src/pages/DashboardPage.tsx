@@ -427,7 +427,19 @@ export function DashboardPage() {
             ))}
           </div>
         ) : error ? (
-          <ErrorAlert message={error} />
+          // The workspaces list feeds everything downstream (board links,
+          // the selected workspace, the dashboard itself), so a failed read
+          // with no exit strands the page on its own banner. The destructure
+          // already carries `reload` - same retryable shape as the sibling
+          // dashboard-error block above.
+          <div className="flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert id="dashboardpage-workspaces-error" message={error} />
+            </div>
+            <Button size="sm" variant="outline" onClick={reload}>
+              {t("common.retry")}
+            </Button>
+          </div>
         ) : !workspaces || workspaces.length === 0 ? (
           <div className="rise">
             <EmptyState
