@@ -36,6 +36,11 @@ export function SubtaskSection({
   const [newTitle, setNewTitle] = useState("");
   const [adding, setAdding] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  // Detach is a DELETE that un-parents the row; a second click after the
+  // first succeeded hits the handler's ParentTaskId check and surfaces a
+  // 409 "Task is not a subtask of the given parent task" error right after
+  // a successful detach. One click in flight, same guard as toggle.
+  const [detachingId, setDetachingId] = useState<string | null>(null);
 
   const load = useCallback(() => {
     let cancelled = false;
@@ -116,6 +121,8 @@ export function SubtaskSection({
   }
 
   async function detach(subtask: TaskItemResponse) {
+    if (detachingId) return;
+    setDetachingId(subtask.id);
     setError(null);
     try {
       await api(`${base}/subtasks/${subtask.id}`, { method: "DELETE" });
@@ -125,6 +132,8 @@ export function SubtaskSection({
       onChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("subtask.detachFailed"));
+    } finally {
+      setDetachingId(null);
     }
   }
 
@@ -228,9 +237,10 @@ export function SubtaskSection({
                 <button
                   type="button"
                   onClick={() => void detach(subtask)}
+                  disabled={detachingId !== null}
                   aria-label={t("subtask.detachAria")}
                   title={t("common.delete")}
-                  className="rounded p-1 text-muted-foreground opacity-80 transition-all duration-150 hover:text-destructive group-hover:opacity-100"
+                  className="rounded p-1 text-muted-foreground opacity-80 transition-all duration-150 hover:text-destructive group-hover:opacity-100 disabled:opacity-40"
                 >
                   <Trash2 className="size-3.5" aria-hidden />
                 </button>
