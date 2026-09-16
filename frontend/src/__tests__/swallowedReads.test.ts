@@ -978,6 +978,60 @@ describe("webhook test fires show their verdict, DLQ seeds on mount (wave-31)", 
   });
 });
 
+describe("report exports download bytes, not parsed JSON (wave-32)", () => {
+  const api = readFileSync(join(__dirname, "..", "lib", "api.ts"), "utf8");
+  const reports = source("ReportsPage");
+
+  it("binary downloads bypass api() and return response.blob()", () => {
+    // api() ends every 2xx body with response.json(): a CSV/XLSX download
+    // throws SyntaxError on its own bytes, and a JSON export still inits
+    // a TypeError at createObjectURL (plain object, not a Blob). The
+    // download helper must terminate on .blob() and surface !ok bodies
+    // through the shared problem-details parser.
+    const start = api.indexOf("export async function downloadBlob(");
+    expect(start, "downloadBlob was renamed").toBeGreaterThan(-1);
+    const end = api.indexOf("export function exportTasks(", start);
+    const window = api.slice(start, end === -1 ? start + 1400 : end);
+    expect(window, "download still parses the body as JSON").not.toMatch(
+      /response\.json\(\)/,
+    );
+    expect(window, "download never resolves the body bytes").toMatch(
+      /return response\.blob\(\);/,
+    );
+    expect(window, "download lost the shared error surfacing").toMatch(
+      /throw await parseProblemDetails\(response\);/,
+    );
+  });
+
+  it("both export entry points route through the blob downloader", () => {
+    expect(api, "CSV/JSON export still asks api() to parse bytes").toMatch(
+      /export function exportTasks\([\s\S]*?return downloadBlob\(/,
+    );
+    expect(api, "backup export still asks api() to parse bytes").toMatch(
+      /export function exportProjectBackup\([\s\S]*?return downloadBlob\(/,
+    );
+    expect(
+      api,
+      "downloadBlob inherited the JSON default Content-Type, mislabelling header-only GETs",
+    ).toMatch(/no default Content-Type/);
+  });
+
+  it("the export failure path names the generic failure key", () => {
+    // The catch used to surface whatever the parser threw (SyntaxError text
+    // on CSV bytes, TypeError text on the JSON shape). The button toast must
+    // still fall back to reports.exportFailed for non-Error rejections.
+    const start = reports.indexOf("async function handleExport(");
+    expect(start, "handleExport was renamed").toBeGreaterThan(-1);
+    const window = reports.slice(start, start + 900);
+    expect(window, "export lost its object-URL download wiring").toMatch(
+      /const blob = await exportTasks\(workspaceId, projectId, format\);/,
+    );
+    expect(window, "export lost its generic failure fallback").toMatch(
+      /t\("reports\.exportFailed"\)/,
+    );
+  });
+});
+
 describe("ai accept routes to the exact card (wave-30)", () => {
   const panel = readFileSync(
     join(COMPONENTS, "ai", "AiAssistantPanel.tsx"),

@@ -680,12 +680,52 @@ export function getTeamReport(
   return api<TeamReportResponse>(`/workspaces/${workspaceId}/reporting/team`);
 }
 
+/**
+ * Fetch a binary download (task CSV/JSON export, project backup XLSX) with
+ * the same bearer + refresh behaviour as api(). Deliberately NOT routed
+ * through api<T>: api() ends every 2xx body with response.json(), which
+ * throws a SyntaxError on CSV/XLSX bytes and launders a JSON export into a
+ * plain object that URL.createObjectURL then rejects with a TypeError — both
+ * shapes broke the Reports export buttons (nothing ever downloaded; the
+ * catch showed a parser/engine message instead of reports.exportFailed).
+ */
+export async function downloadBlob(
+  path: string,
+  options: RequestInit = {},
+): Promise<Blob> {
+  const send = async (): Promise<Response> =>
+    fetch(`${BASE}${path}`, {
+      ...options,
+      // Unlike api(), no default Content-Type: these are header-only GETs and
+      // a JSON default would mislabel the request the server answers.
+      headers: {
+        ...(tokens.access ? { Authorization: `Bearer ${tokens.access}` } : {}),
+        ...options.headers,
+      },
+    });
+
+  let response = await send();
+
+  if (response.status === 401 && tokens.refresh) {
+    const refreshed = await refreshSession();
+    if (refreshed) {
+      response = await send();
+    }
+  }
+
+  if (!response.ok) {
+    throw await parseProblemDetails(response);
+  }
+
+  return response.blob();
+}
+
 export function exportTasks(
   workspaceId: string,
   projectId: string,
   format: "csv" | "json",
 ): Promise<Blob> {
-  return api<Blob>(
+  return downloadBlob(
     `/workspaces/${workspaceId}/projects/${projectId}/export/tasks?format=${format}`,
     { headers: { Accept: format === "csv" ? "text/csv" : "application/json" } },
   );
@@ -707,7 +747,7 @@ export function exportProjectBackup(
   projectId: string,
   format: "json" | "excel",
 ): Promise<Blob> {
-  return api<Blob>(
+  return downloadBlob(
     `/workspaces/${workspaceId}/projects/${projectId}/export/backup?format=${format}`,
     {
       headers: {
