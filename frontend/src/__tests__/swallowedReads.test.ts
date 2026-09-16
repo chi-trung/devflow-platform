@@ -874,3 +874,74 @@ describe("clipboard confirmation follows the promise (wave-29)", () => {
     }
   });
 });
+
+describe("ai accept routes to the exact card (wave-30)", () => {
+  const panel = readFileSync(
+    join(COMPONENTS, "ai", "AiAssistantPanel.tsx"),
+    "utf8",
+  );
+
+  it("pendingAccepting is a (message, action) position, not a bare index", () => {
+    expect(
+      panel,
+      "bare action index regressed: the same index exists in several messages at once",
+    ).toMatch(
+      /const \[pendingAccepting, setPendingAccepting\] = useState<\{\s*\n\s*message: number;\s*\n\s*action: number;\s*\n\s*\} \| null>\(null\);/,
+    );
+  });
+
+  it("the last-message writer is gone; outcomes address prev[messageIndex]", () => {
+    expect(panel, "replaceLastAction still exists").not.toMatch(
+      /replaceLastAction/,
+    );
+    const start = panel.indexOf("function replaceAction(");
+    expect(start, "replaceAction was renamed").toBeGreaterThan(-1);
+    const window = panel.slice(start, start + 1200);
+    expect(
+      window,
+      "outcome no longer lands on the exact card the user acted on",
+    ).toMatch(/const target = prev\[messageIndex\];/);
+    expect(
+      window,
+      "out-of-range write guard is gone",
+    ).toMatch(/if \(actionIndex < 0 \|\| actionIndex >= actions\.length\) return prev;/);
+  });
+
+  it("handleAccept/handleReject take the message index and scope the in-flight card", () => {
+    const acceptStart = panel.indexOf("async function handleAccept(");
+    expect(acceptStart, "handleAccept was renamed").toBeGreaterThan(-1);
+    const acceptWindow = panel.slice(acceptStart, acceptStart + 800);
+    expect(
+      acceptWindow,
+      "handleAccept lost its message index",
+    ).toMatch(
+      /action: AiExecuteActionContract,\s*\n\s*messageIndex: number,\s*\n\s*actionIndex: number,/,
+    );
+    expect(
+      acceptWindow,
+      "in-flight marker regressed to a bare index",
+    ).toMatch(/setPendingAccepting\(\{ message: messageIndex, action: actionIndex \}\);/);
+    const rejectStart = panel.indexOf("function handleReject(");
+    expect(rejectStart, "handleReject was renamed").toBeGreaterThan(-1);
+    const rejectWindow = panel.slice(rejectStart, rejectStart + 400);
+    expect(
+      rejectWindow,
+      "handleReject lost its message index",
+    ).toMatch(/messageIndex: number, actionIndex: number/);
+  });
+
+  it("each message wires its own index into accept/reject and the accepting flag", () => {
+    expect(
+      panel,
+      "onAccept no longer passes the message index — outcome lands on the last message",
+    ).toMatch(/void handleAccept\(action, i, actionIndex\)/);
+    expect(
+      panel,
+      "onReject no longer passes the message index",
+    ).toMatch(/handleReject\(i, actionIndex\)/);
+    expect(
+      panel,
+      "accepting flag regressed to a bare index shared by every message",
+    ).toMatch(/pendingAccepting\?\.message === i/);
+  });
+});
