@@ -1282,7 +1282,11 @@
   "labelLabel": "Filter by label",
   "sortDirection": "Toggle sort direction",
   "sortLabel": "Sort by",
-  "clearFilters": "Clear filters"
+  "clearFilters": "Clear filters",
+  "membersLoadFailed": "Failed to load members. The assignee filter is unavailable.",
+  "projectsLoadFailed": "Failed to load the project list.",
+  "labelsLoadFailed": "Failed to load labels for this project.",
+  "savedSearchesLoadFailed": "Failed to load saved searches."
  },
  "savedSearch": {
   "title": "Saved Searches",
@@ -1388,7 +1392,8 @@
   "savedSearchDeleteFailed": "Couldn't remove saved search.",
   "deleteSavedAria": "Delete saved search {{name}}",
   "loadFailed": "Search failed. Try again.",
-  "projectsLoadFailed": "Some results couldn't be resolved because projects failed to load."
+  "projectsLoadFailed": "Some results couldn't be resolved because projects failed to load.",
+  "savedSearchesLoadFailed": "Saved searches could not be loaded."
  },
  "import": {
   "title": "Import tasks",
@@ -1844,6 +1849,7 @@
   "eventsLabel": "Events",
   "secretLabel": "Secret (optional)",
   "secretPlaceholder": "Optional signing secret",
+  "roleLoadFailed": "Failed to load your workspace role. Delivery troubleshooting is unavailable.",
   "loadFailed": "Failed to load webhooks.",
   "saveFailed": "Failed to save webhook.",
   "testFailed": "Failed to test webhook.",
@@ -1899,6 +1905,7 @@
   "removeAria": "Remove {{name}} from project",
   "loadFailed": "Failed to load members",
   "workspaceLoadFailed": "Failed to load workspace members.",
+  "workspaceRoleLoadFailed": "Failed to load the workspace. Member administration is unavailable.",
   "roleLabel": "Role",
   "manager": "Manager",
   "member": "Member",

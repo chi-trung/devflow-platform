@@ -83,10 +83,20 @@ export function CommandPalette({
     query.trim() || statusFilter || priorityFilter || dueFilter,
   );
 
-  const { data: savedRaw, reload: reloadSaved } = useApi<SavedSearchResponse[]>(
+  // A failed read used to render as a missing group with no explanation —
+  // the Saved searches section just vanished from the palette. (The Workspaces
+  // group below stays un-gated on purpose: AppShell's sidebar fetches the same
+  // roster with its own error row, so a failure there is already named on
+  // screen.)
+  const {
+    data: savedRaw,
+    error: savedError,
+    reload: reloadSaved,
+  } = useApi<SavedSearchResponse[]>(
     () => (open ? getSavedSearches() : Promise.resolve([])),
     [open],
   );
+  const savedSearchesFailed = savedError !== null && savedRaw === null;
   const savedSearches = useMemo(
     () =>
       (savedRaw ?? []).filter(
@@ -618,6 +628,23 @@ export function CommandPalette({
             // here would hide hits the palette couldn't resolve.
             <li role="alert" className="px-3 py-8 text-center text-sm text-destructive">
               {t("commandPalette.projectsLoadFailed")}
+            </li>
+          )}
+          {savedSearchesFailed && (
+            // The Saved searches group simply vanishes when this read fails —
+            // indistinguishable from having saved none. Name it, with a retry.
+            <li
+              role="alert"
+              className="flex items-center justify-center gap-2 px-3 py-2 font-mono text-[11px] text-destructive"
+            >
+              <span>{t("commandPalette.savedSearchesLoadFailed")}</span>
+              <button
+                type="button"
+                onClick={reloadSaved}
+                className="rounded border border-border px-1.5 py-0.5 text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground"
+              >
+                {t("common.retry")}
+              </button>
             </li>
           )}
           {results.length === 0 && !searching && !searchError && !hitsUnresolvable && (

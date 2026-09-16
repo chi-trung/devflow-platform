@@ -1282,7 +1282,11 @@
   "labelLabel": "Lọc theo nhãn",
   "sortDirection": "Đổi chiều sắp xếp",
   "sortLabel": "Sắp xếp theo",
-  "clearFilters": "Xóa bộ lọc"
+  "clearFilters": "Xóa bộ lọc",
+  "membersLoadFailed": "Không tải được danh sách thành viên. Bộ lọc người được gán không khả dụng.",
+  "projectsLoadFailed": "Không tải được danh sách dự án.",
+  "labelsLoadFailed": "Không tải được danh sách nhãn của dự án này.",
+  "savedSearchesLoadFailed": "Không tải được các tìm kiếm đã lưu."
  },
  "savedSearch": {
   "title": "Tìm kiếm đã lưu",
@@ -1388,7 +1392,8 @@
   "savedSearchDeleteFailed": "Không xoá được tìm kiếm đã lưu.",
   "deleteSavedAria": "Xoá tìm kiếm đã lưu {{name}}",
   "loadFailed": "Tìm kiếm thất bại. Thử lại.",
-  "projectsLoadFailed": "Một số kết quả không xác định được vì danh sách dự án tải thất bại."
+  "projectsLoadFailed": "Một số kết quả không xác định được vì danh sách dự án tải thất bại.",
+  "savedSearchesLoadFailed": "Không tải được các tìm kiếm đã lưu."
  },
  "import": {
   "title": "Nhập task từ file",
@@ -1844,6 +1849,7 @@
   "eventsLabel": "Sự kiện",
   "secretLabel": "Secret (tùy chọn)",
   "secretPlaceholder": "Secret ký tùy chọn",
+  "roleLoadFailed": "Không tải được vai trò của bạn trong workspace. Không có thông tin xử lý sự cố phân phối.",
   "loadFailed": "Không tải được danh sách webhook.",
   "saveFailed": "Không lưu được webhook.",
   "testFailed": "Không test được webhook.",
@@ -1899,6 +1905,7 @@
   "removeAria": "Xóa {{name}} khỏi dự án",
   "loadFailed": "Không tải được danh sách thành viên",
   "workspaceLoadFailed": "Không tải được danh sách thành viên workspace.",
+  "workspaceRoleLoadFailed": "Không tải được thông tin workspace. Quản lý thành viên không khả dụng.",
   "roleLabel": "Vai trò",
   "manager": "Quản lý",
   "member": "Thành viên",
