@@ -829,3 +829,48 @@ describe("row deletes hold one click in flight (wave-28)", () => {
     ).toMatch(/disabled=\{deletingAttachmentId !== null\}/);
   });
 });
+
+describe("clipboard confirmation follows the promise (wave-29)", () => {
+  const pat = readFileSync(
+    join(COMPONENTS, "settings", "PATSection.tsx"),
+    "utf8",
+  );
+
+  it("waits for writeText before claiming the one-time token copied", () => {
+    const window = pat.slice(
+      pat.indexOf("async function handleCopyToken"),
+      pat.indexOf("async function handleCopyToken") + 600,
+    );
+    expect(
+      window,
+      "the token shows once; a premature toast hides a rejected write",
+    ).toMatch(
+      /await navigator\.clipboard\.writeText\(createdToken\);\s*\n\s*push\(t\("pat\.copied"\)\);\s*\n\s*\} catch \{\s*\n\s*push\(t\("pat\.copyFailed"\), "error"\);/,
+    );
+    expect(
+      window,
+      "the failure path lost its i18n key",
+    ).toMatch(/pat\.copyFailed/);
+  });
+
+  it("the copy button routes through the guarded handler", () => {
+    expect(
+      pat,
+      "the button regressed to a fire-and-forget write with a success toast",
+    ).not.toMatch(
+      /void navigator\.clipboard\.writeText\(createdToken\);\s*\n\s*push\(t\("pat\.copied"\)\);/,
+    );
+    expect(pat, "the copy button lost its handler wiring").toMatch(
+      /onClick=\{\(\) => void handleCopyToken\(\)\}/,
+    );
+  });
+
+  it("both locales name the manual fallback", () => {
+    for (const loc of ["en", "vi"] as const) {
+      const dict = JSON.parse(
+        readFileSync(join(__dirname, "..", "i18n", `${loc}.json`), "utf8"),
+      );
+      expect(dict.pat.copyFailed, `${loc} lost pat.copyFailed`).toBeTruthy();
+    }
+  });
+});

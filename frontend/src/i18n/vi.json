@@ -1956,6 +1956,7 @@
   "createdHint": "Sao chép token ngay. Bạn sẽ không thể nhìn thấy lại sau này.",
   "copy": "Sao chép",
   "copied": "Đã sao chép token vào clipboard",
+  "copyFailed": "Không sao chép tự động được — hãy bôi đen token và sao chép thủ công.",
   "revokeTitle": "Thu hồi token?",
   "revokeMsg": "Thao tác này sẽ thu hồi vĩnh viễn token \"{{name}}\" và không thể hoàn tác.",
   "revoke": "Thu hồi",

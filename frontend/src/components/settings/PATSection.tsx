@@ -133,6 +133,20 @@ export function PATSection() {
     }
   }
 
+  // The token is shown exactly once; a toast that claims it copied when the
+  // write rejected (NotFocusedError after the create POST stole focus, Safari
+  // in a private window, permissions policy) sends the user to revoke and
+  // recreate it for nothing. Success text only after the promise resolves.
+  async function handleCopyToken() {
+    if (!createdToken) return;
+    try {
+      await navigator.clipboard.writeText(createdToken);
+      push(t("pat.copied"));
+    } catch {
+      push(t("pat.copyFailed"), "error");
+    }
+  }
+
   async function handleConfirmDelete() {
     if (!pendingDelete) return;
     const target = pendingDelete;
@@ -337,12 +351,7 @@ export function PATSection() {
               {createdToken}
             </code>
             <div className="mt-4 flex justify-end gap-2">
-              <Button
-                onClick={() => {
-                  void navigator.clipboard.writeText(createdToken);
-                  push(t("pat.copied"));
-                }}
-              >
+              <Button onClick={() => void handleCopyToken()}>
                 {t("pat.copy")}
               </Button>
               <Button variant="ghost" onClick={() => setCreatedToken(null)}>
