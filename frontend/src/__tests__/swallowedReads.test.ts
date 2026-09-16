@@ -875,6 +875,109 @@ describe("clipboard confirmation follows the promise (wave-29)", () => {
   });
 });
 
+describe("webhook test fires show their verdict, DLQ seeds on mount (wave-31)", () => {
+  const content = source("WebhooksPage");
+
+  it("handleTest consumes the WebhookTestResponse instead of discarding it", () => {
+    const start = content.indexOf("async function handleTest(");
+    expect(start, "handleTest was renamed").toBeGreaterThan(-1);
+    const end = content.indexOf("async function handleDelete(", start);
+    const window = content.slice(start, end === -1 ? start + 2200 : end);
+    expect(
+      window,
+      "verdict body still swallowed: a 200 with delivered:false reads as success",
+    ).toMatch(/const verdict = await testWebhook\(workspaceId, webhookId\);/);
+    expect(
+      window,
+      "verdict never recorded per webhook",
+    ).toMatch(/setTestVerdicts\(\(prev\) => \(\{\s*\.\.\.prev, \[webhookId\]: verdict\s*\}\)\);/);
+    expect(
+      window,
+      "undelivered verdict has no failure feedback",
+    ).toMatch(/webhook\.testUndelivered/);
+  });
+
+  it("exactly one test runs at a time per page", () => {
+    const start = content.indexOf("async function handleTest(");
+    const window = content.slice(start, start + 400);
+    expect(
+      window,
+      "double-click stacks two test signatures on a slow endpoint",
+    ).toMatch(/if \(testingId !== null\) return;/);
+  });
+
+  it("each webhook row renders its own settled verdict as a status message", () => {
+    expect(
+      content,
+      "verdict has no plain-text per-row rendering",
+    ).toMatch(/role="status"/);
+    expect(
+      content,
+      "verdict lost its accessible name",
+    ).toMatch(/aria-label=\{t\("webhook\.testVerdict"\)\}/);
+    expect(
+      content,
+      "delivered and undelivered verdicts are not visually distinguished",
+    ).toMatch(/testVerdicts\[webhook\.id\]\.delivered/);
+    expect(
+      content,
+      "verdict falls back to the generic failure key when the backend sends no detail",
+    ).toMatch(/testVerdicts\[webhook\.id\]\.error \?\? t\("webhook\.testFailed"\)/);
+  });
+
+  it("the dead-letter queue fetches on mount instead of rendering never-fetched as empty", () => {
+    expect(
+      content,
+      "no mount seed: the queue reads empty until someone presses refresh",
+    ).toMatch(/useEffect\(\(\) => \{\s*\n\s*void loadDeadLetters\(\);\s*\n\s*\}, \[workspaceId\]\);/);
+    // The fetch itself must not wait on, or branch on, the role flag — the
+    // render gate `{isAdmin && (` legitimately stays, as does the wave-17
+    // comment explaining it. Match from the effect opening so the window
+    // covers only the seed call, not the neighboring isAdmin comment.
+    const seedStart = content.indexOf("void loadDeadLetters();");
+    expect(seedStart, "mount seed effect was removed").toBeGreaterThan(-1);
+    const effectOpen = content.lastIndexOf("useEffect(", seedStart);
+    expect(effectOpen, "mount seed is not inside an effect").toBeGreaterThan(-1);
+    const seedWindow = content.slice(effectOpen, seedStart);
+    expect(
+      seedWindow,
+      "seed gated on the role read: role latency decides what the queue holds",
+    ).not.toMatch(/isAdmin/);
+    expect(
+      content,
+      "unfetched [] still renders the fetched-empty copy",
+    ).toMatch(/!dlqFetched \|\| \(deadLetters\.length === 0 && !dlqError\)/);
+    expect(
+      content,
+      "pending copy lost its i18n key",
+    ).toMatch(/outbox\.dlqPendingDescription/);
+    const start = content.indexOf("async function loadDeadLetters(");
+    expect(start, "loadDeadLetters was renamed").toBeGreaterThan(-1);
+    const window = content.slice(start, start + 600);
+    expect(
+      window,
+      "fetched flag never settles: a failed load stays pending forever",
+    ).toMatch(/setDlqFetched\(true\);/);
+  });
+
+  it("both locales carry the new verdict and pending keys", () => {
+    for (const loc of ["en", "vi"] as const) {
+      const dict = JSON.parse(
+        readFileSync(join(__dirname, "..", "i18n", `${loc}.json`), "utf8"),
+      );
+      for (const key of [
+        "webhook.testDelivered",
+        "webhook.testUndelivered",
+        "webhook.testVerdict",
+        "outbox.dlqPendingDescription",
+      ]) {
+        const [ns, leaf] = key.split(".");
+        expect(dict[ns][leaf], `${loc} lost ${key}`).toBeTruthy();
+      }
+    }
+  });
+});
+
 describe("ai accept routes to the exact card (wave-30)", () => {
   const panel = readFileSync(
     join(COMPONENTS, "ai", "AiAssistantPanel.tsx"),
