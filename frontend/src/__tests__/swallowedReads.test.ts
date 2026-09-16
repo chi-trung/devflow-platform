@@ -773,3 +773,59 @@ describe("saved-search handoff survives a same-board navigate", () => {
     ).toMatch(/next\.delete\("fs"\);/);
   });
 });
+
+describe("row deletes hold one click in flight (wave-28)", () => {
+  const ds = readFileSync(
+    join(COMPONENTS, "board", "DependencySection.tsx"),
+    "utf8",
+  );
+  const tdp = readFileSync(
+    join(COMPONENTS, "board", "TaskDetailPanel.tsx"),
+    "utf8",
+  );
+
+  it("removeDependency guards before the un-linking DELETE", () => {
+    const window = ds.slice(
+      ds.indexOf("async function removeDependency"),
+      ds.indexOf("async function removeDependency") + 1400,
+    );
+    expect(
+      window,
+      "a double-click sends a second DELETE whose handler answers 404 after the dependency already removed",
+    ).toMatch(/if \(removingId\) return;\s*\n\s*setRemovingId\(dependency\.id\);[\s\S]*await removeTaskDependency\(/);
+    expect(
+      ds,
+      "remove-blocker button lost its disabled wiring",
+    ).toMatch(/disabled=\{removingId !== null\}/);
+  });
+
+  it("deleteComment guards before the row DELETE", () => {
+    const window = tdp.slice(
+      tdp.indexOf("async function deleteComment"),
+      tdp.indexOf("async function deleteComment") + 1400,
+    );
+    expect(
+      window,
+      "comment NotFound-after-success resurfaced",
+    ).toMatch(/if \(deletingCommentId\) return;\s*\n\s*setDeletingCommentId\(comment\.id\);[\s\S]*method: "DELETE"/);
+    expect(
+      tdp,
+      "delete-comment button lost its disabled wiring",
+    ).toMatch(/disabled=\{deletingCommentId !== null\}/);
+  });
+
+  it("deleteAttachment guards before the row DELETE", () => {
+    const window = tdp.slice(
+      tdp.indexOf("async function deleteAttachment"),
+      tdp.indexOf("async function deleteAttachment") + 1400,
+    );
+    expect(
+      window,
+      "attachment NotFound-after-success resurfaced",
+    ).toMatch(/if \(deletingAttachmentId\) return;\s*\n\s*setDeletingAttachmentId\(att\.id\);[\s\S]*method: "DELETE"/);
+    expect(
+      tdp,
+      "delete-attachment button lost its disabled wiring",
+    ).toMatch(/disabled=\{deletingAttachmentId !== null\}/);
+  });
+});

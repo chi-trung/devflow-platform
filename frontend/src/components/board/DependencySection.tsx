@@ -43,6 +43,11 @@ export function DependencySection({
   const [query, setQuery] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
+  // Remove is a DELETE that drops the row; a second click after the first
+  // succeeded hits the handler's GetByIdAsync->NotFoundException and surfaces
+  // a 404 error right after a successful removal. One click in flight, same
+  // guard shape as addingId above.
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,6 +105,8 @@ export function DependencySection({
   }
 
   async function removeDependency(dependency: TaskDependencyResponse) {
+    if (removingId) return;
+    setRemovingId(dependency.id);
     setError(null);
     try {
       await removeTaskDependency(workspaceId, projectId, task.id, dependency.id);
@@ -111,6 +118,8 @@ export function DependencySection({
       setError(
         err instanceof Error ? err.message : t("dependency.failedToRemove"),
       );
+    } finally {
+      setRemovingId(null);
     }
   }
 
@@ -212,10 +221,11 @@ export function DependencySection({
               <button
                 type="button"
                 onClick={() => void removeDependency(dependency)}
+                disabled={removingId !== null}
                 aria-label={t("dependency.removeBlockerAria", {
                   title: dependency.blockerTitle,
                 })}
-                className="rounded p-1 text-muted-foreground opacity-80 transition-all duration-150 hover:text-destructive group-hover:opacity-100"
+                className="rounded p-1 text-muted-foreground opacity-80 transition-all duration-150 hover:text-destructive group-hover:opacity-100 disabled:opacity-40"
               >
                 <Trash2 className="size-3.5" aria-hidden />
               </button>
