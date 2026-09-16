@@ -1956,6 +1956,7 @@
   "createdHint": "Copy this token now. You won't be able to see it again.",
   "copy": "Copy",
   "copied": "Token copied to clipboard",
+  "copyFailed": "Couldn't copy automatically — select the token and copy it manually.",
   "revokeTitle": "Revoke token?",
   "revokeMsg": "This will permanently revoke the token \"{{name}}\". This action cannot be undone.",
   "revoke": "Revoke",
