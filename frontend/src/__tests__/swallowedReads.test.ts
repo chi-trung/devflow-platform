@@ -670,3 +670,62 @@ describe("task panel lists stop claiming absence under their own failure", () =>
     ).toMatch(/entries\.length === 0 && !error/);
   });
 });
+
+describe("template card apply/delete hold one click in flight", () => {
+  const card = readFileSync(
+    join(COMPONENTS, "templates", "TemplatesCard.tsx"),
+    "utf8",
+  );
+
+  it("handleApply guards before the task-minting POST", () => {
+    const window = card.slice(
+      card.indexOf("async function handleApply"),
+      card.indexOf("async function handleApply") + 1400,
+    );
+    expect(
+      window,
+      "apply POSTs /apply (a fresh task per call) with no in-flight guard",
+    ).toMatch(/if \(applyingId\) return;\s*\n\s*setApplyingId\(template\.id\);[\s\S]*await applyTemplate/);
+    expect(
+      card,
+      "apply button lost its disabled wiring",
+    ).toMatch(/disabled=\{applyingId !== null\}/);
+  });
+
+  it("handleDelete guards before the row-deleting DELETE", () => {
+    const window = card.slice(
+      card.indexOf("async function handleDelete"),
+      card.indexOf("async function handleDelete") + 1400,
+    );
+    expect(
+      window,
+      "a double-click sends a second DELETE for the removed row (404 -> error toast after success)",
+    ).toMatch(/if \(deletingId\) return;\s*\n\s*setDeletingId\(template\.id\);[\s\S]*await deleteTemplate/);
+    expect(
+      card,
+      "delete button lost its disabled wiring",
+    ).toMatch(/disabled=\{deletingId !== null\}/);
+  });
+});
+
+describe("knowledge page save failure is named where the user can see it", () => {
+  const kp = source("KnowledgePage");
+
+  it("create/edit catch sets the in-dialog error, not the page banner", () => {
+    expect(
+      kp,
+      "save failure renders behind the open z-[70] Dialog backdrop again",
+    ).toMatch(/catch \(err\) \{\s*(\/\/[^\n]*\s*)*setSaveError\(err instanceof Error \? err\.message : t\("knowledge\.saveFailed"\)\)/);
+    expect(
+      kp,
+      "in-dialog ErrorAlert wiring is gone",
+    ).toMatch(/\{saveError && \(\s*\n\s*<ErrorAlert id="knowledge-save-error"/);
+  });
+
+  it("supersede closes its dialog before awaiting", () => {
+    expect(
+      kp,
+      "supersede failure would hide behind the open overlay",
+    ).toMatch(/setSuperseding\(null\);\s*\n\s*try \{\s*\n\s*await supersedeKnowledgeEntry/);
+  });
+});

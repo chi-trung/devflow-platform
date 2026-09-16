@@ -56,6 +56,9 @@ export function KnowledgePage() {
   const [tags, setTags] = useState("");
   const [status, setStatus] = useState<KnowledgeStatus>("Draft");
   const [saving, setSaving] = useState(false);
+  // Save failures are named INSIDE the dialog: the page-level banner would
+  // sit behind the open z-[70] overlay and never be seen.
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Supersede state
   const [superseding, setSuperseding] = useState<KnowledgeEntryResponse | null>(null);
@@ -88,6 +91,7 @@ export function KnowledgePage() {
     setStatus("Draft");
     setEditing(null);
     setCreating(false);
+    setSaveError(null);
   }
 
   const activeEntries = entries.filter((e) => e.status !== "Superseded" && e.status !== "Deprecated");
@@ -126,7 +130,12 @@ export function KnowledgePage() {
       resetForm();
       loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("knowledge.saveFailed"));
+      // The dialog stays open so the typed title/body survive a failed save,
+      // but the failure is named INSIDE the dialog: the page-level banner
+      // would render behind the z-[70] overlay and never be seen (same
+      // lesson as handleDelete, adapted to a form - SprintBar's edit dialog
+      // is the in-dialog shape).
+      setSaveError(err instanceof Error ? err.message : t("knowledge.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -149,9 +158,11 @@ export function KnowledgePage() {
 
   async function handleSupersede() {
     if (!superseding || !supersedeTargetId.trim()) return;
+    // Close the dialog first, same as handleDelete: the failure banner lives
+    // at page level and would sit behind the open z-[70] overlay forever.
+    setSuperseding(null);
     try {
       await supersedeKnowledgeEntry(workspaceId, projectId, superseding.id, supersedeTargetId.trim());
-      setSuperseding(null);
       push(t("knowledge.superseded"));
       loadData();
     } catch (err) {
@@ -234,6 +245,9 @@ export function KnowledgePage() {
           title={editing ? t("knowledge.edit") : t("knowledge.createTitle")}
         >
           <form onSubmit={handleSubmit} className="space-y-4">
+            {saveError && (
+              <ErrorAlert id="knowledge-save-error" message={saveError} />
+            )}
             <div>
               <label htmlFor="knowledge-title" className="mb-1 block text-sm font-medium">{t("knowledge.titleLabel")}</label>
               <Input
