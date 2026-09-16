@@ -23,6 +23,11 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
   const [name, setName] = useState("");
   const [priority, setPriority] = useState("Medium");
   const [busy, setBusy] = useState(false);
+  // Apply POSTs /apply, which mints a fresh task per call, so a second click
+  // during the in-flight request duplicates the task. Same applyingId guard the
+  // TemplatesPage list uses for this exact endpoint.
+  const [applyingId, setApplyingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { push } = useToast();
 
   // Same class as PATSection: a failed list must not render "No templates"
@@ -67,21 +72,33 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
   }
 
   async function handleApply(template: TemplateResponse) {
+    if (applyingId) return;
+    setApplyingId(template.id);
     try {
       await applyTemplate(workspaceId, projectId, template.id);
       push(t("template.applied", { name: template.name }));
       onChanged();
     } catch (err) {
       push(err instanceof Error ? err.message : t("templates.applyFailed"), "error");
+    } finally {
+      setApplyingId(null);
     }
   }
 
   async function handleDelete(template: TemplateResponse) {
+    // DELETE by id is itself idempotent-safe server-side, but a double-click
+    // sends the second request after the row already went away: the 404 came
+    // back as a "delete failed" toast right after a successful delete. Same
+    // guard, one click in flight per card.
+    if (deletingId) return;
+    setDeletingId(template.id);
     try {
       await deleteTemplate(workspaceId, projectId, template.id);
       setTemplates((current) => (current ?? []).filter((t) => t.id !== template.id));
     } catch (err) {
       push(err instanceof Error ? err.message : t("templates.deleteFailed"), "error");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -160,17 +177,19 @@ export function TemplatesCard({ workspaceId, projectId, onChanged }: TemplatesCa
                 <button
                   type="button"
                   onClick={() => void handleApply(template)}
+                  disabled={applyingId !== null}
                   title={t("templates.createFromTitle")}
-                  className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 font-medium transition-colors duration-150 hover:border-primary hover:text-primary"
+                  className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 font-medium transition-colors duration-150 hover:border-primary hover:text-primary disabled:opacity-40"
                 >
                   <Play className="size-3" aria-hidden />
-                  {t("template.apply")}
+                  {applyingId === template.id ? t("common.saving") : t("template.apply")}
                 </button>
                 <button
                   type="button"
                   onClick={() => void handleDelete(template)}
+                  disabled={deletingId !== null}
                   aria-label={t("templates.deleteAria", { name: template.name })}
-                  className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-destructive"
+                  className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-destructive disabled:opacity-40"
                 >
                   <Trash2 className="size-3.5" aria-hidden />
                 </button>
