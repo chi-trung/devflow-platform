@@ -751,3 +751,25 @@ describe("subtask detach holds one click in flight", () => {
     ).toMatch(/disabled=\{detachingId !== null\}/);
   });
 });
+
+describe("saved-search handoff survives a same-board navigate", () => {
+  const bp = source("BoardPage");
+
+  it("the ?fs= effect re-runs when the handoff arrives after mount", () => {
+    const start = bp.indexOf('searchParams.get("fs")');
+    expect(start, "the saved-search handoff effect was renamed").toBeGreaterThan(-1);
+    const window = bp.slice(start, start + 1500);
+    expect(
+      window,
+      "palette ?fs= navigation while already on the board is silently dropped (deps reverted to mount-only)",
+    ).toMatch(/}, \[fsParam, setSearchParams\]\);/);
+    expect(
+      window,
+      "mount-only eslint escape returned on the handoff effect",
+    ).not.toMatch(/exhaustive-deps\s*\n\s*\}, \[\]\);/);
+    expect(
+      window,
+      "handoff no longer strips itself, so the re-run would loop",
+    ).toMatch(/next\.delete\("fs"\);/);
+  });
+});
