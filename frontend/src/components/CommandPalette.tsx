@@ -113,13 +113,14 @@ export function CommandPalette({
     () => pagedItems<WorkspaceResponse>(workspacesRaw),
     [workspacesRaw],
   );
-  const { data: projectsRaw, error: projectsError } = useApi<unknown>(
-    () =>
-      open && workspaceId
-        ? api(`/workspaces/${workspaceId}/projects`)
-        : Promise.resolve([]),
-    [open, workspaceId],
-  );
+  const { data: projectsRaw, error: projectsError, reload: reloadProjects } =
+    useApi<unknown>(
+      () =>
+        open && workspaceId
+          ? api(`/workspaces/${workspaceId}/projects`)
+          : Promise.resolve([]),
+      [open, workspaceId],
+    );
   const projects = useMemo(
     () => pagedItems<ProjectResponse>(projectsRaw),
     [projectsRaw],
@@ -625,9 +626,20 @@ export function CommandPalette({
           {hitsUnresolvable && (
             // The search found hits, but task/epic/label rows route through
             // the project map, which failed to load — claiming "no results"
-            // here would hide hits the palette couldn't resolve.
-            <li role="alert" className="px-3 py-8 text-center text-sm text-destructive">
-              {t("commandPalette.projectsLoadFailed")}
+            // here would hide hits the palette couldn't resolve. Retryable:
+            // the saved row below already established the inline-retry shape.
+            <li
+              role="alert"
+              className="flex items-center justify-center gap-2 px-3 py-2 font-mono text-[11px] text-destructive"
+            >
+              <span>{t("commandPalette.projectsLoadFailed")}</span>
+              <button
+                type="button"
+                onClick={reloadProjects}
+                className="rounded border border-border px-1.5 py-0.5 text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground"
+              >
+                {t("common.retry")}
+              </button>
             </li>
           )}
           {savedSearchesFailed && (
