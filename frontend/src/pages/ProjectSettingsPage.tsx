@@ -279,8 +279,16 @@ export function ProjectSettingsPage() {
         )}
 
         {membersError ? (
-          <div className="mb-4">
-            <ErrorAlert message={membersError} />
+          <div className="mb-4 flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert
+                id="projectsettingspage-members-error"
+                message={membersError}
+              />
+            </div>
+            <Button size="sm" variant="outline" onClick={loadMembers}>
+              {t("common.retry")}
+            </Button>
           </div>
         ) : membersLoading ? (
           <div className="flex flex-col gap-3">

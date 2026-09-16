@@ -1235,7 +1235,14 @@ export function BoardPage() {
             ))}
           </div>
         ) : error ? (
-          <ErrorAlert message={error} />
+          <div className="flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert id="boardpage-tasks-error" message={error} />
+            </div>
+            <Button size="sm" variant="outline" onClick={reload}>
+              {t("common.retry")}
+            </Button>
+          </div>
         ) : tasks.length === 0 ? (
           <EmptyState
             icon={<SquareKanban className="size-8 text-muted-foreground" aria-hidden />}

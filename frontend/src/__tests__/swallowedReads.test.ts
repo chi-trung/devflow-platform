@@ -523,3 +523,75 @@ describe("WorkspacePage load banners offer the reload they already have", () => 
     expect(content).toMatch(/error:\s*membersError,[\s\S]{0,120}?reload:\s*reloadMembers/);
   });
 });
+
+// Wave-22: the remaining load-failure banners in the useApi family. Each site
+// names its failure and then strands the reader — BoardPage's task-list branch,
+// ProjectSettingsPage's member roster (its sibling workspace-roster banner has
+// had a retry since wave-16), and WorkspacePage's header read. Lock the same
+// three invariants as wave-21: no bare <ErrorAlert message={X} />, stable id,
+// retry wired to the SAME loader inside the banner block.
+describe("wave-22 load banners stop dead-ending their regions", () => {
+  const DEAD_ENDS: Array<{
+    file: string;
+    alertId: string;
+    bare: RegExp;
+    retry: string;
+  }> = [
+    {
+      file: "BoardPage",
+      alertId: "boardpage-tasks-error",
+      bare: /<ErrorAlert message=\{error\} \/>/,
+      retry: "onClick={reload}",
+    },
+    {
+      file: "ProjectSettingsPage",
+      alertId: "projectsettingspage-members-error",
+      bare: /<ErrorAlert message=\{membersError\} \/>/,
+      retry: "onClick={loadMembers}",
+    },
+    {
+      file: "WorkspacePage",
+      alertId: "workspacepage-workspace-error",
+      bare: /<ErrorAlert message=\{wsError \?\? t\("workspace\.notFound"\)\} \/>/,
+      retry: "onClick={reloadWorkspace}",
+    },
+  ];
+
+  describe.each(DEAD_ENDS)("$file", ({ file, alertId, bare, retry }) => {
+    it(`${alertId} is a retryable banner, not a bare dead end`, () => {
+      const content = source(file);
+      expect(content, `bare <ErrorAlert> is back for ${alertId}`).not.toMatch(
+        bare,
+      );
+      const alert = content.indexOf(`id="${alertId}"`);
+      expect(alert, "banner lost its stable id").toBeGreaterThan(-1);
+      const block = content.slice(alert, alert + 1400);
+      expect(block, "banner lost its retry wiring").toMatch(
+        new RegExp(retry.replace(/[{}]/g, "\$&")),
+      );
+      expect(block, "retry button lost its label").toMatch(/common\.retry/);
+    });
+  });
+
+  it("WorkspacePage's not-found branch keeps no retry (404 is terminal)", () => {
+    const content = source("WorkspacePage");
+    // The retry must be conditional on wsError itself, not on the merged
+    // `wsError || !workspace` branch — retrying a workspace you can't see
+    // re-fails forever and the honest exit is the back link above.
+    const alert = content.indexOf('id="workspacepage-workspace-error"');
+    expect(alert).toBeGreaterThan(-1);
+    const block = content.slice(alert, alert + 1400);
+    expect(block, "retry stopped being conditional on wsError").toMatch(
+      /\{wsError && \(\s*\n\s*<Button[^>]*onClick=\{reloadWorkspace\}/,
+    );
+  });
+
+  it("both useApi destructures still expose the reloads the banners call", () => {
+    expect(source("BoardPage")).toMatch(
+      /data: tasksRaw,[\s\S]{0,120}?reload,/,
+    );
+    expect(source("WorkspacePage")).toMatch(
+      /error:\s*wsError,[\s\S]{0,120}?reload:\s*reloadWorkspace/,
+    );
+  });
+});
