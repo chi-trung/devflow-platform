@@ -46,7 +46,13 @@ export function MilestonesPage() {
   const [view, setView] = useState<ViewMode>("list");
 
   const { currentUser } = useAuth();
-  const { data: members = [] } = useApi<WorkspaceMemberResponse[]>(
+  // A failed roster read must not collapse to [] -> isAdmin false, which
+  // silently removes the per-milestone delete control from a real admin.
+  const {
+    data: members,
+    error: membersError,
+    reload: reloadMembers,
+  } = useApi<WorkspaceMemberResponse[]>(
     () => api(`/workspaces/${workspaceId}/members`),
     [workspaceId],
   );
@@ -223,6 +229,20 @@ export function MilestonesPage() {
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <ErrorAlert id="milestones-load-error" message={error} />
             <Button variant="outline" size="sm" onClick={loadData}>
+              {t("common.retry")}
+            </Button>
+          </div>
+        )}
+
+        {membersError && (
+          <div className="mb-4 flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorAlert
+                id="milestonespage-members-error"
+                message={t("common.membersLoadFailed")}
+              />
+            </div>
+            <Button size="sm" variant="outline" onClick={reloadMembers}>
               {t("common.retry")}
             </Button>
           </div>

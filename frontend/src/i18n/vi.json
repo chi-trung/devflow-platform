@@ -825,6 +825,7 @@
   "applying": "Đang áp dụng…",
   "regenerate": "Tạo lại",
   "planFailed": "Không tạo được kế hoạch. Hãy kiểm tra cấu hình AI.",
+  "planLoadFailed": "Không tải được kế hoạch đã lưu.",
   "applyFailed": "Không áp dụng được kế hoạch.",
   "assistant": "Trợ lý AI",
   "assistantSubtitle": "Làm mọi thứ bằng câu lệnh tự nhiên",
@@ -1593,6 +1594,7 @@
   "edit": "Sửa",
   "refresh": "Làm mới",
   "loadError": "Phiên bản mới vừa được phát hành. Tải lại để nhận bản mới.",
+  "membersLoadFailed": "Không tải được danh sách thành viên workspace. Các thao tác quản trị không khả dụng.",
   "unexpectedError": "Có lỗi xảy ra khi hiển thị trang này."
  },
  "graph": {
