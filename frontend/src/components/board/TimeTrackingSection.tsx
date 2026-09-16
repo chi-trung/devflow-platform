@@ -317,7 +317,10 @@ export function TimeTrackingSection({
 
       {!entries ? (
         <p className="text-xs text-muted-foreground">{t("common.loading")}</p>
-      ) : entries.length === 0 ? (
+      ) : entries.length === 0 && !error ? (
+        // The load catch writes [] as well as the error, so the empty list
+        // under the error line claimed "no time logged" for a read that was
+        // never observed. Gate on !error like the sibling panels.
         <p className="text-xs text-muted-foreground">
           {t("timeTracking.noTimeLogged")}
         </p>
