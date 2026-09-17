@@ -248,14 +248,40 @@ export interface IncomingNotification {
 
 let notificationConnection: signalR.HubConnection | null = null;
 
+// Workspaces whose workspace-event group the connection should be a member
+// of. SignalR runs a fresh handshake on every automatic reconnect (new
+// connectionId) and ASP.NET Core hub groups are keyed by connection id, so
+// membership is lost; this set is re-joined from onreconnected.
+const joinedWorkspaces = new Set<string>();
+
 export function getNotificationConnection(): signalR.HubConnection {
   if (!notificationConnection) {
     notificationConnection = new signalR.HubConnectionBuilder()
       .withUrl(`${API_BASE}/hubs/notifications`, HUB_OPTIONS)
       .withAutomaticReconnect(RECONNECT_DELAYS)
       .build();
+    notificationConnection.onreconnected(() => {
+      for (const workspaceId of joinedWorkspaces) {
+        void notificationConnection
+          ?.invoke("JoinWorkspace", workspaceId)
+          .catch(() => {});
+      }
+    });
   }
   return notificationConnection;
+}
+
+/**
+ * Remember that this connection wants `workspace:{id}` events, so the
+ * membership can be re-established after an automatic reconnect. Paired with
+ * {@link unjoinWorkspace} from the same effect that called it.
+ */
+export function joinWorkspaceGroup(workspaceId: string): void {
+  joinedWorkspaces.add(workspaceId);
+}
+
+export function unjoinWorkspaceGroup(workspaceId: string): void {
+  joinedWorkspaces.delete(workspaceId);
 }
 
 let notificationSubscribers = 0;
@@ -300,6 +326,8 @@ export function resetNotificationStream(): void {
     void stopProjectConnection(notificationConnection);
     notificationConnection = null;
   }
+  // The socket is gone, so its group memberships cannot outlive it.
+  joinedWorkspaces.clear();
 }
 
 /** Used by the online guard: restart the stream if this app still wants it. */
