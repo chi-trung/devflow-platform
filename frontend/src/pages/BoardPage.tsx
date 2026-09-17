@@ -1078,6 +1078,29 @@ export function BoardPage() {
           </div>
         )}
 
+        {membersFailed && (
+          // The roster drives `isAdmin`, so a failed read demotes an Owner to
+          // a bystander: Import vanishes, SprintBar loses its edit controls,
+          // and the assignee filter goes unevaluable. The FilterBar retry
+          // only renders while the assignee dropdown is visible (and the
+          // keyboard "?" hint names the missing list only when a search is
+          // typed), so the board itself must name the failure and offer the
+          // reload - outside every gate the error disables.
+          <div className="mb-3">
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <ErrorAlert
+                  id="boardpage-members-error"
+                  message={t("board.membersLoadFailed")}
+                />
+              </div>
+              <Button size="sm" variant="outline" onClick={reloadMembers}>
+                {t("common.retry")}
+              </Button>
+            </div>
+          </div>
+        )}
+
         {epicsFailed && swimlaneMode === "epic" && (
           <div className="mb-3">
             <div className="flex items-start gap-2">

@@ -417,6 +417,60 @@ describe("BoardPage custom-fields read", () => {
   });
 });
 
+describe("BoardPage members read (wave-34)", () => {
+  const content = source("BoardPage");
+
+  it("destructure exposes error + reload + null-guarded failed flag", () => {
+    expect(
+      content,
+      "members fetch regressed to discarding its error",
+    ).not.toMatch(/const\s*\{\s*data:\s*members\s*\}\s*=\s*useApi/);
+    expect(content).toMatch(
+      /data:\s*members,[\s\S]{0,200}?error:\s*membersError,[\s\S]{0,200}?reload:\s*reloadMembers/,
+    );
+    expect(content).toMatch(
+      /const\s+membersFailed\s*=\s*membersError\s*!==\s*null\s*&&\s*members\s*===\s*null/,
+    );
+  });
+
+  it("the failed roster renders a retryable banner outside every gate it disables", () => {
+    // The roster derives `isAdmin`: on failure an Owner reads as a bystander,
+    // so Import (`{!creating && isAdmin && (`) and SprintBar's edit controls
+    // hard-hide. The FilterBar retry only renders while the assignee dropdown
+    // is visible, and the assigneeFilterUnknown banner needs a typed search -
+    // neither names the missing admin actions when the board first loads.
+    const gate = content.indexOf("{membersFailed && (");
+    const alert = content.indexOf('id="boardpage-members-error"');
+    const retry = content.indexOf("onClick={reloadMembers}");
+    expect(gate, "members banner was removed").toBeGreaterThanOrEqual(0);
+    expect(alert, "members ErrorAlert lost its stable id").toBeGreaterThan(gate);
+    expect(retry, "members error has no retry wired").toBeGreaterThan(gate);
+    expect(content).toMatch(/board\.membersLoadFailed/);
+    // The banner must sit above the board area, like its siblings.
+    const sprintBar = content.indexOf("<SprintBar");
+    expect(gate, "banner drifted below the board area").toBeLessThan(sprintBar);
+    // Unconditional: unlike the epics banner (GUID lanes only show in epic
+    // mode), the roster gates admin actions on every board, so no extra
+    // condition may gate the banner.
+    expect(content).toMatch(/\{membersFailed && \(/);
+    expect(content).not.toMatch(
+      /\{membersFailed && [^(\s][\s\S]{0,80}?\(/,
+    );
+  });
+
+  it("both locales carry the new membersLoadFailed key", () => {
+    for (const loc of ["en", "vi"] as const) {
+      const dict = JSON.parse(
+        readFileSync(join(__dirname, "..", "i18n", `${loc}.json`), "utf8"),
+      );
+      expect(
+        dict.board.membersLoadFailed,
+        `${loc} lost board.membersLoadFailed`,
+      ).toBeTruthy();
+    }
+  });
+});
+
 // Wave-20 hunts the two shapes the BoardPage wave could not see, because they
 // were never useApi destructures:
 //  - EpicsPage's loadEpics Promise.all kept its lists at [] on failure AND
