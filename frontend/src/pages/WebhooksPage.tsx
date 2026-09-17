@@ -39,9 +39,14 @@ const WEBHOOK_EVENTS = [
 ] as const;
 
 export function WebhooksPage() {
+  const { workspaceId = "" } = useParams();
+  // Keep lists, dialogs and pending mutation callbacks scoped to one workspace.
+  return <WorkspaceWebhooksPage key={workspaceId} workspaceId={workspaceId} />;
+}
+
+function WorkspaceWebhooksPage({ workspaceId }: { workspaceId: string }) {
   const { t } = useTranslation();
   const { push } = useToast();
-  const { workspaceId = "" } = useParams();
   const [webhooks, setWebhooks] = useState<WebhookResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
