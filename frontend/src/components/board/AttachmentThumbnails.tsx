@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { getAttachmentObjectUrl } from "../../lib/api";
 import type { TaskItemResponse } from "../../types/api";
 
@@ -30,9 +30,6 @@ export function useAttachmentPreviews({
   previews,
 }: UseAttachmentPreviewsOptions): PreviewImage[] {
   const [urls, setUrls] = useState<Record<string, string>>({});
-  // Track every URL this hook has created so cleanup revokes them even when
-  // the URL map was populated after the effect body ran.
-  const createdRef = useRef<string[]>([]);
 
   useEffect(() => {
     if (!previews || previews.length === 0) {
@@ -40,6 +37,14 @@ export function useAttachmentPreviews({
       return;
     }
     let cancelled = false;
+
+    // URLs created by THIS effect run only. The previous version pushed into
+    // createdRef.current from inside the promise, so a fetch resolving after
+    // cleanup (task card unmounted mid-flight, previews prop swapped) landed
+    // its URL in the ref after cleanup had already emptied it, or after
+    // `cancelled` made the .then drop it from state — either way the blob
+    // bytes were never revoked and leaked for the page lifetime.
+    const created: string[] = [];
 
     Promise.all(
       previews.map(async (preview) => {
@@ -49,11 +54,16 @@ export function useAttachmentPreviews({
           taskId,
           preview.id,
         );
-        if (url) createdRef.current.push(url);
+        if (url) created.push(url);
         return { id: preview.id, url };
       }),
     ).then((results) => {
-      if (cancelled) return;
+      // Revoke anything that resolved too late to be rendered: the effect is
+      // done, so nothing will ever point an <img> at these URLs.
+      if (cancelled) {
+        for (const url of created) URL.revokeObjectURL(url);
+        return;
+      }
       const next: Record<string, string> = {};
       for (const { id, url } of results) {
         if (url) next[id] = url;
@@ -63,10 +73,9 @@ export function useAttachmentPreviews({
 
     return () => {
       cancelled = true;
-      for (const url of createdRef.current) {
+      for (const url of created) {
         URL.revokeObjectURL(url);
       }
-      createdRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId, projectId, taskId, previews]);
@@ -92,24 +101,28 @@ export function AttachmentRowThumb({
 }) {
   const isImage = contentType.startsWith("image/");
   const [url, setUrl] = useState<string | null>(null);
-  const createdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isImage) return;
     let cancelled = false;
+    // Local to this run: a fetch resolving after cleanup must still revoke its
+    // URL, which a shared ref cannot guarantee (see useAttachmentPreviews).
+    let created: string | null = null;
     void getAttachmentObjectUrl(workspaceId, projectId, taskId, attachmentId).then(
       (u) => {
         if (!cancelled && u) {
-          createdRef.current = u;
+          created = u;
           setUrl(u);
+        } else if (u) {
+          URL.revokeObjectURL(u);
         }
       },
     );
     return () => {
       cancelled = true;
-      if (createdRef.current) {
-        URL.revokeObjectURL(createdRef.current);
-        createdRef.current = null;
+      if (created) {
+        URL.revokeObjectURL(created);
+        created = null;
       }
     };
   }, [workspaceId, projectId, taskId, attachmentId, isImage]);
