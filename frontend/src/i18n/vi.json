@@ -559,7 +559,8 @@
   "customFieldsLoadFailed": "Không tải được giá trị trường tùy biến. Nhãn trường trên các thẻ bị ẩn.",
   "blockedFilterUnknown": "Trạng thái bị chặn không xác định nên kết quả chỉ-task-bị-chặn có thể sai.",
   "labelFilterUnknown": "Không tải được danh sách nhãn nên tìm kiếm theo nhãn không khớp được.",
-  "assigneeFilterUnknown": "Không tải được danh sách thành viên nên tìm kiếm theo người được giao không khớp được."
+  "assigneeFilterUnknown": "Không tải được danh sách thành viên nên tìm kiếm theo người được giao không khớp được.",
+  "membersLoadFailed": "Không tải được danh sách thành viên. Bộ lọc người được giao, quản lý sprint và nhập tác vụ không khả dụng."
  },
  "taskStatus": {
   "Idea": "Idea",

@@ -559,7 +559,8 @@
   "customFieldsLoadFailed": "Failed to load custom field values. The chips on cards are hidden.",
   "blockedFilterUnknown": "Blocked state is unknown, so blocked-only results may be wrong.",
   "labelFilterUnknown": "Labels couldn't be loaded, so label searches can't be matched.",
-  "assigneeFilterUnknown": "Members couldn't be loaded, so assignee searches can't be matched."
+  "assigneeFilterUnknown": "Members couldn't be loaded, so assignee searches can't be matched.",
+  "membersLoadFailed": "Failed to load workspace members. The assignee filter, sprint management, and task import are unavailable."
  },
  "taskStatus": {
   "Idea": "Idea",
