@@ -23,9 +23,38 @@ const RECONNECT_DELAYS = [0, 2_000, 5_000, 10_000, 30_000, 60_000];
 // start, never start twice, and await any pending start before stopping.
 const starting = new WeakMap<signalR.HubConnection, Promise<void>>();
 
+// ── Project hub: one connection per project, shared ─────────────────
+// Two consumers open on the same board (BoardPage's live-update effect and
+// usePresence) used to call createProjectConnection separately, so every
+// board tab held TWO ProjectHub connections in the same project group.
+// The hub broadcasts to OthersInGroup, so a duplicate connection made every
+// remote board user's events arrive twice, and made the same user appear
+// twice in everyone's presence list (two join broadcasts, two connection
+// ids). Ref-counting collapses both consumers onto one socket.
+const projectConnections = new Map<string, signalR.HubConnection>();
+let projectSubscribers = 0;
+let projectStopTimer: number | null = null;
+
+/**
+ * Return the single shared project-hub connection for this project, starting
+ * it if needed. The connection is NOT stopped when the caller is done — see
+ * {@link releaseProjectConnection}, which only stops once the last consumer
+ * drops it (after a short delay so a rapid unmount/remount does not churn
+ * the socket).
+ */
 export function createProjectConnection(
   projectId?: string,
 ): signalR.HubConnection {
+  if (!projectId) {
+    // Untyped callers still get a connection; it simply joins no group.
+    return new signalR.HubConnectionBuilder()
+      .withUrl(`${API_BASE}/hubs/projects`, HUB_OPTIONS)
+      .withAutomaticReconnect(RECONNECT_DELAYS)
+      .build();
+  }
+  const existing = projectConnections.get(projectId);
+  if (existing) return existing;
+
   const connection = new signalR.HubConnectionBuilder()
     .withUrl(`${API_BASE}/hubs/projects`, HUB_OPTIONS)
     .withAutomaticReconnect(RECONNECT_DELAYS)
@@ -34,12 +63,64 @@ export function createProjectConnection(
   // After an automatic reconnect the connection has rejoined no groups;
   // re-invoke JoinProject so live updates keep flowing.
   connection.onreconnected(() => {
-    if (projectId) {
-      void connection.invoke("JoinProject", projectId).catch(() => {});
-    }
+    void connection.invoke("JoinProject", projectId).catch(() => {});
   });
 
+  projectConnections.set(projectId, connection);
   return connection;
+}
+
+/**
+ * Register a consumer of the shared project connection. Must be paired with
+ * {@link releaseProjectConnection} in an effect cleanup. The project id is
+ * accepted for call-site symmetry with release (which needs it to find the
+ * socket) and is intentionally not read here — the count is global because
+ * a board always holds exactly one project connection at a time.
+ */
+export function retainProjectConnection(_projectId: string): void {
+  projectSubscribers++;
+  if (projectStopTimer !== null) {
+    window.clearTimeout(projectStopTimer);
+    projectStopTimer = null;
+  }
+}
+
+/**
+ * Drop a consumer. The socket is only stopped once the last consumer is gone
+ * — and after 1s, so a remount (React strict mode, a route hop and back)
+ * reuses the warm connection instead of tearing a WebSocket down and up.
+ */
+export async function releaseProjectConnection(
+  projectId: string,
+): Promise<void> {
+  projectSubscribers = Math.max(0, projectSubscribers - 1);
+  if (projectSubscribers > 0) return;
+
+  if (projectStopTimer !== null) window.clearTimeout(projectStopTimer);
+  projectStopTimer = window.setTimeout(async () => {
+    projectStopTimer = null;
+    if (projectSubscribers > 0) return;
+    const connection = projectConnections.get(projectId);
+    if (connection) {
+      await stopProjectConnection(connection).catch(() => {});
+      projectConnections.delete(projectId);
+    }
+  }, 1000);
+}
+
+/**
+ * Reset all project connections (tests / explicit teardown).
+ */
+export function resetProjectConnections(): void {
+  projectSubscribers = 0;
+  if (projectStopTimer !== null) {
+    window.clearTimeout(projectStopTimer);
+    projectStopTimer = null;
+  }
+  for (const connection of projectConnections.values()) {
+    void stopProjectConnection(connection);
+  }
+  projectConnections.clear();
 }
 
 /**

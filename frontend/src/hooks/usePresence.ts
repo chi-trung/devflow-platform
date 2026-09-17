@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   createProjectConnection,
+  releaseProjectConnection,
+  retainProjectConnection,
   startProjectConnection,
   stopProjectConnection,
 } from "../lib/realtime";
@@ -33,6 +35,9 @@ export function usePresence(
   useEffect(() => {
     if (!projectId) return;
     const connection = createProjectConnection(projectId);
+    // Shared with BoardPage's own live-update connection: both consumers
+    // hold one ref, so the socket only stops when the board is fully gone.
+    retainProjectConnection(projectId);
 
     const selfId = currentUserId ?? null;
 
@@ -69,6 +74,7 @@ export function usePresence(
       connection.off("user-joined", handleUserJoined);
       connection.off("user-left", handleUserLeft);
       void stopProjectConnection(connection);
+      void releaseProjectConnection(projectId);
     };
   }, [projectId, currentUserId]);
 

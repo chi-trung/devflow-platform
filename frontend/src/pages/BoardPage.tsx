@@ -29,6 +29,8 @@ import {
 import {
   createProjectConnection,
   onConnectionWake,
+  releaseProjectConnection,
+  retainProjectConnection,
   startProjectConnection,
   stopProjectConnection,
 } from "../lib/realtime";
@@ -722,6 +724,9 @@ export function BoardPage() {
     if (!projectId) return;
 
     const connection = createProjectConnection(projectId);
+    // Shared with usePresence: both consumers of this board's hub connection
+    // hold one ref so the socket survives either one unmounting alone.
+    retainProjectConnection(projectId);
     let timer: number | undefined;
     const scheduleReload = () => {
       window.clearTimeout(timer);
@@ -760,6 +765,7 @@ export function BoardPage() {
       window.clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisible);
       void stopProjectConnection(connection);
+      void releaseProjectConnection(projectId);
     };
   }, [projectId, reload, reloadSprints, reloadActivities]);
 
