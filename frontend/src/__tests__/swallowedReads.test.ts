@@ -1102,3 +1102,46 @@ describe("ai accept routes to the exact card (wave-30)", () => {
     ).toMatch(/pendingAccepting\?\.message === i/);
   });
 });
+
+describe("attachment calls hit the shared API base, not the Vercel SPA (wave-33)", () => {
+  const api = readFileSync(join(__dirname, "..", "lib", "api.ts"), "utf8");
+  const panel = readFileSync(
+    join(COMPONENTS, "board", "TaskDetailPanel.tsx"),
+    "utf8",
+  );
+
+  it("no root-relative /api/v1 attachment URL survives in api.ts", () => {
+    // In dev a root-relative /api/v1 path still works (Vite proxies /api to
+    // localhost:5217), but in prod it hits the Vercel SPA itself — vercel.json
+    // rewrites /(.*) -> /index.html (probed HTTP 200 text/html on
+    // /api/v1/ping). The upload XHR then posted index.html bytes and the
+    // blob fetch painted index.html as a fake attachment.
+    expect(
+      api,
+      'root-relative "/api/v1 attachment URL regressed — prod Vercel serves index.html for it',
+    ).not.toMatch(/`\/api\/v1/);
+    expect(
+      api,
+      "uploadTaskAttachment no longer routes through the shared BASE",
+    ).toMatch(
+      /export async function uploadTaskAttachment\([\s\S]*?\$\{BASE\}\/workspaces/,
+    );
+    expect(
+      api,
+      "getAttachmentObjectUrl no longer routes through the shared BASE",
+    ).toMatch(
+      /export async function getAttachmentObjectUrl\([\s\S]*?\$\{BASE\}\/workspaces/,
+    );
+  });
+
+  it("the panel downloader resolves against API_BASE too", () => {
+    expect(
+      panel,
+      "panel downloader regressed to a root-relative /api/v1 path",
+    ).not.toMatch(/`\/api\/v1\/workspaces/);
+    expect(
+      panel,
+      "panel downloader lost its shared-base wiring",
+    ).toMatch(/\$\{API_BASE\}\/api\/v1\/workspaces/);
+  });
+});
