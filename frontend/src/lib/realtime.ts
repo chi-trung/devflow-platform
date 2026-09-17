@@ -41,6 +41,10 @@ let projectStopTimer: number | null = null;
  * {@link releaseProjectConnection}, which only stops once the last consumer
  * drops it (after a short delay so a rapid unmount/remount does not churn
  * the socket).
+ *
+ * Pass {@link createUnjoinedProjectConnection} for a consumer that wants its
+ * own socket outside the shared map (it still re-joins its group after a
+ * reconnect).
  */
 export function createProjectConnection(
   projectId?: string,
@@ -67,6 +71,27 @@ export function createProjectConnection(
   });
 
   projectConnections.set(projectId, connection);
+  return connection;
+}
+
+/**
+ * A project-hub connection that lives OUTSIDE the shared map: the caller owns
+ * its own socket and stops it itself. Used by SprintPlanningPage, which never
+ * shares a project with BoardPage but still needs to re-join the project group
+ * after an automatic reconnect (SignalR drops group membership on reconnect).
+ */
+export function createUnjoinedProjectConnection(
+  projectId?: string,
+): signalR.HubConnection {
+  const connection = new signalR.HubConnectionBuilder()
+    .withUrl(`${API_BASE}/hubs/projects`, HUB_OPTIONS)
+    .withAutomaticReconnect(RECONNECT_DELAYS)
+    .build();
+  if (projectId) {
+    connection.onreconnected(() => {
+      void connection.invoke("JoinProject", projectId).catch(() => {});
+    });
+  }
   return connection;
 }
 

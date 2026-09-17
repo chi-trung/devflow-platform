@@ -20,7 +20,7 @@ import {
   startSprint,
 } from "../lib/api";
 import {
-  createProjectConnection,
+  createUnjoinedProjectConnection,
   startProjectConnection,
   stopProjectConnection,
 } from "../lib/realtime";
@@ -128,7 +128,9 @@ export function SprintPlanningPage() {
   useEffect(() => {
     if (!projectId) return;
 
-    const connection = createProjectConnection();
+    // Owns its socket outside the shared map: this page never shares a
+    // project with BoardPage, but it still must re-join after a reconnect.
+    const connection = createUnjoinedProjectConnection(projectId);
     let timer: number | undefined;
     const scheduleReload = () => {
       window.clearTimeout(timer);

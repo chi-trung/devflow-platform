@@ -20,18 +20,26 @@ vi.mock("@microsoft/signalr", () => {
       }
       build() {
         counter += 1;
-        return {
+        const connection = {
           id: `conn-${counter}`,
           state: "Disconnected",
+          // Captured so a test can simulate a transport reconnect and assert
+          // the connection re-joins its project group.
+          reconnectHandler: null as (() => void) | null,
+          invoked: [] as string[],
           on() {},
           off() {},
           async start() {},
           async stop() {},
-          async invoke() {},
-          onreconnected() {
+          async invoke(method: string) {
+            this.invoked.push(method);
+          },
+          onreconnected(handler: () => void) {
+            this.reconnectHandler = handler;
             return this;
           },
         };
+        return connection;
       }
     },
     HubConnectionState: { Connected: "Connected", Disconnected: "Disconnected" },
@@ -40,6 +48,7 @@ vi.mock("@microsoft/signalr", () => {
 
 import {
   createProjectConnection,
+  createUnjoinedProjectConnection,
   retainProjectConnection,
   releaseProjectConnection,
   resetProjectConnections,
@@ -91,5 +100,36 @@ describe("project hub connection is shared, not duplicated (wave-36)", () => {
     expect(
       (createProjectConnection("project-1") as unknown as { id: string }).id,
     ).toBe((first as unknown as { id: string }).id);
+  });
+
+  it("re-joins the project group after a transport reconnect", async () => {
+    const conn = createProjectConnection("project-1") as unknown as {
+      reconnectHandler: (() => void) | null;
+      invoked: string[];
+    };
+    expect(conn.reconnectHandler).not.toBeNull();
+    conn.reconnectHandler!();
+    await Promise.resolve();
+    expect(conn.invoked).toContain("JoinProject");
+  });
+
+  it("re-joins from an unjoined (self-owned) connection too", async () => {
+    // SprintPlanningPage owns its socket but still drops group membership on
+    // a reconnect — without this it silently stops receiving board updates.
+    const conn = createUnjoinedProjectConnection("project-2") as unknown as {
+      reconnectHandler: (() => void) | null;
+      invoked: string[];
+    };
+    expect(conn.reconnectHandler).not.toBeNull();
+    conn.reconnectHandler!();
+    await Promise.resolve();
+    expect(conn.invoked).toContain("JoinProject");
+  });
+
+  it("does not register a reconnect handler with no project id", () => {
+    const conn = createUnjoinedProjectConnection() as unknown as {
+      reconnectHandler: (() => void) | null;
+    };
+    expect(conn.reconnectHandler).toBeNull();
   });
 });
