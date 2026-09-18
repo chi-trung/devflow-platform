@@ -396,7 +396,9 @@ export function BoardPage() {
     return () => window.clearTimeout(timer);
   }, [workspaceId, projectId]);
 
-  const parsedSearch = parseSearchQuery(search);
+  // Memoised: a fresh object every render would defeat the visibleTasks
+  // memo below, re-running all fourteen filters on every keystroke.
+  const parsedSearch = useMemo(() => parseSearchQuery(search), [search]);
   const operatorAssigneeId =
     parsedSearch.assignee === ""
       ? ""
@@ -438,61 +440,83 @@ export function BoardPage() {
   const blockedFilterUnknown =
     blockedStateUnknown && (blockedOnly || parsedSearch.blockedOnly);
 
-  const visibleTasks = tasks
-    .filter((task) =>
-      sprintFilter === "all"
-        ? true
-        : sprintFilter === "none"
-          ? !task.sprintId
-          : task.sprintId === sprintFilter,
-    )
-    .filter((task) =>
-      priorityFilter ? task.priority === priorityFilter : true,
-    )
-    .filter((task) => {
-      if (!assigneeFilter) return true;
-      if (assigneeFilter === "none") return !task.assigneeId;
-      return task.assigneeId === assigneeFilter;
-    })
-    .filter((task) => {
-      if (!dueFrom && !dueTo) return true;
-      if (!task.dueDateUtc) return false;
-      const due = new Date(task.dueDateUtc).getTime();
-      if (dueFrom && due < new Date(`${dueFrom}T00:00:00`).getTime()) return false;
-      if (dueTo && due > new Date(`${dueTo}T23:59:59`).getTime()) return false;
-      return true;
-    })
-    // Blocked state is derived from the dependency graph (unresolved edges) —
-    // the task list response has no isBlocked field.
-    .filter((task) => (blockedOnly ? blockedTaskIds.has(task.id) : true))
-    // Subtask rows carry no labelIds; the board list always does.
-    .filter((task) =>
-      labelFilter ? (task.labelIds ?? []).includes(labelFilter) : true,
-    )
-    .filter((task) =>
-      parsedSearch.label
-        ? (task.labelIds ?? []).some((id) => operatorLabelIds.includes(id))
-        : true,
-    )
-    .filter((task) => (prFilter ? prStateOf(task) === prFilter : true))
-    .filter((task) =>
-      parsedSearch.pr ? prStateOf(task) === parsedSearch.pr : true,
-    )
-    .filter((task) =>
-      parsedSearch.status ? task.status === parsedSearch.status : true,
-    )
-    .filter((task) =>
-      parsedSearch.priority ? task.priority === parsedSearch.priority : true,
-    )
-    .filter((task) =>
-      operatorAssigneeId ? task.assigneeId === operatorAssigneeId : true,
-    )
-    .filter((task) => (parsedSearch.blockedOnly ? blockedTaskIds.has(task.id) : true))
-    .filter((task) =>
-      parsedSearch.text
-        ? task.title.toLowerCase().includes(parsedSearch.text.toLowerCase())
-        : true,
-    );
+  // Fourteen filters over the full task list. Without memoisation this chain
+  // re-runs on every render — including keystrokes that only touch selection
+  // or an open drawer — and it feeds both the page slice and the Ctrl+A
+  // shortcut, so a fresh array also re-binds that listener each time.
+  const visibleTasks = useMemo(
+    () =>
+      tasks
+        .filter((task) =>
+          sprintFilter === "all"
+            ? true
+            : sprintFilter === "none"
+              ? !task.sprintId
+              : task.sprintId === sprintFilter,
+        )
+        .filter((task) =>
+          priorityFilter ? task.priority === priorityFilter : true,
+        )
+        .filter((task) => {
+          if (!assigneeFilter) return true;
+          if (assigneeFilter === "none") return !task.assigneeId;
+          return task.assigneeId === assigneeFilter;
+        })
+        .filter((task) => {
+          if (!dueFrom && !dueTo) return true;
+          if (!task.dueDateUtc) return false;
+          const due = new Date(task.dueDateUtc).getTime();
+          if (dueFrom && due < new Date(`${dueFrom}T00:00:00`).getTime()) return false;
+          if (dueTo && due > new Date(`${dueTo}T23:59:59`).getTime()) return false;
+          return true;
+        })
+        // Blocked state is derived from the dependency graph (unresolved edges) —
+        // the task list response has no isBlocked field.
+        .filter((task) => (blockedOnly ? blockedTaskIds.has(task.id) : true))
+        // Subtask rows carry no labelIds; the board list always does.
+        .filter((task) =>
+          labelFilter ? (task.labelIds ?? []).includes(labelFilter) : true,
+        )
+        .filter((task) =>
+          parsedSearch.label
+            ? (task.labelIds ?? []).some((id) => operatorLabelIds.includes(id))
+            : true,
+        )
+        .filter((task) => (prFilter ? prStateOf(task) === prFilter : true))
+        .filter((task) =>
+          parsedSearch.pr ? prStateOf(task) === parsedSearch.pr : true,
+        )
+        .filter((task) =>
+          parsedSearch.status ? task.status === parsedSearch.status : true,
+        )
+        .filter((task) =>
+          parsedSearch.priority ? task.priority === parsedSearch.priority : true,
+        )
+        .filter((task) =>
+          operatorAssigneeId ? task.assigneeId === operatorAssigneeId : true,
+        )
+        .filter((task) => (parsedSearch.blockedOnly ? blockedTaskIds.has(task.id) : true))
+        .filter((task) =>
+          parsedSearch.text
+            ? task.title.toLowerCase().includes(parsedSearch.text.toLowerCase())
+            : true,
+        ),
+    [
+      tasks,
+      sprintFilter,
+      priorityFilter,
+      assigneeFilter,
+      dueFrom,
+      dueTo,
+      blockedOnly,
+      blockedTaskIds,
+      labelFilter,
+      operatorLabelIds,
+      prFilter,
+      parsedSearch,
+      operatorAssigneeId,
+    ],
+  );
 
   const pageCount = Math.max(1, Math.ceil(visibleTasks.length / TASKS_PER_PAGE));
   const safePage = Math.min(page, pageCount);
