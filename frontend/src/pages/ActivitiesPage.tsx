@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { ArrowLeft, Activity, ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
@@ -76,6 +76,13 @@ export function ActivitiesPage() {
 
   const PAGE_SIZE = 25;
 
+  // Only the most recent request may write state: changing a filter while the
+  // previous filter's response is still in flight would let the older response
+  // land last and silently replace the list the user is looking at (or, on
+  // failure, wipe it for an error nobody asked for). The request is not
+  // abortable from here, so the late response is checked and discarded instead.
+  const loadGeneration = useRef(0);
+
   // Load members for actor dropdown. A failure must be visible: the
   // alternative is a dropdown stuck at "All members" that can never offer a
   // person to filter by, with no hint of why.
@@ -94,6 +101,7 @@ export function ActivitiesPage() {
   }, [loadActors]);
 
   const loadActivities = useCallback(async () => {
+    const generation = ++loadGeneration.current;
     setLoading(true);
     setError(null);
     try {
@@ -107,11 +115,13 @@ export function ActivitiesPage() {
       if (dateTo) filters.to = new Date(dateTo + "T23:59:59Z").toISOString();
 
       const data = await getActivities(workspaceId, projectId, filters);
+      if (generation !== loadGeneration.current) return;
       setPageData(data);
     } catch (err) {
+      if (generation !== loadGeneration.current) return;
       setError(err instanceof Error ? err.message : t("activity.loadFailed"));
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) setLoading(false);
     }
   }, [workspaceId, projectId, currentPage, actorFilter, actionFilter, dateFrom, dateTo, t]);
 
@@ -190,7 +200,11 @@ export function ActivitiesPage() {
 
         {/* Filter Bar */}
         {showFilters && (
-          <div id="activity-filter-bar" className="mb-4 rounded-xl border border-border bg-card p-4">
+          <div
+            id="activity-filter-bar"
+            data-testid="activity-filter-bar"
+            className="mb-4 rounded-xl border border-border bg-card p-4"
+          >
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {/* Actor filter */}
               <div>
