@@ -103,4 +103,20 @@ describe("BoardPage memoises the fourteen-filter chain", () => {
       .toMatch(/EMPTY_TASKS/);
     expect(content).toMatch(/tasks=\{tasksByStatus\.get\(status\) \?\? EMPTY_TASKS\}/);
   });
+
+  it("does not hand TaskCard a fresh empty array for members or epics", () => {
+    // TaskCard is memoised and takes `members` (and, through Column, `epics`)
+    // as props. `data ?? []` creates a new array every render while the data
+    // is loading, which defeats that memo for the whole loading window —
+    // exactly the bug the empty-tasks constant exists for. Scoped to the
+    // Column render site: `members ?? []` elsewhere (presence, bulk-assign,
+    // the members strip) feeds event handlers and JSX maps, not memoised
+    // props, so the identity does not matter there.
+    const colStart = content.indexOf("tasks={tasksByStatus.get(status) ?? EMPTY_TASKS}");
+    expect(colStart, "the Column render site moved").toBeGreaterThan(-1);
+    const site = content.slice(colStart, colStart + 400);
+    expect(site).not.toMatch(/\?\? \[\]/);
+    expect(site).toMatch(/members=\{members \?\? EMPTY_MEMBERS\}/);
+    expect(site).toMatch(/epics=\{epics \?\? EMPTY_EPICS\}/);
+  });
 });
