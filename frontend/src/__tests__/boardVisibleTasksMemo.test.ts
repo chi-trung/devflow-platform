@@ -78,4 +78,29 @@ describe("BoardPage memoises the fourteen-filter chain", () => {
     const body = useMemoBody(content, "blockedTaskIds");
     expect(body).toContain("depGraph");
   });
+
+  it("memoises pagedTasks and partitions once per status, not per render", () => {
+    // Column's `shown` windowing and swimlane partition both key on the
+    // `tasks` prop by identity. An inline `pagedTasks.filter(...)` at the
+    // render site is a fresh array every render, which invalidates both of
+    // Column's memos on every keystroke and re-slices/re-partitions every
+    // column for nothing.
+    const paged = useMemoBody(content, "pagedTasks");
+    expect(paged, "pagedTasks must depend on visibleTasks").toContain("visibleTasks");
+    expect(paged, "pagedTasks must depend on safePage").toContain("safePage");
+
+    const byStatus = useMemoBody(content, "tasksByStatus");
+    expect(byStatus, "tasksByStatus must depend on pagedTasks").toContain("pagedTasks");
+    // The old form: a per-column inline filter at the render site.
+    expect(content).not.toMatch(/tasks=\{pagedTasks\.filter\(/);
+  });
+
+  it("hands Column a stable empty array for a status with no tasks", () => {
+    // Every column gets a `tasks` prop every render. A missing-map lookup
+    // returning an inline `[]` would be a fresh array per render and would
+    // defeat Column's memos exactly like the inline filter did.
+    expect(content, "the empty-array fallback must be a module-level constant")
+      .toMatch(/EMPTY_TASKS/);
+    expect(content).toMatch(/tasks=\{tasksByStatus\.get\(status\) \?\? EMPTY_TASKS\}/);
+  });
 });
