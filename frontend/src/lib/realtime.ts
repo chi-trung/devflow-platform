@@ -32,8 +32,11 @@ const starting = new WeakMap<signalR.HubConnection, Promise<void>>();
 // twice in everyone's presence list (two join broadcasts, two connection
 // ids). Ref-counting collapses both consumers onto one socket.
 const projectConnections = new Map<string, signalR.HubConnection>();
-let projectSubscribers = 0;
-let projectStopTimer: number | null = null;
+// Ref-count PER PROJECT: a board holds one shared socket for its project, and
+// each of its consumers (BoardPage's live-update effect, usePresence) owns one
+// ref. A global counter would let a release of project A tear down project B.
+const projectSubscribers = new Map<string, number>();
+const projectStopTimers = new Map<string, number>();
 
 /**
  * Return the single shared project-hub connection for this project, starting
@@ -96,52 +99,64 @@ export function createUnjoinedProjectConnection(
 }
 
 /**
- * Register a consumer of the shared project connection. Must be paired with
- * {@link releaseProjectConnection} in an effect cleanup. The project id is
- * accepted for call-site symmetry with release (which needs it to find the
- * socket) and is intentionally not read here — the count is global because
- * a board always holds exactly one project connection at a time.
+ * Register a consumer of the shared project connection for this project. Must
+ * be paired with {@link releaseProjectConnection} in an effect cleanup.
+ *
+ * Callers that hold this project's socket — BoardPage's live-update effect and
+ * usePresence on the same board — each retain once; the socket is only stopped
+ * once the last one for THIS project releases it. Stopping directly (instead of
+ * releasing) would close the other consumer's connection mid-session.
  */
-export function retainProjectConnection(_projectId: string): void {
-  projectSubscribers++;
-  if (projectStopTimer !== null) {
-    window.clearTimeout(projectStopTimer);
-    projectStopTimer = null;
+export function retainProjectConnection(projectId: string): void {
+  projectSubscribers.set(projectId, (projectSubscribers.get(projectId) ?? 0) + 1);
+  const timer = projectStopTimers.get(projectId);
+  if (timer !== undefined) {
+    window.clearTimeout(timer);
+    projectStopTimers.delete(projectId);
   }
 }
 
 /**
- * Drop a consumer. The socket is only stopped once the last consumer is gone
- * — and after 1s, so a remount (React strict mode, a route hop and back)
- * reuses the warm connection instead of tearing a WebSocket down and up.
+ * Drop a consumer. The socket is only stopped once the last consumer for this
+ * project is gone — and after 1s, so a remount (React strict mode, a route hop
+ * and back) reuses the warm connection instead of tearing a WebSocket down
+ * and up.
  */
 export async function releaseProjectConnection(
   projectId: string,
 ): Promise<void> {
-  projectSubscribers = Math.max(0, projectSubscribers - 1);
-  if (projectSubscribers > 0) return;
+  const remaining = Math.max(0, (projectSubscribers.get(projectId) ?? 0) - 1);
+  if (remaining > 0) {
+    projectSubscribers.set(projectId, remaining);
+    return;
+  }
+  projectSubscribers.delete(projectId);
 
-  if (projectStopTimer !== null) window.clearTimeout(projectStopTimer);
-  projectStopTimer = window.setTimeout(async () => {
-    projectStopTimer = null;
-    if (projectSubscribers > 0) return;
-    const connection = projectConnections.get(projectId);
-    if (connection) {
-      await stopProjectConnection(connection).catch(() => {});
-      projectConnections.delete(projectId);
-    }
-  }, 1000);
+  const pending = projectStopTimers.get(projectId);
+  if (pending !== undefined) window.clearTimeout(pending);
+  projectStopTimers.set(
+    projectId,
+    window.setTimeout(async () => {
+      projectStopTimers.delete(projectId);
+      if (projectSubscribers.has(projectId)) return;
+      const connection = projectConnections.get(projectId);
+      if (connection) {
+        await stopProjectConnection(connection).catch(() => {});
+        projectConnections.delete(projectId);
+      }
+    }, 1000),
+  );
 }
 
 /**
  * Reset all project connections (tests / explicit teardown).
  */
 export function resetProjectConnections(): void {
-  projectSubscribers = 0;
-  if (projectStopTimer !== null) {
-    window.clearTimeout(projectStopTimer);
-    projectStopTimer = null;
+  for (const timer of projectStopTimers.values()) {
+    window.clearTimeout(timer);
   }
+  projectStopTimers.clear();
+  projectSubscribers.clear();
   for (const connection of projectConnections.values()) {
     void stopProjectConnection(connection);
   }

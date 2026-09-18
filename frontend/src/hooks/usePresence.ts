@@ -4,7 +4,6 @@ import {
   releaseProjectConnection,
   retainProjectConnection,
   startProjectConnection,
-  stopProjectConnection,
 } from "../lib/realtime";
 import type { WorkspaceMemberResponse } from "../types/api";
 
@@ -73,7 +72,9 @@ export function usePresence(
     return () => {
       connection.off("user-joined", handleUserJoined);
       connection.off("user-left", handleUserLeft);
-      void stopProjectConnection(connection);
+      // Release only — never stop directly. BoardPage shares this socket, and
+      // stopping here would drop it (and our group membership) out from under
+      // the board. release is what gates the ref-count and the 1s remount delay.
       void releaseProjectConnection(projectId);
     };
   }, [projectId, currentUserId]);
