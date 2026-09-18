@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { ArrowLeft, Plus, Trash2, Play, Copy } from "lucide-react";
@@ -33,16 +33,25 @@ export function TemplatesPage() {
   const [priority, setPriority] = useState("Medium");
   const [estimateMinutes, setEstimateMinutes] = useState("");
 
+  // The retry button is not disabled while a load is in flight, so two clicks
+  // in a row put two loads in flight. Whichever response lands last wins, and
+  // the loser can be an error for a retry the user already moved past. Only
+  // the most recent load may write state.
+  const loadGeneration = useRef(0);
+
   const loadTemplates = useCallback(async () => {
+    const generation = ++loadGeneration.current;
     setLoading(true);
     setError(null);
     try {
       const data = await getTemplates(workspaceId, projectId);
+      if (generation !== loadGeneration.current) return;
       setTemplates(data);
     } catch (err) {
+      if (generation !== loadGeneration.current) return;
       setError(err instanceof Error ? err.message : t("template.loadFailed"));
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) setLoading(false);
     }
   }, [workspaceId, projectId, t]);
 

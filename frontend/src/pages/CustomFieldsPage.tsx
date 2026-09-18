@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { ArrowLeft, Plus, Trash2, GripVertical, Pencil, Check, X } from "lucide-react";
@@ -46,16 +46,25 @@ export function CustomFieldsPage() {
   const [editOptions, setEditOptions] = useState("");
   const [editIsRequired, setEditIsRequired] = useState(false);
 
+  // The retry button is not disabled while a load is in flight, so two clicks
+  // in a row put two loads in flight. Whichever response lands last wins, and
+  // the loser can be an error for a retry the user already moved past. Only
+  // the most recent load may write state.
+  const loadGeneration = useRef(0);
+
   const loadFields = useCallback(async () => {
+    const generation = ++loadGeneration.current;
     setLoading(true);
     setError(null);
     try {
       const data = await getCustomFields(workspaceId, projectId);
+      if (generation !== loadGeneration.current) return;
       setFields(data);
     } catch (err) {
+      if (generation !== loadGeneration.current) return;
       setError(err instanceof Error ? err.message : t("customField.loadFailed"));
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) setLoading(false);
     }
   }, [workspaceId, projectId, t]);
 
