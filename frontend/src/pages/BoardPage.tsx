@@ -32,7 +32,6 @@ import {
   releaseProjectConnection,
   retainProjectConnection,
   startProjectConnection,
-  stopProjectConnection,
 } from "../lib/realtime";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../auth/AuthContext";
@@ -764,7 +763,11 @@ export function BoardPage() {
       offWake();
       window.clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisible);
-      void stopProjectConnection(connection);
+      // This handler would outlive the component if the socket survives this
+      // unmount (usePresence still holds it) — unregister it before releasing.
+      connection.off("project-event", scheduleReload);
+      // Release only — never stop directly. usePresence shares this socket;
+      // stopping here would kill the board's presence for the other consumer.
       void releaseProjectConnection(projectId);
     };
   }, [projectId, reload, reloadSprints, reloadActivities]);
