@@ -73,8 +73,11 @@ const TASKS_PER_PAGE = 24;
 
 // Stable identity for columns whose status has no tasks this page: Column's
 // windowing memos key on `tasks` by identity, so the empty array must not be
-// a fresh literal per render either.
+// a fresh literal per render either. The same rule applies to the members
+// and epics lists — TaskCard is memoised and takes `members` as a prop.
 const EMPTY_TASKS: TaskItemResponse[] = [];
+const EMPTY_MEMBERS: WorkspaceMemberResponse[] = [];
+const EMPTY_EPICS: EpicResponse[] = [];
 
 
 function getColumns(t: (key: string) => string): { title: string; status: TaskItemResponse["status"] }[] {
@@ -1368,8 +1371,8 @@ export function BoardPage() {
                     title={title}
                     status={status}
                     tasks={tasksByStatus.get(status) ?? EMPTY_TASKS}
-                    members={members ?? []}
-                    epics={epics ?? []}
+                    members={members ?? EMPTY_MEMBERS}
+                    epics={epics ?? EMPTY_EPICS}
                     swimlaneMode={swimlaneMode}
                     customFieldsByTaskId={customFieldsByTaskId ?? undefined}
                     blockedTaskIds={blockedTaskIds}
