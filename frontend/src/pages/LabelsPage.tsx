@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { ArrowLeft, Plus, Trash2, Palette } from "lucide-react";
@@ -30,16 +30,25 @@ export function LabelsPage() {
   const [name, setName] = useState("");
   const [color, setColor] = useState(PRESET_COLORS[0]);
 
+  // The retry button is not disabled while a load is in flight, so two clicks
+  // in a row put two loads in flight. Whichever response lands last wins, and
+  // the loser can be an error for a retry the user already moved past. Only
+  // the most recent load may write state.
+  const loadGeneration = useRef(0);
+
   const loadLabels = useCallback(async () => {
+    const generation = ++loadGeneration.current;
     setLoading(true);
     setError(null);
     try {
       const data = await getLabels(workspaceId, projectId);
+      if (generation !== loadGeneration.current) return;
       setLabels(data);
     } catch (err) {
+      if (generation !== loadGeneration.current) return;
       setError(err instanceof Error ? err.message : t("label.loadFailed"));
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) setLoading(false);
     }
   }, [workspaceId, projectId, t]);
 
