@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { ensureLocale } from "../i18n";
 import {
   BellRing,
   Globe,
@@ -525,6 +526,26 @@ function LanguageSection() {
     { code: "en", label: "English" },
     { code: "vi", label: "Tiếng Việt" },
   ];
+  // The locale chunk may still be downloading after a lazy split. Switching
+  // before it lands would flip the UI to raw keys, so the toggle waits and
+  // shows a loading state while the fetch is in flight.
+  const [localeLoading, setLocaleLoading] = useState(false);
+  const changingLocale = useRef<string | null>(null);
+  const selectLanguage = (code: string) => {
+    if (changingLocale.current === code) return;
+    changingLocale.current = code;
+    setLocaleLoading(true);
+    ensureLocale(code)
+      .then(() => {
+        void i18n.changeLanguage(code);
+        localStorage.setItem("devflow.language", code);
+        push(t("settings.languageChangedTo", { language: labelOf(languages, code) }));
+      })
+      .finally(() => {
+        setLocaleLoading(false);
+        changingLocale.current = null;
+      });
+  };
 
   return (
     <section
@@ -550,16 +571,13 @@ function LanguageSection() {
             <button
               key={lang.code}
               type="button"
-              onClick={() => {
-                void i18n.changeLanguage(lang.code);
-                localStorage.setItem("devflow.language", lang.code);
-                push(t("settings.languageChangedTo", { language: lang.label }));
-              }}
+              disabled={localeLoading}
+              onClick={() => selectLanguage(lang.code)}
               className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors duration-150 ${
                 i18n.language === lang.code
                   ? "border-primary bg-primary/10 text-primary-strong"
                   : "border-border text-muted-foreground hover:border-border-strong hover:text-foreground"
-              }`}
+              } ${localeLoading ? "cursor-wait opacity-60" : ""}`}
             >
               {lang.label}
             </button>
@@ -568,6 +586,11 @@ function LanguageSection() {
       </div>
     </section>
   );
+}
+
+// Owns the toast's interpolation value; no caller has the label inline.
+function labelOf(languages: { code: string; label: string }[], code: string): string {
+  return languages.find((l) => l.code === code)?.label ?? code;
 }
 
 function KeyboardShortcutsSection() {
