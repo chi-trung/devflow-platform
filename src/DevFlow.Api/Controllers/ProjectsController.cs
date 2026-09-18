@@ -52,6 +52,23 @@ public sealed class ProjectsController(ISender sender) : ControllerBase
         return Ok(result);
     }
 
+    // Batched task counts for every project the caller can see. Replaces the
+    // workspace page's one-request-per-project /tasks fan-out, which was there
+    // only to render "3/10 done" next to each project card.
+    [HttpGet("task-stats")]
+    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Projects.Stats.ProjectTaskStatsResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> TaskStats(
+        Guid workspaceId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await sender.Send(
+            new Application.Features.Projects.Stats.ProjectTaskStatsQuery(workspaceId),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
     [HttpGet("{projectId:guid}")]
     [ProducesResponseType(typeof(Application.Features.Projects.ProjectResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
