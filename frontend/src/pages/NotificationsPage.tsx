@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Bell, CheckCheck, Eye, EyeOff, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -84,8 +84,17 @@ export function NotificationsPage() {
     },
   });
 
+  // Only the most recent request may write state. The filter tabs are effect
+  // deps and are never disabled, so switching tabs while a page is loading
+  // puts two requests in flight; the older response landing last would replace
+  // the list the user is looking at (and the page counter with it), or land a
+  // stale error next to a list that loaded fine. The request is not
+  // abortable from here, so the late response is checked and discarded.
+  const loadGeneration = useRef(0);
+
   const fetchNotifications = useCallback(
     async (pageNum: number, filterTab: NotificationFilter) => {
+      const generation = ++loadGeneration.current;
       setLoading(true);
       setError(null);
       try {
@@ -96,12 +105,14 @@ export function NotificationsPage() {
           readOnly: filterTab === "read",
           mentionsOnly: filterTab === "mentions",
         });
+        if (generation !== loadGeneration.current) return;
         setNotifications(data.items.map(fromApi));
         setTotalCount(data.totalCount);
       } catch (err) {
+        if (generation !== loadGeneration.current) return;
         setError(err instanceof Error ? err.message : t("notification.loadFailed"));
       } finally {
-        setLoading(false);
+        if (generation === loadGeneration.current) setLoading(false);
       }
     },
     [t],

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { ArrowLeft, Link2, Unlink, Trash2, ExternalLink, Github } from "lucide-react";
@@ -46,13 +46,21 @@ export function GitHubPage() {
   const [integrationUnknown, setIntegrationUnknown] = useState(false);
   const [prsFailed, setPrsFailed] = useState(false);
 
+  // Neither retry button is disabled while a load is in flight, so two clicks
+  // put two loads in flight; whichever settles last wins, and the loser can be
+  // an error for a retry that already succeeded. Only the most recent load may
+  // write state.
+  const loadGeneration = useRef(0);
+
   const loadData = useCallback(async () => {
+    const generation = ++loadGeneration.current;
     setLoading(true);
     setError(null);
     const [integrationResult, prsResult] = await Promise.allSettled([
       getGitHubIntegration(workspaceId, projectId),
       getProjectPRs(workspaceId, projectId),
     ]);
+    if (generation !== loadGeneration.current) return;
     if (integrationResult.status === "fulfilled") {
       setIntegration(integrationResult.value);
       setIntegrationUnknown(false);
