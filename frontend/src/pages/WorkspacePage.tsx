@@ -24,7 +24,6 @@ import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { useAuth } from "../auth/AuthContext";
 import type {
   ProjectResponse,
-  TaskItemResponse,
   WorkspaceMemberResponse,
   WorkspaceResponse,
 } from "../types/api";
@@ -98,31 +97,31 @@ export function WorkspacePage() {
     }
     let cancelled = false;
 
-    // Promise.all was all-or-nothing: one failed task fetch left `stats`
-    // at its previous value and the `?? 0` consumers below then rendered
-    // "0/0 done · 0%" next to projects that do have tasks. Each project's
-    // stats now fail on their own, into an explicit null "unknown".
-    Promise.all(
-      projectList.map(async (project) => {
-        try {
-          const tasksRaw = await api<unknown>(
-            `/workspaces/${workspaceId}/projects/${project.id}/tasks`,
-          );
-          const tasks = pagedItems<TaskItemResponse>(tasksRaw);
-          return [
-            project.id,
-            {
-              total: tasks.length,
-              done: tasks.filter((t) => t.status === "Done").length,
-            },
-          ] as const;
-        } catch {
-          return [project.id, null] as const;
+    // ONE batched request for every project's counts, not one /tasks per
+    // project. A failed stats fetch is still per-project-explicit: entries
+    // missing from the response stay null ("unknown"), never 0/0.
+    api<unknown>(`/workspaces/${workspaceId}/projects/task-stats`)
+      .then((raw) => {
+        if (cancelled) return;
+        const rows = Array.isArray(raw) ? raw : [];
+        const known = new Map<string, { total: number; done: number }>();
+        for (const row of rows) {
+          const r = row as { projectId?: string; totalTasks?: number; doneTasks?: number };
+          if (typeof r.projectId !== "string") continue;
+          known.set(r.projectId, {
+            total: typeof r.totalTasks === "number" ? r.totalTasks : 0,
+            done: typeof r.doneTasks === "number" ? r.doneTasks : 0,
+          });
         }
-      }),
-    )
-      .then((entries) => {
-        if (!cancelled) setStats(Object.fromEntries(entries));
+        setStats(
+          Object.fromEntries(
+            projectList.map((p) => [p.id, known.get(p.id) ?? null]),
+          ),
+        );
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setStats(Object.fromEntries(projectList.map((p) => [p.id, null])));
       });
 
     return () => {
