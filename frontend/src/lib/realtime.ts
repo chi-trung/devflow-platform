@@ -267,7 +267,13 @@ let notificationConnection: signalR.HubConnection | null = null;
 // of. SignalR runs a fresh handshake on every automatic reconnect (new
 // connectionId) and ASP.NET Core hub groups are keyed by connection id, so
 // membership is lost; this set is re-joined from onreconnected.
-const joinedWorkspaces = new Set<string>();
+// Workspaces whose workspace-event group the connection should be a member
+// of. SignalR runs a fresh handshake on every automatic reconnect (new
+// connectionId) and ASP.NET Core hub groups are keyed by connection id, so
+// membership is lost; this map is re-joined from onreconnected. The value is
+// a ref-count — AppShell and WorkspacePage both join the same workspace while
+// it is open, so the first to unmount must not drop the other's membership.
+const joinedWorkspaces = new Map<string, number>();
 
 export function getNotificationConnection(): signalR.HubConnection {
   if (!notificationConnection) {
@@ -276,7 +282,7 @@ export function getNotificationConnection(): signalR.HubConnection {
       .withAutomaticReconnect(RECONNECT_DELAYS)
       .build();
     notificationConnection.onreconnected(() => {
-      for (const workspaceId of joinedWorkspaces) {
+      for (const workspaceId of joinedWorkspaces.keys()) {
         void notificationConnection
           ?.invoke("JoinWorkspace", workspaceId)
           .catch(() => {});
@@ -289,13 +295,26 @@ export function getNotificationConnection(): signalR.HubConnection {
 /**
  * Remember that this connection wants `workspace:{id}` events, so the
  * membership can be re-established after an automatic reconnect. Paired with
- * {@link unjoinWorkspace} from the same effect that called it.
+ * {@link unjoinWorkspaceGroup} from the same effect that called it.
+ *
+ * The join is REF-COUNTED: AppShell and WorkspacePage both subscribe while a
+ * workspace is open, so the consumer that unmounts first must not drop the
+ * membership the other one still relies on. The group is only left when the
+ * last consumer for that workspace releases it.
  */
 export function joinWorkspaceGroup(workspaceId: string): void {
-  joinedWorkspaces.add(workspaceId);
+  joinedWorkspaces.set(
+    workspaceId,
+    (joinedWorkspaces.get(workspaceId) ?? 0) + 1,
+  );
 }
 
 export function unjoinWorkspaceGroup(workspaceId: string): void {
+  const remaining = Math.max(0, (joinedWorkspaces.get(workspaceId) ?? 0) - 1);
+  if (remaining > 0) {
+    joinedWorkspaces.set(workspaceId, remaining);
+    return;
+  }
   joinedWorkspaces.delete(workspaceId);
 }
 
@@ -343,6 +362,14 @@ export function resetNotificationStream(): void {
   }
   // The socket is gone, so its group memberships cannot outlive it.
   joinedWorkspaces.clear();
+}
+
+/**
+ * Test helper: how many consumers currently hold this workspace's group join.
+ * Undefined when no consumer has joined it.
+ */
+export function workspaceGroupSubscribers(workspaceId: string): number | undefined {
+  return joinedWorkspaces.get(workspaceId);
 }
 
 /** Used by the online guard: restart the stream if this app still wants it. */
