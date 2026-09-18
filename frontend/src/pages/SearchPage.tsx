@@ -1,4 +1,4 @@
-import { useState, useMemo, type FormEvent } from "react";
+import { useState, useRef, useMemo, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { ArrowLeft, Search, FileText, FolderOpen, Layers, Tag, Users, MessageSquare, ChevronUp, ChevronDown } from "lucide-react";
@@ -111,7 +111,19 @@ export function SearchPage() {
   );
   const savedSearches = savedSearchesRaw ?? [];
 
-  async function runSearch(page = 1, overrides?: Partial<SearchFilters>) {
+  // Only the most recent search may write state: the saved-search dropdown is
+  // not disabled while a search loads, so selecting another saved search (or
+  // typing a new query and submitting) puts two requests in flight. If the
+  // older response lands last it replaces the results the user is looking at,
+  // along with the page counter — or, while nothing has loaded yet, swaps the
+  // skeletons for an error nobody asked for. The fetch is not abortable from
+  // here, so the late response is checked and discarded instead.
+  const searchGeneration = useRef(0);
+
+  // Filters can be passed in because applySavedSearch changes them in the same
+  // tick; the query string cannot — SearchFilters has no field for it, and
+  // setQuery has not flushed yet when runSearch reads `query`.
+  async function runSearch(page = 1, overrides?: Partial<SearchFilters> & { query?: string }) {
     const f = {
       status,
       priority,
@@ -123,12 +135,13 @@ export function SearchPage() {
       sortDir,
       ...overrides,
     };
+    const generation = ++searchGeneration.current;
     setLoading(true);
     setError(null);
     setSearched(true);
     setSearchPage(page);
     try {
-      const data = await searchWorkspace(workspaceId, query.trim(), {
+      const data = await searchWorkspace(workspaceId, (overrides?.query ?? query).trim(), {
         status: f.status || undefined,
         priority: f.priority || undefined,
         assigneeId: f.assigneeId || undefined,
@@ -138,11 +151,13 @@ export function SearchPage() {
         sortBy: f.sortBy || undefined,
         sortDir: f.sortDir || undefined,
       }, page, 20);
+      if (generation !== searchGeneration.current) return;
       setResult(data);
     } catch (err) {
+      if (generation !== searchGeneration.current) return;
       setError(err instanceof Error ? err.message : t("search.loadFailed"));
     } finally {
-      setLoading(false);
+      if (generation === searchGeneration.current) setLoading(false);
     }
   }
 
@@ -193,6 +208,9 @@ export function SearchPage() {
     setSortBy(fSortBy);
     setSortDir(fSortDir);
     runSearch(1, {
+      // The saved query is the whole point of a saved search; without this it
+      // searches whatever text the box happened to hold when it was applied.
+      query: saved.query,
       status: fStatus,
       priority: fPriority,
       assigneeId: fAssigneeId,
