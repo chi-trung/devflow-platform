@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Link,
@@ -719,29 +719,35 @@ export function BoardPage() {
     visibleTasks,
   ]);
 
-  function toggleSelect(taskId: string) {
+  // Stable identities: TaskCard is memoised and these are props on it, so a
+  // fresh function per render would re-run every visible card's body on every
+  // keystroke. The setState updater already closes over nothing that changes.
+  const toggleSelect = useCallback((taskId: string) => {
     setSelectedIds((current) => {
       const next = new Set(current);
       if (next.has(taskId)) next.delete(taskId);
       else next.add(taskId);
       return next;
     });
-  }
+  }, []);
 
-  function handleSelectAllInColumn(status: TaskItemResponse["status"], select: boolean) {
-    const columnTaskIds = visibleTasks
-      .filter((t) => t.status === status)
-      .map((t) => t.id);
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (select) {
-        columnTaskIds.forEach((id) => next.add(id));
-      } else {
-        columnTaskIds.forEach((id) => next.delete(id));
-      }
-      return next;
-    });
-  }
+  const handleSelectAllInColumn = useCallback(
+    (status: TaskItemResponse["status"], select: boolean) => {
+      const columnTaskIds = visibleTasks
+        .filter((t) => t.status === status)
+        .map((t) => t.id);
+      setSelectedIds((current) => {
+        const next = new Set(current);
+        if (select) {
+          columnTaskIds.forEach((id) => next.add(id));
+        } else {
+          columnTaskIds.forEach((id) => next.delete(id));
+        }
+        return next;
+      });
+    },
+    [visibleTasks],
+  );
 
   async function runBulk(
     action: () => Promise<void>,
@@ -763,9 +769,12 @@ export function BoardPage() {
     }
   }
 
-  function handleEstimationSaved(_taskId: string, _storyPoints: number | null) {
-    reload();
-  }
+  const handleEstimationSaved = useCallback(
+    (_taskId: string, _storyPoints: number | null) => {
+      reload();
+    },
+    [reload],
+  );
 
   // Live updates: any change made by anyone in this project triggers a
   // debounced refetch, so open boards stay in sync across browsers.

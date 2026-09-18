@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useState, type FormEvent } from "react";
+import { memo, useState, type FormEvent } from "react";
 import { Check, Link2, Hash, Plus, X, Clock, GitPullRequest, GitPullRequestArrow, GitPullRequestClosed } from "lucide-react";
 import type { TaskItemResponse, WorkspaceMemberResponse, CustomFieldValueResponse } from "../../types/api";
 import { Avatar } from "../ui/Avatar";
@@ -51,7 +51,19 @@ interface TaskCardProps {
   onEstimationSaved?: (taskId: string, storyPoints: number | null) => void;
 }
 
-export function TaskCard({
+/** Test-only render counter. The memo has to sit OUTSIDE the counter for it
+ *  to observe what React actually reconciled — anything outside the memo
+ *  (wrappers, Profiler) re-runs for every card regardless — so the counter
+ *  lives inside the component body the memo wraps. */
+let __renders = 0;
+export function __taskCardRenders(): number {
+  return __renders;
+}
+export function __resetTaskCardRenders(): void {
+  __renders = 0;
+}
+
+export const TaskCard = memo(function TaskCard({
   task,
   members,
   customFieldValues,
@@ -65,6 +77,7 @@ export function TaskCard({
   projectId,
   onEstimationSaved,
 }: TaskCardProps) {
+  __renders++;
   const { t } = useTranslation();
   const { push } = useToast();
   const assignee = members.find((m) => m.userId === task.assigneeId);
@@ -432,4 +445,4 @@ export function TaskCard({
       />
     </div>
   );
-}
+});
