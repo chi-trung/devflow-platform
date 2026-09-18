@@ -71,6 +71,12 @@ import type {
 
 const TASKS_PER_PAGE = 24;
 
+// Stable identity for columns whose status has no tasks this page: Column's
+// windowing memos key on `tasks` by identity, so the empty array must not be
+// a fresh literal per render either.
+const EMPTY_TASKS: TaskItemResponse[] = [];
+
+
 function getColumns(t: (key: string) => string): { title: string; status: TaskItemResponse["status"] }[] {
   return [
     { title: t("board.idea"), status: "Idea" },
@@ -520,10 +526,30 @@ export function BoardPage() {
 
   const pageCount = Math.max(1, Math.ceil(visibleTasks.length / TASKS_PER_PAGE));
   const safePage = Math.min(page, pageCount);
-  const pagedTasks = visibleTasks.slice(
-    (safePage - 1) * TASKS_PER_PAGE,
-    safePage * TASKS_PER_PAGE,
+  const pagedTasks = useMemo(
+    () =>
+      visibleTasks.slice(
+        (safePage - 1) * TASKS_PER_PAGE,
+        safePage * TASKS_PER_PAGE,
+      ),
+    [visibleTasks, safePage],
   );
+
+  // One array per column, memoised: Column's `shown` windowing and swimlane
+  // partition both depend on the `tasks` prop by identity, so an inline
+  // `.filter()` here (a fresh array every render) would invalidate both on
+  // every keystroke and re-slice/re-partition all columns for nothing.
+  // The status list comes from COLUMNS' contents (a fixed literal set);
+  // COLUMNS itself is a fresh array per render so it stays out of the deps.
+  const tasksByStatus = useMemo(() => {
+    const byStatus = new Map<string, TaskItemResponse[]>();
+    for (const { status } of COLUMNS) byStatus.set(status, []);
+    for (const task of pagedTasks) {
+      const list = byStatus.get(task.status);
+      if (list) list.push(task);
+    }
+    return byStatus;
+  }, [pagedTasks]);
 
   useEffect(() => {
     setPage(1);
@@ -1332,7 +1358,7 @@ export function BoardPage() {
                   <Column
                     title={title}
                     status={status}
-                    tasks={pagedTasks.filter((t) => t.status === status)}
+                    tasks={tasksByStatus.get(status) ?? EMPTY_TASKS}
                     members={members ?? []}
                     epics={epics ?? []}
                     swimlaneMode={swimlaneMode}
