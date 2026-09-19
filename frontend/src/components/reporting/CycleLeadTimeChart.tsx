@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Activity } from "lucide-react";
 import type { CycleLeadTimeResponse } from "../../types/api";
@@ -18,7 +19,15 @@ interface CycleLeadTimeChartProps {
 const formatMetric = (value: number | null): string =>
   value === null || value === undefined || Number.isNaN(value) ? "—" : value.toFixed(1);
 
-export function CycleLeadTimeChart({ data, className = "" }: CycleLeadTimeChartProps) {
+// Test-only render counter. ReportsPage re-renders on every keystroke in the
+// from/to date inputs, and this body recomputes the scatter geometry and the
+// y-tick array on each of those renders. (See BurndownChartApi / TeamReportCards.)
+let __renders = 0;
+export function __cycleLeadTimeChartRenders(): number { return __renders; }
+export function __resetCycleLeadTimeChartRenders(): void { __renders = 0; }
+
+export const CycleLeadTimeChart = memo(function CycleLeadTimeChart({ data, className = "" }: CycleLeadTimeChartProps) {
+  __renders++;
   const { t } = useTranslation();
 
   if (data.tasks.length === 0) {
@@ -128,4 +137,4 @@ export function CycleLeadTimeChart({ data, className = "" }: CycleLeadTimeChartP
       </div>
     </div>
   );
-}
+});
