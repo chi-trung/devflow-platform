@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -65,6 +65,11 @@ function daysLeft(endUtc: string): number {
     Math.ceil((new Date(endUtc).getTime() - Date.now()) / 86_400_000),
   );
 }
+
+// Stable identity for a workspace with no sprints yet: the memoised sprint
+// lists below fall back to this while the fetch is in flight, and an inline
+// `?? []` would be a fresh array every render.
+const EMPTY_SPRINTS: SprintResponse[] = [];
 
 export function SprintPlanningPage() {
   const { t } = useTranslation();
@@ -157,11 +162,26 @@ export function SprintPlanningPage() {
   const myRole = members?.find((m) => m.userId === currentUser?.id)?.role;
   const canManage = myRole === "Owner" || myRole === "Admin";
 
-  const allSprints = sprints ?? [];
+  const allSprints = sprints ?? EMPTY_SPRINTS;
   const active = allSprints.find((s) => s.status === "Active");
-  const planned = allSprints.filter((s) => s.status === "Planned");
-  const completed = allSprints.filter((s) => s.status === "Completed");
-  const planning = allSprints.filter((s) => s.status !== "Completed");
+
+  // The three derived sprint lists are memoised: SprintBoard and the completed
+  // grid below are both memoised consumers, and a fresh `.filter()` result per
+  // render would release those memos for every keystroke in the start/end-date
+  // inputs. `sprints` is stable from useApi while loading resolves, so the
+  // fallback has to be a module-level constant, not an inline `?? []`.
+  const planned = useMemo(
+    () => allSprints.filter((s) => s.status === "Planned"),
+    [allSprints],
+  );
+  const completed = useMemo(
+    () => allSprints.filter((s) => s.status === "Completed"),
+    [allSprints],
+  );
+  const planning = useMemo(
+    () => allSprints.filter((s) => s.status !== "Completed"),
+    [allSprints],
+  );
 
   // The active sprint's tasks, memoised. BurndownChart runs an
   // O(days x completions) derivation over this array (a new Date() per task,
@@ -195,41 +215,54 @@ export function SprintPlanningPage() {
     setEndDate("");
   }
 
-  async function handleAssign(taskId: string, sprintId: string) {
-    const task = tasks.find((t) => t.id === taskId);
-    if (!task || task.sprintId === sprintId) return;
+  const handleAssign = useCallback(
+    async (taskId: string, sprintId: string) => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task || task.sprintId === sprintId) return;
 
-    setBoardError(null);
-    setTasks((current) =>
-      current.map((t) => (t.id === taskId ? { ...t, sprintId } : t)),
-    );
+      setBoardError(null);
+      setTasks((current) =>
+        current.map((t) => (t.id === taskId ? { ...t, sprintId } : t)),
+      );
 
-    try {
-      await assignTaskToSprint(workspaceId, projectId, sprintId, taskId);
-      const target = allSprints.find((s) => s.id === sprintId);
-      push(t("sprint.addedTo", { name: target?.name ?? "sprint" }));
-    } catch (err) {
-      reload();
-      setBoardError(err instanceof Error ? err.message : t("sprint.failedToMove"));
-      push(t("sprint.couldntMove"), "error");
-    }
-  }
+      try {
+        await assignTaskToSprint(workspaceId, projectId, sprintId, taskId);
+        const target = allSprints.find((s) => s.id === sprintId);
+        push(t("sprint.addedTo", { name: target?.name ?? "sprint" }));
+      } catch (err) {
+        reload();
+        setBoardError(err instanceof Error ? err.message : t("sprint.failedToMove"));
+        push(t("sprint.couldntMove"), "error");
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the body is an
+    // async closure over tasks/allSprints (both derived state), the two setters
+    // and the toast/push helpers. Neither can be named in the dep list, so its
+    // closure inputs are; the identity only needs to change when one of them
+    // does, which is exactly what this list expresses.
+    [tasks, allSprints, workspaceId, projectId, reload, push, t],
+  );
 
-  async function handleRemoveFromSprint(taskId: string, sprintId: string) {
-    setBoardError(null);
-    setTasks((current) =>
-      current.map((t) => (t.id === taskId ? { ...t, sprintId: null } : t)),
-    );
+  const handleRemoveFromSprint = useCallback(
+    async (taskId: string, sprintId: string) => {
+      setBoardError(null);
+      setTasks((current) =>
+        current.map((t) => (t.id === taskId ? { ...t, sprintId: null } : t)),
+      );
 
-    try {
-      await removeTaskFromSprint(workspaceId, projectId, sprintId, taskId);
-      push(t("sprint.movedToBacklog"));
-    } catch (err) {
-      reload();
-      setBoardError(err instanceof Error ? err.message : t("sprint.failedToMove"));
-      push(t("sprint.couldntMove"), "error");
-    }
-  }
+      try {
+        await removeTaskFromSprint(workspaceId, projectId, sprintId, taskId);
+        push(t("sprint.movedToBacklog"));
+      } catch (err) {
+        reload();
+        setBoardError(err instanceof Error ? err.message : t("sprint.failedToMove"));
+        push(t("sprint.couldntMove"), "error");
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see
+    // handleAssign: async closure, deps are its closure inputs.
+    [workspaceId, projectId, reload, push, t],
+  );
 
   async function handleStart() {
     if (!startingId) return;
@@ -563,12 +596,8 @@ export function SprintPlanningPage() {
                   <SprintBoard
                     tasks={tasks}
                     sprints={planning}
-                    onAssign={(taskId, sprintId) =>
-                      void handleAssign(taskId, sprintId)
-                    }
-                    onRemove={(taskId, sprintId) =>
-                      void handleRemoveFromSprint(taskId, sprintId)
-                    }
+                    onAssign={handleAssign}
+                    onRemove={handleRemoveFromSprint}
                   />
                 </>
               )}
