@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Users, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { formatMinutes } from "../../lib/format";
@@ -11,8 +12,30 @@ interface TeamReportCardsProps {
   className?: string;
 }
 
-export function TeamReportCards({ data, members, className = "" }: TeamReportCardsProps) {
+// Test-only render counter. ReportsPage re-renders on every keystroke in the
+// from/to date inputs, and this body scanned the whole workspace roster once
+// per report member (a linear lookup inside the row map) on each of those
+// renders. (See FilterBar / SprintBar / SprintBoard / Column for the pattern.)
+let __renders = 0;
+export function __teamReportCardsRenders(): number { return __renders; }
+export function __resetTeamReportCardsRenders(): void { __renders = 0; }
+
+export const TeamReportCards = memo(function TeamReportCards({ data, members, className = "" }: TeamReportCardsProps) {
+  __renders++;
   const { t } = useTranslation();
+
+  // Looked up per row instead of scanning the roster per row: the body used to
+  // do a linear search of `members` for every report member,
+  // O(reportMembers x workspaceMembers) on every parent re-render. A Map build
+  // is O(members) and each row is O(1).
+  const profilesByUserId = useMemo(() => {
+    const map = new Map<string, WorkspaceMemberResponse>();
+    for (const member of members) {
+      map.set(member.userId, member);
+    }
+    return map;
+  }, [members]);
+
   if (data.members.length === 0) {
     return (
       <div className={className}>
@@ -89,7 +112,7 @@ export function TeamReportCards({ data, members, className = "" }: TeamReportCar
           </thead>
           <tbody>
             {data.members.map((member) => {
-              const profile = members.find((m) => m.userId === member.userId);
+              const profile = profilesByUserId.get(member.userId);
               const name = profile?.displayName || member.userName || profile?.username || t("common.member");
               return (
                 <tr key={member.userId} className="border-b border-border last:border-0 hover:bg-elevated/30">
@@ -113,4 +136,4 @@ export function TeamReportCards({ data, members, className = "" }: TeamReportCar
       </div>
     </div>
   );
-}
+});
