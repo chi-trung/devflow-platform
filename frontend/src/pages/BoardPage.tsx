@@ -25,6 +25,7 @@ import {
   getProjectTaskFieldValues,
   pagedItems,
   reorderTasks,
+  type BoardFilterState,
 } from "../lib/api";
 import {
   createProjectConnection,
@@ -73,11 +74,13 @@ const TASKS_PER_PAGE = 24;
 
 // Stable identity for columns whose status has no tasks this page: Column's
 // windowing memos key on `tasks` by identity, so the empty array must not be
-// a fresh literal per render either. The same rule applies to the members
-// and epics lists — TaskCard is memoised and takes `members` as a prop.
+// a fresh literal per render either. The same rule applies to the members,
+// epics and labels lists — TaskCard, Column and FilterBar are all memoised and
+// take one of these as a prop.
 const EMPTY_TASKS: TaskItemResponse[] = [];
 const EMPTY_MEMBERS: WorkspaceMemberResponse[] = [];
 const EMPTY_EPICS: EpicResponse[] = [];
+const EMPTY_LABELS: LabelResponse[] = [];
 
 
 function getColumns(t: (key: string) => string): { title: string; status: TaskItemResponse["status"] }[] {
@@ -408,6 +411,38 @@ export function BoardPage() {
   // Memoised: a fresh object every render would defeat the visibleTasks
   // memo below, re-running all fourteen filters on every keystroke.
   const parsedSearch = useMemo(() => parseSearchQuery(search), [search]);
+
+  // Stable identity for FilterBar (memoised). The inline object literal this
+  // replaced was a fresh instance every render, so the memo released on every
+  // keystroke and re-ran the chip build and all the option lists for nothing.
+  // The page reads `priorityFilter ?? ""` here because the state is nullable
+  // while BoardFilterState.priority is a string; keep that normalisation in
+  // the memo, not at the render site, or the memo depends on a derived value
+  // it cannot name.
+  const filterState = useMemo(
+    () => ({
+      sprint: sprintFilter,
+      search,
+      priority: priorityFilter ?? "",
+      assignee: assigneeFilter,
+      label: labelFilter,
+      pr: prFilter,
+      dueFrom,
+      dueTo,
+      blockedOnly,
+    }),
+    [
+      sprintFilter,
+      search,
+      priorityFilter,
+      assigneeFilter,
+      labelFilter,
+      prFilter,
+      dueFrom,
+      dueTo,
+      blockedOnly,
+    ],
+  );
   const operatorAssigneeId =
     parsedSearch.assignee === ""
       ? ""
@@ -798,6 +833,37 @@ export function BoardPage() {
     reload();
     reloadSprints();
   }, [reload, reloadSprints]);
+
+  // Stable identity: FilterBar is memoised and takes this as its change
+  // handler. An inline arrow at the render site is a fresh function every
+  // render, so the memo would hold for no keystroke. The nine setters are all
+  // useState identities (stable for the lifetime of the page), so the dep list
+  // is empty by construction rather than by omission.
+  const handleFilterChange = useCallback(
+    (patch: Partial<BoardFilterState>) => {
+      if (patch.sprint !== undefined) setSprintFilter(patch.sprint);
+      if (patch.search !== undefined) setSearch(patch.search);
+      if (patch.priority !== undefined)
+        setPriorityFilter(patch.priority === "" ? null : patch.priority);
+      if (patch.assignee !== undefined) setAssigneeFilter(patch.assignee);
+      if (patch.label !== undefined) setLabelFilter(patch.label);
+      if (patch.pr !== undefined) setPrFilter(patch.pr);
+      if (patch.dueFrom !== undefined) setDueFrom(patch.dueFrom);
+      if (patch.dueTo !== undefined) setDueTo(patch.dueTo);
+      if (patch.blockedOnly !== undefined) setBlockedOnly(patch.blockedOnly);
+    },
+    [
+      setSprintFilter,
+      setSearch,
+      setPriorityFilter,
+      setAssigneeFilter,
+      setLabelFilter,
+      setPrFilter,
+      setDueFrom,
+      setDueTo,
+      setBlockedOnly,
+    ],
+  );
 
   async function runBulk(
     action: () => Promise<void>,
@@ -1282,36 +1348,15 @@ export function BoardPage() {
 
         <FilterBar
           projectId={projectId}
-          members={members ?? []}
-          labels={labels ?? []}
+          members={members ?? EMPTY_MEMBERS}
+          labels={labels ?? EMPTY_LABELS}
           membersFailed={membersFailed}
           onRetryMembers={reloadMembers}
           labelsFailed={labelsFailed}
           onRetryLabels={reloadLabels}
           blockedUnknown={blockedStateUnknown}
-          current={{
-            sprint: sprintFilter,
-            search,
-            priority: priorityFilter ?? "",
-            assignee: assigneeFilter,
-            label: labelFilter,
-            pr: prFilter,
-            dueFrom,
-            dueTo,
-            blockedOnly,
-          }}
-          onChange={(patch) => {
-            if (patch.sprint !== undefined) setSprintFilter(patch.sprint);
-            if (patch.search !== undefined) setSearch(patch.search);
-            if (patch.priority !== undefined)
-              setPriorityFilter(patch.priority === "" ? null : patch.priority);
-            if (patch.assignee !== undefined) setAssigneeFilter(patch.assignee);
-            if (patch.label !== undefined) setLabelFilter(patch.label);
-            if (patch.pr !== undefined) setPrFilter(patch.pr);
-            if (patch.dueFrom !== undefined) setDueFrom(patch.dueFrom);
-            if (patch.dueTo !== undefined) setDueTo(patch.dueTo);
-            if (patch.blockedOnly !== undefined) setBlockedOnly(patch.blockedOnly);
-          }}
+          current={filterState}
+          onChange={handleFilterChange}
         />
 
         {creating && (
