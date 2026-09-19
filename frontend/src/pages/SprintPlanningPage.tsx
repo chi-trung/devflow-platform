@@ -46,6 +46,11 @@ import type {
   WorkspaceMemberResponse,
 } from "../types/api";
 
+// Stable identity for the no-active-sprint case: BurndownChart's derivation
+// runs off this array, so a fresh `[]` per render would re-derive nothing
+// useful and still churn the memo's dependency.
+const EMPTY_TASKS: TaskItemResponse[] = [];
+
 function fmt(date: string | null): string {
   if (!date) return "";
   return new Date(date).toLocaleDateString(undefined, {
@@ -157,6 +162,25 @@ export function SprintPlanningPage() {
   const planned = allSprints.filter((s) => s.status === "Planned");
   const completed = allSprints.filter((s) => s.status === "Completed");
   const planning = allSprints.filter((s) => s.status !== "Completed");
+
+  // The active sprint's tasks, memoised. BurndownChart runs an
+  // O(days x completions) derivation over this array (a new Date() per task,
+  // then a filter per day), so handing it a fresh `.filter()` result every
+  // render would re-derive the whole curve on every keystroke and drag.
+  // The counts below read the same array, so the memo serves both.
+  const activeTasks = useMemo(
+    () => (active ? tasks.filter((t) => t.sprintId === active.id) : EMPTY_TASKS),
+    [tasks, active?.id],
+  );
+
+  // Two more filters over the active sprint. Cheap individually, but they ran
+  // on every render (the section below re-renders on each keystroke and drag)
+  // and the inputs are just two counts, so memoising keeps them off the path.
+  const activeProgress = useMemo(() => {
+    let completed = 0;
+    for (const t of activeTasks) if (t.status === "Done") completed += 1;
+    return { total: activeTasks.length, completed };
+  }, [activeTasks]);
 
   function openStart(sprintId: string) {
     setStartingId(sprintId);
@@ -391,15 +415,8 @@ export function SprintPlanningPage() {
                     </span>
                   ) : (
                     <SprintProgress
-                      total={
-                        tasks.filter((t) => t.sprintId === active.id).length
-                      }
-                      completed={
-                        tasks.filter(
-                          (t) =>
-                            t.sprintId === active.id && t.status === "Done",
-                        ).length
-                      }
+                      total={activeProgress.total}
+                      completed={activeProgress.completed}
                       className="min-w-48 flex-1"
                     />
                   )}
@@ -421,7 +438,7 @@ export function SprintPlanningPage() {
                     className="mt-4"
                     startDateUtc={active.startDateUtc}
                     endDateUtc={active.endDateUtc}
-                    tasks={tasks.filter((t) => t.sprintId === active.id)}
+                    tasks={activeTasks}
                   />
                 )}
               </section>
