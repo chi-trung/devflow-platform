@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { memo, useId } from "react";
 import { TrendingDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "../ui/EmptyState";
@@ -29,6 +29,17 @@ function startOfUtcDay(iso: string): number {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
+// Test-only render counter. Memoising this component only pays off if React
+// can skip re-running the derivation below, and the only reliable way to
+// assert that is to count from inside the memoised body (see taskCardMemo).
+let renderCount = 0;
+export function __burndownRenders(): number {
+  return renderCount;
+}
+export function __resetBurndownRenders(): void {
+  renderCount = 0;
+}
+
 function formatDay(dateMs: number): string {
   return new Date(dateMs).toLocaleDateString(undefined, {
     month: "short",
@@ -41,7 +52,11 @@ function buildPath(points: Point[]): string {
   return points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
 }
 
-export function BurndownChart({
+function useRenderCount(): void {
+  renderCount += 1;
+}
+
+export const BurndownChart = memo(function BurndownChart({
   startDateUtc,
   endDateUtc,
   tasks,
@@ -49,6 +64,7 @@ export function BurndownChart({
 }: BurndownChartProps) {
   const { t } = useTranslation();
   const gradientId = useId();
+  useRenderCount();
 
   const total = tasks.length;
   const start = startOfUtcDay(startDateUtc);
@@ -281,4 +297,4 @@ export function BurndownChart({
       )}
     </div>
   );
-}
+});
