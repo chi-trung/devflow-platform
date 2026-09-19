@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { memo, useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { CalendarRange, Plus, Play, Flag, Gauge, Pencil } from "lucide-react";
 import { api, getVelocity, updateSprint } from "../../lib/api";
@@ -28,7 +28,18 @@ function fmt(date: string | null): string {
   });
 }
 
-export function SprintBar({
+// Test-only render counter. SprintBar mounts once on BoardPage (it is only
+// swapped out for an error banner, never for a loading state) and the page
+// re-renders on every keystroke in the filter input, every drag and every
+// SignalR project-event reload. Without a memo each of those re-ran 14 useState
+// initialisers, the velocity fetch effect's dependency walk, the
+// active/planned derivations and the ~330-line JSX tree (see FilterBar /
+// Column / TaskDetailPanel for the same pattern).
+let __renders = 0;
+export function __sprintBarRenders(): number { return __renders; }
+export function __resetSprintBarRenders(): void { __renders = 0; }
+
+export const SprintBar = memo(function SprintBar({
   sprints,
   canManage,
   filter,
@@ -37,6 +48,7 @@ export function SprintBar({
   workspaceId,
   projectId,
 }: SprintBarProps) {
+  __renders++;
   const { t } = useTranslation();
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -364,4 +376,4 @@ export function SprintBar({
       )}
     </div>
   );
-}
+});
