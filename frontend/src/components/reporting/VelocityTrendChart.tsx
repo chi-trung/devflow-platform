@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { BarChart3 } from "lucide-react";
 import type { VelocityHistoryResponse } from "../../types/api";
@@ -15,7 +16,15 @@ interface VelocityTrendChartProps {
   className?: string;
 }
 
-export function VelocityTrendChart({ data, className = "" }: VelocityTrendChartProps) {
+// Test-only render counter. ReportsPage re-renders on every keystroke in the
+// from/to date inputs, and this body recomputes the bar geometry and the y-tick
+// array on each of those renders. (See BurndownChartApi / TeamReportCards.)
+let __renders = 0;
+export function __velocityTrendChartRenders(): number { return __renders; }
+export function __resetVelocityTrendChartRenders(): void { __renders = 0; }
+
+export const VelocityTrendChart = memo(function VelocityTrendChart({ data, className = "" }: VelocityTrendChartProps) {
+  __renders++;
   const { t } = useTranslation();
   const points = data.points.slice(0, 10);
 
@@ -142,4 +151,4 @@ export function VelocityTrendChart({ data, className = "" }: VelocityTrendChartP
       </svg>
     </div>
   );
-}
+});
