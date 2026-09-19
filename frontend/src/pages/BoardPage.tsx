@@ -760,6 +760,32 @@ export function BoardPage() {
     [visibleTasks],
   );
 
+  // Stable identity for the per-column drop handler. Column is memoised, so an
+  // inline arrow at the render site (wrapping moveTask) is a fresh function
+  // every render and releases the memo for nothing. moveTask is a plain inner
+  // function — it reads tasks/blockedTaskIds/t by closure — so the callback
+  // must list those closures as deps. The guard inside moveTask is unchanged;
+  // only the wrapper's identity is memoised.
+  const handleDropTask = useCallback(
+    (taskId: string, status: TaskItemResponse["status"], beforeTaskId?: string | null) => {
+      void moveTask(taskId, status, beforeTaskId);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- moveTask closes
+    // over tasks/blockedStateUnknown/blockedTaskIds/t/push; listing the
+    // function itself is not possible, so its closure inputs are named.
+    [tasks, blockedStateUnknown, blockedTaskIds, t, push],
+  );
+
+  // Stable identity: Column is memoised and takes this as its per-column
+  // select-all handler. An inline arrow binding `status` at the render site
+  // would be a fresh function every render and release the memo for nothing,
+  // so the memoised handler is built per status inside the map below.
+  const makeSelectAllInColumn = useCallback(
+    (status: TaskItemResponse["status"]) =>
+      (select: boolean) => handleSelectAllInColumn(status, select),
+    [handleSelectAllInColumn],
+  );
+
   // Stable identities: TaskDetailPanel is memoised and takes these as props.
   // An inline arrow at the render site is a fresh function every render, so
   // the memo would hold for no keystroke. The setState updater closes over
@@ -1397,15 +1423,13 @@ export function BoardPage() {
                     swimlaneMode={swimlaneMode}
                     customFieldsByTaskId={customFieldsByTaskId ?? undefined}
                     blockedTaskIds={blockedTaskIds}
-                    onDropTask={(taskId, next, beforeId) =>
-                      void moveTask(taskId, next, beforeId)
-                    }
+                    onDropTask={handleDropTask}
                     onDelete={setPendingDelete}
                     onSelect={setSelectedTaskId}
                     selectionMode={selectedIds.size > 0}
                     selectedIds={selectedIds}
                     onToggleSelect={toggleSelect}
-                    onSelectAllInColumn={(select) => handleSelectAllInColumn(status, select)}
+                    onSelectAllInColumn={makeSelectAllInColumn(status)}
                     workspaceId={workspaceId}
                     projectId={projectId}
                     onEstimationSaved={handleEstimationSaved}
