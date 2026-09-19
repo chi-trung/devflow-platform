@@ -1,8 +1,14 @@
+import { memo, useCallback, useMemo } from "react";
 import { CalendarRange } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { SprintResponse, TaskItemResponse } from "../../types/api";
 import { SprintProgress } from "./SprintProgress";
+
+// Stable identity for a sprint column with no tasks: the JSX below reads
+// `.length` and `.map()` on this, so a fresh `[]` per render is harmless to
+// correctness but noise in the grouping memo's dep list.
+const EMPTY_TASKS: TaskItemResponse[] = [];
 
 const priorityDot: Record<TaskItemResponse["priority"], string> = {
   Critical: "bg-destructive",
@@ -96,28 +102,76 @@ function TaskRow({ task }: TaskRowProps) {
 interface SprintBoardProps {
   tasks: TaskItemResponse[];
   sprints: SprintResponse[];
-  onAssign: (taskId: string, sprintId: string) => void;
-  onRemove: (taskId: string, sprintId: string) => void;
+  /** Async so the page can hand its `async` handler straight through — a
+   * `() => void` prop would force a fresh wrapping arrow at the render site
+   * and churn the identity this memo compares. */
+  onAssign: (taskId: string, sprintId: string) => Promise<void> | void;
+  onRemove: (taskId: string, sprintId: string) => Promise<void> | void;
 }
 
-export function SprintBoard({
+// Test-only render counter. SprintPlanningPage re-renders on every keystroke in
+// the sprint start/end-date inputs, and this body is quadratic in the inputs:
+// `tasks.filter()` once per sprint column plus one more for the backlog, and
+// `dragHandlers()` is re-created for every section on each of those renders.
+// (See FilterBar / SprintBar / Column / TaskDetailPanel for the same pattern.)
+let __renders = 0;
+export function __sprintBoardRenders(): number { return __renders; }
+export function __resetSprintBoardRenders(): void { __renders = 0; }
+
+export const SprintBoard = memo(function SprintBoard({
   tasks,
   sprints,
   onAssign,
   onRemove,
 }: SprintBoardProps) {
+  __renders++;
   const { t } = useTranslation();
-  const backlogTasks = tasks.filter((t) => !t.sprintId);
+
+  // Grouped once instead of once per sprint column: the body used to filter the
+  // whole task list for every sprint (O(tasks x sprints)) plus once more for
+  // the backlog. A Map build is O(tasks), and the per-sprint lookup is O(1).
+  const tasksBySprint = useMemo(() => {
+    const map = new Map<string, TaskItemResponse[]>();
+    for (const task of tasks) {
+      if (!task.sprintId) continue;
+      const bucket = map.get(task.sprintId);
+      if (bucket) bucket.push(task);
+      else map.set(task.sprintId, [task]);
+    }
+    return map;
+  }, [tasks]);
+
+  const backlogTasks = useMemo(
+    () => tasks.filter((task) => !task.sprintId),
+    [tasks],
+  );
+
+  // The handlers close over `tasks`/`onRemove`, but the closures themselves are
+  // only created when the section drops a task — not on every render. Building
+  // them here still costs an object per section per render, but that is two
+  // function allocations, not a task-list scan.
+  const backlogDrop = useMemo(
+    () => dragHandlers((taskId) => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (task?.sprintId) onRemove(taskId, task.sprintId);
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the closure reads
+    // tasks and onRemove; onRemove is stable from the page's useCallback.
+    [tasks, onRemove],
+  );
+  const makeSprintDrop = useCallback(
+    (sprintId: string) => dragHandlers((taskId) => onAssign(taskId, sprintId)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onAssign is stable
+    // from the page's useCallback; sprintId is bound per call.
+    [onAssign],
+  );
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[300px_1fr]">
       <section
         aria-label={t("sprint.backlogColumnAria")}
         data-drag-over="false"
-        {...dragHandlers((taskId) => {
-          const task = tasks.find((t) => t.id === taskId);
-          if (task?.sprintId) onRemove(taskId, task.sprintId);
-        })}
+        {...backlogDrop}
         className="flex min-h-72 flex-col gap-2 rounded-xl border border-border bg-surface p-3 transition-colors duration-200 data-[drag-over=true]:border-primary/50 data-[drag-over=true]:bg-primary/5"
       >
         <header className="flex items-center gap-2 px-1 pb-1">
@@ -143,10 +197,11 @@ export function SprintBoard({
 
       <div className="grid content-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {sprints.map((sprint) => {
-          const sprintTasks = tasks.filter((t) => t.sprintId === sprint.id);
-          const completed = sprintTasks.filter(
-            (t) => t.status === "Done",
-          ).length;
+          const sprintTasks = tasksBySprint.get(sprint.id) ?? EMPTY_TASKS;
+          let completed = 0;
+          for (const task of sprintTasks) {
+            if (task.status === "Done") completed += 1;
+          }
           const locked = sprint.status === "Completed";
           const Icon: LucideIcon = CalendarRange;
 
@@ -155,7 +210,7 @@ export function SprintBoard({
               key={sprint.id}
               aria-label={t("sprint.sprintColumnAria", { name: sprint.name })}
               data-drag-over="false"
-              {...(locked ? {} : dragHandlers((taskId) => onAssign(taskId, sprint.id)))}
+              {...(locked ? {} : makeSprintDrop(sprint.id))}
               className="flex min-h-72 flex-col gap-2 rounded-xl border border-border bg-surface p-3 transition-colors duration-200 data-[drag-over=true]:border-primary/50 data-[drag-over=true]:bg-primary/5"
             >
               <header className="flex items-center gap-2 px-1">
@@ -204,4 +259,4 @@ export function SprintBoard({
       </div>
     </div>
   );
-}
+});
