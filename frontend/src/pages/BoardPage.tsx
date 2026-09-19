@@ -834,6 +834,16 @@ export function BoardPage() {
     reloadSprints();
   }, [reload, reloadSprints]);
 
+  // Stable identity: SprintBar is memoised and takes this as its post-mutation
+  // handler. An inline arrow at the render site is a fresh function every
+  // render, so the memo would hold for no keystroke. This is the same pair as
+  // handleTaskChanged — both reload the task list and the sprint list — but
+  // SprintBar's contract is "a sprint changed", so it keeps its own name.
+  const handleSprintChanged = useCallback(() => {
+    reloadSprints();
+    reload();
+  }, [reloadSprints, reload]);
+
   // Stable identity: FilterBar is memoised and takes this as its change
   // handler. An inline arrow at the render site is a fresh function every
   // render, so the memo would hold for no keystroke. The nine setters are all
@@ -1337,10 +1347,7 @@ export function BoardPage() {
             canManage={canManageSprints}
             filter={sprintFilter}
             onFilterChange={setSprintFilter}
-            onChanged={() => {
-              reloadSprints();
-              reload();
-            }}
+            onChanged={handleSprintChanged}
             workspaceId={workspaceId}
             projectId={projectId}
           />
