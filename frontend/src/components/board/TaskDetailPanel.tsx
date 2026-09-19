@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { memo, useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { X, Paperclip, Download, Trash2, BookmarkPlus, Eye, RefreshCw, CheckSquare, Square } from "lucide-react";
 import { api, API_BASE, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask, uploadTaskAttachment, getTaskWatchers, pagedItems } from "../../lib/api";
@@ -25,6 +25,17 @@ import { CustomFieldsSection } from "./CustomFieldsSection";
 import { TaskPullRequests } from "../github/TaskPullRequests";
 import { CollapsibleSection } from "./CollapsibleSection";
 import type { CurrentUser } from "../../auth/AuthContext";
+
+// Test-only render counter. The panel is memoised, so a no-op parent
+// re-render must not re-run its ~1100-line body; the only reliable way to
+// assert that is to count from inside the memoised body (see TaskCard).
+let __renders = 0;
+export function __detailPanelRenders(): number {
+  return __renders;
+}
+export function __resetDetailPanelRenders(): void {
+  __renders = 0;
+}
 
 /** Small inline hint for the collapsed DoD row: checked/total items. */
 function DoDMeta({ value }: { value: string }) {
@@ -129,7 +140,7 @@ function DefinitionOfDoneField({
   );
 }
 
-export function TaskDetailPanel({
+export const TaskDetailPanel = memo(function TaskDetailPanel({
   task,
   currentUser,
   members,
@@ -140,6 +151,7 @@ export function TaskDetailPanel({
   onClose,
   onTaskChanged,
 }: TaskDetailPanelProps) {
+  __renders++;
   const { t } = useTranslation();
   // While open the panel is a modal: focus lands inside, Tab cycles its
   // controls without leaking to the board cards behind the overlay, and
@@ -1145,4 +1157,4 @@ export function TaskDetailPanel({
       </aside>
     </div>
   );
-}
+});

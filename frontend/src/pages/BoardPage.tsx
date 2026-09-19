@@ -554,6 +554,14 @@ export function BoardPage() {
     return byStatus;
   }, [pagedTasks]);
 
+  // TaskDetailPanel is memoised; its sprint dropdown reads this list, so an
+  // inline `(sprints ?? []).filter(...)` at the render site would hand it a
+  // fresh array every render and re-run the whole panel body per keystroke.
+  const panelSprints = useMemo(
+    () => (sprints ?? []).filter((s) => s.status !== "Completed"),
+    [sprints],
+  );
+
   useEffect(() => {
     setPage(1);
   }, [sprintFilter, search, priorityFilter, assigneeFilter, labelFilter, prFilter, dueFrom, dueTo, blockedOnly]);
@@ -751,6 +759,19 @@ export function BoardPage() {
     },
     [visibleTasks],
   );
+
+  // Stable identities: TaskDetailPanel is memoised and takes these as props.
+  // An inline arrow at the render site is a fresh function every render, so
+  // the memo would hold for no keystroke. The setState updater closes over
+  // nothing that changes, and reload/reloadSprints come from useApi (stable).
+  const closeDetailPanel = useCallback(() => {
+    setSelectedTaskId(null);
+  }, []);
+
+  const handleTaskChanged = useCallback(() => {
+    reload();
+    reloadSprints();
+  }, [reload, reloadSprints]);
 
   async function runBulk(
     action: () => Promise<void>,
@@ -1572,16 +1593,13 @@ export function BoardPage() {
         <TaskDetailPanel
           task={selectedTask}
           currentUser={currentUser}
-          members={members ?? []}
-          sprints={(sprints ?? []).filter((s) => s.status !== "Completed")}
+          members={members ?? EMPTY_MEMBERS}
+          sprints={panelSprints}
           allTasks={tasks}
           workspaceId={workspaceId}
           projectId={projectId}
-          onClose={() => setSelectedTaskId(null)}
-          onTaskChanged={() => {
-            reload();
-            reloadSprints();
-          }}
+          onClose={closeDetailPanel}
+          onTaskChanged={handleTaskChanged}
         />
       )}
 
