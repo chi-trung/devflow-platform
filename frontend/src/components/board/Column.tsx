@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Lightbulb, PencilRuler, ShieldCheck, CircleDot, Play, Eye, CheckCircle2, Check } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -48,7 +48,16 @@ const COLUMN_META: Record<
   Done: { icon: CheckCircle2, accent: "text-teal-300" },
 };
 
-export function Column({
+// Test-only render counter. The board renders one Column per status (7) and
+// re-renders on every keystroke in the filter input, every drag and every
+// SignalR project-event reload. The windowing, the swimlane partition and the
+// JSX map over the windowed cards only pay once if React can skip the body
+// (see TaskCard / TaskDetailPanel for the same pattern).
+let __renders = 0;
+export function __columnRenders(): number { return __renders; }
+export function __resetColumnRenders(): void { __renders = 0; }
+
+export const Column = memo(function Column({
   title,
   status,
   tasks,
@@ -68,6 +77,7 @@ export function Column({
   projectId,
   onEstimationSaved,
 }: ColumnProps) {
+  __renders++;
   const meta = COLUMN_META[status];
   const Icon = meta.icon;
 
@@ -295,4 +305,4 @@ export function Column({
       </div>
     </section>
   );
-}
+});
