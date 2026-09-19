@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { memo, useId, useState } from "react";
 import { TrendingDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { BurndownResponse } from "../../types/api";
@@ -31,7 +31,16 @@ function formatFull(iso: string): string {
   });
 }
 
-export function BurndownChartApi({ data, className = "" }: BurndownChartApiProps) {
+// Test-only render counter. ReportsPage re-renders on every keystroke in the
+// from/to date inputs, and this body rebuilds two SVG path strings, a y-tick
+// array and an x-tick day list on each of those renders.
+// (See TeamReportCards / SprintBoard / FilterBar for the pattern.)
+let __renders = 0;
+export function __burndownChartApiRenders(): number { return __renders; }
+export function __resetBurndownChartApiRenders(): void { __renders = 0; }
+
+export const BurndownChartApi = memo(function BurndownChartApi({ data, className = "" }: BurndownChartApiProps) {
+  __renders++;
   const { t } = useTranslation();
   const gradientId = useId();
   const [hover, setHover] = useState<number | null>(null);
@@ -245,4 +254,4 @@ export function BurndownChartApi({ data, className = "" }: BurndownChartApiProps
       </div>
     </div>
   );
-}
+});
