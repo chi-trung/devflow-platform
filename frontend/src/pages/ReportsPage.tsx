@@ -29,6 +29,11 @@ import type {
 
 type ReportTab = "charts" | "team" | "export";
 
+// Stable identity for the empty roster: `members ?? []` at the render site is a
+// fresh array per render and churns TeamReportCards' memo on every keystroke in
+// the from/to date inputs, even while the roster is unchanged.
+const EMPTY_MEMBERS: WorkspaceMemberResponse[] = [];
+
 // Every report section shares one failure affordance: the server message plus a
 // retry wired to the reload its own useApi already exposed. Before this, an
 // errored chart had no way to recover short of changing the date range or
@@ -356,7 +361,7 @@ export function ReportsPage() {
                     onRetry={reloadMembers}
                   />
                 )}
-                <TeamReportCards data={team} members={members ?? []} />
+                <TeamReportCards data={team} members={members ?? EMPTY_MEMBERS} />
               </>
             ) : null}
           </div>
