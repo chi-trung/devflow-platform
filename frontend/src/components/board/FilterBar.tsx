@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Filter, Link2, X } from "lucide-react";
 import {
@@ -50,7 +50,17 @@ interface FilterBarProps {
   onChange: (patch: Partial<BoardFilterState>) => void;
 }
 
-export function FilterBar({
+// Test-only render counter. FilterBar mounts once on BoardPage, which
+// re-renders on every keystroke in its own search input, every drag and every
+// SignalR project-event reload. Without a memo each of those re-runs the chip
+// build (up to seven `t()` calls plus two `.find()` lookups), the
+// members/labels option lists and the ~220-line JSX tree (see TaskCard /
+// Column / TaskDetailPanel for the same pattern).
+let __renders = 0;
+export function __filterBarRenders(): number { return __renders; }
+export function __resetFilterBarRenders(): void { __renders = 0; }
+
+export const FilterBar = memo(function FilterBar({
   projectId,
   members,
   labels,
@@ -62,6 +72,7 @@ export function FilterBar({
   current,
   onChange,
 }: FilterBarProps) {
+  __renders++;
   const { t } = useTranslation();
   const { push } = useToast();
   const [version, setVersion] = useState(0);
@@ -374,4 +385,4 @@ export function FilterBar({
       )}
     </section>
   );
-}
+});
