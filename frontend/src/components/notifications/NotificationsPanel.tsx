@@ -120,19 +120,22 @@ export function NotificationsPanel({
     openedByPointer.current = false;
   }, [open]);
 
-  function handleItemClick(notification: {
-    id: string;
-    workspaceId: string | null;
-    projectId: string | null;
-    taskId: string | null;
-  }) {
-    markRead(notification.id);
-    setOpen(false);
-    if (notification.workspaceId && notification.projectId) {
-      const base = `/workspaces/${notification.workspaceId}/projects/${notification.projectId}`;
-      navigate(notification.taskId ? `${base}?task=${notification.taskId}` : base);
-    }
-  }
+  const handleItemClick = useCallback(
+    (notification: {
+      id: string;
+      workspaceId: string | null;
+      projectId: string | null;
+      taskId: string | null;
+    }) => {
+      markRead(notification.id);
+      setOpen(false);
+      if (notification.workspaceId && notification.projectId) {
+        const base = `/workspaces/${notification.workspaceId}/projects/${notification.projectId}`;
+        navigate(notification.taskId ? `${base}?task=${notification.taskId}` : base);
+      }
+    },
+    [markRead, navigate],
+  );
 
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -300,7 +303,7 @@ export function NotificationsPanel({
                     <NotificationItem
                       notification={notification}
                       unread={!notification.isRead}
-                      onClick={() => handleItemClick(notification)}
+                      onClick={handleItemClick}
                     />
                   </li>
                 ))}

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import i18n, { type TFunction } from "i18next";
 import { ArrowRightLeft, Bell, MessageSquare, UserPlus } from "lucide-react";
@@ -34,14 +35,30 @@ export function timeAgo(utc: string, t?: TFunction): string {
 interface NotificationItemProps {
   notification: AppNotification;
   unread: boolean;
-  onClick: () => void;
+  /**
+   * Receives the row's notification back. Call sites pass one stable
+   * useCallback handler for the whole list; the row forwards its own object,
+   * so per-row prop identity survives a list rebuild.
+   */
+  onClick?: (notification: AppNotification) => void;
 }
 
-export function NotificationItem({
+// Test-only render counter. NotificationsPanel re-renders on every 60s poll
+// and on each open/close; the rows must not follow unless a row's own props
+// changed.
+let __renders = 0;
+export function __notificationItemRenders(): number { return __renders; }
+export function __resetNotificationItemRenders(): void { __renders = 0; }
+
+export const NotificationItem = memo(function NotificationItem({
   notification,
   unread,
   onClick,
 }: NotificationItemProps) {
+  // The handler can be absent (row not yet wired); a no-op click beats a
+  // crash, and the row is replaced by the next render anyway.
+  const handleClick = () => onClick?.(notification);
+  __renders++;
   const { t } = useTranslation();
   const meta = kindMeta[notification.kind];
   const Icon = meta.icon;
@@ -49,7 +66,7 @@ export function NotificationItem({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={handleClick}
       className={`flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors duration-150 hover:bg-elevated ${
         unread ? "bg-primary/5" : ""
       }`}
@@ -82,4 +99,4 @@ export function NotificationItem({
       )}
     </button>
   );
-}
+});

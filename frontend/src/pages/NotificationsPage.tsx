@@ -192,6 +192,19 @@ export function NotificationsPage() {
     }
   }
 
+  // Structural parameter: NotificationItem calls back with the hook's
+  // AppNotification shape, which carries taskId; the page's NotificationRow
+  // also has it, so one handler serves both.
+  const openNotification = useCallback(
+    (n: { workspaceId: string | null; projectId: string | null; taskId: string | null }) => {
+      if (n.workspaceId && n.projectId) {
+        const base = `/workspaces/${n.workspaceId}/projects/${n.projectId}`;
+        navigate(n.taskId ? `${base}?task=${n.taskId}` : base);
+      }
+    },
+    [navigate],
+  );
+
   const filterTabs: { key: NotificationFilter; label: string }[] = [
     { key: "all", label: t("notificationPage.filterAll") },
     { key: "unread", label: t("notificationPage.filterUnread") },
@@ -299,12 +312,7 @@ export function NotificationsPage() {
                       <NotificationItem
                         notification={n}
                         unread={!n.isRead}
-                        onClick={() => {
-                          if (n.workspaceId && n.projectId) {
-                            const base = `/workspaces/${n.workspaceId}/projects/${n.projectId}`;
-                            navigate(n.taskItemId ? `${base}?task=${n.taskItemId}` : base);
-                          }
-                        }}
+                        onClick={openNotification}
                       />
                     </div>
                     <div className="flex shrink-0 items-center gap-1 transition-opacity duration-150 group-focus-within:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
