@@ -59,6 +59,22 @@ export interface UseNotificationsOptions {
   onIncoming?: (notification: IncomingNotification) => void;
 }
 
+/** Field-by-field equality so a no-op poll can reuse the previous object. */
+function shallowEqualNotification(a: AppNotification, b: AppNotification): boolean {
+  return (
+    a.id === b.id &&
+    a.type === b.type &&
+    a.message === b.message &&
+    a.actorName === b.actorName &&
+    a.createdAtUtc === b.createdAtUtc &&
+    a.kind === b.kind &&
+    a.isRead === b.isRead &&
+    a.taskId === b.taskId &&
+    a.workspaceId === b.workspaceId &&
+    a.projectId === b.projectId
+  );
+}
+
 export function useNotifications(
   _workspaceId?: string | null,
   enabled = true,
@@ -75,6 +91,9 @@ export function useNotifications(
   markAllRead: () => void;
 } {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  // Previous poll's items keyed by id, so a no-op 60s poll can reuse the exact
+  // objects the list already rendered. Declared before the memo that reads it.
+  const prevNotifications = useRef<Map<string, AppNotification> | null>(null);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation();
@@ -174,8 +193,32 @@ export function useNotifications(
     [notifications],
   );
 
+  // The 60s poll rebuilds `notifications` from scratch. When the server returns
+  // the same items, a fresh array identity would re-render every row in the
+  // panel (and would defeat the memo on NotificationItem) purely because the
+  // objects were re-created. Reusing the previous object for an unchanged id
+  // keeps the list byte-stable across a no-op poll.
+  const stableNotifications = useMemo(() => {
+    const prev = prevNotifications.current;
+    if (!prev) return notifications;
+    let changed = false;
+    const next = notifications.map((n) => {
+      const old = prev.get(n.id);
+      if (old && shallowEqualNotification(old, n)) return old;
+      changed = true;
+      return n;
+    });
+    return changed ? next : notifications;
+  }, [notifications]);
+
+  useEffect(() => {
+    prevNotifications.current = new Map(
+      stableNotifications.map((n) => [n.id, n]),
+    );
+  }, [stableNotifications]);
+
   return {
-    notifications,
+    notifications: stableNotifications,
     unreadCount,
     loading,
     error,
