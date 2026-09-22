@@ -1,18 +1,19 @@
 <Project>
 
-  <!-- EF Core 9 flows out-of-band System.Text.Json / Encodings.Web /
-       IO.Pipelines 9.0.20 into DevFlow.Api (Web SDK), so those assemblies
-       ship at version 9.0.0.0. A plain (non-Web) SDK test project otherwise
-       binds the in-box net8.0 8.0.0.0 facades and fails with MSB3277/CS1705
-       ("DevFlow.Api uses System.Text.Json 9.0.0.0 which is higher than the
-       referenced 8.0.0.0"). Pinning the out-of-band packages here raises the
-       test projects onto the same 9.0.20 copies and unifies the graph.
+  <!-- Microsoft.Extensions.Hosting 10 / EF Core 9 flow out-of-band
+       System.Text.Json / Encodings.Web / IO.Pipelines into DevFlow.Api
+       (Web SDK). A plain (non-Web) SDK test project otherwise binds the
+       in-box net8.0 facades and fails with MSB3277/CS1705 assembly-version
+       splits, or NU1605 when a stale pin sits below a transitive 10.0.12
+       floor (TreatWarningsAsErrors turns NU1605 fatal). Pinning the
+       out-of-band packages here raises the test projects onto the same
+       copies and unifies the graph.
        Kept in one place instead of per-csproj so both test projects stay in
        step if a third is added. -->
   <ItemGroup Condition="'$(IsTestProject)' == 'true'">
-    <PackageReference Include="System.Text.Json" Version="9.0.20" />
-    <PackageReference Include="System.Text.Encodings.Web" Version="9.0.20" />
-    <PackageReference Include="System.IO.Pipelines" Version="9.0.20" />
+    <PackageReference Include="System.Text.Json" Version="10.0.12" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="10.0.12" />
+    <PackageReference Include="System.IO.Pipelines" Version="10.0.12" />
   </ItemGroup>
 
 </Project>

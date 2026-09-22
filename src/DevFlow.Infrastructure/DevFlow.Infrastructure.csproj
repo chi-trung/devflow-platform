@@ -17,10 +17,10 @@
          NuGet otherwise resolves Relational 9.0.1 against Core 9.0.20 and the
          test projects hit an assembly-version split (MSB3277/CS1705). -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.20" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.*" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.*" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageReference Include="StackExchange.Redis" Version="2.13.17" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
