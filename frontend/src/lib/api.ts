@@ -1937,10 +1937,14 @@ export async function planAiTask(
   workspaceId: string,
   projectId: string,
   taskId: string,
+  prompt?: string | null,
 ): Promise<AiPlanResponse> {
+  const body: { taskId: string; prompt?: string } = { taskId };
+  const focus = prompt?.trim();
+  if (focus) body.prompt = focus;
   return api<AiPlanResponse>(
     `/workspaces/${workspaceId}/projects/${projectId}/ai/plan`,
-    { method: "POST", body: JSON.stringify({ taskId }) },
+    { method: "POST", body: JSON.stringify(body) },
   );
 }
 

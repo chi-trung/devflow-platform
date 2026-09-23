@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Brain,
@@ -12,6 +12,19 @@ import { planAiTask, applyAiPlan, getLatestAiPlan } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { ErrorAlert } from "../ui/ErrorAlert";
 import type { AiPlanResponse } from "../../types/api";
+
+/** Max textarea height before it starts scrolling internally (4 rows). */
+const MAX_COMPOSER_ROWS = 4;
+
+/** Static preset focuses — task-scoped, not context-scoped (no aiSuggest). */
+const PRESET_KEYS = [
+  "ai.planPresetBreakdown",
+  "ai.planPresetAcceptance",
+  "ai.planPresetRisks",
+  "ai.planPresetSpike",
+  "ai.planPresetPrioritize",
+  "ai.planPresetEstimate",
+] as const;
 
 interface AiPlanPanelProps {
   workspaceId: string;
@@ -35,6 +48,11 @@ export function AiPlanPanel({
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadTick, setLoadTick] = useState(0);
+  /** Free-form focus the user last sent (or a preset chip filled). */
+  const [promptDraft, setPromptDraft] = useState("");
+  /** Last focus used for generate/regenerate — chips set it, send sets it. */
+  const [lastPrompt, setLastPrompt] = useState<string | null>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
 
   const loadPlan = useCallback(() => {
     let cancelled = false;
@@ -68,11 +86,13 @@ export function AiPlanPanel({
     return cleanup;
   }, [loadPlan, taskId, loadTick]);
 
-  async function generate() {
+  async function generate(prompt?: string | null) {
+    const focus = (prompt ?? lastPrompt ?? promptDraft).trim() || null;
     setGenerating(true);
     setError(null);
+    setLastPrompt(focus);
     try {
-      const data = await planAiTask(workspaceId, projectId, taskId);
+      const data = await planAiTask(workspaceId, projectId, taskId, focus);
       setPlan(data);
       if (data.applied) {
         onChanged();
@@ -97,6 +117,27 @@ export function AiPlanPanel({
     } finally {
       setApplying(false);
     }
+  }
+
+  function autoGrowComposer() {
+    const el = composerRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const maxPx = MAX_COMPOSER_ROWS * 20 + 16;
+    el.style.height = `${Math.min(el.scrollHeight, maxPx)}px`;
+  }
+
+  function handleChip(presetKey: (typeof PRESET_KEYS)[number]) {
+    const text = t(presetKey);
+    setPromptDraft(text);
+    setLastPrompt(text);
+    void generate(text);
+  }
+
+  function handleSend() {
+    const text = promptDraft.trim();
+    if (!text || generating) return;
+    void generate(text);
   }
 
   // Plan DoD items are plain criteria strings (the "- [ ]" checkbox form is
@@ -143,12 +184,60 @@ export function AiPlanPanel({
         </div>
       )}
 
-      {/* Generate button when no plan exists */}
+      {/* Generate UI when no plan exists: preset chips + free composer.
+          The whole block stays gated on !loadError so a failed read never
+          offers an overwrite button (see swallowedReads contract). */}
       {!loading && !plan && !generating && !loadError && (
-        <Button onClick={generate}>
-          <Sparkles className="mr-1.5 size-4" aria-hidden />
-          {t("ai.askAiToPlan")}
-        </Button>
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-1.5">
+            {PRESET_KEYS.map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleChip(key)}
+                className="cursor-pointer rounded-full border border-border bg-elevated/60 px-2.5 py-1 text-xs text-foreground transition-colors duration-150 hover:border-primary/40 hover:bg-primary/10 hover:text-primary-strong"
+              >
+                {t(key)}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-end gap-2 rounded-xl border border-border bg-card px-3 py-2 focus-within:border-primary/50">
+            <textarea
+              ref={composerRef}
+              value={promptDraft}
+              rows={1}
+              onChange={(event) => {
+                setPromptDraft(event.target.value);
+                autoGrowComposer();
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder={t("ai.planPlaceholder")}
+              aria-label={t("ai.planPlaceholder")}
+              className="max-h-[80px] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent py-1.5 text-sm leading-5 text-foreground placeholder:text-muted-foreground focus:outline-none"
+            />
+            <button
+              type="button"
+              aria-label={t("ai.planSend")}
+              disabled={!promptDraft.trim()}
+              onClick={handleSend}
+              className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-primary text-on-primary transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Sparkles className="size-4" aria-hidden />
+            </button>
+          </div>
+
+          {/* Plain "Ask AI" still works with no focus (prompt omitted). */}
+          <Button onClick={() => generate(null)} variant="outline" size="sm">
+            <Sparkles className="mr-1.5 size-4" aria-hidden />
+            {t("ai.askAiToPlan")}
+          </Button>
+        </div>
       )}
 
       {/* Generating state */}
@@ -253,7 +342,7 @@ export function AiPlanPanel({
             )}
             <button
               type="button"
-              onClick={generate}
+              onClick={() => generate(lastPrompt)}
               disabled={generating}
               className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground disabled:opacity-40"
             >

@@ -21,6 +21,15 @@ interface AiAssistantPanelProps {
   sprintId?: string | null;
   epicId?: string | null;
   context: AiPageContext;
+  /**
+   * chrome:
+   * - "floating": fixed card bottom-right (legacy FAB launcher) — the node
+   *   unmounts when `open` is false (AiDock never uses this).
+   * - "dock": full-height right rail — the parent keeps the node mounted and
+   *   toggles visibility with a translate-x slide, so `if (!open) return null`
+   *   must not run for dock mode (the transition would never fire).
+   */
+  variant?: "floating" | "dock";
   /** Called after AI actions have been executed (e.g. a task was created) so
    * the parent page can refresh the board / list without a manual F5. */
   onTaskChanged?: () => void;
@@ -40,6 +49,7 @@ export function AiAssistantPanel({
   sprintId,
   epicId,
   context,
+  variant = "floating",
   onTaskChanged,
 }: AiAssistantPanelProps) {
   const { t } = useTranslation();
@@ -215,13 +225,20 @@ export function AiAssistantPanel({
     el.style.height = `${Math.min(el.scrollHeight, maxPx)}px`;
   }
 
-  if (!open) return null;
+  // Floating launcher unmounts itself when closed (legacy FAB path). The
+  // dock keeps the node mounted so the slide-in transition can run — a
+  // conditional return here would snap it instead of gliding.
+  if (variant === "floating" && !open) return null;
 
   return (
     <div
       role="dialog"
       aria-label={t("ai.assistant")}
-      className="flex h-[min(70dvh,26rem)] w-[min(92vw,26rem)] flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_24px_80px_rgba(0,0,0,0.5)] rise"
+      className={
+        variant === "dock"
+          ? "flex h-full w-full flex-col overflow-hidden border-l border-border bg-card"
+          : "flex h-[min(70dvh,26rem)] w-[min(92vw,26rem)] flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_24px_80px_rgba(0,0,0,0.5)] rise"
+      }
     >
       <header className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
@@ -239,7 +256,7 @@ export function AiAssistantPanel({
         </div>
         <button
           type="button"
-          aria-label={t("ui.closeMenuAria")}
+          aria-label={t("ai.assistantClose")}
           onClick={onClose}
           className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
         >

@@ -234,4 +234,68 @@ public class PlanTaskCommandHandlerTests
         await Assert.ThrowsAsync<NotFoundException>(() =>
             handler.Handle(new PlanTaskCommand(_workspaceId, _project.Id, foreignTask.Id), CancellationToken.None));
     }
+
+    [Fact]
+    public async Task Handle_ShouldOmitFocus_WhenPromptIsNull()
+    {
+        _aiClient.PlanTaskAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(SamplePlanJson());
+
+        var handler = BuildHandler();
+        await handler.Handle(
+            new PlanTaskCommand(_workspaceId, _project.Id, _task.Id, Prompt: null),
+            CancellationToken.None);
+
+        await _aiClient.Received(1).PlanTaskAsync(
+            Arg.Any<string>(),
+            Arg.Is<string>(context => !context.Contains("Additional focus from the user")),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldAppendUserFocus_WhenPromptProvided()
+    {
+        _aiClient.PlanTaskAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(SamplePlanJson());
+
+        var handler = BuildHandler();
+        await handler.Handle(
+            new PlanTaskCommand(_workspaceId, _project.Id, _task.Id, Prompt: "Focus on auth edge cases"),
+            CancellationToken.None);
+
+        await _aiClient.Received(1).PlanTaskAsync(
+            Arg.Any<string>(),
+            Arg.Is<string>(context =>
+                context.Contains("Additional focus from the user: Focus on auth edge cases")),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldTruncateOverlongPrompt_To500Chars()
+    {
+        string? captured = null;
+        _aiClient.PlanTaskAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(SamplePlanJson());
+        await _aiClient.PlanTaskAsync(
+                Arg.Any<string>(),
+                Arg.Do<string>(c => captured = c),
+                Arg.Any<CancellationToken>());
+
+        var longPrompt = new string('x', 600);
+        var handler = BuildHandler();
+        await handler.Handle(
+            new PlanTaskCommand(_workspaceId, _project.Id, _task.Id, Prompt: longPrompt),
+            CancellationToken.None);
+
+        Assert.NotNull(captured);
+        var marker = "Additional focus from the user: ";
+        var idx = captured!.IndexOf(marker, StringComparison.Ordinal);
+        Assert.True(idx >= 0, "focus line missing from user context");
+        var focus = captured[(idx + marker.Length)..];
+        // AppendLine uses Environment.NewLine — on Windows that's \r\n, so
+        // stop at either terminator or the CR would count as a 501st char.
+        var lineEnd = focus.IndexOfAny(['\r', '\n']);
+        var segment = lineEnd >= 0 ? focus[..lineEnd] : focus;
+        Assert.Equal(500, segment.Length);
+    }
 }

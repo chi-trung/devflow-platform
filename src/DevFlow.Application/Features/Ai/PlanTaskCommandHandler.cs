@@ -46,7 +46,7 @@ public sealed class PlanTaskCommandHandler(
 
         var knowledge = await knowledgeRepository.GetForProjectAsync(command.ProjectId, cancellationToken);
 
-        var (systemPrompt, userContext) = BuildPrompts(project, task, knowledge);
+        var (systemPrompt, userContext) = BuildPrompts(project, task, knowledge, command.Prompt);
 
         string? rawResponse;
         try
@@ -130,7 +130,8 @@ public sealed class PlanTaskCommandHandler(
     private static (string SystemPrompt, string UserContext) BuildPrompts(
         Project project,
         TaskItem task,
-        IReadOnlyList<KnowledgeEntry> knowledge)
+        IReadOnlyList<KnowledgeEntry> knowledge,
+        string? userPrompt)
     {
         var systemPrompt = """
             You are DevFlow's planning agent. You break a work item down into a
@@ -162,6 +163,18 @@ public sealed class PlanTaskCommandHandler(
         userContext.AppendLine($"Description: {task.Description ?? "(none)"}");
         userContext.AppendLine($"Status: {task.Status}");
         userContext.AppendLine($"Priority: {task.Priority}");
+
+        if (!string.IsNullOrWhiteSpace(userPrompt))
+        {
+            var focus = userPrompt.Trim();
+            if (focus.Length > 500)
+            {
+                focus = focus[..500];
+            }
+
+            userContext.AppendLine($"Additional focus from the user: {focus}");
+        }
+
         userContext.AppendLine();
 
         if (knowledge.Count == 0)

@@ -36,7 +36,7 @@ import { Button } from "./ui/Button";
 import { EmojiTile } from "./ui/EmojiCover";
 import { ErrorAlert } from "./ui/ErrorAlert";
 import { CommandPalette } from "./CommandPalette";
-import { AiFloatingButton } from "./ai/AiFloatingButton";
+import { AiDock } from "./ai/AiDock";
 import type { AiPageContext } from "./ai/AiSuggestedPrompts";
 import { ApiStatusDot } from "./user/ApiStatusDot";
 import { ThemeToggle } from "./ui/ThemeToggle";
@@ -816,7 +816,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       />
 
       {workspaceId && (
-        <AiFloatingButton
+        <AiDock
           workspaceId={workspaceId}
           projectId={projectId}
           context={pageContext}

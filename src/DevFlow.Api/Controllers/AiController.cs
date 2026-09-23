@@ -28,8 +28,23 @@ public sealed class AiController(ISender sender) : ControllerBase
         PlanTaskRequest request,
         CancellationToken cancellationToken)
     {
+        // Trim/limit at the edge so a huge paste never reaches the LLM prompt.
+        var prompt = request.Prompt;
+        if (!string.IsNullOrWhiteSpace(prompt))
+        {
+            prompt = prompt.Trim();
+            if (prompt.Length > 500)
+            {
+                prompt = prompt[..500];
+            }
+        }
+        else
+        {
+            prompt = null;
+        }
+
         var response = await sender.Send(
-            new PlanTaskCommand(workspaceId, projectId, request.TaskId),
+            new PlanTaskCommand(workspaceId, projectId, request.TaskId, prompt),
             cancellationToken);
 
         return Ok(response);
