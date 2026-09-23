@@ -51,6 +51,7 @@ describe("matchRoute", () => {
     expect(matchRoute("/workspaces/ws-1/projects/pr-9/tasks/t1")).toBe(
       "task-detail",
     );
+    expect(matchRoute("/workspaces/ws-1/projects/pr-9/calendar")).toBe("calendar");
     expect(matchRoute("/workspaces/ws-1/projects/pr-9/sprints")).toBe("sprints");
     expect(matchRoute("/workspaces/ws-1/projects/pr-9/reports")).toBe("reports");
     expect(matchRoute("/workspaces/ws-1/projects/pr-9/epics")).toBe("epics");
