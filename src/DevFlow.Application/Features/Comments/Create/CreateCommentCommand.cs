@@ -13,7 +13,11 @@ public sealed record CreateCommentCommand(
     string Content,
     Guid? AssigneeId = null) : IRequest<CommentResponse>, IWorkspaceRequest, IProjectEvent, INotificationEvent
 {
-        public string ActivityVerb => "commented on task";
+        // Handler already writes the canonical activity row (with the task
+        // title) before its SaveChanges. Keep ActivityVerb empty so
+        // ActivityBehavior does not append a second row + SaveChanges on
+        // every comment POST \u2014 that extra round-trip sat on the response path.
+        public string ActivityVerb => "";
         public string ActivityLabel => Content.Length <= 40 ? Content : Content[..40] + "\u2026";
         public Guid? ActivityTaskId => TaskId;
 

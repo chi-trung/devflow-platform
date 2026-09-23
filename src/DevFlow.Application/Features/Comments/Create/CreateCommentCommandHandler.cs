@@ -26,14 +26,17 @@ public sealed partial class CreateCommentCommandHandler(
         CreateCommentCommand command,
         CancellationToken cancellationToken)
     {
-        var project = await projectRepository.GetByIdAsync(command.ProjectId, cancellationToken);
+        // Independent reads — one RTT instead of two sequential hops to Postgres.
+        var projectTask = projectRepository.GetByIdAsync(command.ProjectId, cancellationToken);
+        var taskLoadTask = taskItemRepository.GetByIdAsync(command.TaskId, cancellationToken);
+        await Task.WhenAll(projectTask, taskLoadTask);
+        var project = projectTask.Result;
+        var task = taskLoadTask.Result;
 
         if (project is null || project.WorkspaceId != command.WorkspaceId)
         {
             throw new NotFoundException(nameof(Project), command.ProjectId);
         }
-
-        var task = await taskItemRepository.GetByIdAsync(command.TaskId, cancellationToken);
 
         if (task is null || task.ProjectId != command.ProjectId)
         {
@@ -53,21 +56,36 @@ public sealed partial class CreateCommentCommandHandler(
             task.Title);
         await activityLog.AddAsync(log, cancellationToken);
 
+        // Comment + activity must be durable before any notify fan-out.
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Parse @mentions and create notifications
         var mentionedUsernames = ExtractMentions(command.Content);
         var mentionedUserIds = new HashSet<Guid>();
 
-        foreach (var username in mentionedUsernames)
+        // Resolve @handles and load the watcher list together — neither depends
+        // on the other, and both are pure reads after the comment is committed.
+        var mentionLookupTask = mentionedUsernames.Count == 0
+            ? Task.FromResult(Array.Empty<Domain.Entities.User?>())
+            : Task.WhenAll(mentionedUsernames.Select(username =>
+                userRepository.GetByUsernameAsync(username, cancellationToken)));
+        var watchersTask = watcherRepository.GetByTaskAsync(task.Id, cancellationToken);
+        await Task.WhenAll(mentionLookupTask, watchersTask);
+
+        var mentionedUsers = await mentionLookupTask;
+        var watchers = await watchersTask;
+
+        // SignalR is best-effort fan-out; awaiting each send before the HTTP
+        // response made every comment wait on hub RTT for every mention/watcher.
+        var realtimeTasks = new List<Task>();
+
+        for (var i = 0; i < mentionedUsernames.Count; i++)
         {
-            var mentionedUser = await userRepository.GetByUsernameAsync(username, cancellationToken);
+            var mentionedUser = mentionedUsers[i];
             if (mentionedUser is null || mentionedUser.Id == userContext.UserId)
                 continue;
 
             mentionedUserIds.Add(mentionedUser.Id);
 
-            // Create notification
             var notification = Notification.Create(
                 mentionedUser.Id,
                 "Mention",
@@ -79,17 +97,15 @@ public sealed partial class CreateCommentCommandHandler(
 
             await notificationRepository.AddAsync(notification, cancellationToken);
 
-            // Push realtime notification to the mentioned user's group
-            await realtimeNotificationService.NotifyUserAsync(
+            realtimeTasks.Add(realtimeNotificationService.NotifyUserAsync(
                 mentionedUser.Id,
                 "Mention",
                 $"mentioned you in a comment on \"{task.Title}\"",
                 task.Id,
                 project.Id,
                 project.WorkspaceId,
-                cancellationToken);
+                CancellationToken.None));
 
-            // Send email notification only if the user has mentions enabled
             var prefs = await preferencesRepository.GetByUserIdAsync(mentionedUser.Id, cancellationToken);
             if (prefs?.EmailOnMention != false && !string.IsNullOrWhiteSpace(mentionedUser.Email))
             {
@@ -107,9 +123,6 @@ public sealed partial class CreateCommentCommandHandler(
             }
         }
 
-        // Notify watchers (excluding the actor and anyone already mentioned above)
-        var watchers = await watcherRepository.GetByTaskAsync(task.Id, cancellationToken);
-
         foreach (var watcher in watchers.Where(w => w.UserId != userContext.UserId && !mentionedUserIds.Contains(w.UserId)))
         {
             var notification = Notification.Create(
@@ -122,14 +135,14 @@ public sealed partial class CreateCommentCommandHandler(
 
             await notificationRepository.AddAsync(notification, cancellationToken);
 
-            await realtimeNotificationService.NotifyUserAsync(
+            realtimeTasks.Add(realtimeNotificationService.NotifyUserAsync(
                 watcher.UserId,
                 "TaskUpdate",
                 $"new comment on \"{task.Title}\"",
                 task.Id,
                 project.Id,
                 project.WorkspaceId,
-                cancellationToken);
+                CancellationToken.None));
         }
 
         // Email the task assignee when a new comment is added (CommentAdded event)
@@ -162,7 +175,23 @@ public sealed partial class CreateCommentCommandHandler(
             await unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
+        // Hub sends may still be in flight; do not hold the 201 on them.
+        // Failures are observed so they never surface as unobserved-task noise.
+        ObserveRealtime(realtimeTasks);
+
         return new CommentResponse(comment.Id, comment.TaskItemId, comment.AuthorId, comment.Content, comment.CreatedAtUtc);
+    }
+
+    private static void ObserveRealtime(List<Task> tasks)
+    {
+        foreach (var task in tasks)
+        {
+            _ = task.ContinueWith(
+                static t => _ = t.Exception,
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
+        }
     }
 
     /// <summary>

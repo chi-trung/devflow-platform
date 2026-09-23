@@ -26,22 +26,33 @@ public sealed class RealtimeBehavior<TRequest, TResponse> : IPipelineBehavior<TR
 
         // A command may implement both (e.g. creating a project mutates the
         // workspace it belongs to), so check each independently.
+        //
+        // Hub fan-out is best-effort: fire-and-forget so a slow/dead SignalR
+        // connection cannot pin the HTTP response (comment POSTs were hanging
+        // here after the DB write already succeeded). Faults are observed.
         if (request is IProjectEvent projectEvent)
         {
-            await notifier.NotifyProjectAsync(
+            Observe(notifier.NotifyProjectAsync(
                 projectEvent.ProjectId,
                 typeof(TRequest).Name,
-                cancellationToken);
+                CancellationToken.None));
         }
 
         if (request is IWorkspaceEvent workspaceEvent)
         {
-            await notifier.NotifyWorkspaceAsync(
+            Observe(notifier.NotifyWorkspaceAsync(
                 workspaceEvent.WorkspaceId,
                 typeof(TRequest).Name,
-                cancellationToken);
+                CancellationToken.None));
         }
 
         return response;
     }
+
+    private static void Observe(Task task) =>
+        _ = task.ContinueWith(
+            static t => _ = t.Exception,
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
 }
