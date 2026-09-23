@@ -78,11 +78,16 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<SocialLogin> SocialLogins => Set<SocialLogin>();
 
+    public DbSet<RecurringTaskRule> RecurringTaskRules => Set<RecurringTaskRule>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);
 
         modelBuilder.Entity<Project>().HasQueryFilter(p => p.DeletedAtUtc == null);
         modelBuilder.Entity<TaskItem>().HasQueryFilter(t => t.DeletedAtUtc == null);
+        // Also set in RecurringTaskRuleConfiguration; kept here beside the
+        // other soft-delete filters so a model-level sweep does not miss it.
+        modelBuilder.Entity<RecurringTaskRule>().HasQueryFilter(r => r.DeletedAtUtc == null);
     }
 }

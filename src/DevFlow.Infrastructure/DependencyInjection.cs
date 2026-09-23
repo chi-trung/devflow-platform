@@ -6,6 +6,7 @@ using DevFlow.Infrastructure.GitHub;
 using DevFlow.Infrastructure.Caching;
 using DevFlow.Infrastructure.Outbox;
 using DevFlow.Infrastructure.Persistence;
+using DevFlow.Infrastructure.Recurring;
 using DevFlow.Infrastructure.Persistence.Interceptors;
 using DevFlow.Infrastructure.Persistence.Repositories;
 using DevFlow.Infrastructure.Email;
@@ -92,7 +93,9 @@ public static class DependencyInjection
         services.AddScoped<IWebhookDispatcher, WebhookDispatcher>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
         services.AddScoped<IOutboxDispatcher, OutboxDispatcher>();
+        services.AddScoped<IRecurringTaskRuleRepository, RecurringTaskRuleRepository>();
         services.AddHostedService<OutboxProcessor>();
+        services.AddHostedService<RecurringTaskProcessor>();
         services.AddHttpClient("Webhooks");
         if (!string.IsNullOrWhiteSpace(configuration["RESEND_API_KEY"]))
         {
