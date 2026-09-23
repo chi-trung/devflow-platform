@@ -144,7 +144,7 @@ export function UserMenu({
         className={
           compact
             ? `flex items-center gap-1 rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground ${triggerClassName}`
-            : `flex min-w-0 items-center gap-2 rounded-lg px-1 py-1 text-left transition-colors duration-150 hover:bg-elevated ${triggerClassName}`
+            : `flex min-w-0 items-center gap-3 rounded-lg px-1.5 py-1 text-left transition-colors duration-150 hover:bg-elevated ${triggerClassName}`
         }
       >
         {compact ? (
