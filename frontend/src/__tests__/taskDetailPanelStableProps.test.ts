@@ -2,12 +2,12 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-// TaskDetailPanel is mounted inside TaskDetailPage while other state on the
-// page (members/sprints still resolving, Escape nav) can re-render the shell.
-// Before the memo it re-ran its full body per keystroke -- an 1100-line
-// component with ~33 hooks, several effects, comment/attachment lists, and a
-// DoD split + regex filter on every render. Memoising it only holds if every
-// prop reaching it is stable, so the fix is a PAIR:
+// TaskDetailPanel is mounted inside TaskDetailOverlay while other state on
+// the board (members/sprints still resolving, Escape nav) can re-render the
+// shell. Before the memo it re-ran its full body per keystroke -- an
+// 1100-line component with ~33 hooks, several effects, comment/attachment
+// lists, and a DoD split + regex filter on every render. Memoising it only
+// holds if every prop reaching it is stable, so the fix is a PAIR:
 //  1. memo on the component;
 //  2. stable identity for every prop the call site passes.
 //
@@ -15,11 +15,17 @@ import { join } from "node:path";
 // regresses: a future edit rewriting `sprints={panelSprints}` back to an
 // inline `.filter()` looks harmless and compiles fine, but defeats the memo
 // on every keystroke.
+//
+// The call site moved from TaskDetailPage (full route) to TaskDetailOverlay
+// (in-page modal over the board) — same contract, new file.
 
-const PAGES = join(__dirname, "..", "pages");
+const HERE = __dirname;
 
 function source(): string {
-  return readFileSync(join(PAGES, "TaskDetailPage.tsx"), "utf8");
+  return readFileSync(
+    join(HERE, "..", "components", "board", "TaskDetailOverlay.tsx"),
+    "utf8",
+  );
 }
 
 /** The JSX element for the panel, plus its props. */
@@ -31,7 +37,7 @@ function panelCallSite(content: string): string {
   return content.slice(start, end + 2);
 }
 
-describe("TaskDetailPage hands TaskDetailPanel stable props", () => {
+describe("TaskDetailOverlay hands TaskDetailPanel stable props", () => {
   const content = source();
 
   it("memoises the sprint list instead of filtering at the render site", () => {
@@ -78,16 +84,32 @@ describe("TaskDetailPage hands TaskDetailPanel stable props", () => {
     // Inline arrows are a fresh function identity every render.
     expect(site).not.toMatch(/onClose=\{\(\) =>/);
     expect(site).not.toMatch(/onTaskChanged=\{\(\) =>/);
-    expect(site).toMatch(/onClose=\{back\}/);
+    expect(site).toMatch(/onClose=\{onClose\}/);
     expect(site).toMatch(/onTaskChanged=\{handleTaskChanged\}/);
   });
 
   it("keeps the panel handlers in useCallback", () => {
     // The named handlers the call site references must themselves be
     // stable, or the two guards above pass while the memo still releases.
-    for (const name of ["back", "handleTaskChanged"]) {
-      const decl = content.indexOf(`const ${name} = useCallback(`);
-      expect(decl, `${name} must be a useCallback`).toBeGreaterThan(-1);
-    }
+    // onClose is a prop from BoardPage — BoardPage must hand it over as a
+    // useCallback (closeTask there), not an inline arrow at this mount.
+    const decl = content.indexOf("const handleTaskChanged = useCallback(");
+    expect(decl, "handleTaskChanged must be a useCallback").toBeGreaterThan(-1);
+  });
+});
+
+describe("BoardPage hands the overlay a stable close", () => {
+  const board = readFileSync(join(HERE, "..", "pages", "BoardPage.tsx"), "utf8");
+
+  it("wires onClose to a named useCallback, not an inline arrow", () => {
+    const start = board.indexOf("<TaskDetailOverlay");
+    expect(start, "BoardPage no longer mounts TaskDetailOverlay").toBeGreaterThan(-1);
+    const end = board.indexOf("/>", start);
+    const site = board.slice(start, end + 2);
+    expect(site).toMatch(/onClose=\{closeTask\}/);
+    expect(site).not.toMatch(/onClose=\{\(\) =>/);
+    expect(board).toContain("const closeTask = useCallback(");
+    expect(board).toContain("const handleOverlayTaskChanged = useCallback(");
+    expect(site).toMatch(/onTaskChanged=\{handleOverlayTaskChanged\}/);
   });
 });

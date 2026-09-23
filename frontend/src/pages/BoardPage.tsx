@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Link,
-  useNavigate,
   useParams,
   useSearchParams,
 } from "react-router-dom";
@@ -56,6 +55,7 @@ import { FilterBar } from "../components/board/FilterBar";
 import { GraphModal } from "../components/board/GraphModal";
 import { KeyboardHelpModal } from "../components/board/KeyboardHelpModal";
 import { ImportTasksModal } from "../components/board/ImportTasksModal";
+import { TaskDetailOverlay } from "../components/board/TaskDetailOverlay";
 import { BoardPresence } from "../components/board/BoardPresence";
 import { usePresence } from "../hooks/usePresence";
 import { getEpics } from "../lib/api";
@@ -177,7 +177,6 @@ export function BoardPage() {
   const { t } = useTranslation();
   const COLUMNS = getColumns(t);
   const { workspaceId = "", projectId = "" } = useParams();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // Declared before the hooks that consume them in deps/fetchers.
   const [activityOpen, setActivityOpen] = useState(false);
@@ -615,24 +614,49 @@ export function BoardPage() {
     }
   }, [deepLinkPriority, setSearchParams]);
 
-  // Card / deep-link / graph selection all land on the full-page detail
-  // route. Deep links redirect immediately — the page self-fetches by id,
-  // so waiting for the board's filtered `tasks` list would just delay the
-  // navigation (and 404 a task that is filtered out of the current view).
+  // Card / graph selection opens the in-page detail overlay via ?task=.
+  // Push (not replace) so browser Back closes the overlay without leaving
+  // the board. The old navigate(/tasks/:id) full-page hop is gone — share
+  // links still work: TaskDetailPage redirects that shape onto ?task=.
   const openTask = useCallback(
     (taskId: string) => {
-      navigate(`/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}`);
+      // Graph sits at z-50 under the overlay (z-[55]) — close it so Escape
+      // and focus don't stay trapped in a modal the user can no longer see.
+      setGraphOpen(false);
+      setHelpOpen(false);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("task", taskId);
+          return next;
+        },
+        // First open pushes so browser Back closes; switching task while
+        // already open replaces instead of stacking one entry per card.
+        { replace: searchParams.has("task") },
+      );
     },
-    [workspaceId, projectId, navigate],
+    [searchParams, setSearchParams],
   );
 
-  useEffect(() => {
-    if (!deepLinkTaskId) return;
-    navigate(
-      `/workspaces/${workspaceId}/projects/${projectId}/tasks/${deepLinkTaskId}`,
+  // Close without stacking history: the open already pushed ?task=.
+  const closeTask = useCallback(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("task");
+        return next;
+      },
       { replace: true },
     );
-  }, [deepLinkTaskId, workspaceId, projectId, navigate]);
+  }, [setSearchParams]);
+
+  // Post-mutation refresh for the overlay: re-base the board lists the
+  // panel's assignee/sprint/dependency controls read. The overlay reloads
+  // the task itself around this callback.
+  const handleOverlayTaskChanged = useCallback(() => {
+    reload();
+    reloadSprints();
+  }, [reload, reloadSprints]);
 
   // Saved-search handoff from the command palette (?fs=<json>). The palette
   // targets lastBoardPath first, so when the user is ALREADY on this board
@@ -683,8 +707,12 @@ export function BoardPage() {
   // Ctrl+A=select visible, Delete=bulk delete, Esc=step back.
   // The bare-character ones honor the Settings → General turn-off
   // required by WCAG 2.1.4; modifier chords and Delete/Esc are exempt.
+  // While the detail overlay is open the overlay owns Escape (stopPropagation
+  // on document) and every board chord must stay inert — otherwise "n" under
+  // a focused non-input control re-opens create-task behind the modal.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (deepLinkTaskId) return;
       const target = event.target as HTMLElement | null;
       if (
         target &&
@@ -732,8 +760,8 @@ export function BoardPage() {
           if (graphOpen) setGraphOpen(false);
           else if (helpOpen) setHelpOpen(false);
           else if (confirmBulkDelete) setConfirmBulkDelete(false);
-          // The activity drawer used to sit above the detail drawer; with
-          // detail now a route, it only has to beat selection-clearing.
+          // Overlay owns Escape while open (early return above); below it,
+          // the drawer still has to beat selection-clearing.
           else if (activityOpen) setActivityOpen(false);
           else if (selectedIds.size > 0) setSelectedIds(new Set());
           break;
@@ -742,6 +770,7 @@ export function BoardPage() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [
+    deepLinkTaskId,
     creating,
     selectedIds,
     graphOpen,
@@ -1107,10 +1136,22 @@ export function BoardPage() {
           <div>
             <div className="flex items-center gap-2.5">
               {project?.emoji && <EmojiTile emoji={project.emoji} size="md" />}
-              <h1 className="font-display text-2xl font-semibold tracking-tight">
-                {project?.name ??
-                  (projectFailed ? t("board.projectNameUnavailable") : t("common.loading"))}
-              </h1>
+              {/* Fail-closed name: one expression so the fail-closed guard
+                  and the h1↔div swap can't drift apart. While the overlay is
+                  open this must not be an h1: AppShell's title mirror takes
+                  the FIRST h1 under #devflow-content, and the panel's portal
+                  heading needs to win. */}
+              {deepLinkTaskId ? (
+                <div className="font-display text-2xl font-semibold tracking-tight">
+                  {project?.name ??
+                    (projectFailed ? t("board.projectNameUnavailable") : t("common.loading"))}
+                </div>
+              ) : (
+                <h1 className="font-display text-2xl font-semibold tracking-tight">
+                  {project?.name ??
+                    (projectFailed ? t("board.projectNameUnavailable") : t("common.loading"))}
+                </h1>
+              )}
               {project && <Badge tone="teal">{project.key}</Badge>}
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">
@@ -1644,6 +1685,26 @@ export function BoardPage() {
         error={activitiesError}
         onRetry={reloadActivities}
       />
+
+      {deepLinkTaskId && (
+        <TaskDetailOverlay
+          taskId={deepLinkTaskId}
+          workspaceId={workspaceId}
+          projectId={projectId}
+          currentUser={currentUser}
+          members={members ?? EMPTY_MEMBERS}
+          membersFailed={membersFailed}
+          onRetryMembers={reloadMembers}
+          sprints={sprints}
+          sprintsFailed={sprintsError !== null && sprintsRaw === null}
+          onRetrySprints={reloadSprints}
+          allTasks={tasks}
+          allTasksFailed={error !== null && tasksRaw === null}
+          onRetryTasks={reload}
+          onClose={closeTask}
+          onTaskChanged={handleOverlayTaskChanged}
+        />
+      )}
     </AppShell>
   );
 }

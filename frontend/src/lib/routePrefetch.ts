@@ -37,7 +37,10 @@ const ROUTES: RouteShape[] = [
   { name: "search", test: /^\/workspaces\/[^/]+\/search$/, load: () => import("../pages/SearchPage") },
   { name: "workspace-webhooks", test: /^\/workspaces\/[^/]+\/webhooks$/, load: () => import("../pages/WebhooksPage") },
   { name: "board", test: /^\/workspaces\/[^/]+\/projects\/[^/]+$/, load: () => import("../pages/BoardPage") },
-  { name: "task-detail", test: /^\/workspaces\/[^/]+\/projects\/[^/]+\/tasks\/[^/]+$/, load: () => import("../pages/TaskDetailPage") },
+  // The legacy /tasks/:id path only redirects onto the board's ?task=
+  // overlay — warm the board chunk (the real destination), not the thin
+  // redirect shell.
+  { name: "task-detail", test: /^\/workspaces\/[^/]+\/projects\/[^/]+\/tasks\/[^/]+$/, load: () => import("../pages/BoardPage") },
   { name: "sprints", test: /^\/workspaces\/[^/]+\/projects\/[^/]+\/sprints$/, load: () => import("../pages/SprintPlanningPage") },
   { name: "reports", test: /^\/workspaces\/[^/]+\/projects\/[^/]+\/reports$/, load: () => import("../pages/ReportsPage") },
   { name: "epics", test: /^\/workspaces\/[^/]+\/projects\/[^/]+\/epics$/, load: () => import("../pages/EpicsPage") },
