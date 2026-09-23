@@ -21,6 +21,7 @@ import {
   bulkAssignTasks,
   bulkDeleteTasks,
   bulkMoveTasks,
+  createRecurringRule,
   getProjectDependencyGraph,
   getProjectTaskFieldValues,
   pagedItems,
@@ -1045,6 +1046,11 @@ export function BoardPage() {
     description: string | null;
     priority: TaskItemResponse["priority"];
     dueDateUtc: string | null;
+    recurrence?: {
+      frequency: "Daily" | "Weekly" | "Monthly";
+      interval: number;
+      firstDueDateUtc: string;
+    };
   }) {
     // Optimistic insert: render the new card immediately at the bottom of the
     // Backlog column (the server default) while the POST is in flight, then
@@ -1072,9 +1078,12 @@ export function BoardPage() {
     setCreating(false);
 
     try {
+      // The task POST body must not carry `recurrence` — that field is only
+      // for the follow-up rule create once we know the task id.
+      const { recurrence, ...taskBody } = input;
       const created = await api<{ id: string }>(
         `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
-        { method: "POST", body: JSON.stringify(input) },
+        { method: "POST", body: JSON.stringify(taskBody) },
       );
       // Reconcile: swap the optimistic row for the server row (reload also
       // fires, but this removes the temp id immediately for any live edits).
@@ -1084,6 +1093,27 @@ export function BoardPage() {
             t.id === optimisticId ? { ...t, id: created.id } : t,
           ),
         );
+        if (recurrence) {
+          // Rule failure must NOT roll the task back — toast only.
+          try {
+            await createRecurringRule(workspaceId, projectId, {
+              title: input.title,
+              description: input.description,
+              priority: input.priority,
+              frequency: recurrence.frequency,
+              interval: recurrence.interval,
+              firstDueDateUtc: recurrence.firstDueDateUtc,
+              seedTaskId: created.id,
+            });
+          } catch (ruleErr) {
+            push(
+              ruleErr instanceof Error
+                ? ruleErr.message
+                : t("task.recurrence.createFailed"),
+              "error",
+            );
+          }
+        }
       }
       reload();
       push(t("board.taskCreated"));

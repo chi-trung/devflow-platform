@@ -23,6 +23,10 @@ vi.mock("../lib/api", () => ({
   unwatchTask: vi.fn(async () => ({})),
   uploadTaskAttachment: vi.fn(async () => ({})),
   getTaskWatchers: vi.fn(async () => []),
+  listRecurringRules: vi.fn(async () => []),
+  createRecurringRule: vi.fn(async () => ({})),
+  updateRecurringRule: vi.fn(async () => ({})),
+  deleteRecurringRule: vi.fn(async () => undefined),
   pagedItems: (response: unknown) =>
     Array.isArray(response) ? response : [],
   addTaskDependency: vi.fn(async () => ({})),

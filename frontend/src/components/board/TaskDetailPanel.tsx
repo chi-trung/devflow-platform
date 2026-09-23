@@ -23,6 +23,7 @@ import { SubtaskSection } from "./SubtaskSection";
 import { CustomFieldsSection } from "./CustomFieldsSection";
 import { TaskPullRequests } from "../github/TaskPullRequests";
 import { CollapsibleSection } from "./CollapsibleSection";
+import { TaskRecurrenceSection } from "../calendar/TaskRecurrenceSection";
 import type { CurrentUser } from "../../auth/AuthContext";
 
 // Test-only render counter. The panel is memoised, so a no-op parent
@@ -869,6 +870,20 @@ export const TaskDetailPanel = memo(function TaskDetailPanel({
             </Button>
           </div>
         )}
+
+        <div className="mt-4">
+          <p className="mb-2 text-sm font-medium">
+            {t("task.recurrence.sectionTitle")}
+          </p>
+          <TaskRecurrenceSection
+            workspaceId={workspaceId}
+            projectId={projectId}
+            taskId={task.id}
+            seedTitle={task.title}
+            seedPriority={task.priority}
+            seedDueDateUtc={task.dueDateUtc}
+          />
+        </div>
 
         <div className="mt-4 flex flex-col gap-1 text-sm font-medium">
           {t("task.watchers")}

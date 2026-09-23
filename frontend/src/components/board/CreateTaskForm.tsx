@@ -5,14 +5,29 @@ import { Field } from "../ui/Field";
 import { Input } from "../ui/Input";
 import { ErrorAlert } from "../ui/ErrorAlert";
 import type { TaskItemResponse } from "../../types/api";
+import {
+  emptyRecurrenceDraft,
+  firstDueIso,
+  RecurrenceFields,
+  type RecurrenceDraft,
+} from "../calendar/RecurrenceFields";
+
+export interface CreateTaskInput {
+  title: string;
+  description: string | null;
+  priority: TaskItemResponse["priority"];
+  dueDateUtc: string | null;
+  /** Present only when the recurrence toggle is on; owner creates the rule
+   *  AFTER the task POST succeeds (rule fail must not roll the task back). */
+  recurrence?: {
+    frequency: RecurrenceDraft["frequency"];
+    interval: number;
+    firstDueDateUtc: string;
+  };
+}
 
 interface CreateTaskFormProps {
-  onCreate: (input: {
-    title: string;
-    description: string | null;
-    priority: TaskItemResponse["priority"];
-    dueDateUtc: string | null;
-  }) => Promise<void>;
+  onCreate: (input: CreateTaskInput) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -23,6 +38,9 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
   const [priority, setPriority] =
     useState<TaskItemResponse["priority"]>("Medium");
   const [dueDate, setDueDate] = useState("");
+  const [recurrence, setRecurrence] = useState<RecurrenceDraft>(() =>
+    emptyRecurrenceDraft(),
+  );
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -35,6 +53,12 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
       return;
     }
 
+    const firstDue = firstDueIso(recurrence);
+    if (recurrence.enabled && !firstDue) {
+      setError(t("task.recurrence.firstDueRequired"));
+      return;
+    }
+
     setSubmitting(true);
     try {
       await onCreate({
@@ -44,11 +68,21 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
         dueDateUtc: dueDate
           ? new Date(`${dueDate}T12:00:00`).toISOString()
           : null,
+        ...(recurrence.enabled && firstDue
+          ? {
+              recurrence: {
+                frequency: recurrence.frequency,
+                interval: recurrence.interval,
+                firstDueDateUtc: firstDue,
+              },
+            }
+          : {}),
       });
       setTitle("");
       setDescription("");
       setPriority("Medium");
       setDueDate("");
+      setRecurrence(emptyRecurrenceDraft());
     } catch (err) {
       setError(
         err instanceof Error ? err.message : t("board.createTaskFailed"),
@@ -98,7 +132,15 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
             id="task-due"
             type="date"
             value={dueDate}
-            onChange={(event) => setDueDate(event.target.value)}
+            onChange={(event) => {
+              setDueDate(event.target.value);
+              // Seed the recurrence first-due from the due date when the
+              // user hasn't typed one yet — one less field for the common case.
+              setRecurrence((prev) => ({
+                ...prev,
+                firstDueDate: prev.firstDueDate || event.target.value,
+              }));
+            }}
           />
         </Field>
       </div>
@@ -111,6 +153,12 @@ export function CreateTaskForm({ onCreate, onCancel }: CreateTaskFormProps) {
           onChange={(event) => setDescription(event.target.value)}
         />
       </Field>
+
+      <RecurrenceFields
+        draft={recurrence}
+        onChange={setRecurrence}
+        idPrefix="create-recurrence"
+      />
 
       <div className="flex gap-2">
         <Button type="submit" disabled={submitting}>
