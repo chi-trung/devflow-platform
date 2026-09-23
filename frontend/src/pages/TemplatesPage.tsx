@@ -25,6 +25,7 @@ export function TemplatesPage() {
   const [creating, setCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<TemplateResponse | null>(null);
   const [applyingId, setApplyingId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState("");
@@ -90,6 +91,9 @@ export function TemplatesPage() {
   }
 
   async function handleApply(templateId: string) {
+    // One apply in flight — a double-click mints a second task from the
+    // same template before setState re-renders the disabled button.
+    if (applyingId) return;
     setApplyingId(templateId);
     try {
       await applyTemplate(workspaceId, projectId, templateId);
@@ -102,15 +106,20 @@ export function TemplatesPage() {
 
   async function handleDelete() {
     const template = pendingDelete;
-    if (!template) return;
     // Close the dialog first: on failure the page error banner renders
-    // behind the open overlay and is never seen.
+    // behind the open overlay and is never seen. Guard against a second
+    // confirm click landing before the unmount — that DELETE 404s as a
+    // "delete failed" right after the row already went away.
+    if (!template || deleting) return;
+    setDeleting(true);
     setPendingDelete(null);
     try {
       await deleteTemplate(workspaceId, projectId, template.id);
       loadTemplates();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("template.deleteFailed"));
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -299,7 +308,7 @@ export function TemplatesPage() {
                   <button
                     type="button"
                     onClick={() => handleApply(template.id)}
-                    disabled={applyingId === template.id}
+                    disabled={applyingId !== null}
                     className="rounded p-1.5 text-muted-foreground transition-colors duration-150 hover:text-foreground disabled:opacity-50"
                     title={t("template.apply")}
                     aria-label={t("template.apply")}

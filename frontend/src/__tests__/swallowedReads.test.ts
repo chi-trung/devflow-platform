@@ -725,40 +725,43 @@ describe("task panel lists stop claiming absence under their own failure", () =>
   });
 });
 
-describe("template card apply/delete hold one click in flight", () => {
-  const card = readFileSync(
-    join(COMPONENTS, "templates", "TemplatesCard.tsx"),
-    "utf8",
-  );
+describe("templates page apply/delete hold one click in flight", () => {
+  const page = source("TemplatesPage");
 
   it("handleApply guards before the task-minting POST", () => {
-    const window = card.slice(
-      card.indexOf("async function handleApply"),
-      card.indexOf("async function handleApply") + 1400,
+    const window = page.slice(
+      page.indexOf("async function handleApply"),
+      page.indexOf("async function handleApply") + 900,
     );
     expect(
       window,
       "apply POSTs /apply (a fresh task per call) with no in-flight guard",
-    ).toMatch(/if \(applyingId\) return;\s*\n\s*setApplyingId\(template\.id\);[\s\S]*await applyTemplate/);
+    ).toMatch(
+      /if \(applyingId\) return;\s*\n\s*setApplyingId\(templateId\);[\s\S]*await applyTemplate/,
+    );
     expect(
-      card,
+      page,
       "apply button lost its disabled wiring",
     ).toMatch(/disabled=\{applyingId !== null\}/);
   });
 
   it("handleDelete guards before the row-deleting DELETE", () => {
-    const window = card.slice(
-      card.indexOf("async function handleDelete"),
-      card.indexOf("async function handleDelete") + 1400,
+    const window = page.slice(
+      page.indexOf("async function handleDelete"),
+      page.indexOf("async function handleDelete") + 900,
     );
     expect(
       window,
-      "a double-click sends a second DELETE for the removed row (404 -> error toast after success)",
-    ).toMatch(/if \(deletingId\) return;\s*\n\s*setDeletingId\(template\.id\);[\s\S]*await deleteTemplate/);
+      "a second confirm click sends a second DELETE (404 -> error toast after success)",
+    ).toMatch(
+      /if \(!template \|\| deleting\) return;\s*\n\s*setDeleting\(true\);[\s\S]*await deleteTemplate/,
+    );
+    // Dialog must still close before await so a failure is not trapped
+    // behind the overlay (wave-13).
     expect(
-      card,
-      "delete button lost its disabled wiring",
-    ).toMatch(/disabled=\{deletingId !== null\}/);
+      window,
+      "delete closes the dialog only after the request — failure hides behind the overlay",
+    ).toMatch(/setDeleting\(true\);\s*\n\s*setPendingDelete\(null\);/);
   });
 });
 
