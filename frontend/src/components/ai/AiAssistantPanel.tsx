@@ -324,6 +324,7 @@ export function AiAssistantPanel({
             projectId={projectId}
             epicId={epicId}
             context={context}
+            open={open}
             onPick={send}
           />
         )}

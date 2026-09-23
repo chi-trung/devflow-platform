@@ -60,7 +60,7 @@ public sealed class AiAssistantController(ISender sender) : ControllerBase
         CancellationToken cancellationToken)
     {
         var suggestions = await sender.Send(
-            new AiSuggestCommand(workspaceId, projectId, request.PageContext, epicId),
+            new AiSuggestCommand(workspaceId, projectId, request.PageContext, epicId, request.ExcludeKeys),
             cancellationToken);
 
         return Ok(suggestions);

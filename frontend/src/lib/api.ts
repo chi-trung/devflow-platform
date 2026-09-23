@@ -2006,6 +2006,7 @@ export async function aiSuggest(
   projectId: string | undefined,
   pageContext: string | undefined,
   epicId?: string | null,
+  excludeKeys?: string[],
 ): Promise<AiSuggestion[]> {
   const params = new URLSearchParams();
   if (projectId) params.set("projectId", projectId);
@@ -2015,7 +2016,10 @@ export async function aiSuggest(
     `/workspaces/${workspaceId}/ai/suggest${query}`,
     {
       method: "POST",
-      body: JSON.stringify({ pageContext: pageContext ?? null }),
+      body: JSON.stringify({
+        pageContext: pageContext ?? null,
+        excludeKeys: excludeKeys?.length ? excludeKeys : null,
+      }),
     },
   );
 }
