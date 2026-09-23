@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, CircleUserRound, LogOut, Settings, UserRound } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
-import { splitEmail } from "../../lib/format";
 import { Avatar } from "../ui/Avatar";
 
 interface UserMenuProps {
@@ -105,12 +104,6 @@ export function UserMenu({
     navigate("/login");
   }
 
-  // Split at "@" so CSS can only ever ellipsize the local part; the domain
-  // renders as its own shrink-0 span and is never what gets clipped.
-  const { local: emailLocal, domain: emailDomain } = splitEmail(
-    currentUser?.email ?? "",
-  );
-
   function goTo(path: string) {
     setOpen(false);
     navigate(path);
@@ -164,27 +157,18 @@ export function UserMenu({
               src={currentUser?.avatarUrl}
             />
             {/* WCAG 1.4.4: the sidebar is fixed-width, so at 200% root
-                font-size these lines ellipsize (e.g. the username clips at
-                ~9 chars). The truncated strings have no other on-screen
-                source, so each carries a title to expose the full text on
+                font-size this line ellipsizes (e.g. the username clips at
+                ~9 chars). The truncated string has no other on-screen
+                source, so it carries a title to expose the full text on
                 hover — the standard remedy for chrome that must truncate.
-                The email is split at "@" so the ellipsis can only land in
-                the local part: the domain (@gmail.com) is shrink-0 and stays
-                fully visible — a plain truncate on the whole address used to
-                render "nguyen.tr…" and hide exactly that. */}
+                Email is intentionally NOT shown here (long Gmail addresses
+                overflowed the navbar); view it in Profile/Settings. */}
             <span className="min-w-0 flex-1 leading-tight">
               <span
                 className="block truncate text-sm font-medium"
                 title={currentUser?.username}
               >
                 {currentUser?.username ?? t("auth.displayName")}
-              </span>
-              <span
-                className="flex min-w-0 font-mono text-[11px] text-muted-foreground"
-                title={currentUser?.email}
-              >
-                <span className="min-w-0 truncate">{emailLocal}</span>
-                <span className="shrink-0">{emailDomain}</span>
               </span>
             </span>
             <ChevronDown
