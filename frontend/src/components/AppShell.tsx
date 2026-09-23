@@ -21,6 +21,7 @@ import {
   Plus,
   Search,
   Settings2,
+  Sparkles,
   Tag,
   Users,
   Webhook as WebhookIcon,
@@ -36,7 +37,7 @@ import { Button } from "./ui/Button";
 import { EmojiTile } from "./ui/EmojiCover";
 import { ErrorAlert } from "./ui/ErrorAlert";
 import { CommandPalette } from "./CommandPalette";
-import { AiDock } from "./ai/AiDock";
+import { AiAssistantPanel } from "./ai/AiAssistantPanel";
 import type { AiPageContext } from "./ai/AiSuggestedPrompts";
 import { ApiStatusDot } from "./user/ApiStatusDot";
 import { ThemeToggle } from "./ui/ThemeToggle";
@@ -47,6 +48,10 @@ import type { ProjectResponse, WorkspaceResponse } from "../types/api";
 const BOARD_PATH_KEY = "devflow.lastBoardPath";
 const SPRINT_PATH_KEY = "devflow.lastSprintPath";
 const SIDEBAR_KEY = "devflow.sidebarCollapsed";
+const SIDEBAR_MODE_KEY = "devflow.sidebarMode";
+
+/** Left-sidebar body: classic nav menus vs the AI assistant panel. */
+type SidebarMode = "nav" | "ai";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
@@ -56,6 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerRef = useRef<HTMLElement>(null);
+  const modeSwitchRef = useRef<HTMLButtonElement>(null);
   // Desktop-only: collapse the sidebar into a narrow icon rail. Remembered
   // across reloads; the mobile drawer is unaffected (see aside className).
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -65,6 +71,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return false;
     }
   });
+  // Body mode under the logo: Nav ↔ AI. Remembered across reloads; default nav.
+  const [sidebarMode, setSidebarMode] = useState<SidebarMode>(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_MODE_KEY) === "ai" ? "ai" : "nav";
+    } catch {
+      return "nav";
+    }
+  });
 
   useEffect(() => {
     try {
@@ -72,11 +86,37 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [collapsed]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_MODE_KEY, sidebarMode);
+    } catch {}
+  }, [sidebarMode]);
+
   // The collapsed rail expands ONLY via the toggle button (setCollapsed).
   // A previous hover-peek (floating the full panel on mouseenter) was removed:
   // resting the pointer is not intent, and users found the rail springing
   // open under the cursor unpredictable. Labels come back on click alone.
-  const railCollapsed = collapsed;
+
+  const workspaceId = location.pathname.match(
+    /^\/workspaces\/([0-9a-f-]{36})/i,
+  )?.[1];
+
+  const projectId = location.pathname.match(
+    /^\/workspaces\/[0-9a-f-]{36}\/projects\/([0-9a-f-]{36})/i,
+  )?.[1];
+
+  // Mode AI is only meaningful inside a workspace (panel needs workspaceId).
+  // Outside those routes force nav so a stale localStorage "ai" can't blank
+  // the sidebar with an unusable panel.
+  useEffect(() => {
+    if (!workspaceId && sidebarMode === "ai") setSidebarMode("nav");
+  }, [workspaceId, sidebarMode]);
+
+  // Mode AI ignores the collapsed preference: both modes share the expanded
+  // width so the body never jumps size when switching Nav ↔ AI.
+  const effectiveMode: SidebarMode = workspaceId ? sidebarMode : "nav";
+  const modeAi = effectiveMode === "ai";
+  const railCollapsed = collapsed && !modeAi;
 
   // Collapsed-rail design system (A33): every clickable becomes a centered
   // 36px square cell so icons, emoji tiles and the avatar share one optical
@@ -91,13 +131,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ? "lg:border-t lg:border-border/60 lg:pt-3"
     : "";
 
-  const workspaceId = location.pathname.match(
-    /^\/workspaces\/([0-9a-f-]{36})/i,
-  )?.[1];
-
-  const projectId = location.pathname.match(
-    /^\/workspaces\/[0-9a-f-]{36}\/projects\/([0-9a-f-]{36})/i,
-  )?.[1];
+  // Focus: open AI → rAF focus composer (panel does this on `open`);
+  // close AI → return focus to the switch so keyboard users aren't stranded.
+  const prevModeAi = useRef(modeAi);
+  useEffect(() => {
+    if (prevModeAi.current === modeAi) return;
+    const closing = prevModeAi.current && !modeAi;
+    prevModeAi.current = modeAi;
+    if (closing) modeSwitchRef.current?.focus();
+  }, [modeAi]);
 
   const pageContext = useMemo((): AiPageContext => {
     if (!workspaceId) return "workspace";
@@ -446,7 +488,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         aria-modal={drawerOpen ? true : undefined}
         aria-label={drawerOpen ? t("ui.menuDialogAria") : undefined}
         className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
-          collapsed ? "lg:w-[72px]" : "lg:w-60"
+          railCollapsed ? "lg:w-[72px]" : "lg:w-60"
         } ${
           drawerOpen
             ? "translate-x-0 transition-transform shadow-[0_24px_80px_rgba(0,0,0,0.7)] lg:shadow-none"
@@ -483,6 +525,64 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
+        {/* Nav ↔ AI body switch — under the logo, same rail cell pattern so
+            the collapsed icon rail stays one optical grid. Disabled outside
+            a workspace (no AI context). */}
+        <div className={`shrink-0 pb-2 ${railCollapsed ? "lg:px-2" : "px-3"}`}>
+          <button
+            ref={modeSwitchRef}
+            type="button"
+            aria-pressed={modeAi}
+            aria-label={modeAi ? t("ai.assistantClose") : t("ai.assistantOpen")}
+            title={t("ai.assistant")}
+            disabled={!workspaceId}
+            onClick={() => {
+              // Entering AI always lands on the expanded width; leaving AI
+              // then stays expanded (no surprise-collapse back to 72px).
+              if (!modeAi) setCollapsed(false);
+              setSidebarMode(modeAi ? "nav" : "ai");
+            }}
+            className={`flex w-full cursor-pointer items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-sm transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-40 ${railCell} ${
+              modeAi
+                ? "border-primary/40 bg-primary/10 text-primary-strong"
+                : "bg-card text-muted-foreground hover:border-border-strong hover:text-foreground"
+            }`}
+          >
+            <Sparkles className={`size-4 shrink-0 ${railIcon}`} aria-hidden />
+            <span className={`${railCollapsed ? "lg:hidden" : ""}`}>
+              {t("ai.assistant")}
+            </span>
+          </button>
+        </div>
+
+        {/* AI body stays mounted whenever a workspace is in scope so chat
+            history/draft survive Nav ↔ AI; `hidden` takes it out of the a11y
+            tree and the tab order while mode is nav. */}
+        {workspaceId && (
+          <div
+            id="sidebar-ai-panel"
+            role="region"
+            aria-label={t("ai.assistant")}
+            aria-hidden={!modeAi}
+            className={
+              modeAi
+                ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+                : "hidden"
+            }
+          >
+            <AiAssistantPanel
+              open={modeAi}
+              onClose={() => setSidebarMode("nav")}
+              workspaceId={workspaceId}
+              projectId={projectId}
+              context={pageContext}
+              variant="dock"
+              onTaskChanged={handleAiTaskChanged}
+            />
+          </div>
+        )}
+
+        {!modeAi && (
         <nav aria-label={t("ui.sidebarNavAria")} className={`flex-1 space-y-6 overflow-y-auto px-3 pb-4 ${railCollapsed ? "lg:space-y-3 lg:px-2" : ""}`}>
           <button
             type="button"
@@ -691,6 +791,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </section>
 
           </nav>
+        )}
 
         <div
           data-tour="sidebar-bottom"
@@ -727,16 +828,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               />
             </div>
           )}
-          <button
-            type="button"
-            aria-label={collapsed ? t("nav.expand") : t("nav.collapse")}
-            title={collapsed ? t("nav.expand") : t("nav.collapse")}
-            onClick={() => setCollapsed((v) => !v)}
-            className={`hidden w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground lg:flex ${railCell}`}
-          >
-            {collapsed ? <PanelLeftOpen className={`size-4 shrink-0 ${railIcon}`} aria-hidden /> : <PanelLeftClose className={`size-4 shrink-0 ${railIcon}`} aria-hidden />}
-            <span className={`${railCollapsed ? "hidden lg:hidden" : ""}`}>{collapsed ? t("nav.expand") : t("nav.collapse")}</span>
-          </button>
+          {/* Collapse only makes sense for the nav body — a 72px AI chat would
+              be unusable, and mode AI already forces the expanded width. */}
+          {!modeAi && (
+            <button
+              type="button"
+              aria-label={collapsed ? t("nav.expand") : t("nav.collapse")}
+              title={collapsed ? t("nav.expand") : t("nav.collapse")}
+              onClick={() => setCollapsed((v) => !v)}
+              className={`hidden w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground lg:flex ${railCell}`}
+            >
+              {collapsed ? <PanelLeftOpen className={`size-4 shrink-0 ${railIcon}`} aria-hidden /> : <PanelLeftClose className={`size-4 shrink-0 ${railIcon}`} aria-hidden />}
+              <span className={`${railCollapsed ? "hidden lg:hidden" : ""}`}>{collapsed ? t("nav.expand") : t("nav.collapse")}</span>
+            </button>
+          )}
         </div>
         </div>
       </aside>
@@ -814,15 +919,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onClose={() => setPaletteOpen(false)}
         workspaceId={workspaceId}
       />
-
-      {workspaceId && (
-        <AiDock
-          workspaceId={workspaceId}
-          projectId={projectId}
-          context={pageContext}
-          onTaskChanged={handleAiTaskChanged}
-        />
-      )}
     </div>
   );
 }

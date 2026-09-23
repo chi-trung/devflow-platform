@@ -24,10 +24,11 @@ interface AiAssistantPanelProps {
   /**
    * chrome:
    * - "floating": fixed card bottom-right (legacy FAB launcher) — the node
-   *   unmounts when `open` is false (AiDock never uses this).
-   * - "dock": full-height right rail — the parent keeps the node mounted and
-   *   toggles visibility with a translate-x slide, so `if (!open) return null`
-   *   must not run for dock mode (the transition would never fire).
+   *   unmounts when `open` is false (sidebar dock never uses this).
+   * - "dock": full-height body inside the left sidebar (Nav ↔ AI switch) —
+   *   the parent keeps the node mounted and toggles visibility, so
+   *   `if (!open) return null` must not run for dock mode (chat history
+   *   and the open transition both depend on staying mounted).
    */
   variant?: "floating" | "dock";
   /** Called after AI actions have been executed (e.g. a task was created) so
@@ -69,15 +70,20 @@ export function AiAssistantPanel({
 
   useEffect(() => {
     if (open) {
-      setMessages([]);
-      setDraft("");
+      // Floating unmounts while closed, so each open is a fresh session.
+      // Dock/sidebar stays mounted across Nav↔AI switches to keep chat
+      // history — wiping here would defeat that.
+      if (variant === "floating") {
+        setMessages([]);
+        setDraft("");
+      }
       // Let the panel mount before focusing so the animation does not swallow it.
       requestAnimationFrame(() => {
         inputRef.current?.focus();
         autoGrowComposer();
       });
     }
-  }, [open]);
+  }, [open, variant]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -235,8 +241,9 @@ export function AiAssistantPanel({
       role="dialog"
       aria-label={t("ai.assistant")}
       className={
+        // dock = fills the sidebar body (aside already carries border-r).
         variant === "dock"
-          ? "flex h-full w-full flex-col overflow-hidden border-l border-border bg-card"
+          ? "flex h-full w-full flex-col overflow-hidden bg-card"
           : "flex h-[min(70dvh,26rem)] w-[min(92vw,26rem)] flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_24px_80px_rgba(0,0,0,0.5)] rise"
       }
     >
