@@ -2,11 +2,12 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-// TaskDetailPanel is mounted as a modal overlay while BoardPage re-renders on
-// every keystroke. Before the memo it re-ran its full body per keystroke --
-// an 1100-line component with ~33 hooks, several effects, comment/attachment
-// lists, and a DoD split + regex filter on every render. Memoising it only
-// holds if every prop reaching it is stable, so the fix is a PAIR:
+// TaskDetailPanel is mounted inside TaskDetailPage while other state on the
+// page (members/sprints still resolving, Escape nav) can re-render the shell.
+// Before the memo it re-ran its full body per keystroke -- an 1100-line
+// component with ~33 hooks, several effects, comment/attachment lists, and a
+// DoD split + regex filter on every render. Memoising it only holds if every
+// prop reaching it is stable, so the fix is a PAIR:
 //  1. memo on the component;
 //  2. stable identity for every prop the call site passes.
 //
@@ -18,7 +19,7 @@ import { join } from "node:path";
 const PAGES = join(__dirname, "..", "pages");
 
 function source(): string {
-  return readFileSync(join(PAGES, "BoardPage.tsx"), "utf8");
+  return readFileSync(join(PAGES, "TaskDetailPage.tsx"), "utf8");
 }
 
 /** The JSX element for the panel, plus its props. */
@@ -30,7 +31,7 @@ function panelCallSite(content: string): string {
   return content.slice(start, end + 2);
 }
 
-describe("BoardPage hands TaskDetailPanel stable props", () => {
+describe("TaskDetailPage hands TaskDetailPanel stable props", () => {
   const content = source();
 
   it("memoises the sprint list instead of filtering at the render site", () => {
@@ -77,14 +78,14 @@ describe("BoardPage hands TaskDetailPanel stable props", () => {
     // Inline arrows are a fresh function identity every render.
     expect(site).not.toMatch(/onClose=\{\(\) =>/);
     expect(site).not.toMatch(/onTaskChanged=\{\(\) =>/);
-    expect(site).toMatch(/onClose=\{closeDetailPanel\}/);
+    expect(site).toMatch(/onClose=\{back\}/);
     expect(site).toMatch(/onTaskChanged=\{handleTaskChanged\}/);
   });
 
   it("keeps the panel handlers in useCallback", () => {
     // The named handlers the call site references must themselves be
     // stable, or the two guards above pass while the memo still releases.
-    for (const name of ["closeDetailPanel", "handleTaskChanged"]) {
+    for (const name of ["back", "handleTaskChanged"]) {
       const decl = content.indexOf(`const ${name} = useCallback(`);
       expect(decl, `${name} must be a useCallback`).toBeGreaterThan(-1);
     }

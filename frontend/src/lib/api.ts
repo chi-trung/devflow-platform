@@ -1309,6 +1309,16 @@ export async function deleteLabel(
   );
 }
 
+export function getTask(
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+): Promise<TaskItemResponse> {
+  return api<TaskItemResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}`,
+  );
+}
+
 export function getTaskDependencies(
   workspaceId: string,
   projectId: string,

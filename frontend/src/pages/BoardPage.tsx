@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Link,
+  useNavigate,
   useParams,
   useSearchParams,
 } from "react-router-dom";
@@ -49,7 +50,6 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { EmptyBoardIllustration } from "../components/illustrations/EmptyStateIllustrations";
 import { Column } from "../components/board/Column";
 import { CreateTaskForm } from "../components/board/CreateTaskForm";
-import { TaskDetailPanel } from "../components/board/TaskDetailPanel";
 import { SprintBar } from "../components/board/SprintBar";
 import { ActivityDrawer } from "../components/board/ActivityDrawer";
 import { FilterBar } from "../components/board/FilterBar";
@@ -177,6 +177,7 @@ export function BoardPage() {
   const { t } = useTranslation();
   const COLUMNS = getColumns(t);
   const { workspaceId = "", projectId = "" } = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // Declared before the hooks that consume them in deps/fetchers.
   const [activityOpen, setActivityOpen] = useState(false);
@@ -359,7 +360,6 @@ export function BoardPage() {
   const [boardError, setBoardError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [sprintFilter, setSprintFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [assigneeFilter, setAssigneeFilter] = useState("");
@@ -382,8 +382,6 @@ export function BoardPage() {
   const [swimlaneMode, setSwimlaneMode] = useState<"none" | "assignee" | "epic">("none");
   const { currentUser } = useAuth();
   const { push } = useToast();
-
-  const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null;
 
   const myRole = members?.find((m) => m.userId === currentUser?.id)?.role;
   const canManageSprints = myRole === "Owner" || myRole === "Admin";
@@ -589,14 +587,6 @@ export function BoardPage() {
     return byStatus;
   }, [pagedTasks]);
 
-  // TaskDetailPanel is memoised; its sprint dropdown reads this list, so an
-  // inline `(sprints ?? []).filter(...)` at the render site would hand it a
-  // fresh array every render and re-run the whole panel body per keystroke.
-  const panelSprints = useMemo(
-    () => (sprints ?? []).filter((s) => s.status !== "Completed"),
-    [sprints],
-  );
-
   useEffect(() => {
     setPage(1);
   }, [sprintFilter, search, priorityFilter, assigneeFilter, labelFilter, prFilter, dueFrom, dueTo, blockedOnly]);
@@ -625,20 +615,24 @@ export function BoardPage() {
     }
   }, [deepLinkPriority, setSearchParams]);
 
+  // Card / deep-link / graph selection all land on the full-page detail
+  // route. Deep links redirect immediately — the page self-fetches by id,
+  // so waiting for the board's filtered `tasks` list would just delay the
+  // navigation (and 404 a task that is filtered out of the current view).
+  const openTask = useCallback(
+    (taskId: string) => {
+      navigate(`/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}`);
+    },
+    [workspaceId, projectId, navigate],
+  );
+
   useEffect(() => {
     if (!deepLinkTaskId) return;
-    if (tasks.some((task) => task.id === deepLinkTaskId)) {
-      setSelectedTaskId(deepLinkTaskId);
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          next.delete("task");
-          return next;
-        },
-        { replace: true },
-      );
-    }
-  }, [deepLinkTaskId, tasks, setSearchParams]);
+    navigate(
+      `/workspaces/${workspaceId}/projects/${projectId}/tasks/${deepLinkTaskId}`,
+      { replace: true },
+    );
+  }, [deepLinkTaskId, workspaceId, projectId, navigate]);
 
   // Saved-search handoff from the command palette (?fs=<json>). The palette
   // targets lastBoardPath first, so when the user is ALREADY on this board
@@ -696,15 +690,12 @@ export function BoardPage() {
         target &&
         target.closest("input, textarea, select, [contenteditable=true]")
       ) {
-        // Typing in a field must not fire shortcuts. The exception is
-        // Escape while the detail drawer is open: its title and comment
-        // fields live inside the dialog, and closing the dialog has to
-        // stay reachable from them.
-        if (!(event.key === "Escape" && selectedTaskId)) return;
+        // Typing in a field must not fire shortcuts.
+        return;
       }
 
       if ((event.ctrlKey || event.metaKey) && !event.altKey) {
-        if (event.key.toLowerCase() === "a" && !selectedTaskId) {
+        if (event.key.toLowerCase() === "a") {
           event.preventDefault();
           setSelectedIds(new Set(visibleTasks.map((t) => t.id)));
         }
@@ -714,7 +705,7 @@ export function BoardPage() {
       switch (event.key) {
         case "n":
           if (!areCharacterShortcutsEnabled()) break;
-          if (!creating && !selectedTaskId && !graphOpen && !helpOpen)
+          if (!creating && !graphOpen && !helpOpen)
             setCreating(true);
           break;
         case "/":
@@ -732,7 +723,7 @@ export function BoardPage() {
           break;
         case "Delete":
         case "Backspace":
-          if (selectedIds.size > 0 && !selectedTaskId) {
+          if (selectedIds.size > 0) {
             event.preventDefault();
             setConfirmBulkDelete(true);
           }
@@ -741,13 +732,9 @@ export function BoardPage() {
           if (graphOpen) setGraphOpen(false);
           else if (helpOpen) setHelpOpen(false);
           else if (confirmBulkDelete) setConfirmBulkDelete(false);
-          // The activity drawer renders above the detail drawer, so while
-          // both are open it takes the keystroke first.
+          // The activity drawer used to sit above the detail drawer; with
+          // detail now a route, it only has to beat selection-clearing.
           else if (activityOpen) setActivityOpen(false);
-          // The open drawer is the topmost focused surface when no modal is
-          // up, so it closes before the selection-clearing branch can eat
-          // the keystroke.
-          else if (selectedTaskId) setSelectedTaskId(null);
           else if (selectedIds.size > 0) setSelectedIds(new Set());
           break;
       }
@@ -756,7 +743,6 @@ export function BoardPage() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [
     creating,
-    selectedTaskId,
     selectedIds,
     graphOpen,
     helpOpen,
@@ -821,24 +807,9 @@ export function BoardPage() {
     [handleSelectAllInColumn],
   );
 
-  // Stable identities: TaskDetailPanel is memoised and takes these as props.
-  // An inline arrow at the render site is a fresh function every render, so
-  // the memo would hold for no keystroke. The setState updater closes over
-  // nothing that changes, and reload/reloadSprints come from useApi (stable).
-  const closeDetailPanel = useCallback(() => {
-    setSelectedTaskId(null);
-  }, []);
-
-  const handleTaskChanged = useCallback(() => {
-    reload();
-    reloadSprints();
-  }, [reload, reloadSprints]);
-
   // Stable identity: SprintBar is memoised and takes this as its post-mutation
   // handler. An inline arrow at the render site is a fresh function every
-  // render, so the memo would hold for no keystroke. This is the same pair as
-  // handleTaskChanged — both reload the task list and the sprint list — but
-  // SprintBar's contract is "a sprint changed", so it keeps its own name.
+  // render, so the memo would hold for no keystroke.
   const handleSprintChanged = useCallback(() => {
     reloadSprints();
     reload();
@@ -1477,7 +1448,7 @@ export function BoardPage() {
                     blockedTaskIds={blockedTaskIds}
                     onDropTask={handleDropTask}
                     onDelete={setPendingDelete}
-                    onSelect={setSelectedTaskId}
+                    onSelect={openTask}
                     selectionMode={selectedIds.size > 0}
                     selectedIds={selectedIds}
                     onToggleSelect={toggleSelect}
@@ -1640,7 +1611,7 @@ export function BoardPage() {
           tasks={tasks}
           workspaceId={workspaceId}
           projectId={projectId}
-          onSelectTask={setSelectedTaskId}
+          onSelectTask={openTask}
           onClose={() => setGraphOpen(false)}
           onDependencyChanged={() => {
             reload();
@@ -1662,20 +1633,6 @@ export function BoardPage() {
             reloadSprints();
           }}
           isAdmin={isAdmin}
-        />
-      )}
-
-      {selectedTask && (
-        <TaskDetailPanel
-          task={selectedTask}
-          currentUser={currentUser}
-          members={members ?? EMPTY_MEMBERS}
-          sprints={panelSprints}
-          allTasks={tasks}
-          workspaceId={workspaceId}
-          projectId={projectId}
-          onClose={closeDetailPanel}
-          onTaskChanged={handleTaskChanged}
         />
       )}
 

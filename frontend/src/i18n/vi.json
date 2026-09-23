@@ -875,7 +875,10 @@
  "taskDetail": {
   "customFields": "Trường tùy chỉnh",
   "noCustomFields": "Chưa có giá trị trường tùy chỉnh nào cho task này.",
-  "customFieldsLoadFailed": "Không tải được giá trị các trường tùy chỉnh."
+  "customFieldsLoadFailed": "Không tải được giá trị các trường tùy chỉnh.",
+  "backToBoard": "Quay lại bảng",
+  "details": "Chi tiết",
+  "taskLoadFailed": "Không tải được task này."
  },
  "timeTracking": {
   "timeTracking": "Theo dõi thời gian",

@@ -1,6 +1,6 @@
 import { memo, useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { X, Paperclip, Download, Trash2, BookmarkPlus, Eye, RefreshCw, CheckSquare, Square } from "lucide-react";
+import { Paperclip, Download, Trash2, BookmarkPlus, Eye, RefreshCw, CheckSquare, Square } from "lucide-react";
 import { api, API_BASE, createTemplate, tokens, isWatchingTask, watchTask, unwatchTask, uploadTaskAttachment, getTaskWatchers, pagedItems } from "../../lib/api";
 import { AttachmentRowThumb } from "./AttachmentThumbnails";
 import { Button } from "../ui/Button";
@@ -8,7 +8,6 @@ import { ErrorAlert } from "../ui/ErrorAlert";
 import { Avatar } from "../ui/Avatar";
 import { Skeleton } from "../ui/Skeleton";
 import { useToast } from "../ui/ToastProvider";
-import { useFocusTrap } from "../../hooks/useFocusTrap";
 import type {
   CommentResponse,
   SprintResponse,
@@ -60,6 +59,23 @@ interface TaskDetailPanelProps {
   onClose: () => void;
   onTaskChanged: () => void;
 }
+
+const STATUS_LABEL_KEYS: Record<TaskItemResponse["status"], string> = {
+  Idea: "board.idea",
+  Planning: "board.planning",
+  Approval: "board.approval",
+  Ready: "board.ready",
+  InProgress: "board.inProgress",
+  Review: "board.review",
+  Done: "board.done",
+};
+
+const PRIORITY_LABEL_KEYS: Record<TaskItemResponse["priority"], string> = {
+  Low: "task.low",
+  Medium: "task.medium",
+  High: "task.high",
+  Critical: "task.critical",
+};
 
 /**
  * Definition of Done field — a textarea that doubles as a rendered checklist.
@@ -148,17 +164,19 @@ export const TaskDetailPanel = memo(function TaskDetailPanel({
   allTasks,
   workspaceId,
   projectId,
-  onClose,
   onTaskChanged,
 }: TaskDetailPanelProps) {
+  // `onClose` stays on the props interface (page passes a stable `back`) so
+  // the call-site shape — and the memo guards — don't change; the page owns
+  // the Back link, so the panel itself never reads it (noUnusedLocals).
   __renders++;
   const { t } = useTranslation();
-  // While open the panel is a modal: focus lands inside, Tab cycles its
-  // controls without leaking to the board cards behind the overlay, and
-  // closing hands focus back to the card that opened it.
-  const { ref: dialogRef, onKeyDown: trapTab } = useFocusTrap<HTMLDivElement>(true);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
+  // Read-mode is the default so the body reads like a post, not a form.
+  // Edit binds the same `description` state the dirty/PATCH logic already
+  // tracks; exiting edit after a successful save is handled below.
+  const [editingDescription, setEditingDescription] = useState(false);
   const [definitionOfDone, setDefinitionOfDone] = useState(
     task.definitionOfDone ?? "",
   );
@@ -214,6 +232,9 @@ export const TaskDetailPanel = memo(function TaskDetailPanel({
     setPriority(task.priority);
     setAssigneeId(task.assigneeId);
     setDetailError(null);
+    // A task re-sync (onTaskChanged reload) re-bases the body — leave edit
+    // mode so the fresh server value isn't shown under a live textarea.
+    setEditingDescription(false);
   }, [
     task.id,
     task.title,
@@ -520,6 +541,9 @@ export const TaskDetailPanel = memo(function TaskDetailPanel({
       );
       onTaskChanged();
       push(t("task.taskUpdated"));
+      // Description read-mode is the default; a successful PATCH re-bases
+      // the body, so leave edit and show the saved post body again.
+      setEditingDescription(false);
     } catch (err) {
       setDetailError(
         err instanceof Error ? err.message : t("board.updateFailed"),
@@ -580,6 +604,17 @@ export const TaskDetailPanel = memo(function TaskDetailPanel({
     status !== task.status ||
     priority !== task.priority ||
     assigneeId !== task.assigneeId;
+
+  // Meta chips read local state so they mirror unsaved edits the same way
+  // the Details selects do — no extra fetch.
+  const assignee =
+    assigneeId !== null
+      ? (members.find((m) => m.userId === assigneeId) ?? null)
+      : null;
+  const currentSprint =
+    task.sprintId !== null
+      ? (sprints.find((s) => s.id === task.sprintId) ?? null)
+      : null;
 
   const [savingTemplate, setSavingTemplate] = useState(false);
   async function saveAsTemplate() {
@@ -646,496 +681,537 @@ export const TaskDetailPanel = memo(function TaskDetailPanel({
   }
 
   return (
-    <div
-      ref={dialogRef}
-      // z-50 like every other dialog in the app: the mobile bottom nav is
-      // z-40 and paints later, so a z-40 here left the comment form's Send
-      // button fully obscured at 375x720 (WCAG 2.4.10).
-      className="fixed inset-0 z-50"
-      role="dialog"
-      aria-modal="true"
-      aria-label={t("board.detailsAria")}
-      onKeyDown={trapTab}
-    >
-      <button
-        type="button"
-        aria-label={t("board.closePanelAria")}
-        onClick={onClose}
-        tabIndex={-1}
-        className="absolute inset-0 cursor-default bg-foreground/20"
-      />
-
-      <aside className="absolute inset-y-0 right-0 flex w-full max-w-3xl flex-col border-l border-border bg-surface shadow-[0_0_60px_rgba(0,0,0,0.5)]">
-        <header className="flex items-start justify-between gap-3 border-b border-border p-4">
-          <div className="min-w-0 flex-1">
-            {task.key && task.key !== "—" && (
-              <div className="mb-1 px-2">
-                <button
-                  type="button"
-                  onClick={() => void navigator.clipboard.writeText(task.key).catch(() => {})}
-                  title={t("task.copyKey")}
-                  className="rounded bg-elevated px-1.5 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground transition-colors duration-150 hover:text-foreground"
-                >
-                  {task.key}
-                </button>
-              </div>
-            )}
+    // Page-flow article (no modal/fixed/z-50): the route shell owns the
+    // Back link and AppShell owns scroll + document.title mirror. The
+    // sr-only title span inside <h1> is load-bearing — an <input> value
+    // never lands in textContent, so without it the tab title goes stale.
+    <article className="flex flex-col gap-4">
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          {task.key && task.key !== "—" && (
+            <div className="mb-1">
+              <button
+                type="button"
+                onClick={() => void navigator.clipboard.writeText(task.key).catch(() => {})}
+                title={t("task.copyKey")}
+                className="rounded bg-elevated px-1.5 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground transition-colors duration-150 hover:text-foreground"
+              >
+                {task.key}
+              </button>
+            </div>
+          )}
+          <h1 className="m-0">
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               aria-label={t("board.titleAria")}
-              className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 font-display text-base font-semibold leading-snug transition-colors duration-200 hover:border-border focus:border-primary focus:bg-surface focus:outline-none"
+              className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 font-display text-2xl font-semibold leading-snug tracking-tight transition-colors duration-200 hover:border-border focus:border-primary focus:bg-surface focus:outline-none"
             />
-          </div>
-          <button
-            type="button"
-            onClick={() => void saveAsTemplate()}
-            disabled={savingTemplate}
-            aria-label={t("board.saveTemplateAria")}
-            title={t("board.saveTemplateTitle")}
-            className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-primary"
-          >
-            <BookmarkPlus className="size-4" aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={() => void toggleWatch()}
-            disabled={watchingLoading || watchingUnknown}
-            aria-label={watchingUnknown ? t("task.watchUnknownAria") : watching ? t("task.unwatchAria") : t("task.watchAria")}
-            title={watchingUnknown ? t("task.watchUnknown") : watching ? t("task.unwatch") : t("task.watch")}
-            className={`rounded p-1 transition-colors duration-150 ${
-              watchingUnknown
-                ? "text-muted-foreground/60"
-                : watching
-                  ? "text-primary hover:text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Eye className="size-4" aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t("board.closeAria")}
-            className="rounded p-1 text-muted-foreground hover:text-foreground"
-          >
-            <X className="size-4" aria-hidden />
-          </button>
-        </header>
+            <span className="sr-only">{title}</span>
+          </h1>
+        </div>
+        <button
+          type="button"
+          onClick={() => void saveAsTemplate()}
+          disabled={savingTemplate}
+          aria-label={t("board.saveTemplateAria")}
+          title={t("board.saveTemplateTitle")}
+          className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:text-primary"
+        >
+          <BookmarkPlus className="size-4" aria-hidden />
+        </button>
+        <button
+          type="button"
+          onClick={() => void toggleWatch()}
+          disabled={watchingLoading || watchingUnknown}
+          aria-label={watchingUnknown ? t("task.watchUnknownAria") : watching ? t("task.unwatchAria") : t("task.watchAria")}
+          title={watchingUnknown ? t("task.watchUnknown") : watching ? t("task.unwatch") : t("task.watch")}
+          className={`rounded p-1 transition-colors duration-150 ${
+            watchingUnknown
+              ? "text-muted-foreground/60"
+              : watching
+                ? "text-primary hover:text-primary"
+                : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Eye className="size-4" aria-hidden />
+        </button>
+      </header>
 
-        <div className="flex flex-1 flex-col overflow-y-auto">
-          {detailError && (
-            <div className="p-4 pb-0">
-              <ErrorAlert message={detailError} />
+      {/* Meta chips — display-only summary of the local edit state. */}
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <span className="rounded-full border border-border bg-card px-2.5 py-1 font-medium text-muted-foreground">
+          {t(STATUS_LABEL_KEYS[status])}
+        </span>
+        <span className="rounded-full border border-border bg-card px-2.5 py-1 font-medium text-muted-foreground">
+          {t(PRIORITY_LABEL_KEYS[priority])}
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 font-medium text-muted-foreground">
+          {assignee ? (
+            <>
+              <Avatar
+                name={assignee.displayName || assignee.username}
+                id={assignee.userId}
+                size="sm"
+              />
+              {assignee.displayName || assignee.username}
+            </>
+          ) : (
+            t("task.unassigned")
+          )}
+        </span>
+        {dueDate && (
+          <span className="rounded-full border border-border bg-card px-2.5 py-1 font-medium text-muted-foreground">
+            {dueDate}
+          </span>
+        )}
+        {currentSprint && (
+          <span className="rounded-full border border-border bg-card px-2.5 py-1 font-medium text-muted-foreground">
+            {currentSprint.name}
+          </span>
+        )}
+      </div>
+
+      {detailError && <ErrorAlert message={detailError} />}
+
+      {/* ── Details card: field editors (was the right rail) ── */}
+      <section className="rounded-lg border border-border bg-card p-4">
+        <h2 className="mb-3 text-sm font-semibold">{t("taskDetail.details")}</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            {t("task.status")}
+            <select
+              value={status}
+              onChange={(event) =>
+                setStatus(event.target.value as TaskItemResponse["status"])
+              }
+              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            >
+              <option value="Idea">{t("board.idea")}</option>
+              <option value="Planning">{t("board.planning")}</option>
+              <option value="Approval">{t("board.approval")}</option>
+              <option value="Ready">{t("board.ready")}</option>
+              <option value="InProgress">{t("board.inProgress")}</option>
+              <option value="Review">{t("board.review")}</option>
+              <option value="Done">{t("board.done")}</option>
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            {t("task.priority")}
+            <select
+              value={priority}
+              onChange={(event) =>
+                setPriority(event.target.value as TaskItemResponse["priority"])
+              }
+              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            >
+              <option value="Low">{t("task.low")}</option>
+              <option value="Medium">{t("task.medium")}</option>
+              <option value="High">{t("task.high")}</option>
+              <option value="Critical">{t("task.critical")}</option>
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            {t("task.assignee")}
+            <select
+              value={assigneeId ?? ""}
+              onChange={(event) =>
+                setAssigneeId(event.target.value === "" ? null : event.target.value)
+              }
+              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            >
+              <option value="">{t("task.unassigned")}</option>
+              {members.map((member) => (
+                <option key={member.userId} value={member.userId}>
+                  {member.displayName || member.username}
+                  {member.role !== "Member" ? ` (${member.role})` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            {t("task.sprint")}
+            <select
+              value={task.sprintId ?? ""}
+              onChange={(event) =>
+                void changeSprint(event.target.value === "" ? null : event.target.value)
+              }
+              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            >
+              <option value="">{t("task.noSprint")}</option>
+              {sprints.map((sprint) => (
+                <option key={sprint.id} value={sprint.id}>
+                  {sprint.name}
+                  {sprint.status === "Active" ? ` (${t("sprint.active")})` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            {t("task.dueDate")}
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(event) => setDueDate(event.target.value)}
+              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            />
+          </label>
+        </div>
+
+        {dirty && (
+          <div className="mt-3">
+            <Button onClick={() => void saveChanges()} disabled={saving}>
+              {saving ? t("task.saving") : t("task.saveChanges")}
+            </Button>
+          </div>
+        )}
+
+        <div className="mt-4 flex flex-col gap-1 text-sm font-medium">
+          {t("task.watchers")}
+          {watchersLoading ? (
+            <p className="text-xs text-muted-foreground">{t("task.loading")}</p>
+          ) : watchersError ? (
+            <p role="alert" className="text-xs text-destructive">{t("task.watchersLoadFailed")}</p>
+          ) : watchers.length === 0 ? (
+            <p className="text-xs text-muted-foreground">{t("task.noWatchers")}</p>
+          ) : (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {watchers.map((watcher) => (
+                <div
+                  key={watcher.userId}
+                  className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-card px-2 py-1 text-xs"
+                >
+                  <Avatar
+                    name={watcher.displayName || watcher.username}
+                    id={watcher.userId}
+                    size="sm"
+                  />
+                  <span className="truncate font-medium text-foreground">
+                    {watcher.displayName || watcher.username}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
+        </div>
 
-          <div className="flex flex-1 flex-col lg:flex-row">
-          {/* ── Main column (description, advanced sections, comments) ── */}
-          <div className="flex min-w-0 flex-1 flex-col gap-4 p-4">
-            <label className="flex flex-col gap-1 text-sm font-medium">
-              {t("task.description")}
-              <textarea
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                rows={3}
-                placeholder={t("task.addDetail")}
-                className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
-              />
-            </label>
-
-            {/* Advanced sections collapse to one-line rows so description +
-                comments stay the visual anchors of the panel. Bodies render
-                lazily (see CollapsibleSection) so collapsed sections don't
-                fetch their data. */}
-            <CollapsibleSection title={t("board.definitionOfDone")} hint={<DoDMeta value={definitionOfDone} />}>
-              <DefinitionOfDoneField
-                value={definitionOfDone}
-                onChange={setDefinitionOfDone}
-              />
-            </CollapsibleSection>
-
-            <CollapsibleSection title={t("dependency.blockedBy")}>
-              <DependencySection
-                workspaceId={workspaceId}
-                projectId={projectId}
-                task={task}
-                allTasks={allTasks}
-                onChanged={onTaskChanged}
-              />
-            </CollapsibleSection>
-
-            <CollapsibleSection title={t("subtask.subtasks")}>
-              <SubtaskSection
-                workspaceId={workspaceId}
-                projectId={projectId}
-                task={task}
-                onChanged={onTaskChanged}
-              />
-            </CollapsibleSection>
-
-            <CollapsibleSection title={t("taskDetail.customFields")}>
-              <CustomFieldsSection
-                workspaceId={workspaceId}
-                projectId={projectId}
-                taskId={task.id}
-              />
-            </CollapsibleSection>
-
-            <CollapsibleSection title={t("timeTracking.timeTracking")}>
-              <TimeTrackingSection
-                workspaceId={workspaceId}
-                projectId={projectId}
-                task={task}
-                members={members}
-                onChanged={onTaskChanged}
-              />
-            </CollapsibleSection>
-
-            <CollapsibleSection title={t("github.linkedPrs")}>
-              <TaskPullRequests
-                workspaceId={workspaceId}
-                projectId={projectId}
-                taskId={task.id}
-              />
-            </CollapsibleSection>
-
-            <CollapsibleSection title={t("ai.aiPlanner")}>
-              <AiPlanPanel
-                workspaceId={workspaceId}
-                projectId={projectId}
-                taskId={task.id}
-                onChanged={onTaskChanged}
-              />
-            </CollapsibleSection>
-
-            {/* ── Comments ── */}
-            <section className="flex min-h-0 flex-1 flex-col">
-              <h3 className="mb-2 text-sm font-medium">
-                {t("task.comments")}{" "}
-                <span className="font-mono text-xs text-muted-foreground">
-                  ({comments.length})
-                </span>
-              </h3>
-
-              {commentError && (
-                <div className="mb-2">
-                  <ErrorAlert message={commentError} />
-                </div>
-              )}
-
-              <div className="flex flex-col gap-2">
-                {commentsLoading ? (
-                  <div className="space-y-2">
-                    {[0, 1, 2].map((i) => (
-                      <Skeleton key={i} className="h-16 w-full rounded-lg" />
-                    ))}
-                  </div>
-                ) : comments.length === 0 && !commentError ? (
-                  // Same gate EpicsPage ships: when the comments fetch failed
-                  // the list is still [] (the catch never clears data it never
-                  // got), and "No comments yet" under the error banner states
-                  // an absence that was never observed.
-                  <p className="text-sm text-muted-foreground">
-                    {t("task.noComments")}
-                  </p>
-                ) : (
-                  comments.map((comment) => {
-                    const mine = currentUser?.id === comment.authorId;
-                    const author = members.find(
-                      (m) => m.userId === comment.authorId,
-                    );
-                    return (
-                      <article
-                        key={comment.id}
-                        className="rounded-lg border border-border bg-card p-3"
-                      >
-                        <div className="mb-1 flex items-center justify-between gap-2">
-                          <span className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
-                            {mine ? (
-                              t("task.you")
-                            ) : author ? (
-                              <span className="flex items-center gap-1.5">
-                                <Avatar
-                                  name={author.displayName || author.username}
-                                  id={author.userId}
-                                />
-                                {author.displayName || author.username}
-                              </span>
-                            ) : (
-                              comment.authorId.slice(0, 8)
-                            )}
-                            {" · "}
-                            {new Date(comment.createdAtUtc).toLocaleString()}
-                          </span>
-                          {mine && (
-                            <button
-                              type="button"
-                              onClick={() => void deleteComment(comment)}
-                              disabled={deletingCommentId !== null}
-                              aria-label={t("task.deleteComment")}
-                              className="text-xs text-muted-foreground hover:text-destructive disabled:opacity-40"
-                            >
-                              {t("task.deleteComment")}
-                            </button>
-                          )}
-                        </div>
-                        <p className="whitespace-pre-wrap text-sm">
-                          {comment.content}
-                        </p>
-                      </article>
-                    );
-                  })
-                )}
-              </div>
-            </section>
-          </div>
-
-          {/* ── Sidebar (status, fields, save, attachments) ── */}
-          <div className="flex flex-col gap-4 border-t border-border p-4 lg:w-72 lg:shrink-0 lg:border-l lg:border-t-0">
-            <div className="grid grid-cols-2 gap-3">
-              <label className="flex flex-col gap-1 text-sm font-medium">
-                {t("task.status")}
-                <select
-                  value={status}
-                  onChange={(event) =>
-                    setStatus(event.target.value as TaskItemResponse["status"])
-                  }
-                  className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
-                >
-                  <option value="Idea">{t("board.idea")}</option>
-                  <option value="Planning">{t("board.planning")}</option>
-                  <option value="Approval">{t("board.approval")}</option>
-                  <option value="Ready">{t("board.ready")}</option>
-                  <option value="InProgress">{t("board.inProgress")}</option>
-                  <option value="Review">{t("board.review")}</option>
-                  <option value="Done">{t("board.done")}</option>
-                </select>
-              </label>
-
-              <label className="flex flex-col gap-1 text-sm font-medium">
-                {t("task.priority")}
-                <select
-                  value={priority}
-                  onChange={(event) =>
-                    setPriority(event.target.value as TaskItemResponse["priority"])
-                  }
-                  className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
-                >
-                  <option value="Low">{t("task.low")}</option>
-                  <option value="Medium">{t("task.medium")}</option>
-                  <option value="High">{t("task.high")}</option>
-                  <option value="Critical">{t("task.critical")}</option>
-                </select>
-              </label>
-            </div>
-
-            <label className="flex flex-col gap-1 text-sm font-medium">
-              {t("task.assignee")}
-              <select
-                value={assigneeId ?? ""}
-                onChange={(event) =>
-                  setAssigneeId(event.target.value === "" ? null : event.target.value)
-                }
-                className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
-              >
-                <option value="">{t("task.unassigned")}</option>
-                {members.map((member) => (
-                  <option key={member.userId} value={member.userId}>
-                    {member.displayName || member.username}
-                    {member.role !== "Member" ? ` (${member.role})` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-sm font-medium">
-              {t("task.sprint")}
-              <select
-                value={task.sprintId ?? ""}
-                onChange={(event) =>
-                  void changeSprint(event.target.value === "" ? null : event.target.value)
-                }
-                className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
-              >
-                <option value="">{t("task.noSprint")}</option>
-                {sprints.map((sprint) => (
-                  <option key={sprint.id} value={sprint.id}>
-                    {sprint.name}
-                    {sprint.status === "Active" ? ` (${t("sprint.active")})` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-sm font-medium">
-              {t("task.dueDate")}
+        {/* ── Attachments ── */}
+        <section className="mt-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium flex items-center gap-1.5">
+              <Paperclip className="size-4 text-muted-foreground" aria-hidden />
+              {t("task.attachments")}{" "}
+              <span className="font-mono text-xs text-muted-foreground">
+                ({attachments.length})
+              </span>
+            </h3>
+            <label className="cursor-pointer text-xs font-medium text-primary hover:underline">
+              {uploading ? t("task.uploading") : t("task.addFile")}
               <input
-                type="date"
-                value={dueDate}
-                onChange={(event) => setDueDate(event.target.value)}
-                className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+                type="file"
+                onChange={uploadFile}
+                disabled={uploading}
+                className="hidden"
               />
             </label>
+          </div>
 
-            {dirty && (
-              <Button onClick={() => void saveChanges()} disabled={saving}>
-                {saving ? t("task.saving") : t("task.saveChanges")}
-              </Button>
-            )}
-
-            <div className="flex flex-col gap-1 text-sm font-medium">
-              {t("task.watchers")}
-              {watchersLoading ? (
-                <p className="text-xs text-muted-foreground">{t("task.loading")}</p>
-              ) : watchersError ? (
-                <p role="alert" className="text-xs text-destructive">{t("task.watchersLoadFailed")}</p>
-              ) : watchers.length === 0 ? (
-                <p className="text-xs text-muted-foreground">{t("task.noWatchers")}</p>
-              ) : (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {watchers.map((watcher) => (
-                    <div
-                      key={watcher.userId}
-                      className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-card px-2 py-1 text-xs"
-                    >
-                      <Avatar
-                        name={watcher.displayName || watcher.username}
-                        id={watcher.userId}
-                        size="sm"
-                      />
-                      <span className="truncate font-medium text-foreground">
-                        {watcher.displayName || watcher.username}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* ── Attachments ── */}
-            <section className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium flex items-center gap-1.5">
-                  <Paperclip className="size-4 text-muted-foreground" aria-hidden />
-                  {t("task.attachments")}{" "}
-                  <span className="font-mono text-xs text-muted-foreground">
-                    ({attachments.length})
+          <div className="flex flex-col gap-1.5">
+            {uploadQueue.map((item) => (
+              <div
+                key={item.file.name + item.file.size}
+                className="rounded-lg border border-border/60 bg-card p-2 text-xs"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate font-medium text-foreground">
+                    {item.file.name}
                   </span>
-                </h3>
-                <label className="cursor-pointer text-xs font-medium text-primary hover:underline">
-                  {uploading ? t("task.uploading") : t("task.addFile")}
-                  <input
-                    type="file"
-                    onChange={uploadFile}
-                    disabled={uploading}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                {uploadQueue.map((item) => (
-                  <div
-                    key={item.file.name + item.file.size}
-                    className="rounded-lg border border-border/60 bg-card p-2 text-xs"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate font-medium text-foreground">
-                        {item.file.name}
-                      </span>
-                      <span className="shrink-0 text-[10px] font-mono text-muted-foreground">
-                        {Math.round(item.file.size / 1024)} KB
-                      </span>
-                    </div>
-                    {item.error ? (
-                      <div className="mt-1 flex items-center gap-2">
-                        <p role="alert" className="text-xs text-destructive">{item.error}</p>
-                        <button
-                          type="button"
-                          onClick={() => void retryUpload(item)}
-                          className="inline-flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground"
-                        >
-                          <RefreshCw className="size-3" aria-hidden />
-                          {t("task.retry")}
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
-                        <div
-                          className="h-full bg-primary transition-all duration-150"
-                          style={{ width: `${Math.round(item.progress * 100)}%` }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                {attachmentsLoading ? (
-                  <p className="text-xs text-muted-foreground">
-                    {t("task.loading")}
-                  </p>
-                ) : attachmentsError && attachments.length === 0 ? (
-                  <p role="alert" className="text-xs text-destructive">
-                    {t("task.attachmentsLoadFailed")}
-                  </p>
-                ) : attachments.length === 0 && uploadQueue.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    {t("task.noAttachments")}
-                  </p>
-                ) : (
-                  attachments.map((att) => (
-                    <div
-                      key={att.id}
-                      className="group flex items-center justify-between rounded-lg border border-border/60 bg-card p-2 text-xs"
+                  <span className="shrink-0 text-[10px] font-mono text-muted-foreground">
+                    {Math.round(item.file.size / 1024)} KB
+                  </span>
+                </div>
+                {item.error ? (
+                  <div className="mt-1 flex items-center gap-2">
+                    <p role="alert" className="text-xs text-destructive">{item.error}</p>
+                    <button
+                      type="button"
+                      onClick={() => void retryUpload(item)}
+                      className="inline-flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground"
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <AttachmentRowThumb
-                          workspaceId={workspaceId}
-                          projectId={projectId}
-                          taskId={task.id}
-                          attachmentId={att.id}
-                          contentType={att.contentType}
-                        />
-                        <Paperclip className="size-3.5 text-muted-foreground shrink-0" />
-                        <span className="truncate font-medium text-foreground">
-                          {att.fileName}
-                        </span>
-                        <span className="shrink-0 text-[10px] font-mono text-muted-foreground">
-                          ({Math.round(att.fileSize / 1024)} KB)
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100">
-                        <button
-                          type="button"
-                          onClick={() => void downloadAttachment(att)}
-                          title={t("board.download")}
-                          className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-foreground"
-                        >
-                          <Download className="size-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void deleteAttachment(att)}
-                          disabled={deletingAttachmentId !== null}
-                          title={t("common.delete")}
-                          className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-destructive disabled:opacity-40"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                      <RefreshCw className="size-3" aria-hidden />
+                      {t("task.retry")}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
+                    <div
+                      className="h-full bg-primary transition-all duration-150"
+                      style={{ width: `${Math.round(item.progress * 100)}%` }}
+                    />
+                  </div>
                 )}
               </div>
-            </section>
+            ))}
+
+            {attachmentsLoading ? (
+              <p className="text-xs text-muted-foreground">
+                {t("task.loading")}
+              </p>
+            ) : attachmentsError && attachments.length === 0 ? (
+              <p role="alert" className="text-xs text-destructive">
+                {t("task.attachmentsLoadFailed")}
+              </p>
+            ) : attachments.length === 0 && uploadQueue.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {t("task.noAttachments")}
+              </p>
+            ) : (
+              attachments.map((att) => (
+                <div
+                  key={att.id}
+                  className="group flex items-center justify-between rounded-lg border border-border/60 bg-card p-2 text-xs"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <AttachmentRowThumb
+                      workspaceId={workspaceId}
+                      projectId={projectId}
+                      taskId={task.id}
+                      attachmentId={att.id}
+                      contentType={att.contentType}
+                    />
+                    <Paperclip className="size-3.5 text-muted-foreground shrink-0" />
+                    <span className="truncate font-medium text-foreground">
+                      {att.fileName}
+                    </span>
+                    <span className="shrink-0 text-[10px] font-mono text-muted-foreground">
+                      ({Math.round(att.fileSize / 1024)} KB)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100">
+                    <button
+                      type="button"
+                      onClick={() => void downloadAttachment(att)}
+                      title={t("board.download")}
+                      className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-foreground"
+                    >
+                      <Download className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void deleteAttachment(att)}
+                      disabled={deletingAttachmentId !== null}
+                      title={t("common.delete")}
+                      className="rounded p-1 text-muted-foreground hover:bg-elevated hover:text-destructive disabled:opacity-40"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
+        </section>
+      </section>
+
+      {/* ── Description: read as a post body, edit on demand ── */}
+      <section className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold">{t("task.description")}</h2>
+          {!editingDescription && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditingDescription(true)}
+            >
+              {t("common.edit")}
+            </Button>
+          )}
+        </div>
+        {editingDescription ? (
+          <div className="flex flex-col gap-2">
+            <textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              rows={5}
+              placeholder={t("task.addDetail")}
+              aria-label={t("task.description")}
+              className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm placeholder:text-muted-foreground transition-colors duration-200 hover:border-border-strong focus:border-primary focus:outline-none"
+            />
+            <div className="flex items-center gap-2">
+              {/* Save lives on the Details card (one PATCH for every dirty
+                  field); this only leaves edit mode and keeps the draft. */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingDescription(false)}
+              >
+                {t("common.close")}
+              </Button>
+            </div>
           </div>
+        ) : description.trim() ? (
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+            {description}
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">{t("task.addDetail")}</p>
+        )}
+      </section>
+
+      {/* Advanced sections collapse to one-line rows so description +
+          comments stay the visual anchors. Bodies render lazily
+          (see CollapsibleSection) so collapsed sections don't fetch. */}
+      <CollapsibleSection title={t("board.definitionOfDone")} hint={<DoDMeta value={definitionOfDone} />}>
+        <DefinitionOfDoneField
+          value={definitionOfDone}
+          onChange={setDefinitionOfDone}
+        />
+      </CollapsibleSection>
+
+      <CollapsibleSection title={t("dependency.blockedBy")}>
+        <DependencySection
+          workspaceId={workspaceId}
+          projectId={projectId}
+          task={task}
+          allTasks={allTasks}
+          onChanged={onTaskChanged}
+        />
+      </CollapsibleSection>
+
+      <CollapsibleSection title={t("subtask.subtasks")}>
+        <SubtaskSection
+          workspaceId={workspaceId}
+          projectId={projectId}
+          task={task}
+          onChanged={onTaskChanged}
+        />
+      </CollapsibleSection>
+
+      <CollapsibleSection title={t("taskDetail.customFields")}>
+        <CustomFieldsSection
+          workspaceId={workspaceId}
+          projectId={projectId}
+          taskId={task.id}
+        />
+      </CollapsibleSection>
+
+      <CollapsibleSection title={t("timeTracking.timeTracking")}>
+        <TimeTrackingSection
+          workspaceId={workspaceId}
+          projectId={projectId}
+          task={task}
+          members={members}
+          onChanged={onTaskChanged}
+        />
+      </CollapsibleSection>
+
+      <CollapsibleSection title={t("github.linkedPrs")}>
+        <TaskPullRequests
+          workspaceId={workspaceId}
+          projectId={projectId}
+          taskId={task.id}
+        />
+      </CollapsibleSection>
+
+      <CollapsibleSection title={t("ai.aiPlanner")}>
+        <AiPlanPanel
+          workspaceId={workspaceId}
+          projectId={projectId}
+          taskId={task.id}
+          onChanged={onTaskChanged}
+        />
+      </CollapsibleSection>
+
+      {/* ── Comments thread (IG/FB post style) + composer ── */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-semibold">
+          {t("task.comments")}{" "}
+          <span className="font-mono text-xs text-muted-foreground">
+            ({comments.length})
+          </span>
+        </h2>
+
+        {commentError && <ErrorAlert message={commentError} />}
+
+        <div className="flex flex-col gap-4">
+          {commentsLoading ? (
+            <div className="space-y-2">
+              {[0, 1, 2].map((i) => (
+                <Skeleton key={i} className="h-16 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : comments.length === 0 && !commentError ? (
+            // Same gate EpicsPage ships: when the comments fetch failed
+            // the list is still [] (the catch never clears data it never
+            // got), and "No comments yet" under the error banner states
+            // an absence that was never observed.
+            <p className="text-sm text-muted-foreground">
+              {t("task.noComments")}
+            </p>
+          ) : (
+            comments.map((comment) => {
+              const mine = currentUser?.id === comment.authorId;
+              const author = members.find(
+                (m) => m.userId === comment.authorId,
+              );
+              const authorName = mine
+                ? t("task.you")
+                : author
+                  ? author.displayName || author.username
+                  : comment.authorId.slice(0, 8);
+              return (
+                <article
+                  key={comment.id}
+                  className="flex gap-3"
+                >
+                  <Avatar
+                    name={
+                      author
+                        ? author.displayName || author.username
+                        : authorName
+                    }
+                    id={comment.authorId}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-0.5 flex items-center justify-between gap-2">
+                      <span className="flex items-baseline gap-2 text-sm font-semibold">
+                        {authorName}
+                        <time
+                          dateTime={comment.createdAtUtc}
+                          className="text-xs font-normal text-muted-foreground"
+                        >
+                          {new Date(comment.createdAtUtc).toLocaleString()}
+                        </time>
+                      </span>
+                      {mine && (
+                        <button
+                          type="button"
+                          onClick={() => void deleteComment(comment)}
+                          disabled={deletingCommentId !== null}
+                          aria-label={t("task.deleteComment")}
+                          className="text-xs text-muted-foreground hover:text-destructive disabled:opacity-40"
+                        >
+                          {t("task.deleteComment")}
+                        </button>
+                      )}
+                    </div>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                      {comment.content}
+                    </p>
+                  </div>
+                </article>
+              );
+            })
+          )}
         </div>
 
         <form
           onSubmit={addComment}
-          className="flex items-end gap-2 border-t border-border p-4"
+          className="flex items-end gap-2 border-t border-border pt-3"
         >
           <textarea
             value={newComment}
@@ -1154,7 +1230,7 @@ export const TaskDetailPanel = memo(function TaskDetailPanel({
             {postingComment ? "…" : t("task.send")}
           </Button>
         </form>
-      </aside>
-    </div>
+      </section>
+    </article>
   );
 });

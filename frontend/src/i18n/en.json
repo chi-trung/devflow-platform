@@ -798,7 +798,10 @@
  "taskDetail": {
   "customFields": "Custom Fields",
   "noCustomFields": "No custom field values set for this task.",
-  "customFieldsLoadFailed": "Couldn't load custom field values."
+  "customFieldsLoadFailed": "Couldn't load custom field values.",
+  "backToBoard": "Back to Board",
+  "details": "Details",
+  "taskLoadFailed": "Couldn't load this task."
  },
  "activity": {
   "title": "Activity Log",

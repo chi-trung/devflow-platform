@@ -48,6 +48,9 @@ describe("matchRoute", () => {
 
   it("matches project-level shapes with arbitrary ids", () => {
     expect(matchRoute("/workspaces/ws-1/projects/pr-9")).toBe("board");
+    expect(matchRoute("/workspaces/ws-1/projects/pr-9/tasks/t1")).toBe(
+      "task-detail",
+    );
     expect(matchRoute("/workspaces/ws-1/projects/pr-9/sprints")).toBe("sprints");
     expect(matchRoute("/workspaces/ws-1/projects/pr-9/reports")).toBe("reports");
     expect(matchRoute("/workspaces/ws-1/projects/pr-9/epics")).toBe("epics");

@@ -57,6 +57,23 @@ public sealed class TasksController(ISender sender) : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("{taskId:guid}")]
+    [ProducesResponseType(typeof(Application.Features.Tasks.TaskItemResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById(
+        Guid workspaceId,
+        Guid projectId,
+        Guid taskId,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new Application.Features.Tasks.Get.GetTaskByIdQuery(workspaceId, projectId, taskId),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
     [HttpPatch("{taskId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

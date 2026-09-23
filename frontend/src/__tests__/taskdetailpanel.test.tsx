@@ -39,17 +39,6 @@ vi.mock("../lib/api", () => ({
   getProjectPRs: vi.fn(async () => []),
 }));
 
-// jsdom has no layout engine, so offsetParent is always null and the trap's
-// visibility filter would drop every control. A parent-chain stub marks
-// everything visible; the trap and the test compute the same list, so the
-// wrap assertions below still exercise the real boundary logic.
-Object.defineProperty(HTMLElement.prototype, "offsetParent", {
-  configurable: true,
-  get() {
-    return this.parentElement;
-  },
-});
-
 const task = {
   id: "t1",
   projectId: "p1",
@@ -83,49 +72,59 @@ function renderPanel() {
   );
 }
 
-const CONTROL_SELECTOR =
-  'a[href], button:not([disabled]), textarea, input:not([disabled]), select, [tabindex]:not([tabindex="-1"])';
-
-function tabbables(dialog: HTMLElement) {
-  return Array.from(dialog.querySelectorAll<HTMLElement>(CONTROL_SELECTOR)).filter(
-    (el) => el.tabIndex >= 0 && el.offsetParent !== null,
-  );
-}
-
-describe("TaskDetailPanel focus trap", () => {
-  it("is announced as a modal dialog and moves focus inside on open", () => {
+describe("TaskDetailPanel page chrome", () => {
+  it("is not a modal dialog (full-page article)", () => {
     renderPanel();
-    const dialog = screen.getByRole("dialog");
-    expect(dialog).toHaveAttribute("aria-modal", "true");
-    expect(dialog.contains(document.activeElement)).toBe(true);
-    // The backdrop close button is tabIndex -1; initial focus must land on
-    // the first control a real Tab press could reach.
-    const active = document.activeElement as HTMLElement;
-    expect(active.tabIndex).toBeGreaterThanOrEqual(0);
-    expect(active).toBe(tabbables(dialog)[0]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    // No fixed overlay root either — page flow only.
+    const article = document.querySelector("article");
+    expect(article).not.toBeNull();
+    expect(article?.className).not.toMatch(/fixed/);
   });
 
-  it("wraps Tab from the last control to the first, and Shift+Tab back", () => {
+  it("exposes an h1 with a sr-only title for the AppShell document.title mirror", () => {
     renderPanel();
-    const dialog = screen.getByRole("dialog");
-    const items = tabbables(dialog);
-    expect(items.length).toBeGreaterThan(3);
-    items[items.length - 1].focus();
-    fireEvent.keyDown(dialog, { key: "Tab" });
-    expect(document.activeElement).toBe(items[0]);
-    fireEvent.keyDown(dialog, { key: "Tab", shiftKey: true });
-    expect(document.activeElement).toBe(items[items.length - 1]);
+    const h1 = screen.getByRole("heading", { level: 1 });
+    // Input values do not land in textContent; the sr-only span is what the
+    // MutationObserver mirror reads. Dropping it freezes the tab title.
+    expect(h1.querySelector(".sr-only")?.textContent).toBe("Probe task 1");
   });
 
-  it("pulls focus back into the dialog when it has leaked behind the overlay", () => {
+  it("starts description in read mode and toggles to a textarea on Edit", () => {
     renderPanel();
-    const dialog = screen.getByRole("dialog");
+    // Empty description shows the muted addDetail placeholder, not a form.
+    expect(screen.queryByLabelText("task.description")).toBeNull();
+    expect(screen.getByText("task.addDetail")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "common.edit" }));
+    const textarea = screen.getByLabelText("task.description");
+    expect(textarea.tagName).toBe("TEXTAREA");
+    // Editing must surface a dirty Save so the draft is not a trap.
+    // (Description alone is dirty only after a change; type first.)
+    fireEvent.change(textarea, { target: { value: "Now with body" } });
+    expect(
+      screen.getByRole("button", { name: "task.saveChanges" }),
+    ).toBeTruthy();
+  });
+
+  it("leaves edit mode via Close and restores the read view", () => {
+    renderPanel();
+    fireEvent.click(screen.getByRole("button", { name: "common.edit" }));
+    expect(screen.getByLabelText("task.description")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "common.close" }));
+    expect(screen.queryByLabelText("task.description")).toBeNull();
+    expect(screen.getByRole("button", { name: "common.edit" })).toBeTruthy();
+  });
+
+  it("does not autofocus-trap: Tab is free to leave the article", () => {
+    // The old modal used useFocusTrap; a page must not steal Tab. Mount and
+    // assert no dialog aria + focus can sit outside without being yanked.
+    const { container } = renderPanel();
     const outside = document.createElement("button");
     document.body.appendChild(outside);
     outside.focus();
-    expect(dialog.contains(document.activeElement)).toBe(false);
-    fireEvent.keyDown(dialog, { key: "Tab" });
-    expect(dialog.contains(document.activeElement)).toBe(true);
+    fireEvent.keyDown(container, { key: "Tab" });
+    expect(document.activeElement).toBe(outside);
     outside.remove();
   });
 });

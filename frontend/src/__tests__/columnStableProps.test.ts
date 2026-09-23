@@ -87,7 +87,8 @@ describe("BoardPage hands Column stable props", () => {
     const colStart = content.indexOf("tasks={tasksByStatus.get(status) ?? EMPTY_TASKS}");
     const site = content.slice(colStart, colStart + 900);
     expect(site).toMatch(/onDelete=\{setPendingDelete\}/);
-    expect(site).toMatch(/onSelect=\{setSelectedTaskId\}/);
+    // openTask is a useCallback (navigate on click) — identity-stable.
+    expect(site).toMatch(/onSelect=\{openTask\}/);
     expect(site).toMatch(/onToggleSelect=\{toggleSelect\}/);
     expect(site).toMatch(/onEstimationSaved=\{handleEstimationSaved\}/);
     expect(site).toMatch(/customFieldsByTaskId=\{customFieldsByTaskId \?\? undefined\}/);

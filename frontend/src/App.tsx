@@ -52,6 +52,9 @@ const WorkspacePage = lazy(() =>
 const BoardPage = lazy(() =>
   import("./pages/BoardPage").then((m) => ({ default: m.BoardPage })),
 );
+const TaskDetailPage = lazy(() =>
+  import("./pages/TaskDetailPage").then((m) => ({ default: m.TaskDetailPage })),
+);
 const SprintPlanningPage = lazy(() =>
   import("./pages/SprintPlanningPage").then((m) => ({
     default: m.SprintPlanningPage,
@@ -256,6 +259,10 @@ function RoutedBoundary() {
             <Route
               path="/workspaces/:workspaceId/projects/:projectId"
               element={<BoardPage />}
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId/tasks/:taskId"
+              element={<TaskDetailPage />}
             />
             <Route
               path="/workspaces/:workspaceId/projects/:projectId/sprints"
