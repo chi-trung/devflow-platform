@@ -1,10 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 
-// TEMP-PROBE: measures whether TaskDetailPanel re-renders when the parent
-// re-renders without changing anything the panel reads. BoardPage re-renders
-// on every keystroke while the panel is open as a modal overlay. Deleted once
-// the measurement is recorded.
+// Regression: TaskDetailPanel must not re-render when the parent re-renders
+// without changing anything the panel reads. BoardPage re-renders on every
+// keystroke; a bare re-render here is the bug this guards against.
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (k: string) => k }),
