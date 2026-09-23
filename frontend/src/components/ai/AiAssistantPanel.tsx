@@ -247,29 +247,34 @@ export function AiAssistantPanel({
           : "flex h-[min(70dvh,26rem)] w-[min(92vw,26rem)] flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_24px_80px_rgba(0,0,0,0.5)] rise"
       }
     >
-      <header className="flex items-center justify-between border-b border-border px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-primary/15 text-primary-strong">
-            <Sparkles className="size-4" aria-hidden />
-          </span>
-          <div>
-            <p className="text-sm font-semibold leading-tight text-foreground">
-              {t("ai.assistant")}
-            </p>
-            <p className="text-[11px] text-muted-foreground">
-              {t("ai.assistantSubtitle")}
-            </p>
+      {/* Dock lives under the sidebar Nav↔AI switch, which already carries
+          the "AI Assistant" label — a second title here read as a duplicate.
+          Floating keeps the chrome (it is its own window). */}
+      {variant !== "dock" && (
+        <header className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div className="flex items-center gap-2">
+            <span className="flex size-7 items-center justify-center rounded-lg bg-primary/15 text-primary-strong">
+              <Sparkles className="size-4" aria-hidden />
+            </span>
+            <div>
+              <p className="text-sm font-semibold leading-tight text-foreground">
+                {t("ai.assistant")}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {t("ai.assistantSubtitle")}
+              </p>
+            </div>
           </div>
-        </div>
-        <button
-          type="button"
-          aria-label={t("ai.assistantClose")}
-          onClick={onClose}
-          className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
-        >
-          <X className="size-5" aria-hidden />
-        </button>
-      </header>
+          <button
+            type="button"
+            aria-label={t("ai.assistantClose")}
+            onClick={onClose}
+            className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
+          >
+            <X className="size-5" aria-hidden />
+          </button>
+        </header>
+      )}
 
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
         {messages.length === 0 && (

@@ -293,5 +293,8 @@ describe("right-edge dock is gone", () => {
     expect(src).toMatch(/variant === "dock"\s*\n?\s*\?/);
     // Dock must not wipe chat history on every open (sidebar keeps mounted).
     expect(src).toMatch(/variant === "floating"\) \{\s*\n\s*setMessages/);
+    // Dock sits under the Nav↔AI switch which already says "AI Assistant" —
+    // the panel header must not render a second title (visual duplicate).
+    expect(src).toMatch(/variant !== "dock"/);
   });
 });

@@ -527,7 +527,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Nav ↔ AI body switch — under the logo, same rail cell pattern so
             the collapsed icon rail stays one optical grid. Disabled outside
-            a workspace (no AI context). */}
+            a workspace (no AI context). Icon + label metrics mirror the
+            search cell below (size-3.5, flex-1, px-2.5 py-1.5). */}
         <div className={`shrink-0 pb-2 ${railCollapsed ? "lg:px-2" : "px-3"}`}>
           <button
             ref={modeSwitchRef}
@@ -548,8 +549,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 : "bg-card text-muted-foreground hover:border-border-strong hover:text-foreground"
             }`}
           >
-            <Sparkles className={`size-4 shrink-0 ${railIcon}`} aria-hidden />
-            <span className={`${railCollapsed ? "lg:hidden" : ""}`}>
+            <Sparkles className={`size-3.5 shrink-0 ${railIcon}`} aria-hidden />
+            <span className={`flex-1 text-left ${railCollapsed ? "lg:hidden" : ""}`}>
               {t("ai.assistant")}
             </span>
           </button>
