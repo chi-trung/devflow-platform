@@ -1,6 +1,10 @@
 import type {
   BurndownResponse,
+  CalendarTaskListResponse,
   CreateLabelRequest,
+  CreateRecurringRuleRequest,
+  RecurringRuleResponse,
+  UpdateRecurringRuleRequest,
   CreateEpicRequest,
   CreateMilestoneRequest,
   ActivityResponsePage,
@@ -1284,6 +1288,67 @@ export function getLabels(
 ): Promise<LabelResponse[]> {
   return api<LabelResponse[]>(
     `/workspaces/${workspaceId}/projects/${projectId}/labels`,
+  );
+}
+
+/**
+ * Due-date feed for the month grid. `from`/`to` are exclusive ISO bounds
+ * (backend requires from < to and span ≤ 400 days). Uses the dedicated
+ * calendar endpoint — the board list clamps pageSize=100 and would silently
+ * drop older due tasks.
+ */
+export function getProjectCalendarTasks(
+  workspaceId: string,
+  projectId: string,
+  from: string,
+  to: string,
+): Promise<CalendarTaskListResponse> {
+  const qs = new URLSearchParams({ from, to });
+  return api<CalendarTaskListResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/tasks/calendar?${qs}`,
+  );
+}
+
+export function listRecurringRules(
+  workspaceId: string,
+  projectId: string,
+): Promise<RecurringRuleResponse[]> {
+  return api<RecurringRuleResponse[]>(
+    `/workspaces/${workspaceId}/projects/${projectId}/recurring-rules`,
+  );
+}
+
+export function createRecurringRule(
+  workspaceId: string,
+  projectId: string,
+  data: CreateRecurringRuleRequest,
+): Promise<RecurringRuleResponse> {
+  return api<RecurringRuleResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/recurring-rules`,
+    { method: "POST", body: JSON.stringify(data) },
+  );
+}
+
+export function updateRecurringRule(
+  workspaceId: string,
+  projectId: string,
+  ruleId: string,
+  data: UpdateRecurringRuleRequest,
+): Promise<RecurringRuleResponse> {
+  return api<RecurringRuleResponse>(
+    `/workspaces/${workspaceId}/projects/${projectId}/recurring-rules/${ruleId}`,
+    { method: "PUT", body: JSON.stringify(data) },
+  );
+}
+
+export function deleteRecurringRule(
+  workspaceId: string,
+  projectId: string,
+  ruleId: string,
+): Promise<void> {
+  return api<void>(
+    `/workspaces/${workspaceId}/projects/${projectId}/recurring-rules/${ruleId}`,
+    { method: "DELETE" },
   );
 }
 

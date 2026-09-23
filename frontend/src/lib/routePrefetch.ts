@@ -41,6 +41,7 @@ const ROUTES: RouteShape[] = [
   // overlay — warm the board chunk (the real destination), not the thin
   // redirect shell.
   { name: "task-detail", test: /^\/workspaces\/[^/]+\/projects\/[^/]+\/tasks\/[^/]+$/, load: () => import("../pages/BoardPage") },
+  { name: "calendar", test: /^\/workspaces\/[^/]+\/projects\/[^/]+\/calendar$/, load: () => import("../pages/CalendarPage") },
   { name: "sprints", test: /^\/workspaces\/[^/]+\/projects\/[^/]+\/sprints$/, load: () => import("../pages/SprintPlanningPage") },
   { name: "reports", test: /^\/workspaces\/[^/]+\/projects\/[^/]+\/reports$/, load: () => import("../pages/ReportsPage") },
   { name: "epics", test: /^\/workspaces\/[^/]+\/projects\/[^/]+\/epics$/, load: () => import("../pages/EpicsPage") },

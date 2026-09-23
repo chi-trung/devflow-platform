@@ -6,6 +6,7 @@ import {
   BarChart3,
   Bookmark,
   BookOpen,
+  CalendarDays,
   CalendarRange,
   CircleUserRound,
   FileText,
@@ -365,6 +366,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // the board header — the single biggest "feature feels missing" complaint.
   const projectNavItems = projectId
     ? [
+        {
+          to: `/workspaces/${workspaceId}/projects/${projectId}/calendar`,
+          icon: CalendarDays,
+          label: t("nav.calendar"),
+          match: /\/calendar$/i,
+        },
         {
           to: `/workspaces/${workspaceId}/projects/${projectId}/sprints`,
           icon: CalendarRange,

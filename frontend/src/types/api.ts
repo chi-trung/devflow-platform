@@ -174,6 +174,59 @@ export interface SprintResponse {
   completedAtUtc: string | null;
 }
 
+/** One due task on the project calendar feed (lighter than TaskItemResponse). */
+export interface CalendarTaskItem {
+  id: string;
+  /** "{Project.Key}-{Number}" — the Linear-style identifier (e.g. "DEV-42"). */
+  key: string;
+  number: number;
+  title: string;
+  status: "Idea" | "Planning" | "Approval" | "Ready" | "InProgress" | "Review" | "Done";
+  priority: "Low" | "Medium" | "High" | "Critical";
+  dueDateUtc: string | null;
+  assigneeId: string | null;
+}
+
+export interface CalendarTaskListResponse {
+  items: CalendarTaskItem[];
+}
+
+export type RecurrenceFrequency = "Daily" | "Weekly" | "Monthly";
+
+export interface RecurringRuleResponse {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string | null;
+  priority: "Low" | "Medium" | "High" | "Critical";
+  frequency: RecurrenceFrequency;
+  interval: number;
+  firstDueDateUtc: string;
+  nextOccurrenceUtc: string;
+  isActive: boolean;
+  seedTaskId: string | null;
+}
+
+export interface CreateRecurringRuleRequest {
+  title: string;
+  description?: string | null;
+  priority: "Low" | "Medium" | "High" | "Critical";
+  frequency: RecurrenceFrequency;
+  interval: number;
+  firstDueDateUtc: string;
+  seedTaskId?: string | null;
+}
+
+export interface UpdateRecurringRuleRequest {
+  title: string;
+  description?: string | null;
+  priority: "Low" | "Medium" | "High" | "Critical";
+  frequency: RecurrenceFrequency;
+  interval: number;
+  firstDueDateUtc: string;
+  isActive: boolean;
+}
+
 export interface TaskItemResponse {
   id: string;
   projectId: string;
