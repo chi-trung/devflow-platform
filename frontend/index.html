@@ -97,6 +97,25 @@
     <meta name="twitter:image" content="https://devflow-platform-kappa.vercel.app/landing-opt.png" />
     <link rel="preconnect" href="https://devflow-api-vd5h.onrender.com" />
     <link rel="dns-prefetch" href="https://devflow-api-vd5h.onrender.com" />
+    <!-- Wake the Render free-tier backend at HTML-parse time — before the JS
+         bundle even starts downloading (the module script is deferred, so any
+         inline script here runs first). Render sleeps after ~15 min idle and a
+         cold instance takes 30-60s to answer; overlapping that with the
+         bundle download + locale wait is the biggest cut to first action
+         latency. Vite rewrites %VITE_API_URL% at build; in dev the placeholder
+         stays literal (starts with "%") and we skip — dev traffic goes through
+         the Vite proxy from JS anyway. Same endpoint as BackendWarmer and
+         keepalive.ts (/api/v1/ping, not /health — ad-blockers blocklist
+         /health). -->
+    <script>
+      (function () {
+        var base = "%VITE_API_URL%";
+        if (typeof base !== "string" || base.charAt(0) === "%") return;
+        base = base.trim().replace(/\/+$/, "");
+        if (!base) return;
+        fetch(base + "/api/v1/ping", { cache: "no-store" }).catch(function () {});
+      })();
+    </script>
     <!-- Fonts are self-hosted same-origin (see @font-face in index.css).
          Preloading the latin subsets here means the web fonts are usually in
          memory before first paint — no cross-origin round-trip mid-load, and

@@ -12,7 +12,9 @@ import { RequireAuth } from "./auth/RequireAuth";
 import { ToastProvider } from "./components/ui/ToastProvider";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
-import { API_BASE } from "./lib/api";
+import { ShellSkeleton } from "./components/ShellSkeleton";
+import { API_BASE, tokens } from "./lib/api";
+import { prefetchRoute } from "./lib/routePrefetch";
 
 const LandingPage = lazy(() =>
   import("./pages/LandingPage").then((m) => ({ default: m.LandingPage })),
@@ -125,11 +127,28 @@ function LoadingFallback() {
   );
 }
 
+/**
+ * Suspense fallback for every lazy route (and HomeRoute's session-restore
+ * gap). Anonymous — or loading with no stored session — means a public page
+ * is coming: marketing/auth pages have no shell to draw, so keep the
+ * centered spinner. Otherwise the shell skeleton keeps the chrome on screen,
+ * so a lazy route swap never blanks the whole viewport behind a lone
+ * spinner (the old behavior on every navigation).
+ */
+export function RouteFallback() {
+  const { status } = useAuth();
+  if (status === "anonymous") return <LoadingFallback />;
+  if (status === "loading" && !tokens.refresh) return <LoadingFallback />;
+  return <ShellSkeleton />;
+}
+
 // `/` is public: anonymous visitors see the marketing landing page, signed-in
 // users land on the dashboard. Same URL, different content based on auth.
 function HomeRoute() {
   const { status } = useAuth();
-  if (status === "loading") return <LoadingFallback />;
+  // Same decision as the Suspense fallback: a stored session gets the shell
+  // skeleton while the session restore runs, a public first paint the spinner.
+  if (status === "loading") return <RouteFallback />;
   return status === "authenticated" ? <DashboardPage /> : <LandingPage />;
 }
 
@@ -169,12 +188,38 @@ function BackendWarmer() {
   return null;
 }
 
+// Delegated hover/focus listener: warm a route's chunk the moment the
+// visitor aims at a link, so the click lands on the page instead of the
+// Suspense fallback. pointerover covers mouse/pen (touch fires it on tap);
+// focusin covers keyboard Tab. Delegating from document covers every link —
+// sidebar, cards, breadcrumbs — with zero per-component wiring. Dedupe and
+// retry-on-error live in routePrefetch's once().
+function RoutePrefetcher() {
+  useEffect(() => {
+    const warm = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const href = target.closest("a")?.getAttribute("href");
+      // Internal links only — external/mailto targets are not routes.
+      if (href && href.startsWith("/")) prefetchRoute(href);
+    };
+    document.addEventListener("pointerover", warm);
+    document.addEventListener("focusin", warm);
+    return () => {
+      document.removeEventListener("pointerover", warm);
+      document.removeEventListener("focusin", warm);
+    };
+  }, []);
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <ScrollToTop />
         <BackendWarmer />
+        <RoutePrefetcher />
         <ToastProvider>
           {/* Keyed by pathname: once the visitor navigates away from the
               route that threw, remount so a failed chunk can be retried on
@@ -190,7 +235,7 @@ function RoutedBoundary() {
   const { pathname } = useLocation();
   return (
     <RouteErrorBoundary key={pathname}>
-      <Suspense fallback={<LoadingFallback />}>
+      <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<HomeRoute />} />
           <Route path="/login" element={<LoginPage />} />
