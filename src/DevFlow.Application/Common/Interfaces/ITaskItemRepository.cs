@@ -55,4 +55,14 @@ public interface ITaskItemRepository
         Guid assigneeId, Guid workspaceId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<TaskItem>> GetSubtasksAsync(Guid parentTaskId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Tasks in one project whose DueDateUtc falls in [fromUtc, toUtc).
+    /// Soft-deleted rows are excluded by the query filter.
+    /// </summary>
+    Task<IReadOnlyList<TaskItem>> GetDueBetweenAsync(
+        Guid projectId,
+        DateTimeOffset fromUtc,
+        DateTimeOffset toUtc,
+        CancellationToken cancellationToken = default);
 }

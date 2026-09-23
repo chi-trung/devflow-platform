@@ -67,5 +67,7 @@ internal sealed class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
             .IsUnique();
         builder.HasIndex(task => task.EpicId);
         builder.HasIndex(task => task.ParentTaskId);
+        // Calendar month ranges filter DueDateUtc within one project.
+        builder.HasIndex(task => new { task.ProjectId, task.DueDateUtc });
     }
 }

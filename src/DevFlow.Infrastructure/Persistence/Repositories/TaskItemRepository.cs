@@ -160,4 +160,22 @@ public sealed class TaskItemRepository(DevFlowDbContext dbContext) : ITaskItemRe
             .ThenByDescending(task => task.CreatedAtUtc)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<TaskItem>> GetDueBetweenAsync(
+        Guid projectId,
+        DateTimeOffset fromUtc,
+        DateTimeOffset toUtc,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.TaskItems
+            .AsNoTracking()
+            .Where(task =>
+                task.ProjectId == projectId
+                && task.DueDateUtc != null
+                && task.DueDateUtc >= fromUtc
+                && task.DueDateUtc < toUtc)
+            .OrderBy(task => task.DueDateUtc)
+            .ThenBy(task => task.Number)
+            .ToListAsync(cancellationToken);
+    }
 }

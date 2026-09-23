@@ -57,6 +57,24 @@ public sealed class TasksController(ISender sender) : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("calendar")]
+    [ProducesResponseType(typeof(Application.Features.Calendar.CalendarTaskListResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCalendar(
+        Guid workspaceId,
+        Guid projectId,
+        [FromQuery] DateTimeOffset from,
+        [FromQuery] DateTimeOffset to,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new Application.Features.Calendar.GetProjectCalendarQuery(workspaceId, projectId, from, to),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
     [HttpGet("{taskId:guid}")]
     [ProducesResponseType(typeof(Application.Features.Tasks.TaskItemResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
