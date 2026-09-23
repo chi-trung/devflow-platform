@@ -246,7 +246,9 @@ export function NotificationsPanel({
                 key={tab}
                 type="button"
                 onClick={() => setFilter(tab)}
-                className={`flex-1 cursor-pointer rounded-md px-2 py-1 text-xs font-medium transition-colors duration-150 ${
+                // Fixed row height: a wrapping label (vi "Nhắc đến") would
+                // reflow the whole popup when the active pill re-measures.
+                className={`min-w-0 flex-1 cursor-pointer truncate rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap transition-colors duration-150 ${
                   filter === tab
                     ? "bg-primary text-on-primary"
                     : "text-muted-foreground hover:text-foreground"
@@ -257,7 +259,9 @@ export function NotificationsPanel({
             ))}
           </div>
 
-          <div className="max-h-80 overflow-y-auto">
+          {/* Fixed shell height: list / empty / skeleton / error all occupy the
+              same box so switching filter tabs never resizes the popup. */}
+          <div className="flex h-80 flex-col overflow-y-auto">
             {loading && notifications.length === 0 ? (
               <div className="space-y-2 p-3">
                 {[0, 1, 2].map((i) => (
@@ -267,14 +271,14 @@ export function NotificationsPanel({
             ) : loadFailed && error ? (
               // A failed first load is not an empty inbox: say so, with the
               // refresh the bell trigger already performs.
-              <div className="flex flex-col gap-2 p-3">
+              <div className="m-auto flex w-full flex-col gap-2 p-3">
                 <ErrorAlert id="notifications-panel-error" message={error} />
                 <Button variant="outline" size="sm" onClick={refresh}>
                   {t("common.retry")}
                 </Button>
               </div>
             ) : allRead && filter !== "unread" ? (
-              <div className="flex flex-col items-center gap-1.5 px-6 py-10 text-center">
+              <div className="m-auto flex flex-col items-center gap-1.5 px-6 py-10 text-center">
                 <CheckCheck className="size-5 text-primary" aria-hidden />
                 <p className="text-sm font-medium text-foreground">
                   {t("notification.allCaughtUp")}
@@ -284,7 +288,7 @@ export function NotificationsPanel({
                 </p>
               </div>
             ) : filtered.length === 0 ? (
-              <div className="flex flex-col items-center gap-1.5 px-6 py-10 text-center">
+              <div className="m-auto flex flex-col items-center gap-1.5 px-6 py-10 text-center">
                 <Bell className="size-5 text-muted-foreground/60" aria-hidden />
                 <p className="text-sm text-muted-foreground">
                   {filter === "unread"
