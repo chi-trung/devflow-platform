@@ -49,6 +49,20 @@ const BOARD_PATH_KEY = "devflow.lastBoardPath";
 const SPRINT_PATH_KEY = "devflow.lastSprintPath";
 const SIDEBAR_KEY = "devflow.sidebarCollapsed";
 const SIDEBAR_MODE_KEY = "devflow.sidebarMode";
+// Last workspace the user actually visited — lets AI open on non-workspace
+// routes (/, /profile, /settings…) where the URL has no workspaceId.
+const LAST_WS_KEY = "devflow.lastWorkspaceId";
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function readLastWorkspaceId(): string | null {
+  try {
+    const id = localStorage.getItem(LAST_WS_KEY);
+    return id && UUID_RE.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Left-sidebar body: classic nav menus vs the AI assistant panel. */
 type SidebarMode = "nav" | "ai";
@@ -105,16 +119,58 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     /^\/workspaces\/[0-9a-f-]{36}\/projects\/([0-9a-f-]{36})/i,
   )?.[1];
 
-  // Mode AI is only meaningful inside a workspace (panel needs workspaceId).
-  // Outside those routes force nav so a stale localStorage "ai" can't blank
-  // the sidebar with an unusable panel.
+  // Workspace list must resolve before the AI gate: the panel is workspace-
+  // scoped on the API, but the switch should work on every AppShell page —
+  // route id first, else last visited (validated once the list loads), else
+  // the member's first workspace.
+  const {
+    data: workspacesRaw,
+    error: workspacesError,
+    reload: reloadWorkspaces,
+  } = useApi<unknown>(() => api("/workspaces"), []);
+  const workspaces = useMemo(
+    () => pagedItems<WorkspaceResponse>(workspacesRaw),
+    [workspacesRaw],
+  );
+  // useApi keeps the previous data on failure, so "failed with nothing
+  // cached" is error && raw === null — `!workspaces.length` would be a lie.
+  const workspacesFailed = workspacesError !== null && workspacesRaw === null;
+
+  // Remember the route's workspace so leaving it still has an AI context.
   useEffect(() => {
-    if (!workspaceId && sidebarMode === "ai") setSidebarMode("nav");
-  }, [workspaceId, sidebarMode]);
+    if (!workspaceId) return;
+    try {
+      localStorage.setItem(LAST_WS_KEY, workspaceId);
+    } catch {}
+  }, [workspaceId]);
+
+  // Read localStorage each render (not memoized): Dashboard's workspace
+  // picker writes the same key, and the AI click re-renders this shell.
+  const aiWorkspaceId: string | null = (() => {
+    if (workspaceId) return workspaceId;
+    const last = readLastWorkspaceId();
+    if (workspacesRaw !== null) {
+      // List loaded: only trust `last` if membership still holds.
+      if (last && workspaces.some((w) => w.id === last)) return last;
+      return workspaces[0]?.id ?? null;
+    }
+    // Still in flight (or failed with nothing cached): keep last optimistically
+    // so a remembered AI mode isn't force-reset mid-load.
+    return last;
+  })();
+
+  // Mode AI needs a workspace context (API is workspace-scoped). Force nav
+  // only once the list has settled and no id is available — a stale
+  // localStorage "ai" must not blank the sidebar with an unusable panel.
+  useEffect(() => {
+    if (aiWorkspaceId) return;
+    if (workspacesRaw === null && !workspacesFailed) return; // still loading
+    if (sidebarMode === "ai") setSidebarMode("nav");
+  }, [aiWorkspaceId, workspacesRaw, workspacesFailed, sidebarMode]);
 
   // Mode AI ignores the collapsed preference: both modes share the expanded
   // width so the body never jumps size when switching Nav ↔ AI.
-  const effectiveMode: SidebarMode = workspaceId ? sidebarMode : "nav";
+  const effectiveMode: SidebarMode = aiWorkspaceId ? sidebarMode : "nav";
   const modeAi = effectiveMode === "ai";
   const railCollapsed = collapsed && !modeAi;
 
@@ -142,7 +198,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [modeAi]);
 
   const pageContext = useMemo((): AiPageContext => {
-    if (!workspaceId) return "workspace";
+    if (!workspaceId) {
+      // Non-workspace AppShell routes (/, /profile, /settings, …): "/" is
+      // the dashboard when authed; everything else is workspace-level context.
+      if (location.pathname === "/" || location.pathname === "/dashboard")
+        return "dashboard";
+      return "workspace";
+    }
     const path = location.pathname;
     if (/\/epics(\/|$)/i.test(path) && /\/projects\//i.test(path))
       return "epics";
@@ -261,19 +323,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // Fire-and-forget: these populate the SWR cache used by the pages.
     void api(`/workspaces/${activeWorkspaceId}/dashboard`).catch(() => {});
   }, [activeWorkspaceId]);
-
-  const {
-    data: workspacesRaw,
-    error: workspacesError,
-    reload: reloadWorkspaces,
-  } = useApi<unknown>(() => api("/workspaces"), []);
-  const workspaces = useMemo(
-    () => pagedItems<WorkspaceResponse>(workspacesRaw),
-    [workspacesRaw],
-  );
-  // useApi keeps the previous data on failure, so "failed with nothing
-  // cached" is error && raw === null — `!workspaces.length` would be a lie.
-  const workspacesFailed = workspacesError !== null && workspacesRaw === null;
 
   // Refresh the workspace sidebar when a workspace-level event arrives
   // (e.g. a workspace created elsewhere or via AI) — no F5 needed.
@@ -526,9 +575,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Nav ↔ AI body switch — under the logo, same rail cell pattern so
-            the collapsed icon rail stays one optical grid. Disabled outside
-            a workspace (no AI context). Icon + label metrics mirror the
-            search cell below (size-3.5, flex-1, px-2.5 py-1.5). */}
+            the collapsed icon rail stays one optical grid. Disabled only when
+            no workspace id is available at all (no members / list failed).
+            Icon + label metrics mirror the search cell below (size-3.5,
+            flex-1, px-2.5 py-1.5). */}
         <div className={`shrink-0 pb-2 ${railCollapsed ? "lg:px-2" : "px-3"}`}>
           <button
             ref={modeSwitchRef}
@@ -536,7 +586,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             aria-pressed={modeAi}
             aria-label={modeAi ? t("ai.assistantClose") : t("ai.assistantOpen")}
             title={t("ai.assistant")}
-            disabled={!workspaceId}
+            disabled={!aiWorkspaceId}
             onClick={() => {
               // Entering AI always lands on the expanded width; leaving AI
               // then stays expanded (no surprise-collapse back to 72px).
@@ -556,10 +606,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        {/* AI body stays mounted whenever a workspace is in scope so chat
-            history/draft survive Nav ↔ AI; `hidden` takes it out of the a11y
+        {/* AI body stays mounted whenever a workspace id is in scope (route
+            or fallback) so chat history/draft survive Nav ↔ AI and the panel
+            works on every AppShell page; `hidden` takes it out of the a11y
             tree and the tab order while mode is nav. */}
-        {workspaceId && (
+        {aiWorkspaceId && (
           <div
             id="sidebar-ai-panel"
             role="region"
@@ -574,7 +625,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <AiAssistantPanel
               open={modeAi}
               onClose={() => setSidebarMode("nav")}
-              workspaceId={workspaceId}
+              workspaceId={aiWorkspaceId}
               projectId={projectId}
               context={pageContext}
               variant="dock"

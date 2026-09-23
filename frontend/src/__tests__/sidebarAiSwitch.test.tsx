@@ -11,10 +11,13 @@ import { AppShell } from "../components/AppShell";
 //  - both modes share lg:w-60 — AI forces expanded even if collapse=1
 //  - leaving AI does not surprise-collapse
 //  - AI panel stays mounted (hidden) while in nav so chat history survives
-//  - outside a workspace the switch is disabled and mode is forced nav
+//  - AI works on every AppShell page: route workspaceId, else last visited
+//    (devflow.lastWorkspaceId), else first member workspace
+//  - switch disabled only when NO workspace id is available at all
 //  - no right-edge dock / AiDock / AiFloatingButton in the shell path
 
 const WORKSPACE_ID = "11111111-1111-4111-8111-111111111111";
+const FALLBACK_WS_ID = "22222222-2222-4222-8222-222222222222";
 const WS_PATH = `/workspaces/${WORKSPACE_ID}`;
 
 vi.mock("../auth/AuthContext", () => ({
@@ -24,8 +27,25 @@ vi.mock("../auth/AuthContext", () => ({
   }),
 }));
 
+// Controllable so tests can feed the /workspaces list (AI fallback id)
+// without depending on the projects useApi call shape.
+let mockWorkspaces: unknown = null;
+
 vi.mock("../hooks/useApi", () => ({
-  useApi: () => ({ data: null, error: null, loading: true, reload: () => {} }),
+  useApi: (fetcher?: () => Promise<unknown>) => {
+    const src = String(fetcher ?? "");
+    // AppShell's workspace list fetch is `api("/workspaces")` — distinguish
+    // it from `…/workspaces/{id}/projects` (and any other gated fetch).
+    if (src.includes("/workspaces") && !src.includes("/projects")) {
+      return {
+        data: mockWorkspaces,
+        error: null,
+        loading: mockWorkspaces === null,
+        reload: () => {},
+      };
+    }
+    return { data: null, error: null, loading: false, reload: () => {} };
+  },
 }));
 
 vi.mock("../hooks/useWorkspaceEvents", () => ({
@@ -39,7 +59,15 @@ vi.mock("react-i18next", () => ({
 
 vi.mock("../lib/api", () => ({
   api: () => Promise.resolve([]),
-  pagedItems: (d: unknown) => d,
+  // Mirror production: arrays pass through, paged envelopes unwrap .items.
+  pagedItems: (d: unknown) => {
+    if (Array.isArray(d)) return d;
+    if (d && typeof d === "object" && "items" in d) {
+      const items = (d as { items: unknown }).items;
+      return Array.isArray(items) ? items : [];
+    }
+    return [];
+  },
 }));
 
 vi.mock("../lib/realtime", () => ({
@@ -70,14 +98,17 @@ vi.mock("../components/ai/AiAssistantPanel", () => ({
   AiAssistantPanel: ({
     open,
     variant,
+    workspaceId,
   }: {
     open: boolean;
     variant?: string;
+    workspaceId?: string;
   }) => (
     <div
       data-testid="assistant-panel"
       data-open={String(open)}
       data-variant={variant}
+      data-workspace-id={workspaceId}
     >
       <textarea aria-label="composer" />
     </div>
@@ -91,8 +122,13 @@ function renderShell(
     mode?: "nav" | "ai";
     /** Skip the localStorage wipe (remount / reload probes). */
     preserve?: boolean;
+    /** Seed devflow.lastWorkspaceId after the wipe. */
+    lastWorkspaceId?: string;
+    /** Workspace list returned by the mocked /workspaces useApi. */
+    workspaces?: unknown;
   },
 ) {
+  if (opts?.workspaces !== undefined) mockWorkspaces = opts.workspaces;
   if (!opts?.preserve) {
     localStorage.clear();
     localStorage.setItem(
@@ -101,8 +137,14 @@ function renderShell(
     );
     if (opts?.mode) localStorage.setItem("devflow.sidebarMode", opts.mode);
     else localStorage.setItem("devflow.sidebarMode", "nav");
-  } else if (opts?.mode) {
-    localStorage.setItem("devflow.sidebarMode", opts.mode);
+    if (opts?.lastWorkspaceId) {
+      localStorage.setItem("devflow.lastWorkspaceId", opts.lastWorkspaceId);
+    }
+  } else {
+    if (opts?.mode) localStorage.setItem("devflow.sidebarMode", opts.mode);
+    if (opts?.lastWorkspaceId) {
+      localStorage.setItem("devflow.lastWorkspaceId", opts.lastWorkspaceId);
+    }
   }
   return render(
     <MemoryRouter initialEntries={[path]}>
@@ -115,6 +157,7 @@ function renderShell(
 
 beforeEach(() => {
   localStorage.clear();
+  mockWorkspaces = null;
 });
 
 describe("sidebar Nav ↔ AI switch", () => {
@@ -217,9 +260,10 @@ describe("sidebar Nav ↔ AI switch", () => {
     expect(screen.queryByRole("button", { name: "nav.expand" })).toBeNull();
   });
 
-  it("disables the switch outside a workspace and forces nav", () => {
-    // UUID path required — /profile has no workspaceId.
+  it("disables the switch only when no workspace id exists at all", () => {
+    // /profile has no route workspace; list empty; no last-visited id.
     localStorage.setItem("devflow.sidebarMode", "ai");
+    mockWorkspaces = null;
     render(
       <MemoryRouter initialEntries={["/profile"]}>
         <AppShell>
@@ -229,9 +273,104 @@ describe("sidebar Nav ↔ AI switch", () => {
     );
     const toggle = screen.getByRole("button", { name: "ai.assistantOpen" });
     expect(toggle).toHaveProperty("disabled", true);
-    // No AI panel without a workspace context.
+    // No AI panel without any workspace context.
     expect(screen.queryByTestId("assistant-panel")).toBeNull();
     expect(screen.getByLabelText("ui.sidebarNavAria")).toBeTruthy();
+  });
+
+  it("enables AI outside a workspace via last-visited fallback", () => {
+    // Simulate: visited a workspace earlier, now on /profile or /.
+    renderShell("/profile", {
+      mode: "nav",
+      lastWorkspaceId: WORKSPACE_ID,
+    });
+    const toggle = screen.getByRole("button", { name: "ai.assistantOpen" });
+    expect(toggle).toHaveProperty("disabled", false);
+    const panel = screen.getByTestId("assistant-panel");
+    expect(panel.dataset.workspaceId).toBe(WORKSPACE_ID);
+
+    fireEvent.click(toggle);
+    expect(
+      screen.getByRole("button", { name: "ai.assistantClose" }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(screen.getByTestId("assistant-panel").dataset.open).toBe("true");
+    expect(screen.queryByLabelText("ui.sidebarNavAria")).toBeNull();
+  });
+
+  it("enables AI on / using the first member workspace", () => {
+    // Fresh browser: no last-visited id — first workspace from the list.
+    renderShell("/", {
+      mode: "nav",
+      workspaces: {
+        items: [
+          {
+            id: FALLBACK_WS_ID,
+            name: "Acme",
+            slug: "acme",
+            description: null,
+            role: "owner",
+          },
+        ],
+      },
+    });
+    const toggle = screen.getByRole("button", { name: "ai.assistantOpen" });
+    expect(toggle).toHaveProperty("disabled", false);
+    expect(screen.getByTestId("assistant-panel").dataset.workspaceId).toBe(
+      FALLBACK_WS_ID,
+    );
+  });
+
+  it("prefers a last-visited id that is still a member over the first workspace", () => {
+    renderShell("/settings", {
+      mode: "nav",
+      lastWorkspaceId: FALLBACK_WS_ID,
+      workspaces: {
+        items: [
+          { id: WORKSPACE_ID, name: "A", slug: "a", description: null, role: "owner" },
+          { id: FALLBACK_WS_ID, name: "B", slug: "b", description: null, role: "member" },
+        ],
+      },
+    });
+    expect(screen.getByTestId("assistant-panel").dataset.workspaceId).toBe(
+      FALLBACK_WS_ID,
+    );
+  });
+
+  it("falls back to the first workspace when last-visited membership is gone", () => {
+    // last id is no longer in the member list → fail closed to list[0].
+    renderShell("/settings", {
+      mode: "nav",
+      lastWorkspaceId: WORKSPACE_ID,
+      workspaces: {
+        items: [
+          { id: FALLBACK_WS_ID, name: "B", slug: "b", description: null, role: "owner" },
+        ],
+      },
+    });
+    expect(screen.getByTestId("assistant-panel").dataset.workspaceId).toBe(
+      FALLBACK_WS_ID,
+    );
+  });
+
+  it("keeps remembered AI mode on / when a fallback workspace exists", () => {
+    // Stale sidebarMode=ai used to force-nav and blank the panel — now it
+    // re-opens against the fallback workspace.
+    renderShell("/", {
+      mode: "ai",
+      lastWorkspaceId: WORKSPACE_ID,
+    });
+    const toggle = screen.getByRole("button", { name: "ai.assistantClose" });
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByTestId("assistant-panel").dataset.open).toBe("true");
+    expect(screen.getByTestId("assistant-panel").dataset.workspaceId).toBe(
+      WORKSPACE_ID,
+    );
+    expect(screen.queryByLabelText("ui.sidebarNavAria")).toBeNull();
+  });
+
+  it("persists a route workspace id for later non-workspace pages", () => {
+    renderShell(WS_PATH);
+    expect(localStorage.getItem("devflow.lastWorkspaceId")).toBe(WORKSPACE_ID);
   });
 
   it("exposes the same switch inside the mobile drawer", () => {

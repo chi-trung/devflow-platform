@@ -122,6 +122,16 @@ export function DashboardPage() {
     setSelectedWsId(workspaces[0].id);
   }
 
+  // Keep the shared last-workspace key in sync with the dashboard picker so
+  // the sidebar AI panel (AppShell) talks to the workspace the user is
+  // looking at on / — not a stale route id from an earlier visit.
+  useEffect(() => {
+    if (!selectedWsId) return;
+    try {
+      localStorage.setItem("devflow.lastWorkspaceId", selectedWsId);
+    } catch {}
+  }, [selectedWsId]);
+
   // First-login onboarding tour. Auto-opens once (localStorage flag) after the
   // dashboard data has rendered; can be reopened from the greeting row.
   const [tourOpen, setTourOpen] = useState(false);
