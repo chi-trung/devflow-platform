@@ -335,6 +335,7 @@ export function SettingsPage() {
                   id={currentUser?.id}
                   size="md"
                   className="shrink-0"
+                  src={currentUser?.avatarUrl}
                 />
                 {/* flex-1 claims the row's remaining width; the 7rem floor
                     (which scales with root font-size) forces a line break

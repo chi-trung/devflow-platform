@@ -108,7 +108,8 @@ public sealed class AuthController(
             user.Id,
             user.Email,
             user.Username,
-            user.DisplayName));
+            user.DisplayName,
+            user.AvatarUrl));
     }
 
     [Authorize]

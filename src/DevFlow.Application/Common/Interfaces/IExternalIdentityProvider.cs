@@ -7,7 +7,8 @@ public sealed record ExternalIdentity(
     string Subject,
     string Email,
     string Name,
-    string? AccessToken = null);
+    string? AccessToken = null,
+    string? AvatarUrl = null);
 
 /// <summary>
 /// Exchanges a one-time authorization code with an external identity provider

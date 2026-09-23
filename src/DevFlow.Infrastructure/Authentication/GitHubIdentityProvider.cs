@@ -89,6 +89,9 @@ public sealed class GitHubIdentityProvider(
             ? (id.ValueKind == JsonValueKind.Number ? id.GetInt64().ToString() : id.GetString())
             : null;
         var name = root.TryGetProperty("name", out var nm) ? nm.GetString() : null;
+        // The profile photo, e.g. https://avatars.githubusercontent.com/u/… —
+        // GitHub always returns one for accounts with a default identicon too.
+        var avatar = root.TryGetProperty("avatar_url", out var av) ? av.GetString() : null;
 
         if (string.IsNullOrWhiteSpace(subject))
         {
@@ -108,7 +111,7 @@ public sealed class GitHubIdentityProvider(
             throw new UnauthorizedAccessException("GitHub profile is missing a verified email.");
         }
 
-        return new ExternalIdentity(subject, email.Trim(), name ?? string.Empty, accessToken);
+        return new ExternalIdentity(subject, email.Trim(), name ?? string.Empty, accessToken, avatar);
     }
 
     private static async Task<string?> GetPrimaryVerifiedEmailAsync(

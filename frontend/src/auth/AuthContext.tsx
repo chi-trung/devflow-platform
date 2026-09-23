@@ -23,6 +23,8 @@ export interface CurrentUser {
   email: string;
   username: string;
   displayName: string | null;
+  /** OAuth avatar URL from the JWT; null → Avatar renders initials. */
+  avatarUrl: string | null;
 }
 
 interface AuthContextValue {
@@ -143,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: claims.email,
       username: claims.username ?? claims.email,
       displayName: claims.displayName ?? null,
+      avatarUrl: claims.avatarUrl ?? null,
     };
   }, [status, claimsTick]);
 

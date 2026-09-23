@@ -3,6 +3,8 @@ export interface JwtClaims {
   email: string;
   username?: string;
   displayName?: string;
+  /** Provider-hosted avatar URL; absent for password users / no picture. */
+  avatarUrl?: string;
   /** Epoch-seconds expiry (standard JWT claim). */
   exp?: number;
 }

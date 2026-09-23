@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const PALETTE = [
@@ -23,6 +24,12 @@ interface AvatarProps {
   /** When true, renders a green presence dot at the bottom-right corner. */
   online?: boolean;
   className?: string;
+  /**
+   * Provider-hosted photo URL (Google picture / GitHub avatar_url). When it
+   * fails to load — deleted photo, blocked hotlink, offline — the avatar
+   * falls back to the initials rendering instead of a broken-image icon.
+   */
+  src?: string | null;
 }
 
 export function Avatar({
@@ -31,8 +38,13 @@ export function Avatar({
   size = "sm",
   online = false,
   className = "",
+  src = null,
 }: AvatarProps) {
   const { t } = useTranslation();
+  // Remember which exact URL broke: a later different src (user re-login
+  // refreshed their photo) gets a fresh chance without needing a key remount.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const showImage = Boolean(src) && failedSrc !== src;
   const initials = name
     .split(/[\s_-]+/)
     .filter(Boolean)
@@ -47,12 +59,24 @@ export function Avatar({
 
   return (
     <span className="relative inline-flex shrink-0">
-      <span
-        aria-hidden
-        className={`flex select-none items-center justify-center rounded-lg font-display font-semibold ${tone} ${sizeClasses} ${className}`}
-      >
-        {initials || "?"}
-      </span>
+      {showImage ? (
+        <img
+          src={src!}
+          alt=""
+          loading="lazy"
+          // Cross-origin referrer can make some CDNs reject the hotlink.
+          referrerPolicy="no-referrer"
+          onError={() => setFailedSrc(src)}
+          className={`rounded-lg object-cover ${tone} ${sizeClasses} ${className}`}
+        />
+      ) : (
+        <span
+          aria-hidden
+          className={`flex select-none items-center justify-center rounded-lg font-display font-semibold ${tone} ${sizeClasses} ${className}`}
+        >
+          {initials || "?"}
+        </span>
+      )}
       {online && (
         <span
           role="img"

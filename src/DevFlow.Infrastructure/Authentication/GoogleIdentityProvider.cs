@@ -77,12 +77,15 @@ public sealed class GoogleIdentityProvider(
         var subject = root.TryGetProperty("sub", out var sub) ? sub.GetString() : null;
         var email = root.TryGetProperty("email", out var em) ? em.GetString() : null;
         var name = root.TryGetProperty("name", out var nm) ? nm.GetString() : null;
+        // The profile photo, e.g. https://lh3.googleusercontent.com/... —
+        // absent when the account keeps it private.
+        var picture = root.TryGetProperty("picture", out var pic) ? pic.GetString() : null;
 
         if (string.IsNullOrWhiteSpace(subject) || string.IsNullOrWhiteSpace(email))
         {
             throw new UnauthorizedAccessException("Google profile is missing a subject or email.");
         }
 
-        return new ExternalIdentity(subject, email.Trim(), name ?? string.Empty);
+        return new ExternalIdentity(subject, email.Trim(), name ?? string.Empty, AvatarUrl: picture);
     }
 }

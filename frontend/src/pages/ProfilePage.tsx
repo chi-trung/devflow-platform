@@ -99,6 +99,7 @@ export function ProfilePage() {
             name={currentUser?.username ?? "?"}
             id={currentUser?.id}
             size="md"
+            src={currentUser?.avatarUrl}
           />
           <div className="min-w-0">
             <h1 className="font-display text-2xl font-semibold tracking-tight">

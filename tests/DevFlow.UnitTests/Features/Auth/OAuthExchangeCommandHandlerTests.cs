@@ -197,4 +197,80 @@ public class OAuthExchangeCommandHandlerTests
             Arg.Is<Domain.Entities.SocialLogin>(s => s.AccessToken == null),
             Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task Handle_ShouldStoreAvatarUrl_WhenCreatingUser()
+    {
+        Domain.Entities.User? created = null;
+        _identityProvider.GetProfileAsync("google", Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new ExternalIdentity(
+                "google-sub-301",
+                "avatar@google.com",
+                "Avatar",
+                AvatarUrl: "https://lh3.googleusercontent.com/pic=s96-c"));
+        _userRepository.GetByEmailAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((Domain.Entities.User?)null);
+        _userRepository
+            .When(u => u.AddAsync(Arg.Any<Domain.Entities.User>(), Arg.Any<CancellationToken>()))
+            .Do(ci => created = ci.Arg<Domain.Entities.User>());
+        _tokenProvider.GenerateAccessToken(Arg.Any<Domain.Entities.User>()).Returns("access-token");
+        _tokenProvider.GenerateRefreshToken().Returns("refresh-token");
+
+        await _handler.Handle(
+            new OAuthExchangeCommand("google", "code-abc", "verifier-xyz"),
+            CancellationToken.None);
+
+        Assert.NotNull(created);
+        Assert.Equal("https://lh3.googleusercontent.com/pic=s96-c", created!.AvatarUrl);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldRefreshAvatarUrl_OnRelogin()
+    {
+        var existing = Domain.Entities.User.Create("refresh@google.com", "refresh", "hash", "Refresh");
+        existing.UpdateAvatarUrl("https://lh3.googleusercontent.com/old");
+        var login = Domain.Entities.SocialLogin.Create(existing.Id, "google", "google-sub-302");
+        _identityProvider.GetProfileAsync("google", Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new ExternalIdentity(
+                "google-sub-302",
+                "refresh@google.com",
+                "Refresh",
+                AvatarUrl: "https://lh3.googleusercontent.com/new"));
+        _socialLoginRepository.GetByProviderAsync("google", "google-sub-302", Arg.Any<CancellationToken>())
+            .Returns(login);
+        _userRepository.GetByIdAsync(login.UserId, Arg.Any<CancellationToken>())
+            .Returns(existing);
+        _tokenProvider.GenerateAccessToken(existing).Returns("access-token");
+        _tokenProvider.GenerateRefreshToken().Returns("refresh-token");
+
+        await _handler.Handle(
+            new OAuthExchangeCommand("google", "code-abc", "verifier-xyz"),
+            CancellationToken.None);
+
+        // The person may have changed their photo — re-login picks up the new URL.
+        Assert.Equal("https://lh3.googleusercontent.com/new", existing.AvatarUrl);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldKeepExistingAvatar_WhenProviderReturnsNoPicture()
+    {
+        var existing = Domain.Entities.User.Create("keep@google.com", "keep", "hash", "Keep");
+        existing.UpdateAvatarUrl("https://lh3.googleusercontent.com/keepme");
+        var login = Domain.Entities.SocialLogin.Create(existing.Id, "google", "google-sub-303");
+        _identityProvider.GetProfileAsync("google", Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new ExternalIdentity("google-sub-303", "keep@google.com", "Keep"));
+        _socialLoginRepository.GetByProviderAsync("google", "google-sub-303", Arg.Any<CancellationToken>())
+            .Returns(login);
+        _userRepository.GetByIdAsync(login.UserId, Arg.Any<CancellationToken>())
+            .Returns(existing);
+        _tokenProvider.GenerateAccessToken(existing).Returns("access-token");
+        _tokenProvider.GenerateRefreshToken().Returns("refresh-token");
+
+        await _handler.Handle(
+            new OAuthExchangeCommand("google", "code-abc", "verifier-xyz"),
+            CancellationToken.None);
+
+        // A locked Google profile returns no picture — never wipe what we have.
+        Assert.Equal("https://lh3.googleusercontent.com/keepme", existing.AvatarUrl);
+    }
 }

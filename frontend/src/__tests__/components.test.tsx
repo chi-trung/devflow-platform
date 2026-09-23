@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { Badge } from "../components/ui/Badge";
 import { Avatar } from "../components/ui/Avatar";
 import { Skeleton } from "../components/ui/Skeleton";
@@ -57,6 +57,45 @@ describe("Avatar", () => {
     rerender(<Avatar name="Alice" id="user-1" />);
     const color2 = screen.getByText("A").className;
     expect(color1).toBe(color2);
+  });
+
+  it("renders an <img> instead of initials when src is provided", () => {
+    render(<Avatar name="Alice" src="https://lh3.googleusercontent.com/pic" />);
+    const img = document.querySelector("img");
+    expect(img).not.toBeNull();
+    expect(img?.getAttribute("src")).toBe("https://lh3.googleusercontent.com/pic");
+    expect(img).toHaveAttribute("referrerPolicy", "no-referrer");
+    // Decorative — the accessible name lives beside the avatar, matching the
+    // initials span's existing aria-hidden treatment.
+    expect(img).toHaveAttribute("alt", "");
+    expect(screen.queryByText("A")).toBeNull();
+  });
+
+  it("falls back to initials when the image fails to load", () => {
+    render(<Avatar name="Alice" src="https://broken.example/avatar.png" />);
+    const img = document.querySelector("img")!;
+    fireEvent.error(img);
+    expect(document.querySelector("img")).toBeNull();
+    expect(screen.getByText("A")).toBeInTheDocument();
+  });
+
+  it("retries when src changes to a new URL after a failure", () => {
+    const { rerender } = render(
+      <Avatar name="Alice" src="https://broken.example/old.png" />,
+    );
+    fireEvent.error(document.querySelector("img")!);
+    expect(document.querySelector("img")).toBeNull();
+
+    rerender(<Avatar name="Alice" src="https://cdn.example/new.png" />);
+    expect(document.querySelector("img")?.getAttribute("src")).toBe(
+      "https://cdn.example/new.png",
+    );
+  });
+
+  it("treats empty src as absent (password users)", () => {
+    render(<Avatar name="Alice" src={null} />);
+    expect(document.querySelector("img")).toBeNull();
+    expect(screen.getByText("A")).toBeInTheDocument();
   });
 });
 

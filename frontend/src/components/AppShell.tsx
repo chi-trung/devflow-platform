@@ -716,6 +716,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <Avatar
                         name={currentUser.username}
                         id={currentUser.id}
+                        src={currentUser.avatarUrl}
                         className="size-8 text-xs"
                       />
                       <ApiStatusDot className="absolute -right-0.5 -bottom-0.5 ring-2 ring-surface" />

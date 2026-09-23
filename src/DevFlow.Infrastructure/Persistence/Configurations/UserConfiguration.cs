@@ -33,5 +33,8 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(user => user.DisplayName)
             .HasMaxLength(100)
             .IsRequired();
+
+        builder.Property(user => user.AvatarUrl)
+            .HasMaxLength(500);
     }
 }

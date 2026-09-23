@@ -74,6 +74,14 @@ public sealed class OAuthExchangeCommandHandler(
             login!.UpdateAccessToken(identity.AccessToken);
         }
 
+        // Keep the stored avatar fresh on every sign-in (the person may have
+        // changed it since last time). A provider that returned no picture —
+        // e.g. a locked Google profile — leaves the existing URL untouched.
+        if (!string.IsNullOrWhiteSpace(identity.AvatarUrl))
+        {
+            user.UpdateAvatarUrl(identity.AvatarUrl);
+        }
+
         // 3. Issue the normal DevFlow session tokens.
         var accessToken = tokenProvider.GenerateAccessToken(user);
         var refreshToken = RefreshToken.Create(

@@ -38,4 +38,23 @@ describe("decodeJwt", () => {
     const result = decodeJwt(token);
     expect(result).toEqual({ sub: "456", email: "user@test.com" });
   });
+
+  it("decodes the avatarUrl claim when the backend sent one", () => {
+    // The backend omits the claim entirely (never sends "null") for users
+    // without a picture — decodeJwt must surface exactly what was signed.
+    const payload = {
+      sub: "789",
+      email: "oauth@test.com",
+      avatarUrl: "https://lh3.googleusercontent.com/pic",
+    };
+    const base64 = btoa(JSON.stringify(payload))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
+    const result = decodeJwt(`header.${base64}.signature`);
+    expect(result?.avatarUrl).toBe("https://lh3.googleusercontent.com/pic");
+    expect(decodeJwt(`header.${btoa(JSON.stringify({ sub: "1", email: "a@b.c" })).replace(/=+$/, "")}.sig`)?.avatarUrl)
+      .toBeUndefined();
+  });
 });

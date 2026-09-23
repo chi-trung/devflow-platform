@@ -192,10 +192,16 @@ describe("AppShell sidebar collapse", () => {
     expect(screen.queryByText("a@b.c")).toBeNull();
 
     // Expanded: the full trigger returns — the mock user's initials "A" avatar
-    // plus username/email are rendered again.
+    // plus username/email are rendered again. The email is split into a
+    // truncatable local part + a shrink-0 domain so "@b.c" can never be the
+    // piece that ellipsizes; the wrapper's title still carries the full
+    // address (WCAG 1.4.4) and textContent reassembles to the whole email.
     renderShell("/workspaces/ws1", false);
     expect(screen.getByText("alice")).toBeTruthy();
-    expect(screen.getByText("a@b.c")).toBeTruthy();
+    const email = screen.getByTitle("a@b.c");
+    expect(email.textContent).toBe("a@b.c");
+    expect(email.querySelector(".truncate")?.textContent).toBe("a");
+    expect(email.querySelector(".shrink-0")?.textContent).toBe("@b.c");
   });
 
   it("titles the document after the page h1 (WCAG 2.4.2)", () => {
