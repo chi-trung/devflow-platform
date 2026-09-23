@@ -151,4 +151,31 @@ public sealed class WorkspacesController(ISender sender) : ControllerBase
 
         return NoContent();
     }
+
+    [HttpGet("{id:guid}/invitations")]
+    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Workspaces.ListInvitations.PendingInvitationSummary>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ListPendingInvitations(Guid id, CancellationToken cancellationToken)
+    {
+        var invitations = await sender.Send(
+            new Application.Features.Workspaces.ListInvitations.ListWorkspacePendingInvitationsQuery(id),
+            cancellationToken);
+
+        return Ok(invitations);
+    }
+
+    [HttpDelete("{id:guid}/invitations/{invitationId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> RevokeInvitation(Guid id, Guid invitationId, CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Workspaces.RevokeInvitation.RevokeInvitationCommand(id, invitationId),
+            cancellationToken);
+
+        return NoContent();
+    }
 }

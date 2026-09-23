@@ -51,7 +51,7 @@ public sealed class RemoveMemberCommandHandler(
 
         var log = Domain.Entities.ActivityLog.Create(
             command.WorkspaceId,
-            Guid.Empty,
+            null,
             null,
             userContext.UserId,
             "removed",

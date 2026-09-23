@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, FolderKanban, Users, Trash2, X, RotateCcw, Pencil } from "lucide-react";
-import { api, pagedItems, removeWorkspaceMember, updateMemberRole, restoreProject as restoreProjectApi, updateProject, updateWorkspace } from "../lib/api";
+import { api, pagedItems, removeWorkspaceMember, updateMemberRole, restoreProject as restoreProjectApi, updateProject, updateWorkspace, getPendingInvitations, revokeInvitation } from "../lib/api";
 import { EmojiTile, coverGradient } from "../components/ui/EmojiCover";
 import { EmojiPicker, CoverColorPicker } from "../components/ui/EmojiPickers";
 import { EmptyBoardIllustration } from "../components/illustrations/EmptyStateIllustrations";
@@ -23,6 +23,7 @@ import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
 import { useAuth } from "../auth/AuthContext";
 import type {
+  PendingInvitationSummary,
   ProjectResponse,
   WorkspaceMemberResponse,
   WorkspaceResponse,
@@ -262,6 +263,45 @@ export function WorkspacePage() {
   const canManageMembers =
     workspace?.role === "Owner" || workspace?.role === "Admin";
 
+  // Gated: non-admins must not hit the Admin-only list endpoint. Empty []
+  // only when the gate is closed — a real fetch failure keeps data === null
+  // so the error branch below stays the honest render.
+  const {
+    data: pendingInvites,
+    error: pendingInvitesError,
+    reload: reloadPendingInvites,
+  } = useApi<PendingInvitationSummary[]>(
+    () =>
+      canManageMembers
+        ? getPendingInvitations(workspaceId)
+        : Promise.resolve([]),
+    [workspaceId, canManageMembers],
+  );
+
+  const [revokingInviteId, setRevokingInviteId] = useState<string | null>(null);
+
+  async function handleRevokeInvite(invitation: PendingInvitationSummary) {
+    setRevokingInviteId(invitation.id);
+    try {
+      await revokeInvitation(workspaceId, invitation.id);
+      push(
+        t("workspace.revokeInviteSuccess", {
+          email: invitation.invitedEmail,
+        }),
+      );
+      reloadPendingInvites();
+    } catch (err) {
+      push(
+        err instanceof Error
+          ? err.message
+          : t("workspace.revokeInviteFailed"),
+        "error",
+      );
+    } finally {
+      setRevokingInviteId(null);
+    }
+  }
+
   const canManageProjects =
     workspace?.role === "Owner" || workspace?.role === "Admin";
 
@@ -381,7 +421,9 @@ export function WorkspacePage() {
       setInviteEmail("");
       setInviteRole("Member");
       setInviting(false);
-      reloadMembers();
+      // Invite creates a pending invitation, not a membership — the members
+      // list is unchanged; the pending-invite section is what moved.
+      reloadPendingInvites();
       push(t("workspace.inviteSentTo", { email: inviteEmail.trim() }));
     } catch (err) {
       setInviteError(err instanceof Error ? err.message : t("workspace.inviteFailed"));
@@ -903,6 +945,90 @@ export function WorkspacePage() {
                     );
                   })}
                 </ul>
+              )}
+
+              {canManageMembers && (
+                <div className="mt-8">
+                  <h3 className="mb-3 font-display text-lg font-semibold tracking-tight">
+                    {t("workspace.pendingInvitations")}
+                  </h3>
+                  {pendingInvitesError !== null && pendingInvites === null ? (
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <ErrorAlert
+                          id="workspacepage-pending-invites-error"
+                          message={pendingInvitesError}
+                        />
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={reloadPendingInvites}
+                      >
+                        {t("common.retry")}
+                      </Button>
+                    </div>
+                  ) : !pendingInvites ? (
+                    <Skeleton className="h-12" />
+                  ) : pendingInvites.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {t("workspace.noPendingInvitations")}
+                    </p>
+                  ) : (
+                    <ul
+                      role="list"
+                      className="flex flex-col gap-2"
+                    >
+                      {pendingInvites.map((invitation) => {
+                        const isRevoking =
+                          revokingInviteId === invitation.id;
+                        const label =
+                          invitation.inviteeDisplayName ||
+                          invitation.invitedEmail;
+                        return (
+                          <li
+                            key={invitation.id}
+                            className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
+                          >
+                            <div className="min-w-[7rem] flex-1 leading-tight">
+                              <p
+                                className="truncate text-sm font-medium"
+                                title={label}
+                              >
+                                {label}
+                              </p>
+                              <p
+                                className="truncate font-mono text-[11px] text-muted-foreground"
+                                title={invitation.invitedEmail}
+                              >
+                                {invitation.invitedEmail}
+                                {" · "}
+                                {invitation.invitedByName}
+                              </p>
+                            </div>
+                            <span className="shrink-0">
+                              <Badge tone="teal">{invitation.role}</Badge>
+                            </span>
+                            <button
+                              type="button"
+                              disabled={isRevoking}
+                              onClick={() => void handleRevokeInvite(invitation)}
+                              aria-label={t("workspace.revokeInviteAria", {
+                                email: invitation.invitedEmail,
+                              })}
+                              className="rounded p-1 text-muted-foreground transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                            >
+                              <X className="size-4" aria-hidden />
+                              <span className="sr-only">
+                                {t("workspace.revokeInvite")}
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
               )}
             </section>
           </>

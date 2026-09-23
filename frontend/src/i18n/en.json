@@ -1799,7 +1799,14 @@
   "wsNameLabel": "Workspace name",
   "wsDescriptionLabel": "Description",
   "statsLoadFailed": "Task stats could not be loaded",
-  "progressUnknown": "Progress unavailable"
+  "progressUnknown": "Progress unavailable",
+  "pendingInvitations": "Pending invitations",
+  "noPendingInvitations": "No pending invitations",
+  "pendingInvitationsLoadFailed": "Failed to load pending invitations.",
+  "revokeInvite": "Revoke",
+  "revokeInviteAria": "Revoke invitation for {{email}}",
+  "revokeInviteSuccess": "Invitation for {{email}} revoked",
+  "revokeInviteFailed": "Failed to revoke invitation"
  },
  "label": {
   "title": "Labels",
@@ -1977,5 +1984,19 @@
   "statusWarm": "API online",
   "statusWaking": "API is waking up",
   "statusOffline": "You are offline"
+ },
+ "invites": {
+  "pendingInvitesTitle": "Workspace invitations",
+  "pendingInvitesBody": "{{inviter}} invited you to join {{workspace}} as {{role}}.",
+  "acceptInvite": "Accept",
+  "declineInvite": "Decline",
+  "accepting": "Accepting…",
+  "declining": "Declining…",
+  "inviteAccepted": "You joined {{name}}",
+  "inviteAcceptedBody": "You can now open the workspace and start collaborating.",
+  "openWorkspace": "Open workspace",
+  "inviteDeclined": "Invitation declined",
+  "inviteActionFailed": "Could not update the invitation.",
+  "invitesLoadFailed": "Failed to load invitations."
  }
 }

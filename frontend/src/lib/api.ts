@@ -53,6 +53,9 @@ import type {
   AiExecuteActionContract,
   ExecutedAction,
   AiSuggestion,
+  AcceptInvitationResponse,
+  InvitationSummary,
+  PendingInvitationSummary,
 } from "../types/api";
 
 // In dev the Vite proxy forwards /api to localhost; in production
@@ -1714,6 +1717,39 @@ export async function updateMemberRole(
   await api(`/workspaces/${workspaceId}/members/${userId}/role`, {
     method: "PATCH",
     body: JSON.stringify({ role }),
+  });
+}
+
+export function getMyInvitations(): Promise<InvitationSummary[]> {
+  return api<InvitationSummary[]>(`/invitations`);
+}
+
+export async function acceptInvitation(
+  invitationId: string,
+): Promise<AcceptInvitationResponse> {
+  return api<AcceptInvitationResponse>(`/invitations/${invitationId}/accept`, {
+    method: "POST",
+  });
+}
+
+export async function declineInvitation(invitationId: string): Promise<void> {
+  await api(`/invitations/${invitationId}/decline`, { method: "POST" });
+}
+
+export function getPendingInvitations(
+  workspaceId: string,
+): Promise<PendingInvitationSummary[]> {
+  return api<PendingInvitationSummary[]>(
+    `/workspaces/${workspaceId}/invitations`,
+  );
+}
+
+export async function revokeInvitation(
+  workspaceId: string,
+  invitationId: string,
+): Promise<void> {
+  await api(`/workspaces/${workspaceId}/invitations/${invitationId}`, {
+    method: "DELETE",
   });
 }
 

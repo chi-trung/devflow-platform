@@ -41,7 +41,7 @@ public sealed class ActivityLogRepository(DevFlowDbContext dbContext) : IActivit
         // top takePerProject per project in a single query (no per-project N+1).
         var ranked = dbContext.ActivityLogs
             .AsNoTracking()
-            .Where(a => ids.Contains(a.ProjectId))
+            .Where(a => a.ProjectId != null && ids.Contains(a.ProjectId.Value))
             .GroupBy(a => a.ProjectId)
             .SelectMany(g => g
                 .OrderByDescending(a => a.CreatedAtUtc)

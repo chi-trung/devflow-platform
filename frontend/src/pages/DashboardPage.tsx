@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Plus, ArrowUpRight, Boxes, CalendarRange } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
-import { api, pagedItems } from "../lib/api";
+import { useToast } from "../components/ui/ToastProvider";
+import { api, pagedItems, getMyInvitations, acceptInvitation, declineInvitation } from "../lib/api";
 import { loadDashboard, type DashboardResult } from "../lib/dashboard";
 import { useApi } from "../hooks/useApi";
 import { useWorkspaceEvents } from "../hooks/useWorkspaceEvents";
@@ -26,7 +27,12 @@ import { StatsCards } from "../components/dashboard/StatsCards";
 import { TaskDistribution } from "../components/dashboard/TaskDistribution";
 import { ActivityFeed } from "../components/dashboard/ActivityFeed";
 import { SprintHealthCard } from "../components/dashboard/SprintHealthCard";
-import type { ProjectResponse, WorkspaceResponse } from "../types/api";
+import type {
+  AcceptInvitationResponse,
+  InvitationSummary,
+  ProjectResponse,
+  WorkspaceResponse,
+} from "../types/api";
 
 function slugify(name: string): string {
   return name
@@ -52,6 +58,52 @@ export function DashboardPage() {
   // Refresh workspace list when a workspace-level event arrives (e.g. a
   // workspace created via AI on another page) — no F5 needed.
   useWorkspaceEvents(undefined, useCallback(() => reload(), [reload]));
+
+  const { push } = useToast();
+
+  const {
+    data: invitations,
+    error: invitationsError,
+    reload: reloadInvitations,
+  } = useApi<InvitationSummary[]>(() => getMyInvitations(), []);
+
+  const [inviteActionId, setInviteActionId] = useState<string | null>(null);
+  const [acceptedInvite, setAcceptedInvite] =
+    useState<AcceptInvitationResponse | null>(null);
+
+  async function handleAcceptInvite(invitation: InvitationSummary) {
+    setInviteActionId(invitation.id);
+    try {
+      const result = await acceptInvitation(invitation.id);
+      setAcceptedInvite(result);
+      push(t("invites.inviteAccepted", { name: result.workspaceName }));
+      reloadInvitations();
+      reload();
+    } catch (err) {
+      push(
+        err instanceof Error ? err.message : t("invites.inviteActionFailed"),
+        "error",
+      );
+    } finally {
+      setInviteActionId(null);
+    }
+  }
+
+  async function handleDeclineInvite(invitation: InvitationSummary) {
+    setInviteActionId(invitation.id);
+    try {
+      await declineInvitation(invitation.id);
+      push(t("invites.inviteDeclined"));
+      reloadInvitations();
+    } catch (err) {
+      push(
+        err instanceof Error ? err.message : t("invites.inviteActionFailed"),
+        "error",
+      );
+    } finally {
+      setInviteActionId(null);
+    }
+  }
 
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -283,6 +335,108 @@ export function DashboardPage() {
             )}
           </div>
         </div>
+
+        {/* Pending invites: fail-closed — only an error with no data may
+            render the banner; empty is simply "nothing to accept". */}
+        {(invitationsError !== null && invitations === null) ||
+        (invitations !== null && invitations.length > 0) ||
+        acceptedInvite ? (
+          <div className="mb-8">
+            {invitationsError !== null && invitations === null ? (
+              <div className="flex items-start gap-2">
+                <div className="flex-1">
+                  <ErrorAlert
+                    id="dashboardpage-invites-error"
+                    message={invitationsError}
+                  />
+                </div>
+                <Button size="sm" variant="outline" onClick={reloadInvitations}>
+                  {t("common.retry")}
+                </Button>
+              </div>
+            ) : (
+              <>
+                {invitations !== null && invitations.length > 0 && (
+                  <section
+                    aria-label={t("invites.pendingInvitesTitle")}
+                    className="mb-3 rounded-xl border border-border bg-card p-5"
+                  >
+                    <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">
+                      {t("invites.pendingInvitesTitle")}
+                    </h2>
+                    <ul role="list" className="flex flex-col gap-3">
+                      {invitations.map((invitation) => {
+                        const busy = inviteActionId === invitation.id;
+                        return (
+                          <li
+                            key={invitation.id}
+                            className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+                          >
+                            <p className="min-w-0 text-sm">
+                              {t("invites.pendingInvitesBody", {
+                                inviter: invitation.invitedByName,
+                                workspace: invitation.workspaceName,
+                                role: invitation.role,
+                              })}
+                            </p>
+                            <div className="flex shrink-0 gap-2">
+                              <Button
+                                size="sm"
+                                disabled={busy}
+                                onClick={() => void handleAcceptInvite(invitation)}
+                              >
+                                {busy
+                                  ? t("invites.accepting")
+                                  : t("invites.acceptInvite")}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={busy}
+                                onClick={() => void handleDeclineInvite(invitation)}
+                              >
+                                {busy
+                                  ? t("invites.declining")
+                                  : t("invites.declineInvite")}
+                              </Button>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+                )}
+                {acceptedInvite && (
+                  <div className="rounded-xl border border-primary/40 bg-primary/5 p-5">
+                    <p className="font-display font-semibold">
+                      {t("invites.inviteAccepted", {
+                        name: acceptedInvite.workspaceName,
+                      })}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {t("invites.inviteAcceptedBody")}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link to={`/workspaces/${acceptedInvite.workspaceId}`}>
+                        <Button size="sm">
+                          {t("invites.openWorkspace")}
+                          <ArrowUpRight className="ml-1.5 size-3.5" aria-hidden />
+                        </Button>
+                      </Link>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setAcceptedInvite(null)}
+                      >
+                        {t("common.close")}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        ) : null}
 
         {creating && (
           <form

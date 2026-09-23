@@ -56,7 +56,7 @@ public sealed class UpdateMemberRoleCommandHandler(
 
         var log = Domain.Entities.ActivityLog.Create(
             command.WorkspaceId,
-            Guid.Empty,
+            null,
             null,
             userContext.UserId,
             "changed role of",

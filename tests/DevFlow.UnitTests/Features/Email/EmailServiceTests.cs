@@ -22,6 +22,7 @@ public class EmailServiceTests
         Assert.Equal(Task.CompletedTask, service.SendCommentAddedEmailAsync("a@x.io", "T", "P", "c", "B", "w", "p", "t"));
         Assert.Equal(Task.CompletedTask, service.SendRoleChangedEmailAsync("a@x.io", "W", "Admin", "B", "w"));
         Assert.Equal(Task.CompletedTask, service.SendRemovedFromWorkspaceEmailAsync("a@x.io", "W", "B", "w"));
+        Assert.Equal(Task.CompletedTask, service.SendWorkspaceInviteEmailAsync("a@x.io", "W", "B", "Member", "w"));
     }
 
     [Fact]

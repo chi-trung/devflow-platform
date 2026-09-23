@@ -1799,7 +1799,14 @@
   "wsNameLabel": "Tên workspace",
   "wsDescriptionLabel": "Mô tả",
   "statsLoadFailed": "Không tải được thống kê task",
-  "progressUnknown": "Không có tiến độ"
+  "progressUnknown": "Không có tiến độ",
+  "pendingInvitations": "Lời mời đang chờ",
+  "noPendingInvitations": "Không có lời mời nào đang chờ",
+  "pendingInvitationsLoadFailed": "Không thể tải danh sách lời mời.",
+  "revokeInvite": "Thu hồi",
+  "revokeInviteAria": "Thu hồi lời mời của {{email}}",
+  "revokeInviteSuccess": "Đã thu hồi lời mời của {{email}}",
+  "revokeInviteFailed": "Thu hồi lời mời thất bại"
  },
  "label": {
   "title": "Nhãn",
@@ -1977,5 +1984,19 @@
   "statusWarm": "API trực tuyến",
   "statusWaking": "API đang khởi động lại",
   "statusOffline": "Bạn đang ngoại tuyến"
+ },
+ "invites": {
+  "pendingInvitesTitle": "Lời mời không gian làm việc",
+  "pendingInvitesBody": "{{inviter}} mời bạn tham gia {{workspace}} với vai trò {{role}}.",
+  "acceptInvite": "Chấp nhận",
+  "declineInvite": "Từ chối",
+  "accepting": "Đang chấp nhận…",
+  "declining": "Đang từ chối…",
+  "inviteAccepted": "Bạn đã tham gia {{name}}",
+  "inviteAcceptedBody": "Bạn có thể mở không gian làm việc và bắt đầu cộng tác.",
+  "openWorkspace": "Mở không gian làm việc",
+  "inviteDeclined": "Đã từ chối lời mời",
+  "inviteActionFailed": "Không thể xử lý lời mời.",
+  "invitesLoadFailed": "Không thể tải lời mời."
  }
 }
