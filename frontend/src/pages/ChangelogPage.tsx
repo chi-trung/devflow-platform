@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { ArrowRight, Rocket } from "lucide-react";
+import { ArrowRight, Check, Rocket } from "lucide-react";
 import {
   PublicHeader,
   PublicFooter,
@@ -123,7 +123,12 @@ export function ChangelogPage() {
                   className="rounded-xl border border-border bg-card/60 p-6 transition-colors duration-200 hover:border-border-strong"
                 >
                   <div className="mb-3 flex items-center gap-2">
-                    {item.status === "inProgress" ? (
+                    {item.status === "done" ? (
+                      <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-primary-strong">
+                        <Check className="size-3" aria-hidden />
+                        {t("changelog.roadmapStatus.done")}
+                      </span>
+                    ) : item.status === "inProgress" ? (
                       <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-primary-strong">
                         <Rocket className="size-3" aria-hidden />
                         {t("changelog.roadmapStatus.inProgress")}

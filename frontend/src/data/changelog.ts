@@ -25,7 +25,7 @@ export interface ChangelogEntry {
   changes: Partial<Record<ChangeCategory, Localized[]>>;
 }
 
-export type RoadmapStatus = "planned" | "inProgress";
+export type RoadmapStatus = "planned" | "inProgress" | "done";
 
 export interface RoadmapItem {
   title: Localized;
@@ -152,7 +152,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
 export const ROADMAP_ITEMS: RoadmapItem[] = [
   {
     title: { en: "Recurring tasks and automation rules", vi: "Task lặp lại và quy tắc tự động hóa" },
-    status: "planned",
+    status: "done",
   },
   {
     title: { en: "Deeper AI agent capabilities", vi: "AI agent mạnh hơn" },
