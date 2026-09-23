@@ -10,7 +10,7 @@ public class ActivityLog : BaseEntity, IAuditableEntity
 
     private ActivityLog(
         Guid workspaceId,
-        Guid projectId,
+        Guid? projectId,
         Guid? taskItemId,
         Guid actorUserId,
         string action,
@@ -26,7 +26,7 @@ public class ActivityLog : BaseEntity, IAuditableEntity
 
     public Guid WorkspaceId { get; private set; }
 
-    public Guid ProjectId { get; private set; }
+    public Guid? ProjectId { get; private set; }
 
     public Guid? TaskItemId { get; private set; }
 
@@ -42,7 +42,7 @@ public class ActivityLog : BaseEntity, IAuditableEntity
 
     public static ActivityLog Create(
         Guid workspaceId,
-        Guid projectId,
+        Guid? projectId,
         Guid? taskItemId,
         Guid actorUserId,
         string action,

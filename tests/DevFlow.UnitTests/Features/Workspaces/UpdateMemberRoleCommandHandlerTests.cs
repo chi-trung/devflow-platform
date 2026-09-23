@@ -54,7 +54,7 @@ public class UpdateMemberRoleCommandHandlerTests
         await _workspaceRepository.Received(1).UpdateMemberRoleAsync(_workspaceId, _memberId, WorkspaceRole.Admin, Arg.Any<CancellationToken>());
         await _cacheService.Received(1).RemoveAsync($"workspace-members:{_workspaceId}", Arg.Any<CancellationToken>());
         await _activityLogRepository.Received(1).AddAsync(Arg.Is<ActivityLog>(log =>
-            log.Action == "changed role of" && log.Target == "Member User to Admin"), Arg.Any<CancellationToken>());
+            log.Action == "changed role of" && log.Target == "Member User to Admin" && log.ProjectId == null), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

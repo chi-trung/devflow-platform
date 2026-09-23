@@ -56,7 +56,7 @@ public class RemoveMemberCommandHandlerTests
         await _workspaceRepository.Received(1).RemoveMemberAsync(_workspaceId, _memberId, Arg.Any<CancellationToken>());
         await _cacheService.Received(1).RemoveAsync($"workspace-members:{_workspaceId}", Arg.Any<CancellationToken>());
         await _activityLogRepository.Received(1).AddAsync(Arg.Is<ActivityLog>(log =>
-            log.Action == "removed" && log.Target == "Member User from workspace"), Arg.Any<CancellationToken>());
+            log.Action == "removed" && log.Target == "Member User from workspace" && log.ProjectId == null), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

@@ -60,6 +60,13 @@ public interface IEmailService
         string workspaceName,
         string removedBy,
         string workspaceId);
+
+    Task SendWorkspaceInviteEmailAsync(
+        string toEmail,
+        string workspaceName,
+        string invitedBy,
+        string role,
+        string workspaceId);
 }
 
 public class NoOpEmailService : IEmailService
@@ -107,6 +114,12 @@ public class NoOpEmailService : IEmailService
 
     public Task SendRemovedFromWorkspaceEmailAsync(
         string toEmail, string workspaceName, string removedBy, string workspaceId)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task SendWorkspaceInviteEmailAsync(
+        string toEmail, string workspaceName, string invitedBy, string role, string workspaceId)
     {
         return Task.CompletedTask;
     }

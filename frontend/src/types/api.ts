@@ -25,6 +25,37 @@ export interface WorkspaceMemberResponse {
   role: string;
 }
 
+export interface PendingInvitationSummary {
+  id: string;
+  workspaceId: string;
+  invitedUserId: string;
+  invitedEmail: string;
+  role: string;
+  status: string;
+  invitedAtUtc: string;
+  invitedByName: string;
+  inviteeDisplayName: string;
+}
+
+export interface InvitationSummary {
+  id: string;
+  workspaceId: string;
+  workspaceName: string;
+  workspaceSlug: string;
+  invitedEmail: string;
+  role: string;
+  status: string;
+  invitedAtUtc: string;
+  invitedByName: string;
+}
+
+export interface AcceptInvitationResponse {
+  workspaceId: string;
+  workspaceName: string;
+  workspaceSlug: string;
+  role: string;
+}
+
 export interface ProjectMemberResponse {
   userId: string;
   username: string;

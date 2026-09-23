@@ -22,6 +22,13 @@ public class ActivityLogTests
         Assert.Equal("Task Title", log.Target);
     }
 
+    [Fact]
+    public void Create_ShouldAllowNullProjectId_ForWorkspaceLevelActivity()
+    {
+        var log = ActivityLog.Create(Guid.NewGuid(), null, null, Guid.NewGuid(), "changed role of", "user to Admin");
+        Assert.Null(log.ProjectId);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]

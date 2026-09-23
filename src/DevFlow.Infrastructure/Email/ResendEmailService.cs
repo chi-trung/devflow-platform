@@ -100,6 +100,18 @@ public sealed class ResendEmailService(HttpClient httpClient, IConfiguration con
         """);
     }
 
+    public Task SendWorkspaceInviteEmailAsync(
+        string toEmail, string workspaceName, string invitedBy, string role, string workspaceId)
+    {
+        var workspaceUrl = $"{FrontendUrl}/workspaces/{workspaceId}";
+        return SendEmailAsync(toEmail, $"You're invited to join {workspaceName}", $"""
+            <h2>Workspace invitation</h2>
+            <p><strong>{invitedBy}</strong> invited you to join workspace <strong>{workspaceName}</strong> as <strong>{role}</strong>.</p>
+            <p>Sign in to DevFlow and accept the invitation to start collaborating.</p>
+            <p><a href="{workspaceUrl}">Open DevFlow →</a></p>
+        """);
+    }
+
     private async Task SendEmailAsync(string to, string subject, string htmlBody)
     {
         var payload = new
