@@ -161,7 +161,7 @@
   },
   "community": {
    "title": "Xây dựng công khai",
-   "subtitle": "Không forum, không Discord giả vờ có người trực. Mã nguồn, danh sách issue và lịch sử phát hành chính là nơi trò chuyện.",
+   "subtitle": "Trao đổi diễn ra nơi công việc diễn ra: mã nguồn, issue và lịch sử phát hành.",
    "apiHint": "Đang tích hợp? Tài liệu API trực tuyến nằm trong Swagger."
   },
   "help": {
