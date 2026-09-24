@@ -16,12 +16,12 @@ export const PRICING = {
   planName: { en: "Everything, free", vi: "Toàn bộ, miễn phí" } as Localized,
   price: { en: "$0", vi: "0đ" } as Localized,
   period: {
-    en: "forever, for now",
-    vi: "mãi mãi, tính đến lúc này",
+    en: "Free during public beta",
+    vi: "Miễn phí trong giai đoạn beta công khai",
   } as Localized,
   blurb: {
-    en: "The hosted instance runs on hobby-tier infrastructure and costs nothing to use. No credit card, no seat minimum, no feature locked behind a plan.",
-    vi: "Instance công khai chạy trên hạ tầng bậc hobby và không tốn phí để dùng. Không thẻ tín dụng, không yêu cầu số ghế tối thiểu, không tính năng nào bị khóa sau một gói.",
+    en: "The hosted instance is free to use — no credit card, no seat minimum, no locked features. It runs on shared infrastructure, so cold starts can occur after idle periods; the landing page pings the API to warm it.",
+    vi: "Instance công khai miễn phí — không cần thẻ, không giới hạn ghế, không khóa tính năng. Nó chạy trên hạ tầng dùng chung nên có thể khởi động chậm sau thời gian ít truy cập; trang chủ tự ping API để làm ấm.",
   } as Localized,
   bullets: [
     {
@@ -46,8 +46,8 @@ export const PRICING = {
     },
   ] as Localized[],
   note: {
-    en: "If paid plans ever appear, existing usage stays free under this page's terms at the time. The honest current state: there is exactly one plan.",
-    vi: "Nếu các gói trả phí xuất hiện trong tương lai, mức sử dụng hiện tại vẫn miễn phí theo điều khoản của trang này tại thời điểm đó. Tình trạng trung thực lúc này: chỉ có đúng một gói.",
+    en: "One plan today. If paid options are added later, usage under these terms stays free.",
+    vi: "Hiện tại chỉ có một gói. Nếu sau này có thêm gói trả phí, mức dùng theo điều khoản này vẫn miễn phí.",
   } as Localized,
 };
 
@@ -122,8 +122,8 @@ export const COMMUNITY_CARDS: DocCard[] = [
   {
     title: { en: "Bugs and ideas", vi: "Bug và ý tưởng" },
     desc: {
-      en: "One place to report problems and request features. Account and data questions go there too, since there is no support inbox yet.",
-      vi: "Một chỗ duy nhất để báo lỗi và đề xuất tính năng. Câu hỏi về tài khoản và dữ liệu cũng gửi ở đó, vì hiện chưa có hộp thư hỗ trợ.",
+      en: "One place to report problems and request features. Account and data questions are handled there as well — it is the fastest way to reach a maintainer.",
+      vi: "Một chỗ duy nhất để báo lỗi và đề xuất tính năng. Câu hỏi về tài khoản và dữ liệu cũng được xử lý ở đó — đó là cách nhanh nhất để liên hệ người bảo trì.",
     },
     cta: { en: "Open an issue", vi: "Mở một issue" },
     href: "github-issues",
@@ -152,8 +152,8 @@ export const FAQS: Faq[] = [
       vi: "DevFlow có thật sự miễn phí?",
     },
     a: {
-      en: "Yes. The hosted instance has one plan that costs nothing, and registration needs no card. It runs on hobby-tier infrastructure, so cold starts happen after quiet periods; the landing page pings the API to reduce that.",
-      vi: "Đúng vậy. Instance công khai chỉ có một gói miễn phí, đăng ký không cần thẻ. Nó chạy trên hạ tầng bậc hobby nên có thể khởi động lạnh sau thời gian ít người dùng; trang chủ ping API để giảm việc đó.",
+      en: "Yes. The hosted instance is free: one plan, no card to register. It runs on shared infrastructure, so cold starts can happen after quiet periods; the landing page pings the API to reduce that.",
+      vi: "Đúng vậy. Instance công khai miễn phí: một gói duy nhất, đăng ký không cần thẻ. Nó chạy trên hạ tầng dùng chung nên có thể khởi động chậm sau thời gian ít người dùng; trang chủ ping API để giảm việc đó.",
     },
   },
   {
@@ -162,8 +162,8 @@ export const FAQS: Faq[] = [
       vi: "Dữ liệu của tôi lưu ở đâu?",
     },
     a: {
-      en: "Frontend on Vercel, API and Postgres on Render. Passwords are BCrypt hashes, personal access tokens are SHA256 hashes, attachments live in the database. Nightly backups are kept for 30 days.",
-      vi: "Frontend trên Vercel, API và Postgres trên Render. Mật khẩu là bcrypt hash, personal access token là SHA256 hash, tệp đính kèm nằm trong database. Bản sao lưu chạy mỗi đêm, giữ 30 ngày.",
+      en: "Frontend on Vercel, API on Render, Postgres on Supabase. Passwords are BCrypt hashes, personal access tokens are SHA256 hashes, attachments live in the database. Nightly backups are kept for 30 days.",
+      vi: "Frontend trên Vercel, API trên Render, Postgres trên Supabase. Mật khẩu là bcrypt hash, personal access token là SHA256 hash, tệp đính kèm nằm trong database. Bản sao lưu chạy mỗi đêm, giữ 30 ngày.",
     },
   },
   {
@@ -182,8 +182,8 @@ export const FAQS: Faq[] = [
       vi: "Tôi quên mật khẩu thì sao?",
     },
     a: {
-      en: "There is no email reset flow yet, so recovery isn't self-service: change your password in Profile while you still know the old one, or sign in with Google/GitHub if your account is linked. Otherwise open a GitHub issue and the maintainers will help.",
-      vi: "Chưa có luồng đặt lại mật khẩu qua email, nên việc cứu tài khoản chưa tự động: đổi mật khẩu trong Profile khi bạn còn nhớ mật khẩu cũ, hoặc đăng nhập bằng Google/GitHub nếu tài khoản đã liên kết. Nếu không, hãy mở một issue trên GitHub và người bảo trì sẽ giúp.",
+      en: "Password reset by email is not available yet. While signed in you can change your password in Profile; Google/GitHub-linked accounts can sign in that way. Otherwise open a GitHub issue and the maintainers will help.",
+      vi: "Đặt lại mật khẩu qua email chưa khả dụng. Khi còn đăng nhập, bạn có thể đổi mật khẩu trong Profile; tài khoản đã liên kết Google/GitHub có thể đăng nhập bằng cách đó. Nếu không, hãy mở một issue trên GitHub và người bảo trì sẽ giúp.",
     },
   },
   {
@@ -202,8 +202,8 @@ export const FAQS: Faq[] = [
       vi: "Làm sao để xóa tài khoản?",
     },
     a: {
-      en: "Deleting projects and workspaces works in-app today. Full account deletion has no button yet: ask through a GitHub issue and the maintainers remove the account, including from backups after their 30-day retention window.",
-      vi: "Xóa dự án và workspace hiện làm được trong app. Việc xóa trọn tài khoản chưa có nút: hãy yêu cầu qua một issue trên GitHub và người bảo trì sẽ xóa tài khoản, kể cả khỏi các bản sao lưu sau cửa sổ giữ 30 ngày.",
+      en: "Project and workspace deletion is in-app. Full account deletion needs a maintainer for now — open a GitHub issue and we remove the account, including from backups after the 30-day window.",
+      vi: "Xóa dự án và workspace thực hiện trong app. Xóa trọn tài khoản hiện cần người bảo trì — hãy mở một issue trên GitHub và chúng tôi sẽ xóa tài khoản, kể cả khỏi các bản sao lưu sau cửa sổ giữ 30 ngày.",
     },
   },
 ];

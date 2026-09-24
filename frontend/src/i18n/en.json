@@ -161,7 +161,7 @@
   },
   "community": {
    "title": "Build in the open",
-   "subtitle": "No forum and no Discord pretending to be staffed. The source, the issue tracker and the release history are the conversation.",
+   "subtitle": "The conversation happens where the work happens: source, issues, and release history.",
    "apiHint": "Integrating? The live API reference is in Swagger."
   },
   "help": {
