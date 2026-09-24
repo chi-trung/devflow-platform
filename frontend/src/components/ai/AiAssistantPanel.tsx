@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowUp, Sparkles, X } from "lucide-react";
-import { aiExecute, aiExecuteConfirm, type AiHistoryTurn } from "../../lib/api";
+import { ArrowUp, Sparkles, Trash2, X } from "lucide-react";
+import { aiExecute, aiExecuteConfirm } from "../../lib/api";
+import {
+  buildHistory,
+  clearAiChatHistory,
+  loadAiChatHistory,
+  saveAiChatHistory,
+  type ChatMessage,
+} from "../../lib/aiChatHistory";
 import type {
-  AiExecuteResponse,
   AiExecuteActionContract,
   ExecutedAction,
 } from "../../types/api";
+import { ConfirmDialog } from "../ConfirmDialog";
 import { AiActionResults } from "./AiActionResults";
 import { AiSuggestedPrompts, type AiPageContext } from "./AiSuggestedPrompts";
 
@@ -36,38 +43,6 @@ interface AiAssistantPanelProps {
   onTaskChanged?: () => void;
 }
 
-interface ChatMessage {
-  role: "user" | "assistant";
-  prompt?: string;
-  result?: AiExecuteResponse;
-}
-
-/** Cap on prior turns re-sent with each execute — enough for a full
- *  clarification exchange without ballooning the prompt. */
-const MAX_HISTORY_TURNS = 12;
-
-/** Flattens prior chat messages into role/text turns the backend injects
- *  into the model context. Called on the pre-send snapshot so the current
- *  prompt is not duplicated in history. */
-function buildHistory(messages: ChatMessage[]): AiHistoryTurn[] {
-  const turns: AiHistoryTurn[] = [];
-  for (const message of messages.slice(-MAX_HISTORY_TURNS)) {
-    if (message.role === "user" && message.prompt?.trim()) {
-      turns.push({ role: "user", text: message.prompt.trim() });
-    } else if (message.role === "assistant" && message.result) {
-      const parts = [
-        message.result.summary?.trim(),
-        message.result.error?.trim(),
-        ...message.result.actions.map((a) => a.message?.trim()),
-      ].filter((s): s is string => !!s && s.length > 0);
-      if (parts.length > 0) {
-        turns.push({ role: "assistant", text: parts.join(" ") });
-      }
-    }
-  }
-  return turns;
-}
-
 export function AiAssistantPanel({
   open,
   onClose,
@@ -80,9 +55,18 @@ export function AiAssistantPanel({
   onTaskChanged,
 }: AiAssistantPanelProps) {
   const { t } = useTranslation();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Workspace-scoped transcript: dock remounts on full reload and floating
+  // unmounts while closed — localStorage is the only thing that survives both.
+  const [messages, setMessages] = useState<ChatMessage[]>(() =>
+    loadAiChatHistory(workspaceId),
+  );
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
+  /** Workspace that owns the current `messages` state. Bumped when we hydrate
+   * from storage so the save effect does not write one workspace's transcript
+   * under another key mid-switch. */
+  const [hydratedWorkspace, setHydratedWorkspace] = useState(workspaceId);
   /** (message, action) position of the pending action currently being
    * accepted — disables both buttons on exactly that card while in flight.
    * A bare action index is not enough: the same index can exist in several
@@ -94,22 +78,32 @@ export function AiAssistantPanel({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Rehydrate when the shell switches workspace under a still-mounted panel.
+  useEffect(() => {
+    setMessages(loadAiChatHistory(workspaceId));
+    setHydratedWorkspace(workspaceId);
+  }, [workspaceId]);
+
+  // Persist after every transcript change (pruned inside the helper). Skip
+  // the frame where workspaceId already changed but messages are still the
+  // previous workspace's — otherwise we'd copy history across workspaces.
+  useEffect(() => {
+    if (hydratedWorkspace !== workspaceId) return;
+    saveAiChatHistory(workspaceId, messages);
+  }, [workspaceId, hydratedWorkspace, messages]);
+
   useEffect(() => {
     if (open) {
-      // Floating unmounts while closed, so each open is a fresh session.
-      // Dock/sidebar stays mounted across Nav↔AI switches to keep chat
-      // history — wiping here would defeat that.
-      if (variant === "floating") {
-        setMessages([]);
-        setDraft("");
-      }
+      // History is restored from localStorage on mount (and on workspace
+      // change) — never wiped on open. Dock stays mounted across Nav↔AI;
+      // floating remounts and picks the same persisted transcript back up.
       // Let the panel mount before focusing so the animation does not swallow it.
       requestAnimationFrame(() => {
         inputRef.current?.focus();
         autoGrowComposer();
       });
     }
-  }, [open, variant]);
+  }, [open]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -262,10 +256,33 @@ export function AiAssistantPanel({
     el.style.height = `${Math.min(el.scrollHeight, maxPx)}px`;
   }
 
+  /** Clears the persisted transcript and the in-memory list (after confirm). */
+  function handleClearChat() {
+    clearAiChatHistory(workspaceId);
+    setMessages([]);
+    setDraft("");
+    setConfirmClear(false);
+    if (inputRef.current) inputRef.current.style.height = "auto";
+  }
+
   // Floating launcher unmounts itself when closed (legacy FAB path). The
   // dock keeps the node mounted so the slide-in transition can run — a
   // conditional return here would snap it instead of gliding.
   if (variant === "floating" && !open) return null;
+
+  const canClear = messages.length > 0 && !loading && pendingAccepting === null;
+  const clearButton = (
+    <button
+      type="button"
+      aria-label={t("ai.clearChat")}
+      title={t("ai.clearChat")}
+      disabled={!canClear}
+      onClick={() => setConfirmClear(true)}
+      className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-destructive disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      <Trash2 className="size-5" aria-hidden />
+    </button>
+  );
 
   return (
     <div
@@ -296,15 +313,26 @@ export function AiAssistantPanel({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            aria-label={t("ai.assistantClose")}
-            onClick={onClose}
-            className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
-          >
-            <X className="size-5" aria-hidden />
-          </button>
+          <div className="flex items-center gap-0.5">
+            {clearButton}
+            <button
+              type="button"
+              aria-label={t("ai.assistantClose")}
+              onClick={onClose}
+              className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-elevated hover:text-foreground"
+            >
+              <X className="size-5" aria-hidden />
+            </button>
+          </div>
         </header>
+      )}
+
+      {/* Dock has no header (the sidebar switch owns the title) — hang the
+          clear control on a thin utility row once there is something to clear. */}
+      {variant === "dock" && messages.length > 0 && (
+        <div className="flex justify-end border-b border-border px-2 py-1">
+          {clearButton}
+        </div>
       )}
 
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
@@ -393,6 +421,16 @@ export function AiAssistantPanel({
           </button>
         </div>
       </footer>
+
+      {confirmClear && (
+        <ConfirmDialog
+          title={t("ai.clearChatTitle")}
+          message={t("ai.clearChatMessage")}
+          confirmLabel={t("ai.clearChat")}
+          onConfirm={handleClearChat}
+          onCancel={() => setConfirmClear(false)}
+        />
+      )}
     </div>
   );
 }

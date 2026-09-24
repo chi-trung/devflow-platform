@@ -430,8 +430,11 @@ describe("right-edge dock is gone", () => {
     expect(src).toMatch(/variant === "floating" && !open/);
     expect(src).toMatch(/variant\?: "floating" \| "dock"/);
     expect(src).toMatch(/variant === "dock"\s*\n?\s*\?/);
-    // Dock must not wipe chat history on every open (sidebar keeps mounted).
-    expect(src).toMatch(/variant === "floating"\) \{\s*\n\s*setMessages/);
+    // Transcript is persisted per workspace and restored on mount — opening
+    // (floating or dock) must never wipe messages to [].
+    expect(src).toMatch(/loadAiChatHistory\(/);
+    expect(src).toMatch(/saveAiChatHistory\(/);
+    expect(src).not.toMatch(/if \(variant === "floating"\) \{\s*\n\s*setMessages\(\[\]\)/);
     // Dock sits under the Nav↔AI switch which already says "AI Assistant" —
     // the panel header must not render a second title (visual duplicate).
     expect(src).toMatch(/variant !== "dock"/);
