@@ -170,7 +170,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [aiWorkspaceId, workspacesRaw, workspacesFailed, sidebarMode]);
 
   // Mode AI ignores the collapsed preference: both modes share the expanded
-  // width so the body never jumps size when switching Nav ↔ AI.
+  // width (w-80) so the body never jumps size when switching Nav ↔ AI.
   const effectiveMode: SidebarMode = aiWorkspaceId ? sidebarMode : "nav";
   const modeAi = effectiveMode === "ai";
   const railCollapsed = collapsed && !modeAi;
@@ -565,8 +565,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         role={drawerOpen ? "dialog" : undefined}
         aria-modal={drawerOpen ? true : undefined}
         aria-label={drawerOpen ? t("ui.menuDialogAria") : undefined}
-        className={`fixed inset-y-0 left-0 z-[60] flex w-60 shrink-0 flex-col border-r border-border bg-surface duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
-          railCollapsed ? "lg:w-[72px]" : "lg:w-60"
+        /* Expanded = w-80 (320px): Nav labels + AI dock (composer, prompts)
+           both need the room; collapsed rail stays 72px. Nav ↔ AI share this
+           width so the body never jumps on switch. */
+        className={`fixed inset-y-0 left-0 z-[60] flex w-80 shrink-0 flex-col border-r border-border bg-surface duration-300 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:transition-[width] lg:duration-300 lg:ease-out ${
+          railCollapsed ? "lg:w-[72px]" : "lg:w-80"
         } ${
           drawerOpen
             ? "translate-x-0 transition-transform shadow-[0_24px_80px_rgba(0,0,0,0.7)] lg:shadow-none"

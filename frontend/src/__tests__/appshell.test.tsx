@@ -82,7 +82,7 @@ describe("AppShell sidebar collapse", () => {
     expect(aside?.className).toContain("lg:w-[72px]");
 
     fireEvent.click(toggle);
-    expect(aside?.className).toContain("lg:w-60");
+    expect(aside?.className).toContain("lg:w-80");
     expect(localStorage.getItem("devflow.sidebarCollapsed")).toBe("0");
   });
 
@@ -90,7 +90,7 @@ describe("AppShell sidebar collapse", () => {
     const { container } = renderShell("/workspaces/ws1", false);
     const aside = container.querySelector("aside");
     const toggle = screen.getByRole("button", { name: "nav.collapse" });
-    expect(aside?.className).toContain("lg:w-60");
+    expect(aside?.className).toContain("lg:w-80");
 
     fireEvent.click(toggle);
     expect(aside?.className).toContain("lg:w-[72px]");

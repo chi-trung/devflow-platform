@@ -8,7 +8,7 @@ import { AppShell } from "../components/AppShell";
 //  - default mode is nav (localStorage absent → nav body, AI hidden)
 //  - switch sits under the logo; toggles aria-pressed + persists
 //    devflow.sidebarMode
-//  - both modes share lg:w-60 — AI forces expanded even if collapse=1
+//  - both modes share lg:w-80 — AI forces expanded even if collapse=1
 //  - leaving AI does not surprise-collapse
 //  - AI panel stays mounted (hidden) while in nav so chat history survives
 //  - AI works on every AppShell page: route workspaceId, else last visited
@@ -233,7 +233,7 @@ describe("sidebar Nav ↔ AI switch", () => {
     expect(aside?.className).toContain("lg:w-[72px]");
 
     fireEvent.click(screen.getByRole("button", { name: "ai.assistantOpen" }));
-    expect(aside?.className).toContain("lg:w-60");
+    expect(aside?.className).toContain("lg:w-80");
     expect(aside?.className).not.toContain("lg:w-[72px]");
     // Preference is cleared so leaving AI does not snap back to 72px.
     expect(localStorage.getItem("devflow.sidebarCollapsed")).toBe("0");
@@ -245,7 +245,7 @@ describe("sidebar Nav ↔ AI switch", () => {
     fireEvent.click(screen.getByRole("button", { name: "ai.assistantClose" }));
 
     const aside = container.querySelector("aside");
-    expect(aside?.className).toContain("lg:w-60");
+    expect(aside?.className).toContain("lg:w-80");
     expect(aside?.className).not.toContain("lg:w-[72px]");
     // Collapse control is back (hidden while in AI). Entering AI cleared the
     // collapse pref, so the control offers "collapse" again, not "expand".
