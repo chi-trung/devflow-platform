@@ -408,6 +408,55 @@ public class AiExecuteCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_ShouldSurfaceSummaryQuestion_WithoutTightRetry()
+    {
+        // Model parked a clarifying question in `summary` with empty actions
+        // (skipped `reply`). That must surface as a conversational answer —
+        // NOT NoActionsMessage, which would tight-retry and invent actions.
+        _aiClient.ExecuteActionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns("""{"summary":"Which member should I assign the unassigned tasks to?","actions":[]}""");
+
+        var handler = BuildHandler();
+        var response = await handler.Handle(
+            new AiExecuteCommand(_workspaceId, _projectId, "assign the unassigned tasks", "board"),
+            CancellationToken.None);
+
+        Assert.Null(response.Error);
+        Assert.Empty(response.Actions);
+        Assert.Contains("Which member", response.Summary);
+
+        // Exactly one call — no tight retry for a question.
+        await _aiClient.Received(1).ExecuteActionAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldKeepActions_WhenReplyAndActionsBothPresent()
+    {
+        // Reply alongside actions must not discard the actions (the old early
+        // return dropped them). Summary falls back to the reply text.
+        _aiClient.ExecuteActionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns("""
+                {
+                  "summary": "",
+                  "reply": "Tạo task Login cho bạn.",
+                  "actions": [{ "type": "create_task", "title": "Login" }]
+                }
+                """);
+
+        var handler = BuildHandler();
+        var response = await handler.Handle(
+            new AiExecuteCommand(_workspaceId, _projectId, "tạo task login", "board"),
+            CancellationToken.None);
+
+        Assert.Null(response.Error);
+        var action = Assert.Single(response.Actions);
+        Assert.Equal("create_task", action.Type);
+        Assert.Equal("pending", action.Status);
+        Assert.Equal("Tạo task Login cho bạn.", response.Summary);
+    }
+
+    [Fact]
     public async Task Handle_ShouldNotLoopForever_WhenBothAttemptsReturnEmpty()
     {
         // Both the initial call and the tight retry come back empty. The handler

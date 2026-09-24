@@ -111,6 +111,38 @@ export function AiActionResults({
   );
 
   if (error && actions.length === 0) {
+    // Fail-closed on the error, but never swallow a conversational summary
+    // that came with it — a clarification question must stay visible so the
+    // user can answer it (hiding it is how follow-ups go off-target).
+    if (summary) {
+      const items = replyItems?.filter((item) => item.trim().length > 0) ?? [];
+      return (
+        <div className="space-y-2">
+          <div className="rounded-lg border border-border bg-card p-3 text-sm text-foreground">
+            <p className="whitespace-pre-line leading-relaxed">{summary}</p>
+            {items.length > 0 && (
+              <ul role="list" className="mt-2 space-y-1">
+                {items.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span
+                      aria-hidden
+                      className="mt-[0.55em] size-1.5 rounded-full bg-primary/60"
+                    />
+                    <span className="leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <span>{error}</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
         <div className="flex items-start gap-2">

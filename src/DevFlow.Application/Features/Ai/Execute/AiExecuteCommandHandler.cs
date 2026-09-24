@@ -116,25 +116,42 @@ public sealed class AiExecuteCommandHandler(
 
         var contract = AiExecuteContract.Parse(rawResponse);
 
+        var replyItems = contract.ReplyItems
+            .Select(item => item.Trim())
+            .Where(item => item.Length > 0)
+            .ToList();
+        IReadOnlyList<string>? replyItemList = replyItems.Count > 0 ? replyItems : null;
+
         // Conversational prompt (question, greeting, small talk) — the model
         // returned a `reply` instead of action items. Surface it as a plain text
         // answer with no error. `replyItems` renders as a real bulleted list when
-        // the answer spans several distinct points.
-        if (!string.IsNullOrWhiteSpace(contract.Reply))
+        // the answer spans several distinct points. Only take this path when
+        // there is nothing to execute — a reply alongside actions must not
+        // discard those actions.
+        if (!string.IsNullOrWhiteSpace(contract.Reply) && contract.Actions.Count == 0)
         {
-            var replyItems = contract.ReplyItems
-                .Select(item => item.Trim())
-                .Where(item => item.Length > 0)
-                .ToList();
             return new AiExecuteResponse(
                 contract.Reply,
                 Array.Empty<ExecutedAction>(),
                 null,
-                replyItems.Count > 0 ? replyItems : null);
+                replyItemList);
         }
 
         if (contract.Actions.Count == 0)
         {
+            // Clarifying question parked in `summary` (model skipped `reply`).
+            // Surface it as a conversational answer — the empty-actions tight
+            // retry would force ≤3 actions and invent the wrong intent, which
+            // is exactly the "answered off-target after a clarification" bug.
+            if (LooksLikeQuestion(contract.Summary))
+            {
+                return new AiExecuteResponse(
+                    contract.Summary,
+                    Array.Empty<ExecutedAction>(),
+                    null,
+                    replyItemList);
+            }
+
             return new AiExecuteResponse(
                 contract.Summary,
                 Array.Empty<ExecutedAction>(),
@@ -244,7 +261,51 @@ public sealed class AiExecuteCommandHandler(
             actions.Add(result);
         }
 
-        return new AiExecuteResponse(contract.Summary, actions, null);
+        // Reply alongside actions: keep the actions, but never drop the reply
+        // when the model left `summary` empty (otherwise the transcript and the
+        // model history lose what was said).
+        var finalSummary = string.IsNullOrWhiteSpace(contract.Summary)
+            ? contract.Reply
+            : contract.Summary;
+        return new AiExecuteResponse(finalSummary, actions, null);
+    }
+
+    /// <summary>
+    /// True when a summary-only, empty-actions payload is a clarifying question
+    /// the user is meant to answer — not a failed action request that should
+    /// trigger the tight retry.
+    /// </summary>
+    private static bool LooksLikeQuestion(string? summary)
+    {
+        if (string.IsNullOrWhiteSpace(summary))
+        {
+            return false;
+        }
+
+        var text = summary.Trim();
+        if (text.EndsWith('?') || text.EndsWith('？'))
+        {
+            return true;
+        }
+
+        // Common clarification openers in EN + VI (the assistant answers in
+        // the user's language).
+        string[] openers =
+        [
+            "which ", "what ", "who ", "whom ", "where ", "when ", "why ",
+            "how ", "please specify", "need to know", "could you",
+            "can you tell", "bạn muốn", "bạn cần", "vui lòng chỉ",
+            "hãy chỉ", "ai sẽ", "task nào", "sprint nào",
+        ];
+        foreach (var opener in openers)
+        {
+            if (text.StartsWith(opener, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // ----- Prompt building ----------------------------------------------------------
@@ -299,6 +360,11 @@ public sealed class AiExecuteCommandHandler(
               context), assignee=Alice. NEVER invent create_task / create_sprint /
               create_epic from a bare clarification answer unless the user
               explicitly asked to create something new.
+            - When YOU need more information to run an action (which member, which
+              task, which sprint…), put the FULL question in "reply" and leave
+              "actions" empty. Do NOT put the question only in "summary" with an
+              empty actions list — that path is treated as a failure and may be
+              retried as if you were asked to create something.
 
             Rules:
             - If the user asks a question, greets you, or makes small talk (e.g.
