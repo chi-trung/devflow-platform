@@ -1,6 +1,7 @@
 using System.Text.Json;
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Common.Models;
 using DevFlow.Application.Features.Ai;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
@@ -12,7 +13,7 @@ public class PlanTaskCommandHandlerTests
 {
     private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
-    private readonly IKnowledgeRepository _knowledgeRepository = Substitute.For<IKnowledgeRepository>();
+    private readonly IKnowledgeRetrievalService _knowledgeRetrieval = Substitute.For<IKnowledgeRetrievalService>();
     private readonly IAiPlanRepository _aiPlanRepository = Substitute.For<IAiPlanRepository>();
     private readonly IAiClient _aiClient = Substitute.For<IAiClient>();
     private readonly AiPlanApplier _planApplier;
@@ -32,8 +33,9 @@ public class PlanTaskCommandHandlerTests
         _projectRepository.GetByIdAsync(_project.Id, Arg.Any<CancellationToken>()).Returns(_project);
         _taskItemRepository.GetByIdAsync(_task.Id, Arg.Any<CancellationToken>()).Returns(_task);
         _userContext.UserId.Returns(_userId);
-        _knowledgeRepository.GetForProjectAsync(_project.Id, Arg.Any<CancellationToken>())
-            .Returns(new List<KnowledgeEntry>());
+        _knowledgeRetrieval.RetrieveAsync(
+                _project.Id, Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new List<KnowledgeChunkHit>());
 
         var unitOfWork = _unitOfWork;
         _planApplier = new AiPlanApplier(_taskItemRepository, unitOfWork);
@@ -42,7 +44,7 @@ public class PlanTaskCommandHandlerTests
     private PlanTaskCommandHandler BuildHandler() => new(
         _projectRepository,
         _taskItemRepository,
-        _knowledgeRepository,
+        _knowledgeRetrieval,
         _aiPlanRepository,
         _aiClient,
         _planApplier,
@@ -123,12 +125,15 @@ public class PlanTaskCommandHandlerTests
     [Fact]
     public async Task Handle_ShouldPassWeightedKnowledge_IntoUserContext()
     {
-        var highWeight = KnowledgeEntry.Create(_project.Id, "Deploy ADR", "Render + Vercel.", KnowledgeType.Adr);
-        highWeight.SetWeight(0.9m);
-        var lowWeight = KnowledgeEntry.Create(_project.Id, "Old pattern", "Legacy.", KnowledgeType.Pattern);
-        lowWeight.SetWeight(0.2m);
-        _knowledgeRepository.GetForProjectAsync(_project.Id, Arg.Any<CancellationToken>())
-            .Returns(new List<KnowledgeEntry> { highWeight, lowWeight });
+        _knowledgeRetrieval.RetrieveAsync(
+                _project.Id, Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new List<KnowledgeChunkHit>
+            {
+                new(Guid.NewGuid(), 0, "Deploy ADR", "Render + Vercel.",
+                    KnowledgeType.Adr, KnowledgeStatus.Accepted, 0.9m, Similarity: 0.91),
+                new(Guid.NewGuid(), 0, "Old pattern", "Legacy.",
+                    KnowledgeType.Pattern, KnowledgeStatus.Accepted, 0.2m, Similarity: 0.4),
+            });
 
         _aiClient.PlanTaskAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(SamplePlanJson());

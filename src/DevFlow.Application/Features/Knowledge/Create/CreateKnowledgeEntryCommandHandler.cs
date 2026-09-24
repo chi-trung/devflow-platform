@@ -9,6 +9,7 @@ namespace DevFlow.Application.Features.Knowledge.Create;
 public sealed class CreateKnowledgeEntryCommandHandler(
     IProjectRepository projectRepository,
     IKnowledgeRepository knowledgeRepository,
+    IOutboxDispatcher outboxDispatcher,
     IUnitOfWork unitOfWork) : IRequestHandler<CreateKnowledgeEntryCommand, KnowledgeEntryCreatedResponse>
 {
     public async Task<KnowledgeEntryCreatedResponse> Handle(
@@ -31,6 +32,19 @@ public sealed class CreateKnowledgeEntryCommandHandler(
 
         await knowledgeRepository.AddAsync(entry, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // After the entry exists, queue chunk+embed so the HTTP path never
+        // blocks on embedding latency. OutboxDispatcher swallows enqueue
+        // failures (logs only) — the entry itself is already durable.
+        await outboxDispatcher.EnqueueAsync(
+            "knowledge.reembed",
+            new
+            {
+                workspaceId = command.WorkspaceId,
+                knowledgeEntryId = entry.Id,
+                projectId = command.ProjectId,
+            },
+            cancellationToken);
 
         return new KnowledgeEntryCreatedResponse(entry.Id);
     }

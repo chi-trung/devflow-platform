@@ -4,6 +4,7 @@ namespace DevFlow.Infrastructure.AI;
 /// Configuration for the AI planner. Provider-agnostic: "openai" uses the
 /// OpenAI chat-completions shape (works against OpenAI, Anthropic via a proxy,
 /// LiteLLM, Ollama, ...), "gemini" uses the Google Generative Language API.
+/// Embedding knobs are shared by the RAG pipeline (see <see cref="EmbeddingModel"/>).
 /// </summary>
 public sealed class AiOptions
 {
@@ -29,4 +30,26 @@ public sealed class AiOptions
 
     /// <summary>Maximum response tokens for a plan.</summary>
     public int MaxTokens { get; init; } = 2000;
+
+    /// <summary>
+    /// Embedding model override. Empty → provider default
+    /// (gemini: text-embedding-004, openai: text-embedding-3-small).
+    /// </summary>
+    public string EmbeddingModel { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Target embedding width. OpenAI's dimensions= parameter truncates to
+    /// this; Gemini's text-embedding-004 is already 768. The migration pins
+    /// the column at vector(768) — changing this requires a new migration.
+    /// </summary>
+    public int EmbeddingDimensions { get; init; } = 768;
+
+    /// <summary>Second-stage re-rank over vector candidates (default off / NoOp).</summary>
+    public bool EnableRerank { get; init; }
+
+    /// <summary>Candidate pool fetched from vector search before re-rank / budget clip.</summary>
+    public int RetrieveTopK { get; init; } = 12;
+
+    /// <summary>Character budget for the knowledge section of a plan/execute prompt.</summary>
+    public int KnowledgeCharBudget { get; init; } = 3500;
 }

@@ -2,30 +2,29 @@ using System.Text;
 using System.Text.Json;
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Common.Models;
 using DevFlow.Domain.Entities;
 using MediatR;
 
 namespace DevFlow.Application.Features.Ai;
 
 /// <summary>
-/// Builds a knowledge-grounded prompt from the task + the project's weighted
-/// KnowledgeEntries, calls the LLM, parses the JSON plan contract, and persists
-/// it. When the project has self-approval enabled (ApproveAiPlans), the plan is
-/// applied immediately instead of returned as pending.
+/// Builds a knowledge-grounded prompt from the task + the project's relevant
+/// KnowledgeChunks (via RAG retrieval with weight fallback), calls the LLM,
+/// parses the JSON plan contract, and persists it. When the project has
+/// self-approval enabled (ApproveAiPlans), the plan is applied immediately
+/// instead of returned as pending.
 /// </summary>
 public sealed class PlanTaskCommandHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
-    IKnowledgeRepository knowledgeRepository,
+    IKnowledgeRetrievalService knowledgeRetrieval,
     IAiPlanRepository aiPlanRepository,
     IAiClient aiClient,
     AiPlanApplier planApplier,
     IUserContext currentUser,
     IUnitOfWork unitOfWork) : IRequestHandler<PlanTaskCommand, AiPlanResponse>
 {
-    private const int MaxKnowledgeEntries = 12;
-    private const int MaxKnowledgeBodyChars = 800;
-
     public async Task<AiPlanResponse> Handle(
         PlanTaskCommand command,
         CancellationToken cancellationToken)
@@ -44,7 +43,16 @@ public sealed class PlanTaskCommandHandler(
             throw new NotFoundException(nameof(TaskItem), command.TaskId);
         }
 
-        var knowledge = await knowledgeRepository.GetForProjectAsync(command.ProjectId, cancellationToken);
+        // RAG: embed the task title + description + user focus, pull top chunks
+        // under a character budget, fall back to weight-ordered full entries
+        // when embedding/vector search is unavailable (no key, InMemory).
+        var query = BuildKnowledgeQuery(task, command.Prompt);
+        var knowledge = await knowledgeRetrieval.RetrieveAsync(
+            command.ProjectId,
+            query,
+            topK: 0,
+            maxChars: 0,
+            cancellationToken);
 
         var (systemPrompt, userContext) = BuildPrompts(project, task, knowledge, command.Prompt);
 
@@ -127,10 +135,27 @@ public sealed class PlanTaskCommandHandler(
         return BuildResponse(plan, applied: false);
     }
 
+    private static string BuildKnowledgeQuery(TaskItem task, string? userPrompt)
+    {
+        var query = new StringBuilder();
+        query.Append(task.Title);
+        if (!string.IsNullOrWhiteSpace(task.Description))
+        {
+            query.Append(' ').Append(task.Description);
+        }
+
+        if (!string.IsNullOrWhiteSpace(userPrompt))
+        {
+            query.Append(' ').Append(userPrompt);
+        }
+
+        return query.ToString();
+    }
+
     private static (string SystemPrompt, string UserContext) BuildPrompts(
         Project project,
         TaskItem task,
-        IReadOnlyList<KnowledgeEntry> knowledge,
+        IReadOnlyList<KnowledgeChunkHit> knowledge,
         string? userPrompt)
     {
         var systemPrompt = """
@@ -153,6 +178,7 @@ public sealed class PlanTaskCommandHandler(
             - Definition of done must be concrete, testable acceptance criteria.
             - Ground the plan in the provided knowledge entries; do not contradict
               accepted ADRs. Lower-weight entries are less authoritative.
+            - Cite knowledge as [n] where n is the entry number shown below.
             - The plan must be complete enough that a developer could execute it
               without asking for clarification.
             """;
@@ -183,19 +209,21 @@ public sealed class PlanTaskCommandHandler(
         }
         else
         {
-            userContext.AppendLine($"Knowledge base (weighted, highest first):");
-            foreach (var entry in knowledge.Take(MaxKnowledgeEntries))
+            userContext.AppendLine("Knowledge base (retrieved, highest first):");
+            for (var i = 0; i < knowledge.Count; i++)
             {
-                var body = entry.Body;
-                if (body is not null && body.Length > MaxKnowledgeBodyChars)
+                var hit = knowledge[i];
+                var content = hit.Content;
+                if (content is not null && content.Length > 800)
                 {
-                    body = body[..MaxKnowledgeBodyChars] + "…";
+                    content = content[..800] + "…";
                 }
 
-                userContext.AppendLine($"- [{entry.Type}] {entry.Title} (weight {entry.Weight}, {entry.Status})");
-                if (!string.IsNullOrWhiteSpace(body))
+                userContext.AppendLine(
+                    $"- [{i + 1}] [{hit.Type}] {hit.Title} (weight {hit.Weight}, {hit.Status})");
+                if (!string.IsNullOrWhiteSpace(content))
                 {
-                    userContext.AppendLine($"  {body}");
+                    userContext.AppendLine($"  {content}");
                 }
             }
         }

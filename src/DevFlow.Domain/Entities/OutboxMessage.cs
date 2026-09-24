@@ -60,12 +60,16 @@ public class OutboxMessage : BaseEntity
 
     /// <summary>
     /// Extracts the workspace the message belongs to from its payload.
-    /// Webhook payloads carry a top-level <c>workspaceId</c> (serialized camelCase).
-    /// Returns null for messages without one (e.g. future non-webhook types).
+    /// Webhook and knowledge payloads carry a top-level <c>workspaceId</c>
+    /// (serialized camelCase). Returns null for messages without one.
     /// </summary>
     public static Guid? ResolveWorkspaceId(string type, string payload)
     {
-        if (!type.StartsWith("webhook.", StringComparison.OrdinalIgnoreCase))
+        var scoped =
+            type.StartsWith("webhook.", StringComparison.OrdinalIgnoreCase) ||
+            type.StartsWith("knowledge.", StringComparison.OrdinalIgnoreCase);
+
+        if (!scoped)
             return null;
 
         try

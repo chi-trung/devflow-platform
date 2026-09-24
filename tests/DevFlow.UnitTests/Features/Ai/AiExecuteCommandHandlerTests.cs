@@ -20,6 +20,7 @@ public class AiExecuteCommandHandlerTests
     private readonly IEpicRepository _epicRepository = Substitute.For<IEpicRepository>();
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly IAiClient _aiClient = Substitute.For<IAiClient>();
+    private readonly IKnowledgeRetrievalService _knowledgeRetrieval = Substitute.For<IKnowledgeRetrievalService>();
     private readonly ISender _sender = Substitute.For<ISender>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
@@ -34,6 +35,8 @@ public class AiExecuteCommandHandlerTests
             .Returns(new List<Project> { _project });
         _workspaceRepository.GetMembersAsync(_workspaceId, Arg.Any<CancellationToken>())
             .Returns(new List<(Guid UserId, string Email, string Username, string DisplayName, WorkspaceRole Role)>());
+        _knowledgeRetrieval.RetrieveAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new List<DevFlow.Application.Common.Models.KnowledgeChunkHit>());
     }
 
     private AiExecuteCommandHandler BuildHandler() => new(
@@ -42,6 +45,7 @@ public class AiExecuteCommandHandlerTests
         _sprintRepository,
         _taskItemRepository,
         _epicRepository,
+        _knowledgeRetrieval,
         _aiClient,
         new AiActionExecutor(
             _workspaceRepository,

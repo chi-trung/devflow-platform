@@ -1,6 +1,7 @@
 using System.Text;
 using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Common.Models;
 using DevFlow.Domain.Entities;
 using MediatR;
 
@@ -22,6 +23,7 @@ public sealed class AiExecuteCommandHandler(
     ISprintRepository sprintRepository,
     ITaskItemRepository taskItemRepository,
     IEpicRepository epicRepository,
+    IKnowledgeRetrievalService knowledgeRetrieval,
     IAiClient aiClient,
     AiActionExecutor actionExecutor) : IRequestHandler<AiExecuteCommand, AiExecuteResponse>
 {
@@ -264,6 +266,9 @@ public sealed class AiExecuteCommandHandler(
             - Assignee must be one of the member names/emails listed in the context, or null.
             - Priorities must be one of Low, Medium, High, Critical.
             - dueDate must be ISO-8601. If the user says "tomorrow"/"next week", pick a concrete date and note it in the summary.
+            - When a "Knowledge base" section is present for the active project,
+              ground answers and created content in those entries; cite as [n]
+              using the entry numbers shown. Do not invent knowledge not in the list.
 
             HIERARCHY (mandatory):
             - The project hierarchy is EXACTLY three levels:
@@ -399,6 +404,59 @@ public sealed class AiExecuteCommandHandler(
                     ? $" | assignee={task.AssigneeId}"
                     : string.Empty;
                 context.AppendLine($"- {task.Id} | {task.Title} | {task.Status}{typeMarker}{parentRef}{sprint}{epic}{assignee}");
+            }
+        }
+
+        // RAG: pull relevant knowledge for the active project so the assistant
+        // can answer questions and ground create_* content without stuffing the
+        // whole knowledge base into every prompt. Empty (no key / no hits) is
+        // fine — the model just sees "(none)".
+        var knowledgeQuery = string.IsNullOrWhiteSpace(command.PageContext)
+            ? command.Prompt
+            : $"{command.Prompt} {command.PageContext}";
+        IReadOnlyList<KnowledgeChunkHit> knowledgeHits;
+        try
+        {
+            knowledgeHits = await knowledgeRetrieval.RetrieveAsync(
+                activeProject.Id,
+                knowledgeQuery,
+                topK: 0,
+                maxChars: 0,
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            // Retrieval must never fail the execute path — omit the section.
+            knowledgeHits = [];
+        }
+
+        context.AppendLine();
+        context.AppendLine($"Knowledge base for \"{activeProject.Name}\":");
+        if (knowledgeHits.Count == 0)
+        {
+            context.AppendLine("(none)");
+        }
+        else
+        {
+            for (var i = 0; i < knowledgeHits.Count; i++)
+            {
+                var hit = knowledgeHits[i];
+                var content = hit.Content;
+                if (content.Length > 600)
+                {
+                    content = content[..600] + "…";
+                }
+
+                context.AppendLine(
+                    $"- [{i + 1}] [{hit.Type}] {hit.Title} (weight {hit.Weight}, {hit.Status})");
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    context.AppendLine($"  {content}");
+                }
             }
         }
 

@@ -9,6 +9,7 @@ namespace DevFlow.Application.Features.Knowledge.Update;
 public sealed class UpdateKnowledgeEntryCommandHandler(
     IProjectRepository projectRepository,
     IKnowledgeRepository knowledgeRepository,
+    IOutboxDispatcher outboxDispatcher,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateKnowledgeEntryCommand>
 {
     public async Task Handle(UpdateKnowledgeEntryCommand command, CancellationToken cancellationToken)
@@ -33,5 +34,16 @@ public sealed class UpdateKnowledgeEntryCommandHandler(
         entry.ClearDrift();
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Body/title/tags changed → chunks are stale; re-embed asynchronously.
+        await outboxDispatcher.EnqueueAsync(
+            "knowledge.reembed",
+            new
+            {
+                workspaceId = command.WorkspaceId,
+                knowledgeEntryId = entry.Id,
+                projectId = command.ProjectId,
+            },
+            cancellationToken);
     }
 }

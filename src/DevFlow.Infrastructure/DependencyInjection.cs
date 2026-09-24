@@ -14,6 +14,7 @@ using DevFlow.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Pgvector.EntityFrameworkCore;
 
 namespace DevFlow.Infrastructure;
 
@@ -31,21 +32,34 @@ public static class DependencyInjection
         // fallback otherwise so the API stays responsive without an AI key.
         // Provider is chosen explicitly ("gemini" → Google Generative Language
         // API, anything else with a key → OpenAI-compatible chat/completions).
+        // Embedding clients follow the same branch so RAG uses the same
+        // provider + ApiKey as chat (Gemini text-embedding-004 / OpenAI
+        // text-embedding-3-small with dimensions=768).
         if (!string.IsNullOrWhiteSpace(configuration["Ai:ApiKey"]))
         {
             if (string.Equals(configuration["Ai:Provider"], "gemini", StringComparison.OrdinalIgnoreCase))
             {
                 services.AddHttpClient<IAiClient, GeminiAiClient>();
+                services.AddHttpClient<IEmbeddingClient, GeminiEmbeddingClient>();
             }
             else
             {
                 services.AddHttpClient<IAiClient, OpenAiAiClient>();
+                services.AddHttpClient<IEmbeddingClient, OpenAiEmbeddingClient>();
             }
         }
         else
         {
             services.AddScoped<IAiClient, NoOpAiClient>();
+            services.AddScoped<IEmbeddingClient, NoOpEmbeddingClient>();
         }
+
+        // RAG pipeline: chunker + optional re-rank (default NoOp / off) + async
+        // ingestion (outbox knowledge.reembed) + retrieval with weight fallback.
+        services.AddScoped<IContentChunker, ContentChunker>();
+        services.AddScoped<IReranker>(_ => new NoOpReranker());
+        services.AddScoped<IKnowledgeIngestionService, KnowledgeIngestionService>();
+        services.AddScoped<IKnowledgeRetrievalService, KnowledgeRetrievalService>();
 
         services.AddSingleton<AuditableEntityInterceptor>();
         services.AddSingleton<SoftDeleteInterceptor>();
@@ -53,7 +67,7 @@ public static class DependencyInjection
         services.AddDbContext<DevFlowDbContext>((sp, options) =>
         {
             options
-                .UseNpgsql(configuration.GetConnectionString("Database"))
+                .UseNpgsql(configuration.GetConnectionString("Database"), o => o.UseVector())
                 .UseSnakeCaseNamingConvention()
                 .AddInterceptors(
                     sp.GetRequiredService<AuditableEntityInterceptor>(),

@@ -30,6 +30,7 @@ public class BlockedMoveEnforcementTests
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
     private readonly IActivityLogRepository _activityLogRepository = Substitute.For<IActivityLogRepository>();
     private readonly IKnowledgeRepository _knowledgeRepository = Substitute.For<IKnowledgeRepository>();
+    private readonly IOutboxDispatcher _outboxDispatcher = Substitute.For<IOutboxDispatcher>();
     private readonly IUserContext _userContext = Substitute.For<IUserContext>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ITaskDependencyRepository _dependencyRepository = Substitute.For<ITaskDependencyRepository>();
@@ -59,8 +60,8 @@ public class BlockedMoveEnforcementTests
     private UpdateTaskItemCommandHandler UpdateHandler() => new(
         _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository,
         _notificationRepository, _preferencesRepository, _watcherRepository, _emailService,
-        _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext,
-        _unitOfWork, _dependencyRepository);
+        _realtimeService, _activityLogRepository, _knowledgeRepository, _outboxDispatcher,
+        _userContext, _unitOfWork, _dependencyRepository);
 
     private TaskItem Task(TaskItemStatus status, string title = "Existing")
     {

@@ -23,6 +23,7 @@ public class TaskItemHandlerTests
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
     private readonly IActivityLogRepository _activityLogRepository = Substitute.For<IActivityLogRepository>();
     private readonly IKnowledgeRepository _knowledgeRepository = Substitute.For<IKnowledgeRepository>();
+    private readonly IOutboxDispatcher _outboxDispatcher = Substitute.For<IOutboxDispatcher>();
     private readonly IUserContext _userContext = Substitute.For<IUserContext>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ITaskDependencyRepository _dependencyRepository = Substitute.For<ITaskDependencyRepository>();
@@ -91,7 +92,7 @@ public class TaskItemHandlerTests
         _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>()).Returns(task);
 
         var handler = new UpdateTaskItemCommandHandler(
-            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork, _dependencyRepository);
+            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _outboxDispatcher, _userContext, _unitOfWork, _dependencyRepository);
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, task.Id, "Existing", null,
             TaskItemStatus.InProgress, TaskItemPriority.Low, Guid.NewGuid(), null);
@@ -110,7 +111,7 @@ public class TaskItemHandlerTests
         _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>()).Returns(task);
 
         var handler = new UpdateTaskItemCommandHandler(
-            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork, _dependencyRepository);
+            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _outboxDispatcher, _userContext, _unitOfWork, _dependencyRepository);
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, task.Id, "Updated title", "desc",
             TaskItemStatus.Done, TaskItemPriority.Critical, assigneeId, null);
@@ -141,7 +142,7 @@ public class TaskItemHandlerTests
         _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>()).Returns(task);
 
         var handler = new UpdateTaskItemCommandHandler(
-            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork, _dependencyRepository);
+            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _outboxDispatcher, _userContext, _unitOfWork, _dependencyRepository);
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, task.Id, "In progress task", null,
             TaskItemStatus.InProgress, TaskItemPriority.Low, null, null);
@@ -165,7 +166,7 @@ public class TaskItemHandlerTests
             .Returns(new[] { capturedEntry });
 
         var handler = new UpdateTaskItemCommandHandler(
-            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork, _dependencyRepository);
+            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _outboxDispatcher, _userContext, _unitOfWork, _dependencyRepository);
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, task.Id, "Shipped feature", null,
             TaskItemStatus.InProgress, TaskItemPriority.Low, null, null);
@@ -184,7 +185,7 @@ public class TaskItemHandlerTests
         _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>()).Returns(task);
 
         var handler = new UpdateTaskItemCommandHandler(
-            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork, _dependencyRepository);
+            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _outboxDispatcher, _userContext, _unitOfWork, _dependencyRepository);
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, task.Id, "Regular task", null,
             TaskItemStatus.Review, TaskItemPriority.Low, null, null);
@@ -209,7 +210,7 @@ public class TaskItemHandlerTests
         _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>()).Returns(task);
 
         var handler = new UpdateTaskItemCommandHandler(
-            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _userContext, _unitOfWork, _dependencyRepository);
+            _projectRepository, _taskItemRepository, _workspaceRepository, _userRepository, _notificationRepository, _preferencesRepository, _watcherRepository, _emailService, _realtimeService, _activityLogRepository, _knowledgeRepository, _outboxDispatcher, _userContext, _unitOfWork, _dependencyRepository);
         var command = new UpdateTaskItemCommand(
             _workspaceId, _project.Id, task.Id, "Existing", null,
             TaskItemStatus.InProgress, TaskItemPriority.Low, assigneeId, null);

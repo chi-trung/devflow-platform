@@ -1,6 +1,7 @@
 services:
   postgres:
-    image: postgres:17-alpine
+    # pgvector required for KnowledgeChunk embeddings (vector(768) + HNSW).
+    image: pgvector/pgvector:pg17
     container_name: devflow-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-devflow}

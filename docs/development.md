@@ -36,8 +36,14 @@ service on port 8080).
 Copy [.env.example](../.env.example) to `.env` for docker compose. For running
 the API directly, set `Jwt__Key` (required outside Development — generate with
 `openssl rand -base64 64`) and optionally `OAuth__GoogleClientId/Secret`,
-`Ai__ApiKey`, `Ai__Model`. Every appsettings section can be overridden with
-the `Section__Key` environment-variable shape.
+`Ai__ApiKey`, `Ai__Model` (also drives RAG embeddings; empty key → NoOp
+embedding + weight-order knowledge fallback). RAG knobs:
+`Ai__EmbeddingModel`, `Ai__EmbeddingDimensions` (default 768),
+`Ai__EnableRerank` (default false), `Ai__RetrieveTopK`,
+`Ai__KnowledgeCharBudget`. Local Postgres is `pgvector/pgvector:pg17` —
+plain `postgres:17-alpine` cannot store `vector(768)` columns. Every
+appsettings section can be overridden with the `Section__Key`
+environment-variable shape.
 
 ## Testing
 

@@ -16,6 +16,7 @@ public class KnowledgeHandlerTests
     private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly IKnowledgeRepository _knowledgeRepository = Substitute.For<IKnowledgeRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly IOutboxDispatcher _outboxDispatcher = Substitute.For<IOutboxDispatcher>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
     private readonly Project _project;
@@ -29,7 +30,7 @@ public class KnowledgeHandlerTests
     [Fact]
     public async Task Create_ShouldPersistKnowledgeEntryAsDraft()
     {
-        var handler = new CreateKnowledgeEntryCommandHandler(_projectRepository, _knowledgeRepository, _unitOfWork);
+        var handler = new CreateKnowledgeEntryCommandHandler(_projectRepository, _knowledgeRepository, _outboxDispatcher, _unitOfWork);
         var command = new CreateKnowledgeEntryCommand(
             _workspaceId, _project.Id, "How we deploy", "Render + Vercel pipeline.", KnowledgeType.Runbook, "devops");
 
@@ -45,12 +46,16 @@ public class KnowledgeHandlerTests
                 entry.TaskId == null),
             Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        await _outboxDispatcher.Received(1).EnqueueAsync(
+            "knowledge.reembed",
+            Arg.Any<object>(),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Create_ShouldThrowNotFound_WhenProjectMissing()
     {
-        var handler = new CreateKnowledgeEntryCommandHandler(_projectRepository, _knowledgeRepository, _unitOfWork);
+        var handler = new CreateKnowledgeEntryCommandHandler(_projectRepository, _knowledgeRepository, _outboxDispatcher, _unitOfWork);
         var command = new CreateKnowledgeEntryCommand(
             _workspaceId, Guid.NewGuid(), "Ghost", null, KnowledgeType.Adr, null);
 
@@ -80,7 +85,7 @@ public class KnowledgeHandlerTests
         var entry = KnowledgeEntry.Create(otherProjectId, "Other", null, KnowledgeType.Adr);
         _knowledgeRepository.GetByIdAsync(entry.Id, Arg.Any<CancellationToken>()).Returns(entry);
 
-        var handler = new UpdateKnowledgeEntryCommandHandler(_projectRepository, _knowledgeRepository, _unitOfWork);
+        var handler = new UpdateKnowledgeEntryCommandHandler(_projectRepository, _knowledgeRepository, _outboxDispatcher, _unitOfWork);
         var command = new UpdateKnowledgeEntryCommand(
             _workspaceId, _project.Id, entry.Id, "Renamed", null, KnowledgeType.Adr, null, KnowledgeStatus.Accepted);
 
@@ -93,7 +98,7 @@ public class KnowledgeHandlerTests
         var entry = KnowledgeEntry.Create(_project.Id, "Old", "Old body", KnowledgeType.Adr, "old");
         _knowledgeRepository.GetByIdAsync(entry.Id, Arg.Any<CancellationToken>()).Returns(entry);
 
-        var handler = new UpdateKnowledgeEntryCommandHandler(_projectRepository, _knowledgeRepository, _unitOfWork);
+        var handler = new UpdateKnowledgeEntryCommandHandler(_projectRepository, _knowledgeRepository, _outboxDispatcher, _unitOfWork);
         var command = new UpdateKnowledgeEntryCommand(
             _workspaceId, _project.Id, entry.Id, "New title", "New body", KnowledgeType.Runbook, "new", KnowledgeStatus.Accepted);
 
@@ -182,7 +187,7 @@ public class KnowledgeHandlerTests
         entry.FlagDrift("Task reopened.");
         _knowledgeRepository.GetByIdAsync(entry.Id, Arg.Any<CancellationToken>()).Returns(entry);
 
-        var handler = new UpdateKnowledgeEntryCommandHandler(_projectRepository, _knowledgeRepository, _unitOfWork);
+        var handler = new UpdateKnowledgeEntryCommandHandler(_projectRepository, _knowledgeRepository, _outboxDispatcher, _unitOfWork);
         await handler.Handle(
             new UpdateKnowledgeEntryCommand(_workspaceId, _project.Id, entry.Id, "Refreshed", null, KnowledgeType.Runbook, null, KnowledgeStatus.Accepted),
             CancellationToken.None);

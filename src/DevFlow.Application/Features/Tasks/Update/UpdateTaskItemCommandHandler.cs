@@ -21,6 +21,7 @@ public sealed class UpdateTaskItemCommandHandler(
     IRealtimeNotificationService realtimeNotificationService,
     IActivityLogRepository activityLog,
     IKnowledgeRepository knowledgeRepository,
+    IOutboxDispatcher outboxDispatcher,
     IUserContext userContext,
     IUnitOfWork unitOfWork,
     ITaskDependencyRepository dependencyRepository) : IRequestHandler<UpdateTaskItemCommand>
@@ -57,6 +58,7 @@ public sealed class UpdateTaskItemCommandHandler(
 
         var oldAssigneeId = task.AssigneeId;
         var oldStatus = task.Status;
+        KnowledgeEntry? capturedDraft = null;
 
         // Blocked-move enforcement: a real status transition is rejected while
         // the task has unresolved non-cyclic blockers. Same-status saves (edit
@@ -97,14 +99,14 @@ public sealed class UpdateTaskItemCommandHandler(
             // runbook from its title/description so anything shipped is documented.
             if (task.Status == TaskItemStatus.Done)
             {
-                var draftEntry = KnowledgeEntry.CaptureFromTask(
+                capturedDraft = KnowledgeEntry.CaptureFromTask(
                     command.ProjectId,
                     task.Id,
                     task.Title,
                     task.Description,
                     KnowledgeType.Runbook,
                     tags: "auto-captured");
-                await knowledgeRepository.AddAsync(draftEntry, cancellationToken);
+                await knowledgeRepository.AddAsync(capturedDraft, cancellationToken);
             }
             // Drift warning: when a task that already shipped is reopened or moves
             // backwards, any knowledge captured from it may no longer be accurate.
@@ -134,6 +136,20 @@ public sealed class UpdateTaskItemCommandHandler(
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Auto-captured entry now has an Id — queue chunk+embed off the HTTP path.
+        if (capturedDraft is not null)
+        {
+            await outboxDispatcher.EnqueueAsync(
+                "knowledge.reembed",
+                new
+                {
+                    workspaceId = command.WorkspaceId,
+                    knowledgeEntryId = capturedDraft.Id,
+                    projectId = command.ProjectId,
+                },
+                cancellationToken);
+        }
 
         // Notify the new assignee when a task is assigned
         if (command.AssigneeId is not null && command.AssigneeId != oldAssigneeId)

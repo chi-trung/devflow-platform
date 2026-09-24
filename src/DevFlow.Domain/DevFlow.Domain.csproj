@@ -3,4 +3,10 @@
   <PropertyGroup>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- KnowledgeChunk.Embedding is a pgvector Vector so EF maps it without a
+         Domain↔Infrastructure conversion layer. The package is type-only. -->
+    <PackageReference Include="Pgvector" Version="0.3.2" />
+  </ItemGroup>
+
 </Project>

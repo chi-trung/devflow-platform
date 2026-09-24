@@ -1,5 +1,6 @@
 using DevFlow.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
 
 namespace DevFlow.Infrastructure.Persistence;
 
@@ -37,6 +38,8 @@ public class DevFlowDbContext : DbContext
     public DbSet<Milestone> Milestones => Set<Milestone>();
 
     public DbSet<KnowledgeEntry> KnowledgeEntries => Set<KnowledgeEntry>();
+
+    public DbSet<KnowledgeChunk> KnowledgeChunks => Set<KnowledgeChunk>();
 
     public DbSet<AiPlan> AiPlans => Set<AiPlan>();
 
@@ -83,6 +86,19 @@ public class DevFlowDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);
+
+        // knowledge_chunks.embedding is pgvector vector(768). The InMemory
+        // provider (integration fallback without Docker) cannot map
+        // Pgvector.Vector, so drop the column from that model — retrieval
+        // then falls back to weight order (Embedding stays null in memory).
+        if (Database.IsRelational())
+        {
+            modelBuilder.HasPostgresExtension("vector");
+        }
+        else
+        {
+            modelBuilder.Entity<KnowledgeChunk>().Ignore(c => c.Embedding);
+        }
 
         modelBuilder.Entity<Project>().HasQueryFilter(p => p.DeletedAtUtc == null);
         modelBuilder.Entity<TaskItem>().HasQueryFilter(t => t.DeletedAtUtc == null);

@@ -61,7 +61,17 @@ Controllers (`src/DevFlow.Api/Controllers/`) are thin: bind the request, call
   OAuth optional; personal access tokens (`df_...`) for scripts — handled by
   the PAT auth handler + scope middleware.
 - **AI** — provider-agnostic `IAiClient` (`Infrastructure/AI/`). Configure via
-  `Ai__ApiKey` / `Ai__Model`; empty key disables AI features.
+  `Ai__ApiKey` / `Ai__Model`; empty key disables AI features. **RAG**: knowledge
+  is chunked (`knowledge_chunks`, ~1600-char slices with overlap) and embedded
+  asynchronously via outbox `knowledge.reembed` (`OutboxProcessor` →
+  `IKnowledgeIngestionService`). Retrieval embeds the query, cosine-searches
+  project-scoped live chunks (`pgvector` `vector(768)`, HNSW), optionally
+  re-ranks (`Ai:EnableRerank`, default off / NoOp), and clips to
+  `Ai:KnowledgeCharBudget`; missing keys or empty vector hits fall back to
+  weight-ordered full entries so the planner never sees a silent empty KB.
+  Providers: Gemini → `text-embedding-004` (768), OpenAI-compat →
+  `text-embedding-3-small` with `dimensions=768` (one migration for both).
+  Local/Testcontainers Postgres must be `pgvector/pgvector:pg17`.
 
 ## Frontend
 

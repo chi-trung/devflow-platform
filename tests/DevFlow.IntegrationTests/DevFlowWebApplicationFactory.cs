@@ -30,7 +30,7 @@ public sealed class DevFlowWebApplicationFactory : WebApplicationFactory<Program
         try
         {
             dbContainer = new PostgreSqlBuilder()
-                .WithImage("postgres:17-alpine")
+                .WithImage("pgvector/pgvector:pg17")
                 .Build();
             dbContainer.StartAsync().GetAwaiter().GetResult();
         }

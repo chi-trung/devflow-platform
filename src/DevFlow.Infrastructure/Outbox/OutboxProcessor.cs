@@ -44,6 +44,7 @@ public sealed class OutboxProcessor(
         using var scope = serviceProvider.CreateScope();
         var outboxRepository = scope.ServiceProvider.GetRequiredService<IOutboxRepository>();
         var webhookDispatcher = scope.ServiceProvider.GetService<IWebhookDispatcher>();
+        var knowledgeIngestion = scope.ServiceProvider.GetService<IKnowledgeIngestionService>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         var messages = await outboxRepository.GetUnprocessedAsync(BatchSize, cancellationToken);
@@ -57,7 +58,7 @@ public sealed class OutboxProcessor(
 
             try
             {
-                await ProcessMessageAsync(message, webhookDispatcher, cancellationToken);
+                await ProcessMessageAsync(message, webhookDispatcher, knowledgeIngestion, cancellationToken);
                 await outboxRepository.MarkProcessedAsync(message.Id, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
             }
@@ -82,6 +83,7 @@ public sealed class OutboxProcessor(
     private async Task ProcessMessageAsync(
         DevFlow.Domain.Entities.OutboxMessage message,
         IWebhookDispatcher? webhookDispatcher,
+        IKnowledgeIngestionService? knowledgeIngestion,
         CancellationToken cancellationToken)
     {
         if (message.Type.StartsWith("webhook.", StringComparison.OrdinalIgnoreCase))
@@ -112,6 +114,36 @@ public sealed class OutboxProcessor(
                 logger.LogWarning(ex, "Failed to dispatch outbox webhook message {Id}", message.Id);
                 throw;
             }
+
+            return;
         }
+
+        if (string.Equals(message.Type, "knowledge.reembed", StringComparison.OrdinalIgnoreCase))
+        {
+            // Without a handler this branch would fall through and the message
+            // would be marked processed with zero work done — the embedding
+            // silently never happens. Throw when the service is missing so the
+            // message retries instead of vanishing.
+            if (knowledgeIngestion is null)
+            {
+                throw new InvalidOperationException(
+                    "IKnowledgeIngestionService is not registered; cannot process knowledge.reembed.");
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(message.Payload);
+                var entryId = doc.RootElement.GetProperty("knowledgeEntryId").GetGuid();
+                await knowledgeIngestion.ReingestEntryAsync(entryId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to re-embed knowledge for outbox message {Id}", message.Id);
+                throw;
+            }
+        }
+
+        // Unknown types: mark processed (same as before) so a stray message
+        // cannot wedge the queue.
     }
 }
