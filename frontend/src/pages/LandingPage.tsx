@@ -78,7 +78,7 @@ export function LandingPage() {
             aria-hidden
           />
 
-          <div className="mx-auto max-w-6xl px-4 pb-16 pt-16 text-center sm:px-6 sm:pb-24 sm:pt-24">
+          <div className="mx-auto max-w-6xl px-4 pb-12 pt-16 text-center sm:px-6 sm:pb-16 sm:pt-24">
             <p className="mb-4 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary">
               {t("landing.heroEyebrow")}
             </p>
@@ -115,31 +115,6 @@ export function LandingPage() {
 
         {/* ─── Dashboard screenshot ─── */}
         <ScreenshotShowcase />
-
-        {/* ─── The Intelligence ─── */}
-        <IntelligenceSection />
-
-        {/* ─── Features ─── */}
-        <section id="features" className="border-b border-border py-20 sm:py-28">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="mb-14 text-center">
-              <h2 className="mb-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-                {t("landing.featuresTitle")}
-              </h2>
-              <p className="mx-auto max-w-2xl text-muted-foreground">
-                {t("landing.featuresSubtitle")}
-              </p>
-            </div>
-
-            <FeatureBrowserFrame />
-          </div>
-        </section>
-
-        {/* ─── Pricing / Docs / Community / Help ─── */}
-        <PricingSection />
-        <DocsSection />
-        <CommunitySection />
-        <HelpSection />
 
         {/* ─── How it works ─── */}
         <section className="border-b border-border py-20 sm:py-28">
@@ -183,8 +158,30 @@ export function LandingPage() {
           </div>
         </section>
 
+        {/* ─── Features ─── */}
+        <section id="features" className="border-b border-border py-20 sm:py-28">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mb-14 text-center">
+              <h2 className="mb-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+                {t("landing.featuresTitle")}
+              </h2>
+              <p className="mx-auto max-w-2xl text-muted-foreground">
+                {t("landing.featuresSubtitle")}
+              </p>
+            </div>
+
+            <FeatureBrowserFrame />
+          </div>
+        </section>
+
+        {/* ─── The Intelligence ─── */}
+        <IntelligenceSection />
+
+        {/* ─── Pricing ─── */}
+        <PricingSection />
+
         {/* ─── CTA ─── */}
-        <section className="py-20 sm:py-28">
+        <section className="border-b border-border py-20 sm:py-28">
           <div className="mx-auto max-w-6xl px-4 text-center sm:px-6">
             <h2 className="mb-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
               {t("landing.ctaTitle")}
@@ -204,6 +201,11 @@ export function LandingPage() {
             </Link>
           </div>
         </section>
+
+        {/* ─── Docs / Community / Help (post-conversion reference) ─── */}
+        <DocsSection />
+        <CommunitySection />
+        <HelpSection />
       </main>
 
       {/* ─── Footer ─── */}
