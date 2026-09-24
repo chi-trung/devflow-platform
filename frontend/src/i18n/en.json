@@ -46,9 +46,9 @@
    "login": "Log in",
    "signup": "Get started free"
   },
-  "heroEyebrow": "KANBAN · SPRINTS · AI AGENT · WIKI",
-  "heroTitle": "Kanban + sprints + AI agent that plans and ships",
-  "heroSubtitle": "Drag cards across 7 stages from Idea to Done, run sprints with burndown + velocity, and let the AI plan gated by your wiki.",
+  "heroEyebrow": "SPRINT BOARD · AI PLANNER · TEAM WIKI",
+  "heroTitle": "Stop solving the same problem twice.",
+  "heroSubtitle": "Seven stages from Idea to Done, an AI planner that drafts steps, subtasks and acceptance criteria inside each task, and a wiki that captures every decision as you ship.",
   "ctaStart": "Start building free",
   "ctaViewLogin": "Log in",
   "showcase": {
@@ -60,7 +60,8 @@
   "stages": {
    "idea": "Idea",
    "planning": "Planning",
-   "approved": "Approved",
+   "approval": "Approval",
+   "ready": "Ready",
    "inProgress": "In Progress",
    "review": "Review",
    "done": "Done"
@@ -79,9 +80,9 @@
    },
    "ai": {
     "title": "AI Agent Integration",
-    "desc": "An AI agent that plans work and writes the code, gated by your knowledge. Toggle self-approval on for a fully autonomous flow.",
+    "desc": "An AI planner that drafts steps, subtasks and acceptance criteria inside each task, grounded in your team's wiki. Plans arrive as Pending for a teammate to review and Apply (auto-applied when the project enables it).",
     "b1": "Knowledge-gated planning",
-    "b2": "Self-approval toggle for autonomy",
+    "b2": "Plans stay Pending until a teammate clicks Apply",
     "b3": "REST API + webhooks for your tools"
    },
    "wiki": {
@@ -172,16 +173,16 @@
   },
   "hero": {
    "flow": {
-    "taskTitle": "Feature Flow",
-    "taskId": "DF-132",
-    "aiPlan": "AI Plan",
-    "approved": "APPROVED",
-    "checklistTitle": "Testing Checklist",
-    "checklistPassed": "Passed",
-    "version": "v1.0.0",
-    "overview": "Implement OAuth 2.0 refresh flow. Token rotation, silent refresh on 401, retry with exponential backoff.",
-    "aiPlanDesc": "Refactor auth module: add refresh interceptor, rotation logic, and store migration.",
-    "applied": "Applied"
+    "taskTitle": "OAuth refresh flow",
+    "taskId": "DEV-132",
+    "aiPlan": "AI Planner",
+    "approved": "401 triggers silent refresh",
+    "checklistTitle": "Add a refresh interceptor on 401",
+    "checklistPassed": "Rotate tokens and migrate stored sessions",
+    "version": "Retry with exponential backoff",
+    "overview": "Token rotation, silent refresh on 401, retry with backoff.",
+    "aiPlanDesc": "Drafted from ADR-127 (backend-persist): rotate refresh tokens, refresh silently on 401, retry with backoff.",
+    "applied": "Old tokens invalidated after rotation"
    }
   },
   "intel": {
@@ -197,10 +198,10 @@
    "supersededDesc": "forwarded — cite history, follow link",
    "deprecatedName": "Deprecated",
    "deprecatedDesc": "still heard — surfaces as a warning",
-   "terminalPrompt": "$ agent.plan",
-   "terminalQuery": "→ \"add caching to user prefs\"",
-   "terminalAgentTag": "AGENT · RAG k=8",
-   "terminalContextBundle": "Context bundle returned to agent · sorted by weight",
+   "terminalPrompt": "AI Planner · grounded in wiki",
+   "terminalQuery": "Drafting: \"add caching to user prefs\"",
+   "terminalAgentTag": "PLAN · STEPS · SUBTASKS · DEFINITION OF DONE",
+   "terminalContextBundle": "Plan cites wiki entries · accepted entries weigh most",
    "entries": [
     {
      "id": "ADR-127",
@@ -243,8 +244,8 @@
   "mock": {
    "url": "devflow-platform-kappa.vercel.app",
    "flows": {
-    "todo": "Todo",
-    "doing": "Doing",
+    "todo": "Idea",
+    "doing": "In Progress",
     "done": "Done",
     "card1": "OAuth refresh",
     "card2": "API rate limit",
@@ -255,31 +256,31 @@
     "doneCard": "OAuth refresh flow — implemented & tested"
    },
    "ai": {
-    "planTitle": "AI Plan: Refactor auth module",
-    "gateApproved": "Approved ✓",
-    "gateReview": "Review",
-    "discipline1": "collision-ack",
-    "discipline2": "pattern-reuse",
-    "discipline3": "TDD",
-    "gateLabel": "Knowledge Gate",
-    "planning": "Planning",
-    "approved": "Approved",
-    "review": "Review"
+    "planTitle": "AI Planner: OAuth refresh flow",
+    "gateApproved": "Apply plan",
+    "gateReview": "Regenerate",
+    "discipline1": "Break into subtasks",
+    "discipline2": "Focus on acceptance criteria",
+    "discipline3": "Call out risks and edge cases",
+    "gateLabel": "Summary",
+    "planning": "Drafting steps from ADR-127 — no client cache",
+    "approved": "Add refresh interceptor on 401",
+    "review": "Tokens rotate; retries use backoff"
    },
    "wiki": {
-    "adrAccepted": "Accepted",
-    "adrProposed": "Proposed",
-    "adrSuperseded": "Superseded",
-    "adrDeprecated": "Deprecated",
-    "entry1": "ADR-127: No client cache — backend-persist only",
-    "entry2": "ADR-119: 5-min in-memory cache (superseded)",
-    "entry3": "RUN-07: Cache-stale incident recovery",
-    "entry4": "PAT-04: localStorage prefs (deprecated)",
-    "entry5": "ADR-DRAFT: Redis edge cache? (proposed)"
+    "adrAccepted": "ADR · Accepted",
+    "adrProposed": "Pattern · Proposed",
+    "adrSuperseded": "ADR · Superseded",
+    "adrDeprecated": "Pattern · Deprecated",
+    "entry1": "ADR-127: No client cache — w 0.94 · auth, session",
+    "entry2": "ADR-119: 5-min in-memory cache — Superseded",
+    "entry3": "RUN-07: Cache-stale recovery — w 0.71 · incident",
+    "entry4": "PAT-04: localStorage prefs — Deprecated",
+    "entry5": "PAT-19: Backend-persist — w 0.82 · auth"
    },
    "kanban": {
-    "todo": "Todo",
-    "doing": "Doing",
+    "todo": "Idea",
+    "doing": "In Progress",
     "done": "Done",
     "card1": "Auth refresh",
     "card2": "Rate limiter",

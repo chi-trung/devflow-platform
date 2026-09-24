@@ -9,6 +9,13 @@ import { Avatar } from "../ui/Avatar";
  * reference layout: browser-frame mockup (58%) + copy (42%), alternating
  * left/right on desktop, stacked on mobile. Every mockup is HTML/CSS driven by
  * design tokens — no external screenshots.
+ *
+ * Honesty rules for every mock: stage strips use the REAL board names
+ * (landing.stages.*: Idea, Planning, Approval, Ready, In Progress, Review,
+ * Done) — never Todo/Doing/Done. The AI mock mirrors AiPlanPanel output
+ * (summary + Steps + Proposed subtasks + Definition of Done + Apply /
+ * Regenerate). Wiki rows mirror KnowledgeEntryCard (type badge + status
+ * badge + `w {weight}` chip + tags).
  */
 
 const FEATURE_META = [
@@ -50,33 +57,68 @@ const FEATURE_META = [
   },
 ] as const;
 
+// Static t() calls only (i18n-usage checks static keys): the real 7 stages.
+const STAGE_KEYS = [
+  "landing.stages.idea",
+  "landing.stages.planning",
+  "landing.stages.approval",
+  "landing.stages.ready",
+  "landing.stages.inProgress",
+  "landing.stages.review",
+  "landing.stages.done",
+] as const;
+
+/** 7-stage strip reusing the real board names. */
+function StageStrip() {
+  const { t } = useTranslation();
+  return (
+    <div className="mb-2.5 flex gap-1.5 overflow-hidden">
+      {STAGE_KEYS.map((key, i) => (
+        <span
+          key={key}
+          className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${
+            i === 4
+              ? "bg-primary text-on-primary"
+              : "border border-border bg-card text-muted-foreground"
+          }`}
+        >
+          {t(key)}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function FlowsMock() {
   const { t } = useTranslation();
   return (
-    <div className="grid grid-cols-3 gap-2.5">
-      {[
-        { head: t("landing.mock.flows.todo"), cards: ["card1", "card2"], highlight: false },
-        { head: t("landing.mock.flows.doing"), cards: ["card3", "card4"], highlight: false },
-        { head: t("landing.mock.flows.done"), cards: ["card5", "card6"], highlight: true },
-      ].map((col) => (
-        <div key={col.head} className="min-w-0 rounded-lg bg-surface/60 p-2">
-          <p className="mb-2 truncate text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {col.head}
-          </p>
-          <div className="space-y-1.5">
-            {col.cards.map((c) => (
-              <div
-                key={c}
-                className={`truncate rounded-md px-2 py-1.5 text-[10.5px] leading-tight ${
-                  col.highlight ? "border border-primary/40 bg-primary/10 text-foreground" : "bg-card text-muted-foreground"
-                }`}
-              >
-                {t(`landing.mock.flows.${c}`)}
-              </div>
-            ))}
+    <div>
+      <StageStrip />
+      <div className="grid grid-cols-3 gap-2.5">
+        {[
+          { head: t("landing.stages.planning"), cards: ["card1", "card2"], highlight: false },
+          { head: t("landing.stages.inProgress"), cards: ["card3", "card4"], highlight: false },
+          { head: t("landing.stages.done"), cards: ["card5", "card6"], highlight: true },
+        ].map((col) => (
+          <div key={col.head} className="min-w-0 rounded-lg bg-surface/60 p-2">
+            <p className="mb-2 truncate text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {col.head}
+            </p>
+            <div className="space-y-1.5">
+              {col.cards.map((c) => (
+                <div
+                  key={c}
+                  className={`truncate rounded-md px-2 py-1.5 text-[10.5px] leading-tight ${
+                    col.highlight ? "border border-primary/40 bg-primary/10 text-foreground" : "bg-card text-muted-foreground"
+                  }`}
+                >
+                  {t(`landing.mock.flows.${c}`)}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -86,26 +128,48 @@ function AiMock() {
   return (
     <div className="space-y-2.5">
       <div className="rounded-lg border border-violet-400/25 bg-violet-400/5 p-3">
-        <p className="mb-2 text-xs font-semibold text-violet-400">{t("landing.mock.ai.planTitle")}</p>
-        <div className="space-y-1.5">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="h-2 w-full rounded-full bg-elevated" />
-          ))}
-          <div className="h-2 w-2/3 rounded-full bg-elevated" />
+        <div className="mb-1.5 flex items-center justify-between gap-2">
+          <p className="min-w-0 truncate text-xs font-semibold text-violet-400">{t("landing.mock.ai.planTitle")}</p>
+          <span className="shrink-0 rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-500">
+            {t("ai.pending")}
+          </span>
         </div>
+        <p className="mb-2 text-[11px] leading-relaxed text-foreground">{t("landing.hero.flow.aiPlanDesc")}</p>
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {t("ai.steps")}
+        </p>
+        <ol className="mb-2 list-inside list-decimal space-y-0.5 text-[11px] text-muted-foreground">
+          <li>{t("landing.mock.ai.planning")}</li>
+          <li>{t("landing.mock.ai.approved")}</li>
+        </ol>
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {t("ai.proposedSubtasks")}
+        </p>
+        <div className="mb-2 rounded-md border border-border/60 bg-card px-2 py-1.5 text-[11px] text-foreground">
+          {t("landing.mock.ai.review")}
+        </div>
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {t("ai.dod")}
+        </p>
+        <ul role="list" className="space-y-0.5 text-[11px] text-muted-foreground">
+          <li className="flex items-start gap-1.5">
+            <span className="mt-0.5 shrink-0" aria-hidden>•</span>
+            <span>{t("landing.mock.ai.approved")}</span>
+          </li>
+        </ul>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10.5px] font-medium text-primary-strong">
+        <span className="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1 text-[11px] font-semibold text-on-primary">
           {t("landing.mock.ai.gateApproved")}
         </span>
-        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-elevated px-2 py-0.5 text-[10.5px] font-medium text-muted-foreground">
+        <span className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
           {t("landing.mock.ai.gateReview")}
         </span>
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {["discipline1", "discipline2", "discipline3"].map((d) => (
-          <span key={d} className="rounded-md bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-            {t(`landing.mock.ai.${d}`)}
+        {[t("landing.mock.ai.discipline1"), t("landing.mock.ai.discipline2"), t("landing.mock.ai.discipline3")].map((d) => (
+          <span key={d} className="rounded-full border border-border bg-elevated/60 px-2 py-0.5 text-[10.5px] text-foreground">
+            {d}
           </span>
         ))}
       </div>
@@ -115,22 +179,75 @@ function AiMock() {
 
 function WikiMock() {
   const { t } = useTranslation();
+  // Mirrors KnowledgeEntryCard: type badge + status badge + w {weight} + tags.
   const rows = [
-    { text: t("landing.mock.wiki.entry1"), tone: "border-primary/25 text-primary" },
-    { text: t("landing.mock.wiki.entry2"), tone: "border-sky-400/25 text-sky-400" },
-    { text: t("landing.mock.wiki.entry3"), tone: "border-violet-400/25 text-violet-400" },
-    { text: t("landing.mock.wiki.entry4"), tone: "border-rose-400/25 text-rose-400" },
-    { text: t("landing.mock.wiki.entry5"), tone: "border-amber-400/25 text-amber-400" },
+    {
+      title: t("landing.mock.wiki.entry1"),
+      type: t("knowledge.type.Adr"),
+      status: t("knowledge.status.Accepted"),
+      statusTone: "bg-primary/10 text-primary-strong",
+      weight: "w 0.94",
+      tags: "auth, session",
+    },
+    {
+      title: t("landing.mock.wiki.entry2"),
+      type: t("knowledge.type.Adr"),
+      status: t("knowledge.status.Superseded"),
+      statusTone: "bg-elevated text-muted-foreground",
+      weight: "w 0.31",
+      tags: "cache",
+    },
+    {
+      title: t("landing.mock.wiki.entry3"),
+      type: t("knowledge.type.Runbook"),
+      status: t("knowledge.status.Accepted"),
+      statusTone: "bg-primary/10 text-primary-strong",
+      weight: "w 0.71",
+      tags: "incident",
+    },
+    {
+      title: t("landing.mock.wiki.entry4"),
+      type: t("knowledge.type.Pattern"),
+      status: t("knowledge.status.Deprecated"),
+      statusTone: "bg-elevated text-muted-foreground",
+      weight: "w 0.18",
+      tags: "prefs",
+    },
+    {
+      title: t("landing.mock.wiki.entry5"),
+      type: t("knowledge.type.Pattern"),
+      status: t("knowledge.status.Proposed"),
+      statusTone: "bg-violet-400/10 text-violet-400",
+      weight: "w 0.55",
+      tags: "auth",
+    },
   ];
   return (
     <div className="space-y-1.5">
-      {rows.map((row, i) => (
+      {rows.map((row) => (
         <div
-          key={i}
-          className={`flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 text-[11px] ${row.tone}`}
+          key={row.title}
+          className="rounded-md border border-border bg-card px-2.5 py-1.5"
         >
-          <span className={`size-1.5 shrink-0 rounded-full ${row.tone.split(" ")[1]}`} aria-hidden />
-          <span className="min-w-0 flex-1 truncate">{row.text}</span>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-foreground">
+              {row.title}
+            </span>
+            <span className="shrink-0 rounded bg-elevated px-1 py-0.5 font-mono text-[9.5px] text-muted-foreground">
+              {row.type}
+            </span>
+            <span className={`shrink-0 rounded px-1 py-0.5 font-mono text-[9.5px] font-semibold ${row.statusTone}`}>
+              {row.status}
+            </span>
+          </div>
+          <div className="mt-1 flex items-center gap-1.5">
+            <span className="rounded bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+              {row.weight}
+            </span>
+            <span className="rounded-md border border-border bg-surface px-1.5 py-0.5 text-[10px] text-muted-foreground">
+              {row.tags}
+            </span>
+          </div>
         </div>
       ))}
     </div>
@@ -140,33 +257,36 @@ function WikiMock() {
 function KanbanMock() {
   const { t } = useTranslation();
   return (
-    <div className="grid grid-cols-3 gap-2.5">
-      {[
-        { head: t("landing.mock.kanban.todo"), cards: ["card1", "card2"], dim: false },
-        { head: t("landing.mock.kanban.doing"), cards: ["card3", "card4"], dim: false },
-        { head: t("landing.mock.kanban.done"), cards: ["card5", "card6"], dim: true },
-      ].map((col) => (
-        <div key={col.head} className="min-w-0 rounded-lg bg-surface/60 p-2">
-          <p className="mb-2 truncate text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {col.head}
-          </p>
-          <div className="space-y-1.5">
-            {col.cards.map((c, ci) => (
-              <div key={c} className="min-w-0 rounded-md bg-card px-2 py-1.5">
-                <p className="truncate text-[10.5px] leading-tight text-foreground">
-                  {t(`landing.mock.kanban.${c}`)}
-                </p>
-                <div className="mt-1 flex items-center gap-1">
-                  <Avatar
-                    name={[t("landing.mock.kanban.assignee1"), t("landing.mock.kanban.assignee2"), t("landing.mock.kanban.assignee3")][ci]}
-                  />
+    <div>
+      <StageStrip />
+      <div className="grid grid-cols-3 gap-2.5">
+        {[
+          { head: t("landing.stages.ready"), cards: ["card1", "card2"], dim: false },
+          { head: t("landing.stages.review"), cards: ["card3", "card4"], dim: false },
+          { head: t("landing.stages.done"), cards: ["card5", "card6"], dim: true },
+        ].map((col) => (
+          <div key={col.head} className="min-w-0 rounded-lg bg-surface/60 p-2">
+            <p className="mb-2 truncate text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {col.head}
+            </p>
+            <div className="space-y-1.5">
+              {col.cards.map((c, ci) => (
+                <div key={c} className="min-w-0 rounded-md bg-card px-2 py-1.5">
+                  <p className="truncate text-[10.5px] leading-tight text-foreground">
+                    {t(`landing.mock.kanban.${c}`)}
+                  </p>
+                  <div className="mt-1 flex items-center gap-1">
+                    <Avatar
+                      name={[t("landing.mock.kanban.assignee1"), t("landing.mock.kanban.assignee2"), t("landing.mock.kanban.assignee3")][ci]}
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
-            {col.dim && <div className="rounded-md border border-dashed border-border px-2 py-1.5 text-center text-[10px] text-muted-foreground/60">+</div>}
+              ))}
+              {col.dim && <div className="rounded-md border border-dashed border-border px-2 py-1.5 text-center text-[10px] text-muted-foreground/60">+</div>}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
