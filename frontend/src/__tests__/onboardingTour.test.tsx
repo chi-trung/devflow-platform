@@ -265,4 +265,34 @@ describe("tour step targets stay mounted", () => {
     expect(src).toMatch(/url\.origin !== self\.location\.origin/);
     expect(src).toMatch(/CACHE_NAME = "devflow-v5"/);
   });
+
+  it("TourReopenButton sits in the greeting header, not the overflow action row", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const src = readFileSync(
+      join(__dirname, "..", "pages", "DashboardPage.tsx"),
+      "utf8",
+    );
+    const greetingIdx = src.indexOf("flex items-end justify-between");
+    const actionIdx = src.indexOf("no-scrollbar flex h-[38px]");
+    const btnIdx = src.indexOf("<TourReopenButton");
+    expect(greetingIdx).toBeGreaterThan(-1);
+    expect(actionIdx).toBeGreaterThan(greetingIdx);
+    expect(btnIdx).toBeGreaterThan(greetingIdx);
+    expect(btnIdx).toBeLessThan(actionIdx);
+    // Only one mount — must not reappear inside the overflow row.
+    expect(src.match(/<TourReopenButton/g)?.length).toBe(1);
+  });
+
+  it("TourReopenButton label never wraps (mobile clipping regression)", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const src = readFileSync(
+      join(__dirname, "..", "components", "onboarding", "OnboardingTour.tsx"),
+      "utf8",
+    );
+    const fn = src.slice(src.indexOf("export function TourReopenButton"));
+    expect(fn).toMatch(/whitespace-nowrap/);
+    expect(fn).toMatch(/shrink-0/);
+  });
 });

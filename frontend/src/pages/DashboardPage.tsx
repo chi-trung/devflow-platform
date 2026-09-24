@@ -267,8 +267,14 @@ export function DashboardPage() {
     <AppShell>
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="mb-8 flex flex-col gap-4">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
+          {/* Tour reopen lives here (right of greeting), NOT in the
+              overflow-x action row below — that row's fixed 38px height +
+              overflow-x-auto squeezed "Take the tour" to ~3 chars per line
+              on mobile. No flex-wrap: greeting text wraps under min-w-0 and
+              the button stays shrink-0 on the right, so it never grows the
+              block when workspaces land (same 3-line greeting height). */}
+          <div className="flex items-end justify-between gap-4">
+            <div className="min-w-0 flex-1">
               <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
                 {t("dashboard.dashboard")}
               </p>
@@ -289,6 +295,9 @@ export function DashboardPage() {
                 )}
               </p>
             </div>
+            {selectedWsId && workspaces.length > 0 && (
+              <TourReopenButton onOpen={() => setTourOpen(true)} />
+            )}
           </div>
           {/* The actions row always occupies its own 38px line — on a max-w-5xl
               layout the selects + button never fit beside the greeting anyway,
@@ -349,9 +358,6 @@ export function DashboardPage() {
                 <Plus className="size-4" aria-hidden />
                 {t("dashboard.newWorkspace")}
               </Button>
-            )}
-            {selectedWsId && workspaces.length > 0 && (
-              <TourReopenButton onOpen={() => setTourOpen(true)} />
             )}
           </div>
         </div>

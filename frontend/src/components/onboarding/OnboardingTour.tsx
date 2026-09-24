@@ -485,14 +485,16 @@ function welcomeStep(step: number): boolean {
   return step === 0;
 }
 
-/** Button to re-open the tour from the dashboard. */
+/** Button to re-open the tour from the dashboard.
+ *  shrink-0 + whitespace-nowrap: inside a flex/overflow row the label used to
+ *  wrap to ~3 characters per line on mobile and read as clipped text. */
 export function TourReopenButton({ onOpen }: { onOpen: () => void }) {
   const { t } = useTranslation();
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:border-primary hover:text-primary"
+      className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:border-primary hover:text-primary"
     >
       <HelpCircle className="size-4" aria-hidden />
       {t("onboarding.helpButton")}
