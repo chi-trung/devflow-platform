@@ -1,9 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, waitFor, cleanup } from "@testing-library/react";
+import {
+  render,
+  waitFor,
+  cleanup,
+  fireEvent,
+  act,
+  screen,
+} from "@testing-library/react";
 import {
   OnboardingTour,
   isOnScreen,
   requestSidebarDrawer,
+  requestNavSidebar,
+  CARD_FALLBACK_MS,
 } from "../components/onboarding/OnboardingTour";
 
 vi.mock("react-i18next", () => ({
@@ -191,5 +200,69 @@ describe("OnboardingTour card gating", () => {
     expect(card).toBeTruthy();
     expect(main.contains(card)).toBe(false);
     expect(card?.parentElement).toBe(document.body);
+  });
+
+  it("fail-open: still shows Skip/Next when the step target never appears", async () => {
+    // Regression: cardReady was gated on pageReady, and pageReady only flips
+    // when [data-tour=…] exists. A missing target (sprint-health, AI-mode
+    // sidebar-workspaces) left only the full-screen click-catcher — frozen.
+    vi.useFakeTimers();
+    try {
+      render(<OnboardingTour open onClose={() => {}} userId="u1" />);
+      // Welcome always has a card; advance past it with no workspace-select.
+      fireEvent.click(screen.getByRole("button", { name: "onboarding.next" }));
+      expect(document.getElementById("devflow-tour-root")).toBeNull();
+
+      await act(async () => {
+        vi.advanceTimersByTime(CARD_FALLBACK_MS + 50);
+      });
+
+      expect(document.getElementById("devflow-tour-root")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "onboarding.skip" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "onboarding.next" })).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("asks AppShell to leave AI mode so sidebar-workspaces exists", () => {
+    const ensure = vi.fn();
+    window.addEventListener("devflow:ensure-nav-sidebar", ensure);
+    render(<OnboardingTour open onClose={() => {}} userId="u1" />);
+    window.removeEventListener("devflow:ensure-nav-sidebar", ensure);
+    expect(ensure).toHaveBeenCalledTimes(1);
+  });
+
+  it("requestNavSidebar dispatches the ensure-nav event", () => {
+    const ensure = vi.fn();
+    window.addEventListener("devflow:ensure-nav-sidebar", ensure);
+    requestNavSidebar();
+    window.removeEventListener("devflow:ensure-nav-sidebar", ensure);
+    expect(ensure).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("tour step targets stay mounted", () => {
+  it("Dashboard exposes data-tour=sprint-health for step 6", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const src = readFileSync(
+      join(__dirname, "..", "pages", "DashboardPage.tsx"),
+      "utf8",
+    );
+    expect(src).toMatch(/data-tour="sprint-health"/);
+  });
+
+  it("service worker only intercepts same-origin (no connect-src avatar spam)", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const src = readFileSync(
+      join(__dirname, "..", "..", "public", "sw.js"),
+      "utf8",
+    );
+    // Cross-origin avatar fetch() from the SW is gated by connect-src;
+    // img-src already allows those hosts for <img> — SW must bail out first.
+    expect(src).toMatch(/url\.origin !== self\.location\.origin/);
+    expect(src).toMatch(/CACHE_NAME = "devflow-v5"/);
   });
 });

@@ -554,17 +554,25 @@ export function DashboardPage() {
                 {/* Hold the same 267px the overview skeleton reserved until
                     projects settle: selectedProjectId comes from a separate
                     GET, so rendering nothing while that fetch is in flight
-                    used to yank the slot out from under the charts (CLS). */}
-                {selectedProjectId ? (
-                  <div className="mb-4">
+                    used to yank the slot out from under the charts (CLS).
+                    data-tour rides this wrapper (skeleton too) so tour step 6
+                    resolves before sprint data lands — a bare attribute on
+                    SprintHealthCard only would leave pageReady stuck. */}
+                <div
+                  data-tour="sprint-health"
+                  className={
+                    selectedProjectId || projectsLoading ? "mb-4" : undefined
+                  }
+                >
+                  {selectedProjectId ? (
                     <SprintHealthCard
                       workspaceId={selectedWsId}
                       projectId={selectedProjectId}
                     />
-                  </div>
-                ) : projectsLoading ? (
-                  <Skeleton className="h-[267px]" />
-                ) : null}
+                  ) : projectsLoading ? (
+                    <Skeleton className="h-[267px]" />
+                  ) : null}
+                </div>
                 {dashboard.data.upcomingDeadlines.length > 0 ? (
                   <section aria-label={t("dashboard.upcomingDeadlines")} className="mt-4 min-h-[150px] rounded-xl border border-border bg-card p-5">
                     <h2 className="mb-3 inline-flex items-center gap-1.5 font-display font-semibold">

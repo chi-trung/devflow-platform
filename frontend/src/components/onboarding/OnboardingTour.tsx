@@ -39,6 +39,12 @@ export function requestSidebarDrawer(open: boolean) {
   );
 }
 
+/** Ask AppShell to leave AI sidebar mode — nav's `data-tour="sidebar-workspaces"`
+ *  is unmounted while modeAi, which used to leave pageReady stuck forever. */
+export function requestNavSidebar() {
+  window.dispatchEvent(new CustomEvent("devflow:ensure-nav-sidebar"));
+}
+
 interface TourStep {
   /** Resolves the element to highlight. Null → centered (welcome) step. */
   target: () => HTMLElement | null;
@@ -65,8 +71,9 @@ const TOOLTIP_W = 320;
 const SIDEBAR_BP = 1024;
 /** Drawer slide is duration-300; wait for it before scrollIntoView. */
 const DRAWER_SETTLE_MS = 320;
-/** Fail-open: if the target never becomes measurable, still show the card. */
-const CARD_FALLBACK_MS = 1200;
+/** Fail-open: if the target never becomes measurable, still show the card.
+ *  Exported so tests can assert the freeze path (missing data-tour) unblocks. */
+export const CARD_FALLBACK_MS = 1200;
 
 /**
  * True when a meaningful slice of `el` intersects the viewport.
@@ -177,11 +184,14 @@ export function OnboardingTour({
 
   // Sidebar steps on mobile: open the hamburger drawer so the target exists
   // in a visible box; other steps close it so the dashboard isn't covered.
+  // On open, force nav mode — AI mode unmounts sidebar-workspaces, so
+  // pageReady would never flip and the click-catcher would freeze the page.
   useEffect(() => {
     if (!open) {
       requestSidebarDrawer(false);
       return;
     }
+    requestNavSidebar();
     if (step === 0) return;
     const wantsDrawer =
       STEPS[step].needsSidebar === true && window.innerWidth < SIDEBAR_BP;
@@ -207,13 +217,16 @@ export function OnboardingTour({
 
   // Border first, then the card: wait for a measurable rect, with a timeout so
   // a never-visible target cannot strand the user on a blank overlay.
+  // The timeout starts even while pageReady is still false — a missing
+  // data-tour never clears pageReady, and gating on it used to leave only
+  // the full-screen click-catcher up (no Skip/X/Next → frozen screen).
   useEffect(() => {
     if (!open) return;
     setCardReady(welcomeStep(step));
-    if (welcomeStep(step) || !pageReady) return;
+    if (welcomeStep(step)) return;
     const id = window.setTimeout(() => setCardReady(true), CARD_FALLBACK_MS);
     return () => window.clearTimeout(id);
-  }, [open, step, pageReady]);
+  }, [open, step]);
 
   useEffect(() => {
     if (!open) return;
@@ -227,48 +240,81 @@ export function OnboardingTour({
     const vh = window.innerHeight;
     const isMobile = vw < SIDEBAR_BP;
 
+    // Identity bail-outs: the rAF loop runs every frame — minting a fresh
+    // object each tick re-rendered the whole portal and felt frozen on
+    // slower machines even when nothing had moved.
     if (target) {
       // Still scrolling, or in a closed drawer: leave rect null so the card
       // stays hidden (cardReady fallback still unblocks after ~1.2s).
       if (!isOnScreen(target)) {
-        setRect(null);
-        setCardPos({ top: 60, left: clampCardLeft(vw, 16) });
+        setRect((prev) => (prev ? null : prev));
+        const fallbackPos = { top: 60, left: clampCardLeft(vw, 16) };
+        setCardPos((prev) =>
+          prev &&
+          prev.top === fallbackPos.top &&
+          prev.left === fallbackPos.left
+            ? prev
+            : fallbackPos,
+        );
         return;
       }
 
       const r = target.getBoundingClientRect();
-      setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+      setRect((prev) =>
+        prev &&
+        prev.top === r.top &&
+        prev.left === r.left &&
+        prev.width === r.width &&
+        prev.height === r.height
+          ? prev
+          : { top: r.top, left: r.left, width: r.width, height: r.height },
+      );
 
       const spaceBelow = vh - r.bottom;
       const spaceAbove = r.top;
       const placeBelow = spaceBelow > 220 || spaceBelow >= spaceAbove;
       const roomLeft = r.left - 16 >= TOOLTIP_W + 12;
 
+      let nextPos: { top: number; left: number };
       if (STEPS[step].placeLeft && roomLeft && !isMobile) {
-        setCardPos({
+        nextPos = {
           top: Math.min(
             Math.max(12, r.top + r.height / 2 - 110),
             vh - 40,
           ),
           left: clampCardLeft(vw, r.left - TOOLTIP_W - 12),
-        });
+        };
       } else if (placeBelow) {
-        setCardPos({
+        nextPos = {
           top: Math.min(r.bottom + 12, vh - 40),
           left: clampCardLeft(vw, r.left),
-        });
+        };
       } else {
-        setCardPos({
+        nextPos = {
           top: Math.max(12, r.top - 280),
           left: clampCardLeft(vw, r.left),
-        });
+        };
       }
+      setCardPos((prev) =>
+        prev &&
+        prev.top === nextPos.top &&
+        prev.left === nextPos.left
+          ? prev
+          : nextPos,
+      );
     } else {
-      setRect(null);
-      setCardPos({
+      setRect((prev) => (prev ? null : prev));
+      const centerPos = {
         top: vh / 2 - 140,
         left: clampCardLeft(vw, vw / 2 - TOOLTIP_W / 2),
-      });
+      };
+      setCardPos((prev) =>
+        prev &&
+        prev.top === centerPos.top &&
+        prev.left === centerPos.left
+          ? prev
+          : centerPos,
+      );
     }
   }, [open, step]);
 

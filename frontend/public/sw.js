@@ -1,4 +1,4 @@
-const CACHE_NAME = "devflow-v4";
+const CACHE_NAME = "devflow-v5";
 const STATIC_ASSETS = [
   "/",
   "/index.html",
@@ -78,6 +78,12 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
   const url = new URL(event.request.url);
+
+  // Same-origin only. Cross-origin GETs (GitHub/Google avatars, …) must not
+  // enter the cache path: a SW-initiated fetch() is gated by connect-src, while
+  // <img> only needs img-src — intercepting them floods the console with CSP
+  // violations. Leave third-party to the browser (img-src already allows them).
+  if (url.origin !== self.location.origin) return;
 
   // Never cache or intercept API calls or SignalR hubs or backend domain
   if (

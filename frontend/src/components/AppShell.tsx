@@ -258,15 +258,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Onboarding tour on mobile: sidebar steps need the drawer open so the
   // spotlight can land on a real element (not a text-only fallback card).
-  // Events come from OnboardingTour.requestSidebarDrawer.
+  // Events come from OnboardingTour.requestSidebarDrawer / requestNavSidebar.
   useEffect(() => {
     const onOpen = () => setDrawerOpen(true);
     const onClose = () => setDrawerOpen(false);
+    // Tour needs data-tour="sidebar-workspaces" which only renders in nav
+    // mode — leaving AI mode mid-tour would otherwise freeze the overlay.
+    const onEnsureNav = () => setSidebarMode("nav");
     window.addEventListener("devflow:open-sidebar", onOpen);
     window.addEventListener("devflow:close-sidebar", onClose);
+    window.addEventListener("devflow:ensure-nav-sidebar", onEnsureNav);
     return () => {
       window.removeEventListener("devflow:open-sidebar", onOpen);
       window.removeEventListener("devflow:close-sidebar", onClose);
+      window.removeEventListener("devflow:ensure-nav-sidebar", onEnsureNav);
     };
   }, []);
 
