@@ -1,5 +1,7 @@
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Ai.Execute;
+using DevFlow.Application.Features.Sprints;
+using DevFlow.Application.Features.Sprints.Create;
 using DevFlow.Application.Features.Tasks.Create;
 using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
@@ -84,6 +86,50 @@ public class AiExecuteConfirmCommandHandlerTests
         await _realtimeNotifier.Received(1).NotifyProjectAsync(
             _projectId,
             "create_task",
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldCreateSprint_WhenUserAcceptsCreateSprint()
+    {
+        // Accepting create_sprint must create a Sprint only — never fall
+        // through to CreateTaskItemCommand (the original bug: "create sprint
+        // produced tasks").
+        var sprintId = Guid.NewGuid();
+        _sender.Send(Arg.Any<CreateSprintCommand>(), Arg.Any<CancellationToken>())
+            .Returns(new SprintResponse(sprintId, _project.Id, "Sprint 13", "Ship the board", "Planned", null, null, null));
+
+        var handler = BuildHandler();
+        var result = await handler.Handle(
+            new AiExecuteConfirmCommand(
+                _workspaceId,
+                _projectId,
+                new AiExecuteActionContract
+                {
+                    Type = "create_sprint",
+                    Title = "Sprint 13",
+                    Description = "Ship the board",
+                }),
+            CancellationToken.None);
+
+        Assert.Equal("create_sprint", result.Type);
+        Assert.Equal("success", result.Status);
+        Assert.Equal(sprintId, result.EntityId);
+        Assert.Null(result.Contract);
+
+        await _sender.Received(1).Send(
+            Arg.Is<CreateSprintCommand>(c => c.Name == "Sprint 13" && c.Goal == "Ship the board"),
+            Arg.Any<CancellationToken>());
+
+        // Regression: the confirm path must not mint a task.
+        await _sender.DidNotReceive().Send(
+            Arg.Any<IRequest<TaskItemCreatedResponse>>(),
+            Arg.Any<CancellationToken>());
+
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        await _realtimeNotifier.Received(1).NotifyProjectAsync(
+            _projectId,
+            "create_sprint",
             Arg.Any<CancellationToken>());
     }
 

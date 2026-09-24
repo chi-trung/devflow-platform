@@ -43,6 +43,53 @@ const STATUS_COLORS: Record<AiActionStatus, string> = {
   pending: "text-amber-600 dark:text-amber-400",
 };
 
+/**
+ * i18n key for a machine action type (create_sprint → Sprint). Static keys so
+ * the usage test can verify them; unknown types return null and render no chip.
+ */
+function actionTypeKey(type: string): string | null {
+  switch (type.trim().toLowerCase()) {
+    case "create_task":
+      return "ai.actionTypeCreateTask";
+    case "create_subtask":
+      return "ai.actionTypeCreateSubtask";
+    case "create_sprint":
+      return "ai.actionTypeCreateSprint";
+    case "create_epic":
+      return "ai.actionTypeCreateEpic";
+    case "create_project":
+      return "ai.actionTypeCreateProject";
+    case "create_workspace":
+      return "ai.actionTypeCreateWorkspace";
+    case "set_due_date":
+      return "ai.actionTypeSetDueDate";
+    case "set_priority":
+      return "ai.actionTypeSetPriority";
+    case "assign_task":
+      return "ai.actionTypeAssignTask";
+    case "assign_to_sprint":
+      return "ai.actionTypeAssignToSprint";
+    case "add_to_epic":
+      return "ai.actionTypeAddToEpic";
+    default:
+      return null;
+  }
+}
+
+function ActionTypeChip({ type }: { type: string }) {
+  const { t } = useTranslation();
+  const key = actionTypeKey(type);
+  if (!key) return null;
+  return (
+    <span
+      className="shrink-0 rounded border border-border bg-elevated px-1 py-px text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+      title={type}
+    >
+      {t(key)}
+    </span>
+  );
+}
+
 export function AiActionResults({
   summary,
   actions,
@@ -126,6 +173,8 @@ export function AiActionResults({
                     <span className="text-xs font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">
                       {t("ai.actionPending")}
                     </span>{" "}
+                    <ActionTypeChip type={action.type} />
+                    {" "}
                     <span className="text-foreground">{action.label}</span>
                     {action.message && (
                       <p className="mt-0.5 text-xs text-muted-foreground">
@@ -182,6 +231,8 @@ export function AiActionResults({
                       ? t("ai.actionStatusFail")
                       : t("ai.actionStatusSkip")}
                 </span>{" "}
+                <ActionTypeChip type={action.type} />
+                {" "}
                 <span className="text-foreground">{action.message ?? action.label}</span>
                 {isFailedWithHint && (
                   <p className="mt-0.5 flex items-start gap-1 text-xs text-amber-700 dark:text-amber-400">

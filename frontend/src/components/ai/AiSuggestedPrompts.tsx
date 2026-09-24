@@ -168,10 +168,10 @@ function fallbackPrompts(context: AiPageContext): AiSuggestion[] {
           { key: "ai.suggestCreateEpic" },
         ]
       : [
+          { key: "ai.suggestCreateSprint" },
           { key: "ai.suggestCreateTask" },
           { key: "ai.suggestCreateEpic" },
           { key: "ai.suggestPlanMilestones" },
-          { key: "ai.suggestStartSprint" },
         ];
 
   const bucket = Math.floor(Date.now() / (6 * 60 * 60 * 1000));

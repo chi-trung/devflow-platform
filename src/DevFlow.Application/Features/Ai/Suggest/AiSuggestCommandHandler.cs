@@ -129,6 +129,12 @@ public sealed class AiSuggestCommandHandler(
                 70,
                 "sprint");
         }
+        else
+        {
+            // No active and no planned sprint — offer creating one so the
+            // assistant is not only steered toward create_task / start-sprint.
+            Add("ai.suggestCreateSprint", null, 45, "sprint");
+        }
 
         if (completedSprints.Count > 0)
         {

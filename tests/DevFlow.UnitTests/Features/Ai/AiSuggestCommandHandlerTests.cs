@@ -111,6 +111,41 @@ public class AiSuggestCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_ShouldSuggestCreateSprint_WhenNoSprintsExist()
+    {
+        // Without this chip the dock only surfaces task/epic creates — the
+        // user never gets a grounded "create a sprint" prompt.
+        _sprintRepository.GetForProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<Sprint>());
+        _epicRepository.GetForProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<Epic>());
+        _taskItemRepository.GetForProjectAsync(_project.Id, null, Arg.Any<CancellationToken>())
+            .Returns(new List<TaskItem>());
+
+        var suggestions = await Handle(pageContext: "sprints");
+
+        Assert.Contains(suggestions, s => s.Key == "ai.suggestCreateSprint");
+    }
+
+    [Fact]
+    public async Task Handle_ShouldSuggestCreateSprint_WhenOnlyCompletedSprintsExist()
+    {
+        var done = Sprint.Create(_project.Id, "Sprint 10", null);
+        done.Start(DateTimeOffset.UtcNow.AddDays(-14), DateTimeOffset.UtcNow.AddDays(-7));
+        done.Complete();
+        _sprintRepository.GetForProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<Sprint> { done });
+        _epicRepository.GetForProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<Epic>());
+        _taskItemRepository.GetForProjectAsync(_project.Id, null, Arg.Any<CancellationToken>())
+            .Returns(new List<TaskItem>());
+
+        var suggestions = await Handle();
+
+        Assert.Contains(suggestions, s => s.Key == "ai.suggestCreateSprint");
+    }
+
+    [Fact]
     public async Task Handle_ShouldSuggestAssigningUnassignedTasks_WhenSomeExist()
     {
         var task = TaskItem.Create(_project.Id, "Login screen", null, TaskItemPriority.High);

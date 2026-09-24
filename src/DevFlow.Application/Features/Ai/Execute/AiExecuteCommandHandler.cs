@@ -235,11 +235,22 @@ public sealed class AiExecuteCommandHandler(
                   "taskRef": "existing task id or a title substring to match (required for set_due_date, set_priority, assign_task, assign_to_sprint)",
                   "parentTaskRef": "existing task id or title substring (only for create_subtask)",
                   "projectRef": "existing project id or name; omit to use the active project (only for actions that need a project)",
-                  "sprintRef": "existing sprint id or name (only for assign_to_sprint)",
+                  "sprintRef": "existing sprint id or name (ONLY for assign_to_sprint — never for create_sprint)",
                   "epicRef": "existing epic id or name (only for add_to_epic)"
                 }
               ]
             }
+
+            INTENT MAPPING (mandatory):
+            - Creating a new sprint ("create/make a sprint", "new sprint called X",
+              "sprint X for next week") → type create_sprint. title = the sprint
+              name; description = goal if the user gave one. NEVER represent a
+              sprint as create_task / create_subtask / create_epic.
+            - "sprint X with work items A, B, C" → create_sprint first, then one
+              create_task per item (title = each work item, not the sprint name).
+            - Moving existing tasks into an existing sprint → assign_to_sprint
+              (taskRef + sprintRef). Do not create a new sprint for that.
+            - create_sprint never uses sprintRef, taskRef, priority, or dueDate.
 
             Rules:
             - If the user asks a question, greets you, or makes small talk (e.g.
