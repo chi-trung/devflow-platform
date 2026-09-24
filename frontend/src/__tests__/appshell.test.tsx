@@ -156,6 +156,49 @@ describe("AppShell sidebar collapse", () => {
     expect(aside?.contains(document.activeElement)).toBe(false);
   });
 
+  it("opens and closes the drawer from the onboarding tour events", () => {
+    // OnboardingTour.requestSidebarDrawer dispatches these; without them the
+    // mobile sidebar steps only show a bare instruction card.
+    const { container } = renderShell("/workspaces/ws1", false);
+    const aside = container.querySelector("aside");
+    expect(aside?.className).toContain("-translate-x-full invisible lg:visible");
+
+    fireEvent(window, new Event("devflow:open-sidebar"));
+    expect(aside?.className).toContain("translate-x-0");
+    expect(container.querySelector("main")?.hasAttribute("inert")).toBe(true);
+
+    fireEvent(window, new Event("devflow:close-sidebar"));
+    expect(aside?.className).toContain("-translate-x-full invisible lg:visible");
+    expect(container.querySelector("main")?.hasAttribute("inert")).toBe(false);
+  });
+
+  it("does not steal drawer focus or close on Escape while the tour card is up", () => {
+    // The tour card is portaled to body; opening the drawer must not yank
+    // focus out of Next/Skip, and Escape belongs to the tour (finish + close).
+    const { container } = renderShell("/workspaces/ws1", false);
+    const tour = document.createElement("div");
+    tour.id = "devflow-tour-root";
+    document.body.appendChild(tour);
+    const probe = document.createElement("button");
+    tour.appendChild(probe);
+    probe.focus();
+
+    fireEvent(window, new Event("devflow:open-sidebar"));
+    const aside = container.querySelector("aside");
+    expect(aside?.className).toContain("translate-x-0");
+    expect(document.activeElement).toBe(probe);
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(aside?.className).toContain("translate-x-0");
+
+    fireEvent(window, new Event("devflow:close-sidebar"));
+    expect(aside?.className).toContain("-translate-x-full invisible lg:visible");
+    // Focus restore was skipped while the tour owned it.
+    expect(document.activeElement).toBe(probe);
+
+    tour.remove();
+  });
+
   it("announces the open drawer as a modal dialog", () => {
     // Inert hides the background from assistive tech, but the drawer itself
     // must announce as dialog + aria-modal or screen readers keep browsing

@@ -256,23 +256,45 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => observer.disconnect();
   }, [location.pathname]);
 
+  // Onboarding tour on mobile: sidebar steps need the drawer open so the
+  // spotlight can land on a real element (not a text-only fallback card).
+  // Events come from OnboardingTour.requestSidebarDrawer.
+  useEffect(() => {
+    const onOpen = () => setDrawerOpen(true);
+    const onClose = () => setDrawerOpen(false);
+    window.addEventListener("devflow:open-sidebar", onOpen);
+    window.addEventListener("devflow:close-sidebar", onClose);
+    return () => {
+      window.removeEventListener("devflow:open-sidebar", onOpen);
+      window.removeEventListener("devflow:close-sidebar", onClose);
+    };
+  }, []);
+
   useEffect(() => {
     if (!drawerOpen) return;
     // The drawer is the app's modal on mobile and the rest of the chrome is
     // inert while it is open (see the header/main/nav inert={drawerOpen});
     // moving focus inside it stops keyboard users from being stranded on
     // body, and returning focus on close mirrors the Dialog primitive.
+    // Skip the focus move while the onboarding tour owns focus (portal card
+    // outside <main>): otherwise opening the drawer yanks Tab out of Next.
     const previous = document.activeElement as HTMLElement | null;
-    drawerRef.current
-      ?.querySelector<HTMLElement>("a[href], button:not([disabled])")
-      ?.focus();
+    const tourOwnsFocus = document.getElementById("devflow-tour-root") !== null;
+    if (!tourOwnsFocus) {
+      drawerRef.current
+        ?.querySelector<HTMLElement>("a[href], button:not([disabled])")
+        ?.focus();
+    }
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setDrawerOpen(false);
+      // Tour handles Esc itself; only close the drawer when no tour card is up.
+      if (event.key === "Escape" && !document.getElementById("devflow-tour-root")) {
+        setDrawerOpen(false);
+      }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      previous?.focus();
+      if (!tourOwnsFocus) previous?.focus();
     };
   }, [drawerOpen]);
 
