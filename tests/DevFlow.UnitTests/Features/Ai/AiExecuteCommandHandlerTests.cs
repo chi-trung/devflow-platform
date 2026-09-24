@@ -23,6 +23,7 @@ public class AiExecuteCommandHandlerTests
     private readonly IKnowledgeRetrievalService _knowledgeRetrieval = Substitute.For<IKnowledgeRetrievalService>();
     private readonly ISender _sender = Substitute.For<ISender>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly IUserContext _userContext = Substitute.For<IUserContext>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
     private readonly Guid _projectId = Guid.NewGuid();
@@ -37,6 +38,10 @@ public class AiExecuteCommandHandlerTests
             .Returns(new List<(Guid UserId, string Email, string Username, string DisplayName, WorkspaceRole Role)>());
         _knowledgeRetrieval.RetrieveAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new List<DevFlow.Application.Common.Models.KnowledgeChunkHit>());
+        // Existing create_* tests model an Owner/Admin caller (the happy path).
+        // Member-denied cases stub WorkspaceRole.Member explicitly.
+        _workspaceRepository.GetMemberRoleAsync(_workspaceId, Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(WorkspaceRole.Owner);
     }
 
     private AiExecuteCommandHandler BuildHandler() => new(
@@ -55,7 +60,8 @@ public class AiExecuteCommandHandlerTests
             _epicRepository,
             _userRepository,
             _sender,
-            _unitOfWork));
+            _unitOfWork),
+        _userContext);
 
     [Fact]
     public async Task Handle_ShouldReturnFriendlyError_WhenAiRequestTimesOut()
@@ -295,6 +301,110 @@ public class AiExecuteCommandHandlerTests
         Assert.Equal("create_task", response.Actions[0].Type);
         // create_* actions are now proposed as pending
         Assert.Equal("pending", response.Actions[0].Status);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldFailCreateSprint_WhenCallerIsMember()
+    {
+        // create_sprint is Admin-gated. A Member must get a failed action with
+        // a recoveryHint — never a pending card whose Accept would 403.
+        _workspaceRepository.GetMemberRoleAsync(_workspaceId, Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(WorkspaceRole.Member);
+
+        _aiClient.ExecuteActionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns("""
+                {
+                  "summary": "Tạo sprint mới",
+                  "actions": [
+                    { "type": "create_sprint", "title": "Sprint 13", "description": "Ship" }
+                  ]
+                }
+                """);
+
+        var handler = BuildHandler();
+        var response = await handler.Handle(
+            new AiExecuteCommand(_workspaceId, _projectId, "tạo sprint Sprint 13", "sprints"),
+            CancellationToken.None);
+
+        Assert.Null(response.Error);
+        var action = Assert.Single(response.Actions);
+        Assert.Equal("create_sprint", action.Type);
+        Assert.Equal("failed", action.Status);
+        Assert.NotNull(action.Error);
+        Assert.Equal("forbidden", action.Error!.Code);
+        Assert.NotNull(action.Error.RecoveryHint);
+        Assert.Contains("Admin", action.Error.RecoveryHint);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldProposeCreateSprint_WhenCallerIsOwner()
+    {
+        // Same prompt as the Member case — Owner/Admin gets the pending card
+        // (Accept then runs CreateSprintCommand which also requires Admin).
+        _aiClient.ExecuteActionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns("""
+                {
+                  "summary": "Tạo sprint mới",
+                  "actions": [
+                    { "type": "create_sprint", "title": "Sprint 13", "description": "Ship" }
+                  ]
+                }
+                """);
+
+        var handler = BuildHandler();
+        var response = await handler.Handle(
+            new AiExecuteCommand(_workspaceId, _projectId, "tạo sprint Sprint 13", "sprints"),
+            CancellationToken.None);
+
+        Assert.Null(response.Error);
+        var action = Assert.Single(response.Actions);
+        Assert.Equal("create_sprint", action.Type);
+        Assert.Equal("pending", action.Status);
+        Assert.NotNull(action.Contract);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldIncludeHistoryInUserContext_WhenPriorTurnsProvided()
+    {
+        // Multi-turn: the FE re-sends recent chat so a clarification answer
+        // ("Alice") is treated as a follow-up, not a brand-new create_task.
+        string? capturedSystem = null;
+        string? capturedUser = null;
+        _aiClient.ExecuteActionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(call =>
+            {
+                capturedSystem = call.ArgAt<string>(0);
+                capturedUser = call.ArgAt<string>(1);
+                return """{"summary":"ok","reply":"Assigned","actions":[]}""";
+            });
+
+        var history = new[]
+        {
+            new AiHistoryTurn(
+                "user",
+                "Please specify which member you would like to assign the unassigned tasks to."),
+            new AiHistoryTurn("assistant", "Which member?"),
+            new AiHistoryTurn("user", "Alice"),
+        };
+
+        var handler = BuildHandler();
+        var response = await handler.Handle(
+            new AiExecuteCommand(
+                _workspaceId,
+                _projectId,
+                "Alice",
+                "board",
+                History: history),
+            CancellationToken.None);
+
+        Assert.Null(response.Error);
+        Assert.NotNull(capturedUser);
+        Assert.Contains("Recent conversation", capturedUser);
+        Assert.Contains("Which member?", capturedUser);
+        Assert.Contains("User request: Alice", capturedUser);
+        Assert.NotNull(capturedSystem);
+        Assert.Contains("CLARIFICATION / FOLLOW-UP", capturedSystem);
+        Assert.Contains("YOUR WORKSPACE ROLE:", capturedSystem);
     }
 
     [Fact]

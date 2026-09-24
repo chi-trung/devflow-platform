@@ -30,12 +30,26 @@ public sealed class AiExecuteConfirmCommandHandler(
         }
         catch (ForbiddenAccessException)
         {
+            const string message = "You do not have permission to perform this action.";
+            var type = command.Action.Type.Trim().ToLowerInvariant();
+            // create_sprint / create_project are Admin-gated on the nested
+            // command — surface an actionable hint instead of a bare 403 text.
+            var recoveryHint = type is "create_sprint" or "create_project"
+                ? "This action requires Admin or Owner in this workspace. Ask a workspace Admin to promote your role."
+                : "Your role does not allow this action. Ask a workspace Admin.";
             return new ExecutedAction(
                 command.Action.Type,
                 command.Action.Title ?? command.Action.Type,
                 null,
                 "failed",
-                "You do not have permission to perform this action.");
+                message,
+                Error: new AiActionErrorDetail(
+                    "forbidden",
+                    message,
+                    null,
+                    null,
+                    null,
+                    recoveryHint));
         }
         catch (NotFoundException ex)
         {

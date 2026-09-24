@@ -1,3 +1,4 @@
+using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Ai.Execute;
 using DevFlow.Application.Features.Sprints;
@@ -7,6 +8,7 @@ using DevFlow.Domain.Entities;
 using DevFlow.Domain.Enums;
 using MediatR;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
 namespace DevFlow.UnitTests.Features.Ai;
 
@@ -158,5 +160,34 @@ public class AiExecuteConfirmCommandHandlerTests
         Assert.Equal("set_due_date", result.Type);
         Assert.Equal("failed", result.Status);
         Assert.NotNull(result.Message);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnRecoveryHint_WhenForbidden()
+    {
+        // Nested CreateSprintCommand re-enters WorkspaceAuthorizationBehavior
+        // and throws Forbidden for a Member — surface recoveryHint so the UI
+        // can explain the Admin requirement instead of a bare message.
+        _sender.Send(Arg.Any<CreateSprintCommand>(), Arg.Any<CancellationToken>())
+            .ThrowsAsync(new ForbiddenAccessException());
+
+        var handler = BuildHandler();
+        var result = await handler.Handle(
+            new AiExecuteConfirmCommand(
+                _workspaceId,
+                _projectId,
+                new AiExecuteActionContract
+                {
+                    Type = "create_sprint",
+                    Title = "Sprint 13",
+                }),
+            CancellationToken.None);
+
+        Assert.Equal("create_sprint", result.Type);
+        Assert.Equal("failed", result.Status);
+        Assert.NotNull(result.Error);
+        Assert.Equal("forbidden", result.Error!.Code);
+        Assert.NotNull(result.Error.RecoveryHint);
+        Assert.Contains("Admin", result.Error.RecoveryHint);
     }
 }

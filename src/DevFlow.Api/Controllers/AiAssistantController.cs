@@ -38,7 +38,14 @@ public sealed class AiAssistantController(ISender sender) : ControllerBase
         CancellationToken cancellationToken)
     {
         var response = await sender.Send(
-            new AiExecuteCommand(workspaceId, projectId, request.Prompt, request.PageContext, sprintId, epicId),
+            new AiExecuteCommand(
+                workspaceId,
+                projectId,
+                request.Prompt,
+                request.PageContext,
+                sprintId,
+                epicId,
+                request.History),
             cancellationToken);
 
         return Ok(response);

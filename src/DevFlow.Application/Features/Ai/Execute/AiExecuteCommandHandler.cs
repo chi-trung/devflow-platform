@@ -3,6 +3,7 @@ using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Common.Models;
 using DevFlow.Domain.Entities;
+using DevFlow.Domain.Enums;
 using MediatR;
 
 namespace DevFlow.Application.Features.Ai.Execute;
@@ -25,18 +26,31 @@ public sealed class AiExecuteCommandHandler(
     IEpicRepository epicRepository,
     IKnowledgeRetrievalService knowledgeRetrieval,
     IAiClient aiClient,
-    AiActionExecutor actionExecutor) : IRequestHandler<AiExecuteCommand, AiExecuteResponse>
+    AiActionExecutor actionExecutor,
+    IUserContext userContext) : IRequestHandler<AiExecuteCommand, AiExecuteResponse>
 {
     private const string NoActionsMessage =
         "The AI did not return any actions. Try rephrasing your request.";
+
+    /// <summary>Chat history cap — keeps the prompt bounded while still covering a full clarification exchange.</summary>
+    private const int MaxHistoryTurns = 12;
 
     public async Task<AiExecuteResponse> Handle(
         AiExecuteCommand command,
         CancellationToken cancellationToken)
     {
-        var (systemPrompt, userContext) = await BuildPromptsAsync(command, cancellationToken, tight: false);
+        var role = await workspaceRepository.GetMemberRoleAsync(
+            command.WorkspaceId,
+            userContext.UserId,
+            cancellationToken) ?? WorkspaceRole.Member;
 
-        var response = await ExecuteOnceAsync(command, systemPrompt, userContext, cancellationToken);
+        var (systemPrompt, userContextText) = await BuildPromptsAsync(
+            command,
+            role,
+            cancellationToken,
+            tight: false);
+
+        var response = await ExecuteOnceAsync(command, role, systemPrompt, userContextText, cancellationToken);
 
         if (response.Error == NoActionsMessage)
         {
@@ -45,8 +59,12 @@ public sealed class AiExecuteCommandHandler(
             // once with a hard cap on the action count: a large batch request
             // ("create 12 tasks…") then yields a useful partial result instead of
             // an error. Never loop — one tight retry is enough.
-            var (tightPrompt, tightContext) = await BuildPromptsAsync(command, cancellationToken, tight: true);
-            response = await ExecuteOnceAsync(command, tightPrompt, tightContext, cancellationToken);
+            var (tightPrompt, tightContext) = await BuildPromptsAsync(
+                command,
+                role,
+                cancellationToken,
+                tight: true);
+            response = await ExecuteOnceAsync(command, role, tightPrompt, tightContext, cancellationToken);
         }
 
         return response;
@@ -54,6 +72,7 @@ public sealed class AiExecuteCommandHandler(
 
     private async Task<AiExecuteResponse> ExecuteOnceAsync(
         AiExecuteCommand command,
+        WorkspaceRole role,
         string systemPrompt,
         string userContext,
         CancellationToken cancellationToken)
@@ -144,6 +163,25 @@ public sealed class AiExecuteCommandHandler(
             // Accepts them through the confirm endpoint.
             if (AiActionExecutor.IsCreateAction(type))
             {
+                // create_sprint / create_project are Admin-gated on the nested
+                // command. Fail closed here so a Member never sees an Accept
+                // button that would 403 (CreateSprintCommand → Admin).
+                if (RequiresAdmin(type) && role < WorkspaceRole.Admin)
+                {
+                    const string forbidden = "You do not have permission to perform this action.";
+                    actions.Add(FailWithError(
+                        action,
+                        forbidden,
+                        new AiActionErrorDetail(
+                            "forbidden",
+                            forbidden,
+                            null,
+                            null,
+                            null,
+                            "This action requires Admin or Owner in this workspace. Ask a workspace Admin to promote your role.")));
+                    continue;
+                }
+
                 actions.Add(new ExecutedAction(
                     type,
                     action.Title ?? type,
@@ -213,6 +251,7 @@ public sealed class AiExecuteCommandHandler(
 
     private async Task<(string SystemPrompt, string UserContext)> BuildPromptsAsync(
         AiExecuteCommand command,
+        WorkspaceRole role,
         CancellationToken cancellationToken,
         bool tight)
     {
@@ -251,6 +290,15 @@ public sealed class AiExecuteCommandHandler(
             - Moving existing tasks into an existing sprint → assign_to_sprint
               (taskRef + sprintRef). Do not create a new sprint for that.
             - create_sprint never uses sprintRef, taskRef, priority, or dueDate.
+            - CLARIFICATION / FOLLOW-UP: If the "Recent conversation" section shows
+              that a previous assistant turn asked you to specify something (which
+              member, which task, which sprint…), treat THIS message as the answer
+              to that question and complete the ORIGINAL intent. Example: earlier
+              you asked which member to assign unassigned tasks to; the user
+              replies "Alice" → emit assign_task for those tasks (taskRef from
+              context), assignee=Alice. NEVER invent create_task / create_sprint /
+              create_epic from a bare clarification answer unless the user
+              explicitly asked to create something new.
 
             Rules:
             - If the user asks a question, greets you, or makes small talk (e.g.
@@ -299,6 +347,17 @@ public sealed class AiExecuteCommandHandler(
             - Do not echo the user's prompt back. Only output the JSON.
             """;
 
+        // Tell the model the caller's role so it does not propose Admin-only
+        // creates (create_sprint / create_project) to a Member.
+        systemPrompt += $"""
+
+            YOUR WORKSPACE ROLE: {role}.
+            - create_sprint and create_project require Admin or Owner.
+            - When your role is Member, do NOT propose those action types.
+            - When your role is Admin or Owner, prefer them when the user asks
+              to create a sprint or project.
+            """;
+
         if (tight)
         {
             // Second pass: the first call produced no actions (usually because a
@@ -317,6 +376,20 @@ public sealed class AiExecuteCommandHandler(
         }
 
         var context = new StringBuilder();
+        if (command.History is { Count: > 0 })
+        {
+            context.AppendLine("Recent conversation (oldest first):");
+            foreach (var turn in command.History.TakeLast(MaxHistoryTurns))
+            {
+                var roleLabel = turn.Role.Equals("assistant", StringComparison.OrdinalIgnoreCase)
+                    ? "assistant"
+                    : "user";
+                context.AppendLine($"[{roleLabel}]: {turn.Text}");
+            }
+
+            context.AppendLine();
+        }
+
         context.AppendLine($"User request: {command.Prompt}");
         if (!string.IsNullOrWhiteSpace(command.PageContext))
         {
@@ -482,4 +555,8 @@ public sealed class AiExecuteCommandHandler(
         string message,
         AiActionErrorDetail error) =>
         new(action.Type, action.Title ?? action.Type, null, "failed", message, Error: error);
+
+    /// <summary>Creates that require Admin or Owner (nested command gate).</summary>
+    private static bool RequiresAdmin(string type) =>
+        type is "create_sprint" or "create_project";
 }

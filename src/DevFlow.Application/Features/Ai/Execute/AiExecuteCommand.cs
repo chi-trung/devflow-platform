@@ -13,6 +13,8 @@ namespace DevFlow.Application.Features.Ai.Execute;
 /// SprintId / EpicId are the route-level context the user is currently viewing —
 /// the AI uses them to ground refs ("this sprint", "the current epic") and to
 /// suggest context-appropriate actions.
+/// History is the recent chat turns (oldest first) so a clarification answer
+/// ("Alice") is treated as a follow-up to the prior ask, not a brand-new prompt.
 /// </summary>
 [RequireWorkspaceRole(WorkspaceRole.Member)]
 public sealed record AiExecuteCommand(
@@ -21,4 +23,8 @@ public sealed record AiExecuteCommand(
     string Prompt,
     string? PageContext,
     Guid? SprintId = null,
-    Guid? EpicId = null) : IRequest<AiExecuteResponse>, IWorkspaceRequest, IWorkspaceEvent;
+    Guid? EpicId = null,
+    IReadOnlyList<AiHistoryTurn>? History = null) : IRequest<AiExecuteResponse>, IWorkspaceRequest, IWorkspaceEvent;
+
+/// <summary>One prior chat turn re-sent with execute so multi-turn intent holds.</summary>
+public sealed record AiHistoryTurn(string Role, string Text);

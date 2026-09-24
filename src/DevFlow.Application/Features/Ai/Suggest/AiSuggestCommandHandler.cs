@@ -16,7 +16,9 @@ public sealed class AiSuggestCommandHandler(
     ISprintRepository sprintRepository,
     IEpicRepository epicRepository,
     ITaskItemRepository taskItemRepository,
-    ITaskDependencyRepository dependencyRepository) : IRequestHandler<AiSuggestCommand, List<AiSuggestion>>
+    ITaskDependencyRepository dependencyRepository,
+    IWorkspaceRepository workspaceRepository,
+    IUserContext userContext) : IRequestHandler<AiSuggestCommand, List<AiSuggestion>>
 {
     /// <summary>Pool size returned to the client (UI shows 4; extras enable exclude + rotate).</summary>
     private const int MaxSuggestions = 6;
@@ -31,9 +33,21 @@ public sealed class AiSuggestCommandHandler(
         CancellationToken cancellationToken)
     {
         var projects = await projectRepository.GetForWorkspaceAsync(command.WorkspaceId, cancellationToken);
+        // create_sprint / create_project are Admin-gated on the nested command —
+        // never offer those chips to a Member (Accept would 403).
+        var role = await workspaceRepository.GetMemberRoleAsync(
+            command.WorkspaceId,
+            userContext.UserId,
+            cancellationToken) ?? WorkspaceRole.Member;
+        var canAdmin = role >= WorkspaceRole.Admin;
 
         if (projects.Count == 0)
-            return Finalize(NoProjectCandidates(), command);
+        {
+            var noProjectPool = NoProjectCandidates()
+                .Where(c => canAdmin || c.Key != "ai.suggestCreateProject")
+                .ToList();
+            return Finalize(noProjectPool, command);
+        }
 
         // Active project = the one the user is viewing, or the first one.
         var activeProject = projects.FirstOrDefault(p => p.Id == command.ProjectId) ?? projects[0];
@@ -133,7 +147,9 @@ public sealed class AiSuggestCommandHandler(
         {
             // No active and no planned sprint — offer creating one so the
             // assistant is not only steered toward create_task / start-sprint.
-            Add("ai.suggestCreateSprint", null, 45, "sprint");
+            // Admin-only (CreateSprintCommand); Members would 403 on Accept.
+            if (canAdmin)
+                Add("ai.suggestCreateSprint", null, 45, "sprint");
         }
 
         if (completedSprints.Count > 0)
@@ -196,7 +212,7 @@ public sealed class AiSuggestCommandHandler(
         //     the pool so time-rotation and exclude-keys can surface them) ---
         Add("ai.suggestPlanMilestones", null, 25, "plan");
         Add("ai.suggestCreateTask", null, 20, "task");
-        if (projects.Count <= 1)
+        if (projects.Count <= 1 && canAdmin)
             Add("ai.suggestCreateProject", null, 18, "create");
 
         return Finalize(candidates, command);

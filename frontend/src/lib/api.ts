@@ -2033,9 +2033,17 @@ export async function applyAiPlan(
 // route-level context the user is viewing — the AI uses them to resolve
 // "this sprint" / "this epic".
 
+export interface AiHistoryTurn {
+  role: "user" | "assistant";
+  text: string;
+}
+
 export interface AiExecuteInput {
   prompt: string;
   pageContext?: string | null;
+  /** Recent chat turns (oldest first) so a clarification answer is treated as
+   *  a follow-up to the prior ask, not a brand-new prompt. */
+  history?: AiHistoryTurn[] | null;
 }
 
 export async function aiExecute(
@@ -2056,6 +2064,7 @@ export async function aiExecute(
       body: JSON.stringify({
         prompt: input.prompt,
         pageContext: input.pageContext ?? null,
+        history: input.history ?? null,
       }),
     },
   );

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowUp, Sparkles, X } from "lucide-react";
-import { aiExecute, aiExecuteConfirm } from "../../lib/api";
+import { aiExecute, aiExecuteConfirm, type AiHistoryTurn } from "../../lib/api";
 import type {
   AiExecuteResponse,
   AiExecuteActionContract,
@@ -40,6 +40,32 @@ interface ChatMessage {
   role: "user" | "assistant";
   prompt?: string;
   result?: AiExecuteResponse;
+}
+
+/** Cap on prior turns re-sent with each execute — enough for a full
+ *  clarification exchange without ballooning the prompt. */
+const MAX_HISTORY_TURNS = 12;
+
+/** Flattens prior chat messages into role/text turns the backend injects
+ *  into the model context. Called on the pre-send snapshot so the current
+ *  prompt is not duplicated in history. */
+function buildHistory(messages: ChatMessage[]): AiHistoryTurn[] {
+  const turns: AiHistoryTurn[] = [];
+  for (const message of messages.slice(-MAX_HISTORY_TURNS)) {
+    if (message.role === "user" && message.prompt?.trim()) {
+      turns.push({ role: "user", text: message.prompt.trim() });
+    } else if (message.role === "assistant" && message.result) {
+      const parts = [
+        message.result.summary?.trim(),
+        message.result.error?.trim(),
+        ...message.result.actions.map((a) => a.message?.trim()),
+      ].filter((s): s is string => !!s && s.length > 0);
+      if (parts.length > 0) {
+        turns.push({ role: "assistant", text: parts.join(" ") });
+      }
+    }
+  }
+  return turns;
 }
 
 export function AiAssistantPanel({
@@ -96,6 +122,10 @@ export function AiAssistantPanel({
     const prompt = text.trim();
     if (!prompt || loading) return;
 
+    // Snapshot prior turns before appending the current prompt so history
+    // does not duplicate the message about to be sent.
+    const history = buildHistory(messages);
+
     setMessages((prev) => [...prev, { role: "user", prompt }]);
     setDraft("");
     // Reset the composer to one line now that the draft is cleared.
@@ -109,6 +139,7 @@ export function AiAssistantPanel({
         {
           prompt,
           pageContext: context,
+          history,
         },
         { sprintId, epicId },
       );

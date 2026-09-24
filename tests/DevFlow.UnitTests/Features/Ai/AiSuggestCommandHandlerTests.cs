@@ -19,6 +19,8 @@ public class AiSuggestCommandHandlerTests
     private readonly IEpicRepository _epicRepository = Substitute.For<IEpicRepository>();
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
     private readonly ITaskDependencyRepository _dependencyRepository = Substitute.For<ITaskDependencyRepository>();
+    private readonly IWorkspaceRepository _workspaceRepository = Substitute.For<IWorkspaceRepository>();
+    private readonly IUserContext _userContext = Substitute.For<IUserContext>();
 
     private readonly Guid _workspaceId = Guid.NewGuid();
     private readonly Project _project;
@@ -30,6 +32,10 @@ public class AiSuggestCommandHandlerTests
             .Returns(new List<Project> { _project });
         _dependencyRepository.GetAllByProjectIdAsync(_project.Id, Arg.Any<CancellationToken>())
             .Returns(new List<TaskDependency>());
+        // Default: Owner so create_sprint / create_project chips stay visible
+        // (those are Admin-gated). Member-denied cases stub WorkspaceRole.Member.
+        _workspaceRepository.GetMemberRoleAsync(_workspaceId, Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(WorkspaceRole.Owner);
     }
 
     private Task<List<AiSuggestion>> Handle(
@@ -42,7 +48,9 @@ public class AiSuggestCommandHandlerTests
             _sprintRepository,
             _epicRepository,
             _taskItemRepository,
-            _dependencyRepository)
+            _dependencyRepository,
+            _workspaceRepository,
+            _userContext)
             .Handle(
                 new AiSuggestCommand(_workspaceId, projectId, pageContext, epicId, excludeKeys),
                 CancellationToken.None);
@@ -125,6 +133,40 @@ public class AiSuggestCommandHandlerTests
         var suggestions = await Handle(pageContext: "sprints");
 
         Assert.Contains(suggestions, s => s.Key == "ai.suggestCreateSprint");
+    }
+
+    [Fact]
+    public async Task Handle_ShouldNotSuggestCreateSprint_WhenCallerIsMember()
+    {
+        // create_sprint → CreateSprintCommand requires Admin. Offering the chip
+        // to a Member yields Accept → 403 (the reported bug).
+        _workspaceRepository.GetMemberRoleAsync(_workspaceId, Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(WorkspaceRole.Member);
+
+        _sprintRepository.GetForProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<Sprint>());
+        _epicRepository.GetForProjectAsync(_project.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<Epic>());
+        _taskItemRepository.GetForProjectAsync(_project.Id, null, Arg.Any<CancellationToken>())
+            .Returns(new List<TaskItem>());
+
+        var suggestions = await Handle(pageContext: "sprints");
+
+        Assert.DoesNotContain(suggestions, s => s.Key == "ai.suggestCreateSprint");
+    }
+
+    [Fact]
+    public async Task Handle_ShouldNotSuggestCreateProject_WhenCallerIsMember_WhenNoProjects()
+    {
+        _workspaceRepository.GetMemberRoleAsync(_workspaceId, Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(WorkspaceRole.Member);
+        _projectRepository.GetForWorkspaceAsync(_workspaceId, Arg.Any<CancellationToken>())
+            .Returns(new List<Project>());
+
+        var suggestions = await Handle();
+
+        Assert.DoesNotContain(suggestions, s => s.Key == "ai.suggestCreateProject");
+        Assert.Contains(suggestions, s => s.Key == "ai.suggestCreateTask");
     }
 
     [Fact]
