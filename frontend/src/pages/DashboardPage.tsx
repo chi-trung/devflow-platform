@@ -162,6 +162,12 @@ export function DashboardPage() {
   // selector just vanished and the workspace read as "no projects" even
   // when projects exist. Unknown must render as unknown, with a retry.
   const [projectsFailed, setProjectsFailed] = useState(false);
+  // Dashboard and projects are independent GETs. The overview skeleton
+  // always reserves the sprint-health slot, but the loaded branch used to
+  // drop it whenever selectedProjectId was still "" — i.e. whenever the
+  // dashboard response won the race. Holding the skeleton until projects
+  // settle keeps that 267px from vanishing mid-paint (CLS).
+  const [projectsLoading, setProjectsLoading] = useState(false);
   const [projectsReloadKey, setProjectsReloadKey] = useState(0);
 
   const displayName = currentUser?.displayName ?? currentUser?.username ?? "";
@@ -193,6 +199,7 @@ export function DashboardPage() {
     // to the old workspace (would 404 in the console while projects load).
     setSelectedProjectId("");
     setProjectsFailed(false);
+    setProjectsLoading(true);
     let cancelled = false;
     void api<unknown>(`/workspaces/${selectedWsId}/projects`)
       .then((raw) => {
@@ -207,6 +214,9 @@ export function DashboardPage() {
           setProjects([]);
           setProjectsFailed(true);
         }
+      })
+      .finally(() => {
+        if (!cancelled) setProjectsLoading(false);
       });
     return () => {
       cancelled = true;
@@ -541,16 +551,22 @@ export function DashboardPage() {
                     workspaceId={selectedWsId}
                   />
                 </div>
-                {selectedProjectId && (
+                {/* Hold the same 267px the overview skeleton reserved until
+                    projects settle: selectedProjectId comes from a separate
+                    GET, so rendering nothing while that fetch is in flight
+                    used to yank the slot out from under the charts (CLS). */}
+                {selectedProjectId ? (
                   <div className="mb-4">
                     <SprintHealthCard
                       workspaceId={selectedWsId}
                       projectId={selectedProjectId}
                     />
                   </div>
-                )}
+                ) : projectsLoading ? (
+                  <Skeleton className="h-[267px]" />
+                ) : null}
                 {dashboard.data.upcomingDeadlines.length > 0 ? (
-                  <section aria-label={t("dashboard.upcomingDeadlines")} className="mt-4 rounded-xl border border-border bg-card p-5">
+                  <section aria-label={t("dashboard.upcomingDeadlines")} className="mt-4 min-h-[150px] rounded-xl border border-border bg-card p-5">
                     <h2 className="mb-3 inline-flex items-center gap-1.5 font-display font-semibold">
                       <CalendarRange className="size-4 text-primary" aria-hidden />
                       {t("dashboard.upcomingDeadlines")}
@@ -573,7 +589,7 @@ export function DashboardPage() {
                     </ul>
                   </section>
                 ) : (
-                  <div className="mt-4 rounded-xl border border-border bg-card p-8 text-center">
+                  <div className="mt-4 min-h-[150px] rounded-xl border border-border bg-card p-8 text-center">
                     <CalendarRange className="mx-auto size-8 text-muted-foreground" aria-hidden />
                     <p className="mt-2 font-display font-semibold">{t("dashboard.noDeadlines")}</p>
                     <p className="text-sm text-muted-foreground">{t("dashboard.noDeadlinesDesc")}</p>

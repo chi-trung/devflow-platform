@@ -669,7 +669,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             type="button"
             onClick={() => setPaletteOpen(true)}
             title={t("nav.search")}
-            aria-label={t("nav.searchPlaceholder")}
+            // Label in Name (2.5.3): visible text is placeholder + ⌃K; the
+            // old aria-label dropped the kbd so axe label-content-name-mismatch
+            // failed when the rail was expanded.
+            aria-label={`${t("nav.searchPlaceholder")} ⌃K`}
             className={`flex w-full cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground ${railCell}`}
           >
             <Search className={`size-3.5 ${railIcon}`} aria-hidden />

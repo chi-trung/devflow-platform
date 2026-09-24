@@ -104,6 +104,17 @@ export function UserMenu({
     navigate("/login");
   }
 
+  // Same split as Avatar — axe label-content-name-mismatch treats the
+  // initials glyph as visible text even when the span is aria-hidden.
+  const visibleUsername = currentUser?.username ?? t("auth.displayName");
+  const triggerInitials =
+    visibleUsername
+      .split(/[\s_-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("") || "?";
+
   function goTo(path: string) {
     setOpen(false);
     navigate(path);
@@ -138,7 +149,14 @@ export function UserMenu({
             setOpen(true);
           }
         }}
-        aria-label={t("ui.userMenuAria")}
+        // Label in Name (2.5.3): expanded trigger's visible text is initials
+        // + username (axe reads both even when the initials span is aria-hidden).
+        // Compact (rail) has no text — keep the generic name.
+        aria-label={
+          compact
+            ? t("ui.userMenuAria")
+            : `${t("ui.userMenuAria")}: ${triggerInitials} ${visibleUsername}`
+        }
         aria-expanded={open}
         aria-haspopup="menu"
         className={
