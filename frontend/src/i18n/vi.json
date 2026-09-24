@@ -46,9 +46,9 @@
    "login": "Đăng nhập",
    "signup": "Bắt đầu miễn phí"
   },
-  "heroEyebrow": "KANBAN · SPRINT · AI AGENT · WIKI",
-  "heroTitle": "Kanban + sprint + AI agent lập kế hoạch và ship",
-  "heroSubtitle": "Kéo-thả thẻ qua 7 giai đoạn từ Idea đến Done, chạy sprint với burndown + velocity, để AI lập kế hoạch dựa trên wiki của bạn.",
+  "heroEyebrow": "BOARD SPRINT · AI LẬP KẾ HOẠCH · WIKI NHÓM",
+  "heroTitle": "Ngừng giải đi giải lại một bài toán.",
+  "heroSubtitle": "Bảy giai đoạn từ Idea đến Done, AI lập kế hoạch ngay trong từng task với các bước, subtask và tiêu chí nghiệm thu, cùng wiki ghi lại mọi quyết định khi bạn ship.",
   "ctaStart": "Bắt đầu miễn phí",
   "ctaViewLogin": "Đăng nhập",
   "showcase": {
@@ -60,7 +60,8 @@
   "stages": {
    "idea": "Ý tưởng",
    "planning": "Lên kế hoạch",
-   "approved": "Đã duyệt",
+   "approval": "Duyệt",
+   "ready": "Sẵn sàng",
    "inProgress": "Đang làm",
    "review": "Đánh giá",
    "done": "Hoàn thành"
@@ -79,9 +80,9 @@
    },
    "ai": {
     "title": "Tích hợp AI Agent",
-    "desc": "Một AI agent lập kế hoạch công việc và viết code, được kiểm soát bởi tri thức của đội bạn. Bật tự duyệt để có một luồng hoàn toàn tự động.",
+    "desc": "Một AI lập kế hoạch soạn các bước, subtask và tiêu chí nghiệm thu ngay trong từng task, dựa trên wiki của đội bạn. Kế hoạch ở trạng thái Chờ duyệt để đồng đội xem lại và Áp dụng (tự áp dụng khi dự án bật chế độ này).",
     "b1": "Lập kế hoạch có kiểm soát tri thức",
-    "b2": "Bật/tắt tự duyệt để tự chủ",
+    "b2": "Kế hoạch giữ trạng thái Chờ duyệt cho đến khi đồng đội nhấn Áp dụng",
     "b3": "REST API + webhooks cho các công cụ của bạn"
    },
    "wiki": {
@@ -172,16 +173,16 @@
   },
   "hero": {
    "flow": {
-    "taskTitle": "Feature Flow",
-    "taskId": "DF-132",
-    "aiPlan": "AI Plan",
-    "approved": "ĐÃ DUYỆT",
-    "checklistTitle": "Danh sách kiểm tra",
-    "checklistPassed": "Đạt",
-    "version": "v1.0.0",
-    "overview": "Triển khai luồng refresh OAuth 2.0. Xoay token, refresh ngầm khi 401, thử lại với exponential backoff.",
-    "aiPlanDesc": "Tái cấu trúc module auth: thêm interceptor refresh, logic xoay vòng, và migration storage.",
-    "applied": "Đã áp dụng"
+    "taskTitle": "Luồng refresh OAuth",
+    "taskId": "DEV-132",
+    "aiPlan": "AI lập kế hoạch",
+    "approved": "401 kích hoạt refresh ngầm",
+    "checklistTitle": "Thêm interceptor refresh khi gặp 401",
+    "checklistPassed": "Xoay token và chuyển đổi phiên đã lưu",
+    "version": "Thử lại với backoff lũy tiến",
+    "overview": "Xoay token, refresh ngầm khi 401, thử lại với backoff.",
+    "aiPlanDesc": "Soạn từ ADR-127 (backend-persist): xoay refresh token, refresh ngầm khi 401, thử lại với backoff.",
+    "applied": "Token cũ bị vô hiệu sau khi xoay"
    }
   },
   "intel": {
@@ -197,10 +198,10 @@
    "supersededDesc": "đã chuyển tiếp — dẫn lịch sử, theo liên kết",
    "deprecatedName": "Lỗi thời",
    "deprecatedDesc": "vẫn được nghe — nổi lên như cảnh báo",
-   "terminalPrompt": "$ agent.plan",
-   "terminalQuery": "→ \"thêm cache cho user prefs\"",
-   "terminalAgentTag": "AGENT · RAG k=8",
-   "terminalContextBundle": "Bó ngữ cảnh trả về agent · sắp xếp theo trọng số",
+   "terminalPrompt": "AI lập kế hoạch · dựa trên wiki",
+   "terminalQuery": "Đang soạn: \"thêm cache cho user prefs\"",
+   "terminalAgentTag": "KẾ HOẠCH · CÁC BƯỚC · SUBTASK · ĐỊNH NGHĨA HOÀN THÀNH",
+   "terminalContextBundle": "Kế hoạch dẫn nguồn wiki · mục đã chấp nhận có trọng số cao nhất",
    "entries": [
     {
      "id": "ADR-127",
@@ -243,9 +244,9 @@
   "mock": {
    "url": "devflow-platform-kappa.vercel.app",
    "flows": {
-    "todo": "Cần làm",
+    "todo": "Idea",
     "doing": "Đang làm",
-    "done": "Xong",
+    "done": "Hoàn thành",
     "card1": "Refresh OAuth",
     "card2": "Giới hạn API",
     "card3": "Upload avatar",
@@ -255,32 +256,32 @@
     "doneCard": "Luồng refresh OAuth — đã cài đặt & kiểm tra"
    },
    "ai": {
-    "planTitle": "AI Plan: Tái cấu trúc module auth",
-    "gateApproved": "Đã duyệt ✓",
-    "gateReview": "Đánh giá",
-    "discipline1": "collision-ack",
-    "discipline2": "pattern-reuse",
-    "discipline3": "TDD",
-    "gateLabel": "Cổng tri thức",
-    "planning": "Lập kế hoạch",
-    "approved": "Đã duyệt",
-    "review": "Đánh giá"
+    "planTitle": "AI lập kế hoạch: Luồng refresh OAuth",
+    "gateApproved": "Áp dụng kế hoạch",
+    "gateReview": "Tạo lại",
+    "discipline1": "Chia nhỏ thành subtask",
+    "discipline2": "Tập trung tiêu chí nghiệm thu",
+    "discipline3": "Chỉ ra rủi ro và trường hợp biên",
+    "gateLabel": "Tóm tắt",
+    "planning": "Soạn các bước từ ADR-127 — không cache client",
+    "approved": "Thêm interceptor refresh khi gặp 401",
+    "review": "Token được xoay; thử lại dùng backoff"
    },
    "wiki": {
-    "adrAccepted": "Đã chấp nhận",
-    "adrProposed": "Đề xuất",
-    "adrSuperseded": "Đã thay thế",
-    "adrDeprecated": "Lỗi thời",
-    "entry1": "ADR-127: Không cache client — chỉ persist backend",
-    "entry2": "ADR-119: Cache 5 phút trong bộ nhớ (đã thay thế)",
-    "entry3": "RUN-07: Khắc phục sự cố cache-stale",
-    "entry4": "PAT-04: localStorage prefs (lỗi thời)",
-    "entry5": "ADR-DRAFT: Redis edge cache? (đề xuất)"
+    "adrAccepted": "ADR · Đã chấp nhận",
+    "adrProposed": "Pattern · Đề xuất",
+    "adrSuperseded": "ADR · Đã thay thế",
+    "adrDeprecated": "Pattern · Lỗi thời",
+    "entry1": "ADR-127: Không cache client — w 0.94 · auth, session",
+    "entry2": "ADR-119: Cache 5 phút trong bộ nhớ — Đã thay thế",
+    "entry3": "RUN-07: Khắc phục cache-stale — w 0.71 · incident",
+    "entry4": "PAT-04: localStorage prefs — Lỗi thời",
+    "entry5": "PAT-19: Backend-persist — w 0.82 · auth"
    },
    "kanban": {
-    "todo": "Cần làm",
+    "todo": "Idea",
     "doing": "Đang làm",
-    "done": "Xong",
+    "done": "Hoàn thành",
     "card1": "Auth refresh",
     "card2": "Rate limiter",
     "card3": "Upload avatar",

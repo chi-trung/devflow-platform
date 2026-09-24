@@ -29,8 +29,8 @@ export const PRICING = {
       vi: "Không giới hạn workspace, dự án và task",
     },
     {
-      en: "AI agent planning with per-project self-approval",
-      vi: "AI agent lập kế hoạch, tự phê duyệt theo từng dự án",
+      en: "AI planner drafting steps, subtasks and acceptance criteria in each task",
+      vi: "AI lập kế hoạch soạn các bước, subtask và tiêu chí nghiệm thu trong từng task",
     },
     {
       en: "Knowledge base, sprints, burndown and velocity reports",
