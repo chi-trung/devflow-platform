@@ -46,15 +46,15 @@
    "login": "Log in",
    "signup": "Get started free"
   },
-  "heroEyebrow": "WORKFLOW · COMPOUNDING KNOWLEDGE",
-  "heroTitle": "The AI coding workflow that remembers",
-  "heroSubtitle": "Turn ideas into shipped work with structured stages, an AI agent that plans and implements, and a knowledge base that compounds with every release.",
+  "heroEyebrow": "KANBAN · SPRINTS · AI AGENT · WIKI",
+  "heroTitle": "Kanban + sprints + AI agent that plans and ships",
+  "heroSubtitle": "Drag cards across 7 stages from Idea to Done, run sprints with burndown + velocity, and let the AI plan gated by your wiki.",
   "ctaStart": "Start building free",
   "ctaViewLogin": "Log in",
   "showcase": {
    "eyebrow": "LIVE DASHBOARD",
-   "title": "Your whole flow on one screen",
-   "subtitle": "Sprint health, flow metrics, and team activity — the dashboard that keeps every stage of your pipeline in view.",
+   "title": "Your pipeline, live on one screen",
+   "subtitle": "One dashboard for stages, sprints and releases — the proof of the flow above.",
    "alt": "DevFlow dashboard screenshot"
   },
   "stages": {
@@ -67,8 +67,8 @@
   },
   "pipelineTitle": "One structured flow, from idea to shipped",
   "pipelineSubtitle": "Every task moves through the same stages, so nothing falls through the cracks and every decision leaves a trail.",
-  "featuresTitle": "Everything you need to ship with confidence",
-  "featuresSubtitle": "A complete workflow for teams that want structure without the ceremony.",
+  "featuresTitle": "Pipeline, agent, and wiki — connected",
+  "featuresSubtitle": "Stages, knowledge-gated AI, and auto-captured docs in one loop.",
   "features": {
    "flows": {
     "title": "Structured Flows",
@@ -113,8 +113,8 @@
     "b3": "GitHub integration and webhooks"
    }
   },
-  "howTitle": "How it works",
-  "howSubtitle": "From idea to shipped in three steps.",
+  "howTitle": "Idea to shipped in three steps",
+  "howSubtitle": "Define stages, let AI draft the plan and code, review and ship.",
   "how": {
    "step1": {
     "label": "STEP 01",
@@ -132,8 +132,8 @@
     "desc": "Human review at every gate, then ship with confidence — and watch your wiki grow with every release."
    }
   },
-  "ctaTitle": "Ready to streamline your development?",
-  "ctaSubtitle": "Set up your first flow in minutes — free, no credit card required.",
+  "ctaTitle": "Ship your first flow today",
+  "ctaSubtitle": "Create a project, invite your team, ship with docs auto-written — free.",
   "ctaButton": "Start building free",
   "footer": {
    "product": "Product",

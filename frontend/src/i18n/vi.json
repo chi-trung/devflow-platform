@@ -46,15 +46,15 @@
    "login": "Đăng nhập",
    "signup": "Bắt đầu miễn phí"
   },
-  "heroEyebrow": "WORKFLOW · TRI THỨC TÍCH LŨY",
-  "heroTitle": "Luồng làm việc AI biết ghi nhớ",
-  "heroSubtitle": "Biến ý tưởng thành công việc hoàn thành với các giai đoạn có cấu trúc, một AI agent lập kế hoạch và triển khai, cùng kho tri thức tích lũy theo từng bản phát hành.",
+  "heroEyebrow": "KANBAN · SPRINT · AI AGENT · WIKI",
+  "heroTitle": "Kanban + sprint + AI agent lập kế hoạch và ship",
+  "heroSubtitle": "Kéo-thả thẻ qua 7 giai đoạn từ Idea đến Done, chạy sprint với burndown + velocity, để AI lập kế hoạch dựa trên wiki của bạn.",
   "ctaStart": "Bắt đầu miễn phí",
   "ctaViewLogin": "Đăng nhập",
   "showcase": {
    "eyebrow": "BẢNG ĐIỀU KHIỂN TRỰC TIẾP",
-   "title": "Toàn bộ luồng công việc trên một màn hình",
-   "subtitle": "Sức khỏe sprint, chỉ số flow và hoạt động đội nhóm — bảng điều khiển giữ mọi giai đoạn của pipeline trong tầm mắt.",
+   "title": "Pipeline của bạn, trực tiếp trên một màn hình",
+   "subtitle": "Một dashboard cho stages, sprint và release — minh chứng cho luồng ở trên.",
    "alt": "Ảnh chụp bảng điều khiển DevFlow"
   },
   "stages": {
@@ -67,8 +67,8 @@
   },
   "pipelineTitle": "Một luồng có cấu trúc, từ ý tưởng đến khi hoàn thành",
   "pipelineSubtitle": "Mọi task đều đi qua các giai đoạn giống nhau, để không gì bị bỏ sót và mọi quyết định đều để lại dấu vết.",
-  "featuresTitle": "Mọi thứ bạn cần để ship một cách tự tin",
-  "featuresSubtitle": "Một quy trình hoàn chỉnh cho các đội muốn có cấu trúc mà không rườm rà.",
+  "featuresTitle": "Pipeline, agent và wiki — liên thông",
+  "featuresSubtitle": "Stages, AI có kiểm soát tri thức, và tài liệu tự ghi trong một vòng lặp.",
   "features": {
    "flows": {
     "title": "Luồng có cấu trúc",
@@ -113,8 +113,8 @@
     "b3": "Tích hợp GitHub và webhook"
    }
   },
-  "howTitle": "Cách hoạt động",
-  "howSubtitle": "Từ ý tưởng đến khi hoàn thành chỉ trong ba bước.",
+  "howTitle": "Từ ý tưởng đến lúc ship trong ba bước",
+  "howSubtitle": "Định nghĩa stages, để AI soạn plan và code, review rồi ship.",
   "how": {
    "step1": {
     "label": "BƯỚC 01",
@@ -132,8 +132,8 @@
     "desc": "Con người đánh giá ở mọi điểm gác, rồi ship một cách tự tin — và xem wiki của bạn lớn lên theo từng bản phát hành."
    }
   },
-  "ctaTitle": "Sẵn sàng hợp lý hóa quy trình phát triển?",
-  "ctaSubtitle": "Thiết lập flow đầu tiên của bạn trong vài phút — miễn phí, không cần thẻ tín dụng.",
+  "ctaTitle": "Ship flow đầu tiên ngay hôm nay",
+  "ctaSubtitle": "Tạo project, mời đội, ship kèm tài liệu tự ghi — miễn phí.",
   "ctaButton": "Bắt đầu miễn phí",
   "footer": {
    "product": "Sản phẩm",
