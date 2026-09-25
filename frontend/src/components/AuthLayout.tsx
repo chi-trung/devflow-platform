@@ -1,4 +1,3 @@
-import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
@@ -37,6 +36,32 @@ const HIGHLIGHT_KEYS = [
  * three children: at 1000px tall that old layout stranded the logo ~250px above
  * the scene and the motto ~250px below it, with the content floating in the
  * middle of an otherwise empty panel.
+ *
+ * Both pages are ONE screen: no vertical scrollbar, no horizontal scrollbar, at
+ * any viewport. Two measured facts drove this, and both are the opposite of
+ * what the markup looks like it should do:
+ *
+ *  1. `min-h-dvh` is a FLOOR, not a cap. A `flex-1` child stretches to its own
+ *     content, so a tall left column grew the page past the viewport and the
+ *     `overflow-y-auto` on that column did nothing — the column was the thing
+ *     growing, not the thing scrolling. Hence `h-dvh` on the root and `min-h-0`
+ *     on the flex children: the scene is now SIZED TO FIT rather than clipped.
+ *  2. `overflow-y: auto` makes `overflow-x` compute to `auto` as well — that
+ *     pairing is required by the CSS overflow spec whenever one axis is not
+ *     `visible`. So the decorative blob at `-right-32` extended 128px past the
+ *     right edge and made the entire column draggable sideways, at every
+ *     viewport including 390px wide. `overflow-x: clip` on <main> does NOT fix
+ *     this: per spec `clip` computes to `hidden` when the other axis scrolls,
+ *     and a `hidden` box is still programmatically scrollable. The blob is
+ *     therefore wrapped in its own `absolute inset-0 overflow-hidden` box (see
+ *     below) — the only thing that contains a decorative overflow without
+ *     turning it into a scroll port.
+ *
+ * The root is `overflow-x-hidden` and NOT `overflow-hidden` on purpose: the
+ * root must not clip the register form when it is taller than the viewport
+ * (844x390 landscape measured: `h-dvh` + `overflow-hidden` made the submit
+ * button unreachable and the page unscrollable). Vertical scrolling lives on
+ * <main>, which always has `overflow-y-auto`.
  */
 export function AuthLayout({
   title,
@@ -48,7 +73,7 @@ export function AuthLayout({
 }: AuthLayoutProps) {
   const { t } = useTranslation();
   return (
-    <div className="flex min-h-dvh flex-col bg-background text-foreground">
+    <div className="flex h-dvh flex-col overflow-x-hidden bg-background text-foreground">
       {/* First tab stop: skip the header's links straight to the form. The
           <main> target below matches the landing page's #devflow-content
           convention (WCAG 2.4.1), visible only while focused. */}
@@ -59,7 +84,7 @@ export function AuthLayout({
         {t("ui.skipToContent")}
       </a>
 
-      <header className="border-b border-border bg-background/80 backdrop-blur-md">
+      <header className="shrink-0 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6">
           <Logo to="/" size="md" wordmarkHideBelow="sm" />
 
@@ -83,15 +108,16 @@ export function AuthLayout({
         </div>
       </header>
 
-      <div className="flex flex-1">
+      {/* `flex-1` alone still lets a flex item grow past the line; `min-h-0`
+          is what actually pins both columns to the remaining viewport. */}
+      <div className="flex min-h-0 flex-1">
         {/* `<aside>` = complementary landmark, so axe's `region` best-practice
             stops flagging the branding column on /login and /register. No
             aria-label: the panel is already distinct from <main> by role. */}
-        <aside className="relative hidden w-[58%] flex-none flex-col justify-center overflow-y-auto border-r border-border bg-surface p-10 lg:flex">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -top-32 -left-32 size-96 rounded-full bg-primary/10 blur-3xl"
-          />
+        <aside className="relative hidden w-[58%] flex-none flex-col justify-center overflow-hidden border-r border-border bg-surface p-6 lg:flex xl:p-8">
+          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -top-32 -left-32 size-96 rounded-full bg-primary/10 blur-3xl" />
+          </div>
 
           {/* max-w-[700px] tracks the usable width inside the frame: the aside
               is 58% of the viewport (835px at 1440), and capping the scene any
@@ -99,7 +125,7 @@ export function AuthLayout({
               space (672px of 835px). 700px is the ceiling where the scene's
               two 260px-min columns still fit side by side with the gutters
               balanced (67px each) instead of one 135px gap. */}
-          <div className="relative z-10 mx-auto flex w-full max-w-[700px] flex-col gap-8">
+          <div className="relative z-10 mx-auto flex w-full max-w-[700px] flex-col gap-5">
             <AuthScene />
 
             <div>
@@ -107,25 +133,25 @@ export function AuthLayout({
                   two pages read as one design system. It fits on one line
                   here (the column is 680px); the 36-char string wrapped
                   inside the form card, which gets the motto instead. */}
-              <p className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+              <p className="mb-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                 {t("landing.heroEyebrow")}
               </p>
-              <p className="font-display text-3xl font-bold leading-tight tracking-tight text-balance">
+              <p className="font-display text-2xl font-bold leading-tight tracking-tight text-balance">
                 {t("workspace.authTagline")}
               </p>
-              <ul role="list" className="mt-6 grid gap-2">
-                {HIGHLIGHT_KEYS.map((key) => (
-                  <li
-                    key={key}
-                    className="flex items-center gap-3 rounded-lg border border-border bg-card/60 px-3 py-2.5 text-sm"
-                  >
-                    <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary-strong">
-                      <Check className="size-3" aria-hidden />
-                    </span>
+              {/* The three feature rows used to be stacked cards: 142px of
+                  grid plus a 24px top margin, height the page did not have,
+                  to say less than the board scene directly above them
+                  already shows. One line of separated text carries the same
+                  three strings. */}
+              <p className="mt-3 text-sm text-muted-foreground">
+                {HIGHLIGHT_KEYS.map((key, i) => (
+                  <span key={key}>
+                    {i > 0 && <span className="px-1.5 text-border-strong">/</span>}
                     {t(key)}
-                  </li>
+                  </span>
                 ))}
-              </ul>
+              </p>
             </div>
           </div>
         </aside>
@@ -133,14 +159,25 @@ export function AuthLayout({
         <main
           id="devflow-content"
           tabIndex={-1}
-          className="relative flex flex-1 items-center justify-center overflow-y-auto p-6 outline-none"
+          className="relative flex min-h-0 flex-1 justify-center overflow-x-clip overflow-y-auto p-6 outline-none"
         >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-32 -top-32 size-96 rounded-full bg-primary/10 blur-3xl"
-          />
+          {/* The blob lives inside its own clipping wrapper rather than being
+              clipped by <main>. Measured: pairing `overflow-x: clip` with
+              `overflow-y: auto` does NOT work — per spec `clip` computes to
+              `hidden` when the other axis is scrollable, and a `hidden` box is
+              still programmatically scrollable, which put the page 128px back
+              into a sideways drag. <main> must scroll vertically (see below),
+              so it cannot be the thing containing the glow. */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -top-32 -left-32 size-96 rounded-full bg-primary/10 blur-3xl" />
+          </div>
 
-          <div className="relative z-10 w-full max-w-sm rise">
+          {/* `m-auto`, not `items-center` on the parent: a centred flex item
+              that is TALLER than a scroll container has its top half pushed
+              above the scroll origin and becomes unreachable. `m-auto` on the
+              child centres it when it fits and leaves it scrollable at its
+              natural top when it does not. */}
+          <div className="relative z-10 m-auto w-full max-w-sm rise">
             <div className="rounded-2xl border border-border-strong bg-elevated p-6 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.6)]">
               {/* The hero eyebrow (36 chars) wrapped onto two lines inside a
                   336px card; the motto is the auth pages' own wordmark. */}

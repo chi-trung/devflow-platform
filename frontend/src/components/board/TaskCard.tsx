@@ -276,7 +276,15 @@ export const TaskCard = memo(function TaskCard({
         </button>
       </div>
 
-      <div className="mt-2.5 flex items-center gap-2">
+      {/* `flex-wrap` + `whitespace-nowrap`: the meta chips are atomic and short,
+          so when a column gets narrow the row steps to a second LINE rather
+          than squeezing each chip below its content width. Measured on the
+          /login panel at 1024px: without these the flex items shrank to their
+          min-content and the chip's own text broke instead — "DoD"/"met" and
+          "Sep"/"28" each landed on two lines, which reads as a broken card.
+          At the widths the real board uses nothing wraps, so this is a no-op
+          there. */}
+      <div className="mt-2.5 flex flex-wrap items-center gap-2 whitespace-nowrap">
         <span className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
           <span className={`size-1.5 rounded-full ${priorityDot[task.priority]}`} aria-hidden />
           {t(priorityLabelKey[task.priority])}
