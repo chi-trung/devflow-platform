@@ -7,17 +7,19 @@ import type { TaskItemResponse } from "../../types/api";
 /**
  * "Your pipeline, live on one screen" — the dashboard section rebuilt as a
  * real component instead of a static screenshot (landing-opt.png deleted).
- * Renders the REAL Column component with static fixtures (the same shape as
- * DemoBoardPage: no backend, no auth, no API calls, pure props), so the
- * marketing board can never drift from the product board — column chrome,
- * TaskCard fields, priority dots and DoD badges all come from the real code.
+ * Renders the REAL Column component with static fixtures (pure props: no
+ * backend, no auth, no API calls), so the marketing board can never drift
+ * from the product board — column chrome, TaskCard fields, priority dots
+ * and DoD badges all come from the real code.
  *
- * Layout: 7 columns in a horizontal scroll strip (each w-60, matching the
- * app), with the AI plan + wiki panels beneath in an equal-height grid.
- * Everything is HTML/CSS from design tokens — no external images, so no
- * recapture step and no black-hole gaps. Decorative (aria-hidden): the copy
- * block above carries the message; inner controls are non-focusable so the
- * hidden tree can't trap focus (axe aria-hidden-focus).
+ * Layout mirrors the real board (BoardPage): columns flow in a wrapping row
+ * with a min-width floor on desktop, so 7 stages collapse from 4 → 2 columns
+ * instead of squeezing into 7 unreadable slivers. On mobile they stack full
+ * width. The AI plan + wiki panels wrap the same way. Everything is HTML/CSS
+ * from design tokens — no external images, so no recapture step and no
+ * black-hole gaps. Decorative (aria-hidden): the copy block above carries
+ * the message; inner controls are non-focusable so the hidden tree can't
+ * trap focus (axe aria-hidden-focus).
  */
 
 interface Fixture {
@@ -143,9 +145,12 @@ export function LiveBoardShowcase() {
               </span>
             </div>
 
-            <div className="flex gap-2.5 overflow-hidden">
+            {/* Board columns, same pattern as BoardPage: wrapping row with a
+                min-width floor (2 per row on sm, 4 per row on lg), stacked
+                full width on mobile — never 7 squeezed slivers. */}
+            <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-stretch">
               {ORDER.map((status) => (
-                <div key={status} className="w-0 min-w-0 flex-1 [&>section]:h-full">
+                <div key={status} className="flex min-w-0 flex-1 flex-col sm:min-w-[220px] sm:basis-[calc(50%-0.3125rem)] lg:basis-[calc(25%-0.625rem)] [&>section]:h-full">
                   <Column
                     title={titles[status]}
                     status={status}
@@ -161,8 +166,8 @@ export function LiveBoardShowcase() {
               ))}
             </div>
 
-            <div className="mt-3 grid grid-cols-5 items-stretch gap-2.5 text-left">
-              <div className="col-span-3 rounded-xl border border-violet-400/25 bg-violet-400/5 p-3">
+            <div className="mt-3 flex flex-col gap-2.5 text-left sm:flex-row sm:flex-wrap sm:items-stretch">
+              <div className="min-w-0 flex-1 rounded-xl border border-violet-400/25 bg-violet-400/5 p-3 sm:min-w-[280px] sm:basis-[calc(60%-0.3125rem)]">
                 <div className="mb-1.5 flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-400">
                     <Brain className="size-3.5" aria-hidden />
@@ -179,7 +184,7 @@ export function LiveBoardShowcase() {
                 </ol>
               </div>
 
-              <div className="col-span-2 flex items-center gap-2 self-stretch rounded-xl border border-border bg-card px-3 py-2.5">
+              <div className="flex min-w-0 flex-1 items-center gap-2 self-stretch rounded-xl border border-border bg-card px-3 py-2.5 sm:min-w-[220px] sm:basis-[calc(40%-0.3125rem)]">
                 <BookOpen className="size-4 shrink-0 text-primary" aria-hidden />
                 <span className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground">
                   ADR-127: No client cache

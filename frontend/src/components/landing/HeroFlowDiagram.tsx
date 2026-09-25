@@ -7,7 +7,7 @@ import { Brain, BookOpen, Check, ChevronRight, Copy, Hash } from "lucide-react";
  * - 7 stage pills with the REAL board names (landing.stages.*) act as tabs:
  *   click (or arrow-key) one and the board content below follows it — the
  *   task card, the AI plan state and the wiki row all change per stage via
- *   STAGE_CONTENT. Auto-advance runs on a slow ~5000ms interval so each
+ *   useStageContent. Auto-advance runs on a slow ~5000ms interval so each
  *   stage is readable; any manual pick pauses it for 30s
  *   (AUTO_RESUME_MS) before resuming.
  * - Left column: the stage's task card (key chip, priority dot + label,
@@ -36,9 +36,13 @@ const AUTO_RESUME_MS = 30000;
 
 /**
  * Per-stage demo content. Points at EXISTING i18n values only (never new
- * keys — i18n-parity requires en/vi to match): the shared task title/id,
- * the plan steps/DoD from landing.hero.flow, real TaskCard priority labels
- * and real stage names for the done minis.
+ * keys — i18n-parity requires en/vi to match): task titles from
+ * landing.mock.flows, plan steps/DoD from landing.hero.flow plus the
+ * landing.mock.ai disciplines, wiki badges from knowledge.status/type, and
+ * real TaskCard priority labels. Every stage gets its OWN overview, plan
+ * summary, step triple, DoD list and wiki row, so clicking a pill always
+ * shows different content. Wiki titles/weights are fixture identifiers
+ * (like DEV-101 task IDs), intentionally locale-independent.
  */
 function useStageContent() {
   const { t } = useTranslation();
@@ -73,7 +77,61 @@ function useStageContent() {
     "DEV-140",
     "DEV-132",
   ];
-  return { titles, priorities, dates, points, dodMet, ids };
+  // One overview per stage: existing strings only, shuffled so each pill
+  // reads differently — and offset from planSummaries so the task card and
+  // the AI plan never show the same sentence on one stage.
+  const overviews = [
+    t("landing.mock.ai.discipline1"),
+    t("landing.mock.ai.discipline2"),
+    t("landing.mock.ai.discipline3"),
+    t("landing.mock.ai.planning"),
+    t("landing.hero.flow.overview"),
+    t("landing.mock.ai.review"),
+    t("landing.hero.flow.applied"),
+  ];
+  // One plan summary + step triple + DoD pair per stage. Steps reuse the
+  // flow checklist, the ai disciplines and the approved/review notes so the
+  // visible triplets differ per pill.
+  const planSummaries = [
+    t("landing.mock.ai.planning"),
+    t("landing.mock.ai.discipline1"),
+    t("landing.mock.ai.discipline2"),
+    t("landing.mock.ai.discipline3"),
+    t("landing.hero.flow.aiPlanDesc"),
+    t("landing.mock.ai.review"),
+    t("landing.hero.flow.applied"),
+  ];
+  const planSteps = [
+    [t("landing.mock.ai.discipline1"), t("landing.mock.ai.discipline2"), t("landing.mock.ai.discipline3")],
+    [t("landing.hero.flow.checklistTitle"), t("landing.mock.ai.discipline2"), t("landing.mock.ai.discipline3")],
+    [t("landing.hero.flow.checklistTitle"), t("landing.hero.flow.checklistPassed"), t("landing.mock.ai.discipline3")],
+    [t("landing.hero.flow.checklistTitle"), t("landing.hero.flow.checklistPassed"), t("landing.hero.flow.version")],
+    [t("landing.hero.flow.checklistTitle"), t("landing.hero.flow.checklistPassed"), t("landing.mock.ai.approved")],
+    [t("landing.mock.ai.approved"), t("landing.hero.flow.checklistPassed"), t("landing.hero.flow.version")],
+    [t("landing.mock.ai.approved"), t("landing.mock.ai.review"), t("landing.hero.flow.applied")],
+  ];
+  const planDod = [
+    [t("landing.mock.ai.discipline2"), t("landing.mock.ai.discipline3")],
+    [t("landing.hero.flow.approved"), t("landing.mock.ai.discipline2")],
+    [t("landing.hero.flow.approved"), t("landing.mock.ai.discipline3")],
+    [t("landing.hero.flow.approved"), t("landing.hero.flow.version")],
+    [t("landing.hero.flow.approved"), t("landing.hero.flow.applied")],
+    [t("landing.hero.flow.applied"), t("landing.hero.flow.version")],
+    [t("landing.hero.flow.applied"), t("landing.mock.ai.review")],
+  ];
+  // One wiki row per stage: fixture entry titles + real status/type badges.
+  // Mirrors landing.mock.wiki semantics: the Superseded (ADR-119) and
+  // Deprecated (PAT-04) entries carry no weight, so their chip hides.
+  const wiki: { title: string; weight: string | null; type: string; status: string }[] = [
+    { title: "PAT-19: Backend-persist", weight: "w 0.82", type: t("knowledge.type.Pattern"), status: t("knowledge.status.Proposed") },
+    { title: "ADR-119: 5-min in-memory cache", weight: null, type: t("knowledge.type.Adr"), status: t("knowledge.status.Superseded") },
+    { title: "ADR-127: No client cache", weight: "w 0.94", type: t("knowledge.type.Adr"), status: t("knowledge.status.Accepted") },
+    { title: "PAT-04: localStorage prefs", weight: null, type: t("knowledge.type.Pattern"), status: t("knowledge.status.Deprecated") },
+    { title: "ADR-127: No client cache", weight: "w 0.94", type: t("knowledge.type.Adr"), status: t("knowledge.status.Accepted") },
+    { title: "RUN-07: Cache-stale recovery", weight: "w 0.71", type: t("knowledge.type.Runbook"), status: t("knowledge.status.Accepted") },
+    { title: "ADR-127: No client cache", weight: "w 0.94", type: t("knowledge.type.Adr"), status: t("knowledge.status.Accepted") },
+  ];
+  return { titles, priorities, dates, points, dodMet, ids, overviews, planSummaries, planSteps, planDod, wiki };
 }
 
 export function HeroFlowDiagram({ className = "" }: { className?: string }) {
@@ -116,6 +174,8 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
   );
 
   // Static t() calls so i18n-usage can verify every key exists.
+  // (Stage overview/plan/wiki strings also call t() statically inside
+  // useStageContent above, which the same check scans.)
   const stages = [
     t("landing.stages.idea"),
     t("landing.stages.planning"),
@@ -125,13 +185,6 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
     t("landing.stages.review"),
     t("landing.stages.done"),
   ];
-
-  const steps = [
-    t("landing.hero.flow.checklistTitle"),
-    t("landing.hero.flow.checklistPassed"),
-    t("landing.hero.flow.version"),
-  ];
-  const dod = [t("landing.hero.flow.approved"), t("landing.hero.flow.applied")];
 
   const label = `${stages[activeIndex]}: ${content.titles[activeIndex]}`;
 
@@ -230,7 +283,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
           </span>
         </div>
         <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-          {t("landing.hero.flow.overview")}
+          {content.overviews[activeIndex]}
         </p>
         <div className="mt-2.5 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
@@ -292,7 +345,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
         )}
       </div>
       <p className="mb-2 line-clamp-2 text-xs leading-relaxed text-foreground">
-        {t("landing.hero.flow.aiPlanDesc")}
+        {content.planSummaries[activeIndex]}
       </p>
       <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {t("ai.steps")}
@@ -301,7 +354,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
         role="list"
         className="mb-2 list-inside list-decimal space-y-0.5 text-[11px] leading-snug text-muted-foreground"
       >
-        {steps.map((s, i) => (
+        {content.planSteps[activeIndex].map((s, i) => (
           <li key={s} className="df-step-in" style={{ animationDelay: `${i * 160}ms` }}>
             {s}
           </li>
@@ -311,7 +364,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
         {t("ai.dod")}
       </p>
       <ul role="list" className="space-y-0.5">
-        {dod.map((d) => (
+        {content.planDod[activeIndex].map((d) => (
           <li
             key={d}
             className="flex items-start gap-1.5 text-[11px] leading-snug text-muted-foreground"
@@ -345,19 +398,21 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
     >
       <BookOpen className="size-4 shrink-0 text-primary" aria-hidden />
       <span className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground">
-        ADR-127: No client cache
+        {content.wiki[activeIndex].title}
       </span>
       {full && (
         <span className="shrink-0 rounded-md border border-border bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-          {t("knowledge.type.Adr")}
+          {content.wiki[activeIndex].type}
         </span>
       )}
       <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary-strong">
-        {t("knowledge.status.Accepted")}
+        {content.wiki[activeIndex].status}
       </span>
-      <span className="shrink-0 rounded bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-        w 0.94
-      </span>
+      {content.wiki[activeIndex].weight && (
+        <span className="shrink-0 rounded bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+          {content.wiki[activeIndex].weight}
+        </span>
+      )}
     </div>
   );
 
