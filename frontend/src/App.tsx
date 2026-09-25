@@ -119,11 +119,6 @@ const ProjectSettingsPage = lazy(() =>
 const NotFoundPage = lazy(() =>
   import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })),
 );
-// Demo board for the marketing screenshot — DEV only, never in prod bundles.
-// The lazy() wrapper keeps it out of every chunk unless the route mounts.
-const DemoBoardPage = lazy(() =>
-  import("./pages/DemoBoardPage").then((m) => ({ default: m.DemoBoardPage })),
-);
 
 function LoadingFallback() {
   const { t } = useTranslation();
@@ -255,9 +250,6 @@ function RoutedBoundary() {
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
-          {import.meta.env.DEV && (
-            <Route path="/demo/board" element={<DemoBoardPage />} />
-          )}
           <Route element={<RequireAuth />}>
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />

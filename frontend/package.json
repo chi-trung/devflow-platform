@@ -8,8 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "screenshot:dashboard": "node scripts/capture-dashboard.mjs"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@microsoft/signalr": "^10.0.11",

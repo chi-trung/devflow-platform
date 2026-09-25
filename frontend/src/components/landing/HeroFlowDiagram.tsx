@@ -1,63 +1,119 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Brain, BookOpen, Check, Copy, Hash } from "lucide-react";
+import { Brain, BookOpen, Check, ChevronRight, Copy, Hash } from "lucide-react";
 
 /**
- * Living board loop — balanced two-column board mirroring the real product:
- * - 7 stage pills with the REAL board names (landing.stages.*: Idea,
- *   Planning, Approval, Ready, In Progress, Review, Done) lighting up in
- *   sequence via a ~1700ms interval over activeIndex 0..6.
- * - Left column: the In Progress task card (key chip with copy affordance,
- *   priority dot + label, story-points chip, due date, DoD badge, glow ring
- *   at index 4) plus a pair of small Done cards so the column matches the
- *   AI panel height.
+ * Interactive board tour — the hero mockup, not a passive animation:
+ * - 7 stage pills with the REAL board names (landing.stages.*) act as tabs:
+ *   click (or arrow-key) one and the board content below follows it — the
+ *   task card, the AI plan state and the wiki row all change per stage via
+ *   STAGE_CONTENT. Auto-advance runs on a slow ~5000ms interval so each
+ *   stage is readable; any manual pick pauses it for 30s
+ *   (AUTO_RESUME_MS) before resuming.
+ * - Left column: the stage's task card (key chip, priority dot + label,
+ *   story-points chip, due date, DoD badge) with a glow ring only while its
+ *   own stage is active, plus a pair of small Done cards so both columns
+ *   end flush.
  * - Right column: AI plan shaped like AiPlanPanel output (summary + Steps +
- *   Definition of Done + Apply / Regenerate). Steps cascade with staggered
- *   animation-delay; the Pending badge swaps to Applied styling at cycle
- *   end (activeIndex >= 5).
+ *   Definition of Done + Apply / Regenerate). The Pending badge swaps to
+ *   Applied styling for late stages (index >= 5). Steps cascade with
+ *   staggered animation-delay, restarted per stage via key.
  * - A wiki entry row with a real KnowledgeEntryCard status badge (Accepted)
- *   and a real `w {weight}` weight chip that slides up at activeIndex 6.
+ *   and a real `w {weight}` weight chip.
  *
- * No mouse tilt: the board stays flat, only the loop animates.
- * Decorative (role="img"): every inner element is a non-focusable span/div so
- * the img role stays valid. Theme-aware via design tokens. Motion is
- * transform+opacity only (GPU, no LCP layout shift): animate-float-slow /
- * animate-glow-pulse plus df-step-in / df-row-in from index.css, all settled
- * by the global prefers-reduced-motion guard. The interval is skipped
- * entirely under reduced-motion (static: active = In Progress) and cleaned
- * up on unmount. State-only updates, so the mobile-hidden DOM is harmless.
- * Desktop + mobile layouts read the same activeIndex/loopCount state.
- * key={loopCount} on the animated containers restarts CSS animations each
- * full cycle. Pure React/CSS, no new deps.
+ * Accessibility: the pills are a real tablist (role=tablist/tab, arrow-key
+ * navigation, aria-selected) driving a tabpanel below — a keyboard user gets
+ * the same tour. Decorative chrome inside the panel stays non-focusable.
+ * Theme-aware via design tokens. Motion is transform+opacity only
+ * (df-step-in / df-row-in from index.css), settled by the global
+ * prefers-reduced-motion guard; under reduced-motion there is no auto
+ * interval but manual selection still works. Pure React/CSS, no new deps.
  */
 
 const STAGE_COUNT = 7;
-/** Demo card lives at In Progress. */
-const DEMO_STAGE_INDEX = 4;
-const LOOP_MS = 1700;
+const LOOP_MS = 5000;
+const AUTO_RESUME_MS = 30000;
+
+/**
+ * Per-stage demo content. Points at EXISTING i18n values only (never new
+ * keys — i18n-parity requires en/vi to match): the shared task title/id,
+ * the plan steps/DoD from landing.hero.flow, real TaskCard priority labels
+ * and real stage names for the done minis.
+ */
+function useStageContent() {
+  const { t } = useTranslation();
+  const titles = [
+    t("landing.mock.flows.card1"),
+    t("landing.mock.flows.card2"),
+    t("landing.mock.flows.card3"),
+    t("landing.mock.flows.card3"),
+    t("landing.hero.flow.taskTitle"),
+    t("landing.mock.flows.card5"),
+    t("landing.mock.flows.doneCard"),
+  ];
+  const priorities = [
+    { dot: "bg-muted-foreground/50", label: t("task.low") },
+    { dot: "bg-primary", label: t("task.medium") },
+    { dot: "bg-amber-300", label: t("task.high") },
+    { dot: "bg-primary", label: t("task.medium") },
+    { dot: "bg-amber-300", label: t("task.high") },
+    { dot: "bg-primary", label: t("task.medium") },
+    { dot: "bg-destructive", label: t("task.urgent") },
+  ];
+  const dates = ["Oct 12", "Oct 2", "Oct 3", "Oct 5", "Sep 28", "Oct 1", "Sep 20"];
+  const points = [2, 3, 2, 3, 5, 8, 5];
+  // DoD badge reads as met once the card has work behind it.
+  const dodMet = [false, false, false, true, true, true, true];
+  const ids = [
+    "DEV-101",
+    "DEV-112",
+    "DEV-118",
+    "DEV-121",
+    t("landing.hero.flow.taskId"),
+    "DEV-140",
+    "DEV-132",
+  ];
+  return { titles, priorities, dates, points, dodMet, ids };
+}
 
 export function HeroFlowDiagram({ className = "" }: { className?: string }) {
   const { t } = useTranslation();
-  const [activeIndex, setActiveIndex] = useState(DEMO_STAGE_INDEX);
-  const [loopCount, setLoopCount] = useState(0);
-  const activeRef = useRef(DEMO_STAGE_INDEX);
+  const content = useStageContent();
+  // Tour starts at Planning so the hero loads mid-story, not on a blank Idea.
+  const [activeIndex, setActiveIndex] = useState(1);
+  const [paused, setPaused] = useState(false);
+  const activeRef = useRef(1);
+  const resumeTimer = useRef<number | null>(null);
+
+  const goTo = (next: number, manual: boolean) => {
+    const wrapped = ((next % STAGE_COUNT) + STAGE_COUNT) % STAGE_COUNT;
+    activeRef.current = wrapped;
+    setActiveIndex(wrapped);
+    if (manual) {
+      setPaused(true);
+      if (resumeTimer.current !== null) window.clearTimeout(resumeTimer.current);
+      resumeTimer.current = window.setTimeout(() => setPaused(false), AUTO_RESUME_MS);
+    }
+  };
 
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      return;
-    }
-    const id = window.setInterval(() => {
-      const next = (activeRef.current + 1) % STAGE_COUNT;
-      activeRef.current = next;
-      setActiveIndex(next);
-      if (next === 0) setLoopCount((c) => c + 1);
-    }, LOOP_MS);
+    const mq =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-reduced-motion: reduce)")
+        : null;
+    // Reduced-motion: no auto tour, manual selection still works.
+    if (mq?.matches) return;
+    if (paused) return;
+    const id = window.setInterval(() => goTo(activeRef.current + 1, false), LOOP_MS);
     return () => window.clearInterval(id);
-  }, []);
+  }, [paused]);
+
+  useEffect(
+    () => () => {
+      if (resumeTimer.current !== null) window.clearTimeout(resumeTimer.current);
+    },
+    [],
+  );
 
   // Static t() calls so i18n-usage can verify every key exists.
   const stages = [
@@ -77,37 +133,73 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
   ];
   const dod = [t("landing.hero.flow.approved"), t("landing.hero.flow.applied")];
 
-  const label = `${t("landing.hero.flow.taskId")} ${t("landing.hero.flow.taskTitle")}`;
+  const label = `${stages[activeIndex]}: ${content.titles[activeIndex]}`;
 
-  const cardLit = activeIndex === DEMO_STAGE_INDEX;
   const planApplied = activeIndex >= 5;
   const wikiLive = activeIndex === 6;
 
-  const pillClass = (active: boolean) =>
-    `inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors duration-300 ${
-      active
-        ? "bg-primary text-on-primary"
-        : "border border-border-strong bg-card text-foreground"
-    }`;
-  const pillMobileClass = (active: boolean) =>
-    `inline-flex items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-center text-[11px] font-semibold transition-colors duration-300 ${
+  const pillBase =
+    "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+  const pillTone = (active: boolean) =>
+    active
+      ? "bg-primary text-on-primary"
+      : "border border-border-strong bg-card text-foreground hover:border-primary/50";
+  const pillMobileTone = (active: boolean) =>
+    `inline-flex items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-center text-[11px] font-semibold transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
       active
         ? "bg-primary text-on-primary"
         : "border border-border-strong bg-card text-foreground"
     }`;
 
+  const pillClass = (active: boolean) => `${pillBase} ${pillTone(active)}`;
+
+  const onPillKeyDown = (e: React.KeyboardEvent, i: number) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      goTo(i + 1, true);
+      (e.currentTarget.parentElement?.children[(i + 1) % STAGE_COUNT] as HTMLElement | undefined)?.focus();
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      goTo(i - 1, true);
+      (e.currentTarget.parentElement?.children[(i - 1 + STAGE_COUNT) % STAGE_COUNT] as HTMLElement | undefined)?.focus();
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      goTo(0, true);
+      (e.currentTarget.parentElement?.children[0] as HTMLElement | undefined)?.focus();
+    } else if (e.key === "End") {
+      e.preventDefault();
+      goTo(STAGE_COUNT - 1, true);
+      (e.currentTarget.parentElement?.children[STAGE_COUNT - 1] as HTMLElement | undefined)?.focus();
+    }
+  };
+
   const renderPills = (mobile = false) => (
     <div
+      role="tablist"
+      aria-label={t("landing.hero.flow.aiPlan")}
       className={
         mobile
-          ? "mb-4 grid grid-cols-2 gap-1.5"
+          ? // 7 pills: the last one spans both columns and centers, so no
+            // half-width hole sits on the right (the reported mobile bug).
+            "mb-4 grid grid-cols-2 gap-1.5"
           : "mb-5 flex flex-wrap items-center justify-center gap-2"
       }
     >
       {stages.map((s, i) => {
         const active = i === activeIndex;
         return (
-          <span key={s} className={mobile ? pillMobileClass(active) : pillClass(active)}>
+          <button
+            key={s}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            tabIndex={active ? 0 : -1}
+            onClick={() => goTo(i, true)}
+            onKeyDown={(e) => onPillKeyDown(e, i)}
+            className={`${mobile ? pillMobileTone(active) : pillClass(active)}${
+              mobile && i === STAGE_COUNT - 1 ? " col-span-2 mx-auto w-1/2" : ""
+            }`}
+          >
             {active && (
               <span
                 className="size-1.5 shrink-0 rounded-full bg-on-primary animate-glow-pulse"
@@ -115,48 +207,53 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
               />
             )}
             {s}
-          </span>
+          </button>
         );
       })}
     </div>
   );
 
-  const renderTaskCard = () => (
-    <div
-      className={`flex flex-1 flex-col justify-center gap-2.5 rounded-xl border bg-card p-3.5 transition-shadow duration-300 ${
-        cardLit
-          ? "border-primary shadow-[0_0_0_2px_var(--color-primary),0_24px_60px_-24px_rgba(0,0,0,0.5)]"
-          : "border-border-strong shadow-[0_24px_60px_-24px_rgba(0,0,0,0.5)]"
-      }`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <span className="min-w-0 flex-1 truncate text-sm font-medium leading-snug text-foreground">
-          {t("landing.hero.flow.taskTitle")}
-        </span>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded bg-elevated px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
-          {t("landing.hero.flow.taskId")}
-          <Copy className="size-3" aria-hidden />
-        </span>
+  const renderTaskCard = () => {
+    const p = content.priorities[activeIndex];
+    return (
+      <div
+        key={`task-${activeIndex}`}
+        className="df-row-in flex flex-1 flex-col justify-center gap-2.5 rounded-xl border border-primary bg-card p-3.5 shadow-[0_0_0_2px_var(--color-primary),0_24px_60px_-24px_rgba(0,0,0,0.5)]"
+      >
+        <div className="flex items-start justify-between gap-2">
+          <span className="min-w-0 flex-1 truncate text-sm font-medium leading-snug text-foreground">
+            {content.titles[activeIndex]}
+          </span>
+          <span className="inline-flex shrink-0 items-center gap-1 rounded bg-elevated px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
+            {content.ids[activeIndex]}
+            <Copy className="size-3" aria-hidden />
+          </span>
+        </div>
+        <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          {t("landing.hero.flow.overview")}
+        </p>
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+            <span className={`size-1.5 rounded-full ${p.dot}`} aria-hidden />
+            {p.label}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary-strong">
+            <Hash className="size-3" aria-hidden />
+            {content.points[activeIndex]}
+          </span>
+          <span className="font-mono text-[11px] text-muted-foreground">
+            {content.dates[activeIndex]}
+          </span>
+          {content.dodMet[activeIndex] && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-500">
+              <Check className="size-3" aria-hidden />
+              {t("board.dodMet")}
+            </span>
+          )}
+        </div>
       </div>
-      <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-        {t("landing.hero.flow.overview")}
-      </p>
-      <div className="mt-2.5 flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
-          <span className="size-1.5 rounded-full bg-amber-300" aria-hidden />
-          {t("task.high")}
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary-strong">
-          <Hash className="size-3" aria-hidden />5
-        </span>
-        <span className="font-mono text-[11px] text-muted-foreground">Sep 28</span>
-        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-500">
-          <Check className="size-3" aria-hidden />
-          {t("board.dodMet")}
-        </span>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderDoneMini = (title: string) => (
     <div className="flex h-full flex-col justify-center rounded-xl border border-border bg-card px-3 py-2.5">
@@ -175,7 +272,10 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
   );
 
   const renderAiPlan = (withActions: boolean) => (
-    <div className="flex h-full flex-col rounded-xl border border-violet-400/25 bg-violet-400/5 p-3.5 animate-float-slow">
+    <div
+      key={`plan-${activeIndex}`}
+      className="df-row-in flex h-full flex-col rounded-xl border border-violet-400/25 bg-violet-400/5 p-3.5 animate-float-slow"
+    >
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-400">
           <Brain className="size-3.5" aria-hidden />
@@ -199,15 +299,10 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
       </p>
       <ol
         role="list"
-        key={loopCount}
         className="mb-2 list-inside list-decimal space-y-0.5 text-[11px] leading-snug text-muted-foreground"
       >
         {steps.map((s, i) => (
-          <li
-            key={s}
-            className="df-step-in"
-            style={{ animationDelay: `${i * 160}ms` }}
-          >
+          <li key={s} className="df-step-in" style={{ animationDelay: `${i * 160}ms` }}>
             {s}
           </li>
         ))}
@@ -243,9 +338,9 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
 
   const renderWiki = (full: boolean) => (
     <div
-      key={`wiki-${loopCount}`}
-      className={`mt-4 flex items-center gap-2 rounded-xl border bg-card px-3.5 py-2.5 text-left ${
-        wikiLive ? "df-row-in border-primary/50" : "border-border"
+      key={`wiki-${activeIndex}`}
+      className={`df-row-in mt-4 flex items-center gap-2 rounded-xl border bg-card px-3.5 py-2.5 text-left ${
+        wikiLive ? "border-primary/50" : "border-border"
       }`}
     >
       <BookOpen className="size-4 shrink-0 text-primary" aria-hidden />
@@ -268,38 +363,44 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
 
   return (
     <div className={className}>
-      <div role="img" aria-label={label} className="w-full">
-        {/* ─── Desktop ─── */}
-        <div className="hidden w-full md:block">
-          {renderPills()}
+      {/* ─── Desktop ─── */}
+      <div className="hidden w-full md:block">
+        {renderPills()}
 
-          <div className="grid grid-cols-2 items-stretch gap-4 text-left">
-            <div className="flex flex-col gap-3 self-stretch">
-              {renderTaskCard()}
-              <div className="grid flex-1 grid-cols-2 items-stretch gap-3">
-                {renderDoneMini(t("landing.mock.flows.card5"))}
-                {renderDoneMini(t("landing.mock.flows.card6"))}
-              </div>
-            </div>
-            {renderAiPlan(true)}
-          </div>
-
-          {renderWiki(true)}
-        </div>
-
-        {/* ─── Mobile (stacked) ─── */}
-        <div className="w-full md:hidden">
-          {renderPills(true)}
-
-          <div className="space-y-3 text-left">
+        <div
+          role="tabpanel"
+          aria-label={label}
+          className="grid grid-cols-2 items-stretch gap-4 text-left"
+        >
+          <div className="flex flex-col gap-3 self-stretch">
             {renderTaskCard()}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid flex-1 grid-cols-2 items-stretch gap-3">
               {renderDoneMini(t("landing.mock.flows.card5"))}
               {renderDoneMini(t("landing.mock.flows.card6"))}
             </div>
-            {renderAiPlan(false)}
-            {renderWiki(false)}
           </div>
+          {renderAiPlan(true)}
+        </div>
+
+        {renderWiki(true)}
+        <p className="mt-3 flex items-center justify-center gap-1 text-center font-mono text-[11px] text-muted-foreground">
+          {paused ? t("landing.hero.tourPaused") : t("landing.hero.tourHint")}
+          <ChevronRight className="size-3" aria-hidden />
+        </p>
+      </div>
+
+      {/* ─── Mobile (stacked) ─── */}
+      <div className="w-full md:hidden">
+        {renderPills(true)}
+
+        <div role="tabpanel" aria-label={label} className="space-y-3 text-left">
+          {renderTaskCard()}
+          <div className="grid grid-cols-2 gap-2">
+            {renderDoneMini(t("landing.mock.flows.card5"))}
+            {renderDoneMini(t("landing.mock.flows.card6"))}
+          </div>
+          {renderAiPlan(false)}
+          {renderWiki(false)}
         </div>
       </div>
     </div>
