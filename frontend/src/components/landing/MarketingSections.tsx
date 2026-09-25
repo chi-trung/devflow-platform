@@ -72,16 +72,23 @@ const CARD_ICONS = [BookOpen, KeyRound, Check, MessagesSquare];
 
 function DocCardGrid({ cards }: { cards: DocCard[] }) {
   const lang = useLang();
-  // 3-col on desktop so a 3-card section (community) fills one symmetric row;
-  // the 4-card docs section flows 3+1 instead of 2+2 with a hole on the right.
+  // Column count follows the card count so no row is left with holes: docs
+  // ships 4 cards (symmetric 2x2), community ships 3 (one symmetric row of 3
+  // on desktop). A single config orphaned one section either way (4 cards in
+  // 3-col leaves 3+1, 3 cards in 2-col leaves 2+1). With an odd count the last
+  // card also spans the full row on small screens instead of a half-width hole.
+  const threeCol = cards.length % 3 === 0;
+  const odd = cards.length % 2 === 1;
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div
+      className={`grid grid-cols-1 gap-4 sm:grid-cols-2${threeCol ? " lg:grid-cols-3" : ""}`}
+    >
       {cards.map((card, i) => {
         const Icon = CARD_ICONS[i % CARD_ICONS.length];
         return (
           <div
             key={card.title.en}
-            className="flex flex-col rounded-xl border border-border bg-card/60 p-6 transition-colors duration-200 last:sm:col-span-2 last:lg:col-span-1 hover:border-border-strong"
+            className={`flex flex-col rounded-xl border border-border bg-card/60 p-6 transition-colors duration-200 hover:border-border-strong${odd ? " last:sm:col-span-2" : ""}${threeCol ? " last:lg:col-span-1" : ""}`}
           >
             <span className="mb-4 inline-flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary-strong">
               <Icon className="size-5" aria-hidden />
