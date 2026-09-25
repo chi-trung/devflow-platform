@@ -388,6 +388,39 @@ body {
   animation: glow-pulse 2.4s ease-in-out infinite;
 }
 
+/* Living hero loop: AI plan steps cascade in with staggered delays
+   (each step sets its own animation-delay inline). Transform + opacity
+   only, so the loop never causes layout shift (LCP-safe). */
+@keyframes df-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.df-step-in {
+  animation: df-step-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Living hero loop: wiki row slides up when the loop reaches Done.
+   Same GPU-only rule as df-step-in above. */
+@keyframes df-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.df-row-in {
+  animation: df-row-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
