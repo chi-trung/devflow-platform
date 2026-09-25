@@ -56,6 +56,12 @@ coveragereport/
 !.env.example
 appsettings.*.local.json
 secrets.json
+# Machine-local compose tweaks (port conflicts, mounts) — never shared.
+docker-compose.override.yml
+# Local launcher that reads .env so secrets stay out of shell history.
+run-api.local.ps1
+# Log written by the local launcher.
+api-local.log
 
 # OS files
 .DS_Store

@@ -39,6 +39,12 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Database: Host=postgres;Port=5432;Database=${POSTGRES_DB:-devflow};Username=${POSTGRES_USER:-devflow};Password=${POSTGRES_PASSWORD:-devflow}
       ConnectionStrings__Redis: redis:6379
+      # Email verification. RESEND_API_KEY empty on purpose: with no provider
+      # the API logs the verification link instead of mailing it, which is
+      # what you want locally — paste it out of `docker compose logs api`.
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-DevFlow <noreply@resend.dev>}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "8080:8080"
     depends_on:

@@ -31,13 +31,53 @@ public sealed class AuthController(
 
         var userId = await sender.Send(command, cancellationToken);
 
-        return StatusCode(StatusCodes.Status201Created, new RegisterResponse(userId));
+        return StatusCode(
+            StatusCodes.Status201Created,
+            new RegisterResponse(userId, request.Email.Trim().ToLowerInvariant()));
+    }
+
+    /// <summary>
+    /// Exchanges a link token for a session. Anonymous by design: the token in
+    /// the link IS the credential, which is why this route sits under
+    /// /auth and picks up the 10-per-minute limit with its neighbours.
+    /// </summary>
+    [HttpPost("verify-email")]
+    [ProducesResponseType(typeof(Application.Features.Auth.Login.LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> VerifyEmail(
+        VerifyEmailRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new Application.Features.Auth.VerifyEmail.VerifyEmailCommand(request.Token);
+
+        var response = await sender.Send(command, cancellationToken);
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Always 202, whatever the address turns out to be — see the handler for
+    /// why a different response would be a vulnerability.
+    /// </summary>
+    [HttpPost("resend-verification")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResendVerification(
+        ResendVerificationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new Application.Features.Auth.ResendVerification.ResendVerificationCommand(request.Email);
+
+        await sender.Send(command, cancellationToken);
+
+        return Accepted();
     }
 
     [HttpPost("login")]
     [ProducesResponseType(typeof(Application.Features.Auth.Login.LoginResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Login(
         LoginRequest request,
         CancellationToken cancellationToken)

@@ -17,38 +17,29 @@ public class AuthAndWorkspaceIntegrationTests(DevFlowWebApplicationFactory facto
             return;
         }
 
+        // 1. Register
         var email = $"user_{Guid.NewGuid():N}@test.io";
         var username = $"u_{Guid.NewGuid():N}".Substring(0, 10);
         var password = "Sup3rSecret!";
 
-        // 1. Register
-        var registerResponse = await client.PostAsJsonAsync("/api/v1/auth/register", new
-        {
-            email,
-            username,
-            password,
-            displayName = "Test User"
-        });
+        var userId = await RegistrationFlow.RegisterAsync(
+            client, email, username, password, "Test User");
 
-        if (!registerResponse.IsSuccessStatusCode)
-        {
-            var errorBody = await registerResponse.Content.ReadAsStringAsync();
-            throw new Exception($"Register failed with {registerResponse.StatusCode}: {errorBody}");
-        }
+        // 2. Verify — a fresh account may not hold a session until the address
+        // is proven, so this step replaces the old direct login.
+        var accessToken = await RegistrationFlow.VerifyAsync(factory, client, userId);
+        Assert.False(string.IsNullOrEmpty(accessToken));
 
-        // 2. Login
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        // Signing in with a password works only once verified, which is what
+        // makes the gate above meaningful.
         var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new
         {
             email,
             password
         });
-
         Assert.True(loginResponse.IsSuccessStatusCode);
-        var loginBody = await loginResponse.Content.ReadFromJsonAsync<JsonElement>();
-        var accessToken = loginBody.GetProperty("accessToken").GetString();
-        Assert.False(string.IsNullOrEmpty(accessToken));
-
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         // 3. Create Workspace
         var wsResponse = await client.PostAsJsonAsync("/api/v1/workspaces", new

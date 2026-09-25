@@ -123,29 +123,7 @@ public class ReportingTenantAndOrderingIntegrationTests(DevFlowWebApplicationFac
 
     private async Task AuthenticateAsync()
     {
-        var email = $"rep_{Guid.NewGuid():N}@test.io";
-        var username = $"r_{Guid.NewGuid():N}".Substring(0, 10);
-        var password = "Sup3rSecret!";
-
-        var registerResponse = await client.PostAsJsonAsync("/api/v1/auth/register", new
-        {
-            email,
-            username,
-            password,
-            displayName = "Reporting Tester"
-        });
-        registerResponse.EnsureSuccessStatusCode();
-
-        var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new
-        {
-            email,
-            password
-        });
-        loginResponse.EnsureSuccessStatusCode();
-
-        var loginBody = await loginResponse.Content.ReadFromJsonAsync<JsonElement>();
-        var accessToken = loginBody.GetProperty("accessToken").GetString();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        await RegistrationFlow.AuthenticateAsync(factory, client, "Reporting Tester");
     }
 
     private async Task<(Guid WorkspaceId, Guid ProjectId)> CreateWorkspaceAndProjectAsync(string name)

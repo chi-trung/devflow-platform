@@ -113,15 +113,28 @@ public static class DependencyInjection
         services.AddHttpClient("Webhooks");
         if (!string.IsNullOrWhiteSpace(configuration["RESEND_API_KEY"]))
         {
-            services.AddHttpClient<IEmailService, ResendEmailService>();
+            // Explicit timeout: HttpClient otherwise waits 100 seconds, so a
+            // Resend outage would hold each caller's request open for over a
+            // minute and a minute and a half. 10s is well inside the budget
+            // the mail API itself needs, and the send is fire-and-forget
+            // anyway — the caller has already moved on.
+            services.AddHttpClient<IEmailService, ResendEmailService>(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(10);
+            });
         }
         else
         {
-            services.AddScoped<IEmailService, NoOpEmailService>();
+            // Not a no-op: registration is gated on a verification link, so
+            // without a mail provider the link is logged rather than dropped.
+            // See ConsoleLogEmailService.
+            services.AddScoped<IEmailService, ConsoleLogEmailService>();
         }
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ITokenProvider, JwtTokenProvider>();
+        services.AddSingleton<IEmailVerificationTokenProvider, EmailVerificationTokenProvider>();
+        services.AddScoped<IEmailVerificationLinkBuilder, EmailVerificationLinkBuilder>();
         services.AddScoped<IExternalIdentityProvider, GoogleIdentityProvider>();
         services.AddScoped<IExternalIdentityProvider, GitHubIdentityProvider>();
         services.AddHttpClient("OAuth");

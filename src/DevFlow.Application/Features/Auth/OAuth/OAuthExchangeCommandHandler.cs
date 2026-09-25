@@ -82,6 +82,14 @@ public sealed class OAuthExchangeCommandHandler(
             user.UpdateAvatarUrl(identity.AvatarUrl);
         }
 
+        // A Google/GitHub sign-in IS the proof of ownership that a password
+        // registration would need an emailed link for — the provider has
+        // already verified the address itself. So this branch skips the
+        // email-verification gate entirely. It also covers the person who
+        // registered by form, never clicked the link, and then signed in with
+        // the same address through OAuth.
+        user.MarkEmailVerified();
+
         // 3. Issue the normal DevFlow session tokens.
         var accessToken = tokenProvider.GenerateAccessToken(user);
         var refreshToken = RefreshToken.Create(

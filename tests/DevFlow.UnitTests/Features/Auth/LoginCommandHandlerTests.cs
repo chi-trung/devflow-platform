@@ -55,6 +55,9 @@ public class LoginCommandHandlerTests
     public async Task Handle_ShouldIssueTokens_WhenCredentialsAreValid()
     {
         var user = Domain.Entities.User.Create("dev@test.io", "devuser", "stored-hash", "Dev User");
+        // The verification gate has its own tests; this one is about token
+        // issuance, so the fixture starts from an already-verified account.
+        user.MarkEmailVerified();
         _userRepository.GetByEmailAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(user);
         _passwordHasher.Verify(Arg.Any<string>(), Arg.Any<string>()).Returns(true);

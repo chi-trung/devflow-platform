@@ -304,6 +304,23 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// Registration is gated on a verification link actually reaching the new
+// user, so a half-configured mail setup is a silent failure: the API answers
+// 201, the link goes nowhere, and the account sits unusable. Naming the
+// missing variables at boot turns that into something visible in the deploy
+// log instead of something a user reports.
+{
+    var missingEmailSettings = DevFlow.Infrastructure.Email.EmailVerificationLinkBuilder
+        .FindMissingConfiguration(app.Configuration);
+
+    if (missingEmailSettings.Count > 0)
+    {
+        app.Logger.LogWarning(
+            "Email verification is not fully configured. Missing: {MissingSettings}",
+            string.Join("; ", missingEmailSettings));
+    }
+}
+
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 app.UseSerilogRequestLogging();
