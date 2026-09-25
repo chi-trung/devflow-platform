@@ -5,6 +5,8 @@ import {
   BookOpen,
   Check,
   ChevronRight,
+  Circle,
+  CircleDot,
   Copy,
   Hash,
   Users,
@@ -25,11 +27,12 @@ import {
  *   avatars, echoing the real board.
  * - Approval: an approval gate card — checklist with real check states plus
  *   Apply / Regenerate actions.
- * - Ready: the stage's task card (key chip, priority dot + label,
- *   story-points chip, due date, DoD badge) with a glow ring, over a pair
- *   of Done minis so both columns end flush.
- * - In Progress: a split task + AI plan — the plan drafts live (Pending
- *   badge) with cascading steps and a Definition of Done.
+ * - Ready: a Pending AI plan beside the stage's task card (key chip, priority
+ *   dot + label, story-points chip, due date, DoD badge) over a pair of Done
+ *   minis — the same [scene | task + minis] shape every other stage uses.
+ * - In Progress: the same split, with the left column on a subtask breakdown
+ *   (counter, progress bar, done/doing/todo rows) instead of Done minis — the
+ *   stage has no finished pair yet, and a lone `flex-1` card left a hollow box.
  * - Review: the AI plan with an Applied badge and a weight-scored wiki row.
  * - Done: release + knowledge scene — a v1.2.0 release card with a progress
  *   bar and flow rows, plus the wiki row. Both Done minis stay visible so
@@ -194,6 +197,17 @@ function useStageContent() {
     t("landing.hero.flow.approved"),
     t("landing.hero.flow.applied"),
   ];
+  /**
+   * Stage 4's breakdown — the task card alone left the column a hollow box, so
+   * the scene shows the work behind it. Titles reuse existing strings and the
+   * 2/3 split stays honest: the strip shows every row, so the counter's total
+   * is the row count and the bar is the completed fraction of it.
+   */
+  const progressSubtasks: { title: string; state: "done" | "doing" | "todo" }[] = [
+    { title: t("landing.mock.kanban.card1"), state: "done" },
+    { title: t("landing.hero.flow.approved"), state: "done" },
+    { title: t("landing.mock.ai.discipline3"), state: "doing" },
+  ];
   const reviewSummary = t("landing.mock.ai.review");
   const reviewSteps = [
     t("landing.mock.ai.approved"),
@@ -210,7 +224,7 @@ function useStageContent() {
     stackTitles, stackIds, stackDots, stackLabels, stackPoints, stackDates,
     laneCards, laneIds, laneAvatars, gateSteps,
     releaseFlows, wiki, doneCards,
-    progressSummary, progressSteps, progressDod,
+    progressSummary, progressSteps, progressDod, progressSubtasks,
     reviewSummary, reviewSteps, reviewDod, overview,
   };
 }
@@ -439,6 +453,67 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
             {card.wiki}
           </span>
         </div>
+      </div>
+    );
+  };
+
+  /**
+   * Stage 4's work breakdown, under the task card. In Progress has no finished
+   * pair to show, so the column fills with the subtasks the card is being
+   * broken into instead of one tall empty box. Every row is listed, so the
+   * `subtask.progress` counter and the bar both read off the same array —
+   * there is nothing hidden behind the fraction.
+   */
+  const renderSubtaskStrip = () => {
+    const rows = content.progressSubtasks;
+    const doneCount = rows.filter((r) => r.state === "done").length;
+    const donePct = `${Math.round((doneCount / rows.length) * 100)}%`;
+    return (
+      <div
+        key={`subtasks-${activeIndex}`}
+        className="df-row-in flex min-h-0 flex-col justify-center gap-2 rounded-xl border border-border bg-card px-3.5 py-3"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("subtask.subtasks")}
+          </span>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {t("subtask.progress", { done: doneCount, total: rows.length })}
+          </span>
+        </div>
+        <div
+          className="h-1 overflow-hidden rounded-full bg-elevated"
+          role="img"
+          aria-label={t("subtask.progress", { done: doneCount, total: rows.length })}
+        >
+          <div className="df-step-in h-full rounded-full bg-primary" style={{ width: donePct }} aria-hidden />
+        </div>
+        <ul role="list" className="space-y-1">
+          {rows.map((row, i) => (
+            <li
+              key={row.title}
+              className="df-step-in flex items-center gap-1.5 text-[11px] leading-snug"
+              style={{ animationDelay: `${i * 140}ms` }}
+            >
+              {row.state === "done" ? (
+                <Check className="size-3 shrink-0 text-emerald-500" aria-hidden />
+              ) : row.state === "doing" ? (
+                <CircleDot className="size-3 shrink-0 text-primary" aria-hidden />
+              ) : (
+                <Circle className="size-3 shrink-0 text-muted-foreground/50" aria-hidden />
+              )}
+              <span
+                className={`min-w-0 flex-1 truncate ${
+                  row.state === "done"
+                    ? "text-muted-foreground line-through decoration-muted-foreground/40"
+                    : "text-foreground"
+                }`}
+              >
+                {row.title}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
     );
   };
@@ -697,29 +772,16 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
     </div>
   );
 
-  // Stage 3 Ready: task card + 2 Done minis (fills the left column flush).
-  // The task card centres and the mini grid takes a definite height instead of
-  // `flex-1`: the Ready content is ~215px in a 312px frame, so a flexible grid
-  // collapsed to its content and left a gap under it. Two fixed parts — a
-  // centred card and an 8rem row — end the column flush, which is what the
-  // `items-stretch` siblings on the right already do. Those two literals
-  // (19.5rem + 8rem + 12px gap) add up to the shared scene floor, so the
-  // min-h below is belt-and-braces and long locales (vi) can still grow.
-  const renderReadyScene = () => (
-    <div className="flex min-h-0 flex-col justify-center gap-3 md:min-h-[19.5rem]">
-      {renderTaskCard(false)}
-      <div className="grid h-32 grid-cols-2 items-stretch gap-3">
-        {renderDoneMini(0)}
-        {renderDoneMini(1)}
-      </div>
-    </div>
-  );
-
-  // Stage 4 In Progress: task + drafting AI plan side by side.
-  // Same min-h so it ends flush with every other scene.
+  // Stage 4 In Progress: the task card over its subtask breakdown, beside the
+  // drafting AI plan. The left column is two definite parts rather than one
+  // `flex-1` card, so the card hugs its content instead of stretching to 312px
+  // around ~120px of text (the hollow-box defect).
   const renderProgressScene = () => (
-    <div className="grid grid-cols-2 items-stretch gap-3 md:min-h-[19.5rem]">
-      <div className="flex flex-col">{renderTaskCard()}</div>
+    <div className="grid grid-cols-2 items-stretch gap-4 text-left md:min-h-[19.5rem]">
+      <div className="flex min-h-0 flex-col justify-center gap-3">
+        {renderTaskCard(false)}
+        {renderSubtaskStrip()}
+      </div>
       <div key={`plan-${activeIndex}`} className="df-row-in">
         {renderAiPlanCard(
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-500">
@@ -736,8 +798,14 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
   );
 
   // Stage 5 Review: applied AI plan + weight-scored wiki inside the panel.
+  // `justify-center` is what the shared rule above asks for — the AI plan card
+  // inside is `h-full`, so it stretches and the pair still ends flush; without
+  // it the wiki row drops to the floor and the column reads short.
   const renderReviewScene = (full: boolean) => (
-    <div key={`review-${activeIndex}`} className="df-row-in flex flex-col gap-2.5 md:min-h-[19.5rem]">
+    <div
+      key={`review-${activeIndex}`}
+      className="df-row-in flex flex-col justify-center gap-2.5 md:min-h-[19.5rem]"
+    >
       <div className="flex-none">
         {renderAiPlanCard(
           <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-primary-strong">
@@ -754,8 +822,15 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
   );
 
   // Stage 6 Done: release card + wiki, with Done minis staying visible.
+  // Nothing here stretches, so without `justify-center` the 203px of content
+  // pins to the top of the 312px column and leaves ~109px of dead space under
+  // it — the other half of "done thì không bằng tab bên kia". Centring splits
+  // the slack evenly against the wiki row, which is what the other six do.
   const renderDoneScene = (full: boolean) => (
-    <div key={`done-${activeIndex}`} className="df-row-in flex flex-col gap-2.5 md:min-h-[19.5rem]">
+    <div
+      key={`done-${activeIndex}`}
+      className="df-row-in flex flex-col justify-center gap-2.5 md:min-h-[19.5rem]"
+    >
       <div className="flex flex-none flex-col gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3.5">
         <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-500">
           <Rocket className="size-3.5" aria-hidden />
@@ -792,10 +867,14 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
   );
 
   // Desktop pairs every full-width scene with the Done minis so the right
-  // column never collapses — both columns end flush (the OCD rule).
+  // column never collapses — both columns end flush (the OCD rule). The floor
+  // rides on the grid, not just the scene: Ready hands us a bare AI plan with
+  // no `md:min-h` of its own, and without it here the tour drops 40px on that
+  // one stage. `flex-1` on the mini grid is what shares the height with the
+  // task card above it — do not "simplify" it away.
   const renderSceneWithMinis = (scene: React.ReactNode) => (
-    <div className="grid grid-cols-2 items-stretch gap-4 text-left">
-      <div className="flex flex-col self-stretch">{scene}</div>
+    <div className="grid grid-cols-2 items-stretch gap-4 text-left md:min-h-[19.5rem]">
+      <div className="flex min-h-0 flex-col self-stretch">{scene}</div>
       <div className="flex flex-col gap-3 self-stretch">
         {renderTaskCard()}
         <div className="grid flex-1 grid-cols-2 items-stretch gap-3">
@@ -819,49 +898,24 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
               : renderApprovalScene(true),
         );
       case 3:
-        return (
-          <div className="grid grid-cols-2 items-stretch gap-4 text-left">
-            {renderReadyScene()}
-            <div key={`plan-${activeIndex}`} className="df-row-in">
-              {renderAiPlanCard(
-                <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-500">
-                  {t("ai.pending")}
-                </span>,
-                content.progressSummary,
-                content.progressSteps,
-                content.progressDod,
-                true,
-              )}
-            </div>
-          </div>
+        return renderSceneWithMinis(
+          <div key={`plan-${activeIndex}`} className="df-row-in">
+            {renderAiPlanCard(
+              <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-500">
+                {t("ai.pending")}
+              </span>,
+              content.progressSummary,
+              content.progressSteps,
+              content.progressDod,
+              true,
+            )}
+          </div>,
         );
       case 4:
         return renderProgressScene();
-      case 5:
-        return (
-          <div className="grid grid-cols-2 items-stretch gap-4 text-left">
-            {renderReviewScene(true)}
-            <div className="flex flex-col gap-3 self-stretch">
-              {renderTaskCard()}
-              <div className="grid flex-1 grid-cols-2 items-stretch gap-3">
-                {renderDoneMini(0)}
-                {renderDoneMini(1)}
-              </div>
-            </div>
-          </div>
-        );
       default:
-        return (
-          <div className="grid grid-cols-2 items-stretch gap-4 text-left">
-            {renderDoneScene(true)}
-            <div className="flex flex-col gap-3 self-stretch">
-              {renderTaskCard()}
-              <div className="grid flex-1 grid-cols-2 items-stretch gap-3">
-                {renderDoneMini(0)}
-                {renderDoneMini(1)}
-              </div>
-            </div>
-          </div>
+        return renderSceneWithMinis(
+          activeIndex === 5 ? renderReviewScene(true) : renderDoneScene(true),
         );
     }
   };
@@ -888,6 +942,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
         return (
           <div className="space-y-3">
             {renderTaskCard()}
+            {renderSubtaskStrip()}
             <div key={`plan-${activeIndex}`} className="df-row-in">
               {renderAiPlanCard(
                 <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-500">
@@ -914,7 +969,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
       <div className="hidden w-full md:block">
         {renderPills()}
 
-        <div role="tabpanel" aria-label={label}>
+        <div role="tabpanel" aria-label={label} className="text-left">
           {renderDesktopPanel()}
         </div>
 
