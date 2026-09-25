@@ -13,13 +13,28 @@ import type { TaskItemResponse } from "../../types/api";
  * from the product board. Column chrome, TaskCard fields, priority dots and DoD
  * badges all come from the real code.
  *
- * The panel is ~835px wide at `lg` (58% of 1440) but ~658px after the frame
+ * The panel is ~835px wide at `lg` (58% of 1440) but ~700px after the frame
  * padding, which fits exactly two columns at the 260px min-width floor and
  * nothing more — a third column needs ~100px that isn't there, and squeezing
- * TaskCard below 250px wraps every meta chip onto its own line. Three and two
- * tasks respectively keep both columns the same height, so neither ends in a
- * hollow 288px box, the exact "ô to đùng trống lỗng" this redesign exists to
- * remove.
+ * TaskCard below 250px wraps every meta chip onto its own line. In Progress
+ * carries three tasks and Done two, so the taller column sets the height and
+ * Done ends ~85px short of its own box. That tail is deliberate and left in
+ * place: equal-height columns are what a kanban board looks like, and the only
+ * way to close the gap is a third Done task, which costs ~85px of scene height.
+ * At 1280x720 the panel has 655px for 548px of content, so that task would
+ * leave ~11px of slack — the void it removes is worth less than the scrollbar
+ * it risks on a short viewport, which is the whole reason this page exists.
+ *
+ * Sized to FIT, never to scroll. The whole panel has to live inside the
+ * viewport minus the 64px header with no vertical scrollbar, and the split
+ * gives the form side roughly 500px of unused height — so the scene carries
+ * only what does not already appear elsewhere on the page:
+ *   - the count chips row is gone, it repeated the column headers verbatim
+ *     ("In Progress 3" / "Done 2") for 40px of height;
+ *   - the AI Planner and ADR tiles are one line each, side by side, instead of
+ *     a 3-item checklist above a 100px tile. Two tiles with identical padding
+ *     and `items-center` are the same height by construction, which is what
+ *     the old percentage `basis` split was trying and failing to achieve.
  *
  * Every string comes from EXISTING i18n values (landing.mock.flows,
  * landing.hero.flow, board.*, dashboard.*, ai.*, knowledge.*) — no new keys,
@@ -57,7 +72,6 @@ const FIXTURES: Fixture[] = [
 // which is where the component actually looks like itself. Render order is
 // board order, not fixture order, and Done closes the row as the payoff.
 const ORDER: TaskItemResponse["status"][] = ["InProgress", "Done"];
-
 export function AuthScene({ className = "" }: { className?: string }) {
   const { t } = useTranslation();
 
@@ -95,39 +109,25 @@ export function AuthScene({ className = "" }: { className?: string }) {
     Done: t("board.done"),
   };
 
-  const inProgress = (byStatus.get("InProgress") ?? []).length;
-  const doneCount = (byStatus.get("Done") ?? []).length;
-  const planSteps = [
-    t("landing.hero.flow.checklistTitle"),
-    t("landing.hero.flow.checklistPassed"),
-    t("landing.hero.flow.version"),
-  ];
-
   return (
     <BrowserFrame className={className}>
       <div aria-hidden="true" className="[&_a]:pointer-events-none [&_button]:pointer-events-none">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="rounded-lg border border-border bg-surface px-2.5 py-1 font-mono text-[11px] text-muted-foreground">
-            {t("dashboard.inProgress")}: {inProgress}
-          </span>
-          <span className="rounded-lg border border-border bg-surface px-2.5 py-1 font-mono text-[11px] text-muted-foreground">
-            {t("dashboard.completed")}: {doneCount}
-          </span>
-          <span className="ml-auto hidden items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1 font-mono text-[11px] font-semibold text-primary-strong sm:inline-flex">
-            {t("ai.applied")}
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-stretch">
+        {/* `grid-cols-2` with `minmax(0, 1fr)`, NOT a `flex-wrap` row with a
+            `min-w` floor. Measured: at 1024px the aside is 594px and the
+            scene's inner width is 503px, which is 7px less than the 2x260px
+            floors plus the 10px gap — so both columns wrapped onto a second
+            line, the row doubled from 302px to 600px, and the panel then
+            overflowed its 735px column by 80px. Two grid tracks always fit,
+            and `minmax(0, 1fr)` lets them shrink below their content instead
+            of pushing the row over a line. `lg:min-w-[260px]` is the floor
+            TaskCard wants; grid ignores it while the container is narrower.
+            That is safe only because TaskCard's meta row is `flex-wrap` with
+            `whitespace-nowrap` chips (see TaskCard) — a squeezed chip breaking
+            its own text onto two lines looked like a broken card at 1024px,
+            and letting the row step to a second line did not. */}
+        <div className="grid grid-cols-2 items-stretch gap-2.5">
           {ORDER.map((status) => (
-            // No `basis` here on purpose: the row is `flex-wrap`, so a
-            // percentage basis that fails to account for BOTH gaps pushes a
-            // column onto a second line and doubles the row's height. The
-            // `min-w` floor is the wrap guard and `flex-1` shares the rest.
-            <div
-              key={status}
-              className="flex min-w-0 flex-1 flex-col sm:min-w-[260px] [&>section]:h-full"
-            >
+            <div key={status} className="flex min-w-0 flex-col [&>section]:h-full lg:min-w-[260px]">
               <Column
                 title={titles[status]}
                 status={status}
@@ -143,28 +143,22 @@ export function AuthScene({ className = "" }: { className?: string }) {
           ))}
         </div>
 
-        <div className="mt-3 flex flex-col gap-2.5 sm:flex-row sm:items-stretch">
-          <div className="min-w-0 flex-1 rounded-xl border border-violet-400/25 bg-violet-400/5 p-3 sm:min-w-[300px]">
-            <div className="mb-1.5 flex items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-400">
-                <Brain className="size-3.5" aria-hidden />
-                {t("landing.hero.flow.aiPlan")}
-              </span>
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-primary-strong">
-                {t("ai.applied")}
-              </span>
-            </div>
-            <ol
-              role="list"
-              className="list-inside list-decimal space-y-0.5 text-[11px] leading-snug text-muted-foreground"
-            >
-              {planSteps.map((s) => (
-                <li key={s}>{s}</li>
-              ))}
-            </ol>
+        <div className="mt-3 grid grid-cols-2 items-stretch gap-2.5">
+          {/* Both tiles are one line with the same `py`, so they are the same
+              height by construction — the old 3-item checklist over a `basis`
+              split gave the ADR tile a 100px box with a single centred line
+              in it. */}
+          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-violet-400/25 bg-violet-400/5 px-3 py-2.5">
+            <Brain className="size-4 shrink-0 text-violet-400" aria-hidden />
+            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-violet-400">
+              {t("landing.hero.flow.aiPlan")}
+            </span>
+            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-primary-strong">
+              {t("ai.applied")}
+            </span>
           </div>
 
-          <div className="flex min-w-0 flex-1 items-center gap-2 self-stretch rounded-xl border border-border bg-surface px-3 py-2.5 sm:basis-[calc(40%-0.3125rem)]">
+          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5">
             <BookOpen className="size-4 shrink-0 text-primary" aria-hidden />
             <span className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground">
               ADR-127: No client cache

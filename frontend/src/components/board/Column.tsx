@@ -256,7 +256,7 @@ export const Column = memo(function Column({
           {tasks.length}
         </span>
         {tasks.some((t) => t.storyPoints != null) && (
-          <span className="rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary-strong">
+          <span className="whitespace-nowrap rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary-strong">
             {tasks.reduce((sum, t) => sum + (t.storyPoints ?? 0), 0)} pts
           </span>
         )}
