@@ -183,7 +183,9 @@
     "overview": "Token rotation, silent refresh on 401, retry with backoff.",
     "aiPlanDesc": "Drafted from ADR-127 (backend-persist): rotate refresh tokens, refresh silently on 401, retry with backoff.",
     "applied": "Old tokens invalidated after rotation"
-   }
+   },
+   "tourHint": "Click a stage to tour the board",
+   "tourPaused": "Paused — tour resumes shortly"
   },
   "intel": {
    "eyebrow": "THE INTELLIGENCE",

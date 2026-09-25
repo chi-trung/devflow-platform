@@ -183,7 +183,9 @@
     "overview": "Xoay token, refresh ngầm khi 401, thử lại với backoff.",
     "aiPlanDesc": "Soạn từ ADR-127 (backend-persist): xoay refresh token, refresh ngầm khi 401, thử lại với backoff.",
     "applied": "Token cũ bị vô hiệu sau khi xoay"
-   }
+   },
+   "tourHint": "Bấm một giai đoạn để xem board",
+   "tourPaused": "Đã tạm dừng — tour tiếp tục ngay"
   },
   "intel": {
    "eyebrow": "TRÍ TUỆ TÍCH LŨY",

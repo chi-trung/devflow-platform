@@ -7,7 +7,7 @@ import { Button } from "../components/ui/Button";
 import { HeroFlowDiagram } from "../components/landing/HeroFlowDiagram";
 import { IntelligenceSection } from "../components/landing/IntelligenceSection";
 import { FeatureBrowserFrame } from "../components/landing/FeatureBrowserFrame";
-import { ScreenshotShowcase } from "../components/landing/ScreenshotShowcase";
+import { LiveBoardShowcase } from "../components/landing/LiveBoardShowcase";
 import {
   PricingSection,
   DocsSection,
@@ -53,7 +53,7 @@ export function LandingPage() {
             applicationCategory: "ProjectManagementApplication",
             operatingSystem: "Web",
             url: "https://devflow-platform-kappa.vercel.app/",
-            image: "https://devflow-platform-kappa.vercel.app/landing-opt.png",
+            image: "https://devflow-platform-kappa.vercel.app/landing.webp",
             offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
           }),
         }}
@@ -98,8 +98,8 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* ─── Dashboard screenshot ─── */}
-        <ScreenshotShowcase />
+        {/* ─── Live board (real components, no screenshot) ─── */}
+        <LiveBoardShowcase />
 
         {/* ─── How it works ─── */}
         <section className="border-b border-border py-20 sm:py-28">
