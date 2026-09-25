@@ -161,7 +161,9 @@ export function DemoBoardPage() {
       </main>
 
       {/* AI plan + wiki panels fill the lower part of the screenshot frame. */}
-      <div className="grid shrink-0 grid-cols-2 items-start gap-4 px-6 pb-5 text-left">
+      {/* items-stretch so the single-row wiki panel fills the AI panel's
+          height — items-start left a black hole under it in the screenshot. */}
+      <div className="grid shrink-0 grid-cols-2 items-stretch gap-4 px-6 pb-5 text-left">
         <div className="rounded-xl border border-violet-400/25 bg-violet-400/5 p-3.5">
           <div className="mb-2 flex items-center justify-between gap-2">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-400">
@@ -185,7 +187,7 @@ export function DemoBoardPage() {
           </ol>
         </div>
 
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2.5">
+        <div className="flex items-center gap-2 self-stretch rounded-xl border border-border bg-card px-3.5 py-2.5">
           <BookOpen className="size-4 shrink-0 text-primary" aria-hidden />
           <span className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground">
             ADR-127: No client cache

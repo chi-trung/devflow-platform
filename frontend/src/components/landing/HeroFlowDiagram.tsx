@@ -123,7 +123,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
 
   const renderTaskCard = () => (
     <div
-      className={`flex flex-col gap-2.5 rounded-xl border bg-card p-3.5 transition-shadow duration-300 ${
+      className={`flex flex-1 flex-col justify-center gap-2.5 rounded-xl border bg-card p-3.5 transition-shadow duration-300 ${
         cardLit
           ? "border-primary shadow-[0_0_0_2px_var(--color-primary),0_24px_60px_-24px_rgba(0,0,0,0.5)]"
           : "border-border-strong shadow-[0_24px_60px_-24px_rgba(0,0,0,0.5)]"
@@ -159,7 +159,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
   );
 
   const renderDoneMini = (title: string) => (
-    <div className="flex flex-col justify-center rounded-xl border border-border bg-card px-3 py-2.5">
+    <div className="flex h-full flex-col justify-center rounded-xl border border-border bg-card px-3 py-2.5">
       <div className="flex min-w-0 items-center gap-1.5">
         <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
           <Check className="size-2.5 text-emerald-500" aria-hidden />
@@ -274,11 +274,11 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
           {renderPills()}
 
           <div className="grid grid-cols-2 items-stretch gap-4 text-left">
-            <div className="flex min-h-full flex-col gap-3">
+            <div className="flex flex-col gap-3 self-stretch">
               {renderTaskCard()}
               <div className="grid flex-1 grid-cols-2 items-stretch gap-3">
-                <div className="flex min-h-full flex-col">{renderDoneMini(t("landing.mock.flows.card5"))}</div>
-                <div className="flex min-h-full flex-col">{renderDoneMini(t("landing.mock.flows.card6"))}</div>
+                {renderDoneMini(t("landing.mock.flows.card5"))}
+                {renderDoneMini(t("landing.mock.flows.card6"))}
               </div>
             </div>
             {renderAiPlan(true)}
