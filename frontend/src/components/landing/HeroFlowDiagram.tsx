@@ -3,22 +3,22 @@ import { useTranslation } from "react-i18next";
 import { Brain, BookOpen, Check, Copy, Hash } from "lucide-react";
 
 /**
- * Living board loop — mirrors the real product instead of a generic
- * pipeline sketch:
+ * Living board loop — balanced two-column board mirroring the real product:
  * - 7 stage pills with the REAL board names (landing.stages.*: Idea,
  *   Planning, Approval, Ready, In Progress, Review, Done) lighting up in
  *   sequence via a ~1700ms interval over activeIndex 0..6.
- * - ONE task card with real TaskCard fields (key chip with copy
- *   affordance, priority dot + label, story-points chip, due date, DoD
- *   badge) that gains a glow ring when the loop reaches its stage
- *   (In Progress, index 4).
- * - An AI plan block shaped like AiPlanPanel output (summary + Steps list +
- *   Definition of Done bullets). Steps cascade with staggered
+ * - Left column: the In Progress task card (key chip with copy affordance,
+ *   priority dot + label, story-points chip, due date, DoD badge, glow ring
+ *   at index 4) plus a pair of small Done cards so the column matches the
+ *   AI panel height.
+ * - Right column: AI plan shaped like AiPlanPanel output (summary + Steps +
+ *   Definition of Done + Apply / Regenerate). Steps cascade with staggered
  *   animation-delay; the Pending badge swaps to Applied styling at cycle
  *   end (activeIndex >= 5).
  * - A wiki entry row with a real KnowledgeEntryCard status badge (Accepted)
  *   and a real `w {weight}` weight chip that slides up at activeIndex 6.
  *
+ * No mouse tilt: the board stays flat, only the loop animates.
  * Decorative (role="img"): every inner element is a non-focusable span/div so
  * the img role stays valid. Theme-aware via design tokens. Motion is
  * transform+opacity only (GPU, no LCP layout shift): animate-float-slow /
@@ -38,8 +38,6 @@ const LOOP_MS = 1700;
 
 export function HeroFlowDiagram({ className = "" }: { className?: string }) {
   const { t } = useTranslation();
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
   const [activeIndex, setActiveIndex] = useState(DEMO_STAGE_INDEX);
   const [loopCount, setLoopCount] = useState(0);
   const activeRef = useRef(DEMO_STAGE_INDEX);
@@ -60,30 +58,6 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
     }, LOOP_MS);
     return () => window.clearInterval(id);
   }, []);
-
-  function handleMove(e: React.MouseEvent<HTMLDivElement>) {
-    if (
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      return;
-    }
-    const el = wrapRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    if (r.width === 0 || r.height === 0) return;
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    setTilt({
-      rx: Math.max(-6, Math.min(6, -py * 12)),
-      ry: Math.max(-6, Math.min(6, px * 12)),
-    });
-  }
-
-  function handleLeave() {
-    setTilt({ rx: 0, ry: 0 });
-  }
 
   // Static t() calls so i18n-usage can verify every key exists.
   const stages = [
@@ -184,8 +158,24 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
     </div>
   );
 
+  const renderDoneMini = (title: string) => (
+    <div className="rounded-xl border border-border bg-card px-3 py-2.5">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
+          <Check className="size-2.5 text-emerald-500" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1 truncate text-[11px] font-medium leading-snug text-muted-foreground">
+          {title}
+        </span>
+      </div>
+      <span className="mt-1.5 inline-flex rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary-strong">
+        {t("landing.stages.done")}
+      </span>
+    </div>
+  );
+
   const renderAiPlan = (withActions: boolean) => (
-    <div className="rounded-xl border border-violet-400/25 bg-violet-400/5 p-3.5 animate-float-slow">
+    <div className="flex h-full flex-col rounded-xl border border-violet-400/25 bg-violet-400/5 p-3.5 animate-float-slow">
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-400">
           <Brain className="size-3.5" aria-hidden />
@@ -201,7 +191,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
           </span>
         )}
       </div>
-      <p className="mb-2 text-xs leading-relaxed text-foreground">
+      <p className="mb-2 line-clamp-2 text-xs leading-relaxed text-foreground">
         {t("landing.hero.flow.aiPlanDesc")}
       </p>
       <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -239,7 +229,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
         ))}
       </ul>
       {withActions && (
-        <div className="mt-2.5 flex items-center gap-2">
+        <div className="mt-auto flex items-center gap-2 pt-2.5">
           <span className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-semibold text-on-primary">
             {t("ai.applyPlan")}
           </span>
@@ -277,29 +267,20 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
   );
 
   return (
-    <div
-      ref={wrapRef}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      style={{ perspective: "1200px" }}
-      className={className}
-    >
-      <div
-        role="img"
-        aria-label={label}
-        style={{
-          transform: `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
-          transition: tilt.rx === 0 && tilt.ry === 0 ? "transform 0.25s ease-out" : undefined,
-          transformStyle: "preserve-3d",
-        }}
-        className="w-full"
-      >
+    <div className={className}>
+      <div role="img" aria-label={label} className="w-full">
         {/* ─── Desktop ─── */}
         <div className="hidden w-full md:block">
           {renderPills()}
 
-          <div className="grid grid-cols-2 items-start gap-4 text-left">
-            {renderTaskCard()}
+          <div className="grid grid-cols-2 items-stretch gap-4 text-left">
+            <div className="flex h-full flex-col gap-3">
+              {renderTaskCard()}
+              <div className="grid grid-cols-2 gap-3">
+                {renderDoneMini(t("landing.mock.flows.card5"))}
+                {renderDoneMini(t("landing.mock.flows.card6"))}
+              </div>
+            </div>
             {renderAiPlan(true)}
           </div>
 
@@ -312,6 +293,10 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
 
           <div className="space-y-3 text-left">
             {renderTaskCard()}
+            <div className="grid grid-cols-2 gap-2">
+              {renderDoneMini(t("landing.mock.flows.card5"))}
+              {renderDoneMini(t("landing.mock.flows.card6"))}
+            </div>
             {renderAiPlan(false)}
             {renderWiki(false)}
           </div>
