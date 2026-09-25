@@ -82,32 +82,17 @@ export function LandingPage() {
             <p className="mb-4 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary">
               {t("landing.heroEyebrow")}
             </p>
-            <h1 className="mx-auto mb-4 max-w-4xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="mx-auto mb-4 max-w-4xl text-balance font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
               {t("landing.heroTitle")}
             </h1>
             <p className="mx-auto mb-8 max-w-2xl text-base text-muted-foreground sm:text-lg">
               {t("landing.heroSubtitle")}
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link to="/register" className="sm:whitespace-nowrap">
-                <Button size="md" className="gap-2 px-5 py-2.5 text-sm sm:px-6 sm:text-base">
-                  {t("landing.ctaStart")}
-                  <ArrowRight className="size-4" aria-hidden />
-                </Button>
-              </Link>
-              <Link to="/login" className="sm:whitespace-nowrap">
-                <Button
-                  variant="outline"
-                  size="md"
-                  className="px-5 py-2.5 text-sm sm:px-6 sm:text-base"
-                >
-                  {t("landing.ctaViewLogin")}
-                </Button>
-              </Link>
-            </div>
-
+            {/* No CTA row here: the sticky nav already carries Log in /
+                Get started free, and the bottom CTA section closes the page.
+                A duplicate button pair under the subtitle added noise. */}
             {/* Animated flow diagram (desktop + mobile SVGs) */}
-            <div className="mx-auto mt-14 max-w-4xl px-0 overflow-visible">
+            <div className="mx-auto mt-10 max-w-4xl px-0 overflow-visible">
               <HeroFlowDiagram className="mx-auto" />
             </div>
           </div>
