@@ -73,6 +73,46 @@ public sealed class AuthController(
         return Accepted();
     }
 
+    /// <summary>
+    /// Starts a password reset. Always 202, for the same reason as
+    /// resend-verification: a response that differed for a registered address
+    /// would turn this into an account-enumeration oracle.
+    /// </summary>
+    [HttpPost("forgot-password")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ForgotPassword(
+        ForgotPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new Application.Features.Auth.ForgotPassword.ForgotPasswordCommand(request.Email);
+
+        await sender.Send(command, cancellationToken);
+
+        return Accepted();
+    }
+
+    /// <summary>
+    /// Redeems a reset link. A spent, expired or forged token is a 400
+    /// carrying one generic message — never a session, and never a hint about
+    /// which part of the token was wrong.
+    /// </summary>
+    [HttpPost("reset-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResetPassword(
+        ResetPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new Application.Features.Auth.ResetPassword.ResetPasswordCommand(
+            request.Token,
+            request.NewPassword);
+
+        await sender.Send(command, cancellationToken);
+
+        return Ok();
+    }
+
     [HttpPost("login")]
     [ProducesResponseType(typeof(Application.Features.Auth.Login.LoginResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

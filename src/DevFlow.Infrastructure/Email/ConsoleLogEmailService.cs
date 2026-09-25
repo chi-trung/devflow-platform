@@ -8,9 +8,10 @@ namespace DevFlow.Infrastructure.Email;
 /// deployment that has not set one up yet.
 ///
 /// It is NOT a silent no-op. Registration now depends on a verification link
-/// actually reaching the new user, so dropping the link on the floor would
-/// strand every account created here. The link is written to the log instead,
-/// which is what makes the whole flow testable without a mail provider.
+/// actually reaching the new user, and a lost account is now recoverable
+/// through a reset link — so dropping either on the floor would strand people.
+/// Both links are written to the log instead, which is what makes the whole
+/// flow testable without a mail provider.
 ///
 /// The other eight emails stay quiet: they are notifications, the account
 /// already exists, and nobody is blocked by their absence.
@@ -29,6 +30,22 @@ public sealed class ConsoleLogEmailService(ILogger<ConsoleLogEmailService> logge
             toEmail,
             displayName,
             verificationUrl);
+
+        return Task.CompletedTask;
+    }
+
+    public Task SendPasswordResetAsync(
+        string toEmail, string displayName, string resetUrl)
+    {
+        logger.LogWarning(
+            "PASSWORD RESET (no RESEND_API_KEY configured — link below was NOT sent).\n" +
+            "  To:      {ToEmail}\n" +
+            "  Name:    {DisplayName}\n" +
+            "  Link:    {ResetUrl}\n" +
+            "  Expires: in 30 minutes, single use",
+            toEmail,
+            displayName,
+            resetUrl);
 
         return Task.CompletedTask;
     }

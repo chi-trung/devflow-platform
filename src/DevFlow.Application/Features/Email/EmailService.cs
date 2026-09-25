@@ -13,6 +13,18 @@ public interface IEmailService
         string displayName,
         string verificationUrl);
 
+    /// <summary>
+    /// Delivers the one-shot link that lets the recipient choose a new
+    /// password. Like the verification link this is on the critical path of
+    /// getting into the account, so a local run logs it rather than dropping
+    /// it. If the mail never arrives, the address is unreachable and the
+    /// account is not.
+    /// </summary>
+    Task SendPasswordResetAsync(
+        string toEmail,
+        string displayName,
+        string resetUrl);
+
     Task SendTaskAssignedEmailAsync(
         string toEmail,
         string taskTitle,
@@ -84,6 +96,12 @@ public class NoOpEmailService : IEmailService
 {
     public Task SendEmailVerificationAsync(
         string toEmail, string displayName, string verificationUrl)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task SendPasswordResetAsync(
+        string toEmail, string displayName, string resetUrl)
     {
         return Task.CompletedTask;
     }

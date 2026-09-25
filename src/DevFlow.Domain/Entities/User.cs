@@ -46,6 +46,12 @@ public class User : BaseEntity, IAuditableEntity
     public DateTimeOffset? EmailVerificationSentAtUtc { get; private set; }
 
     /// <summary>
+    /// When the last password reset link was generated. Throttle only — the
+    /// tokens themselves live in the <c>password_reset_tokens</c> table.
+    /// </summary>
+    public DateTimeOffset? PasswordResetSentAtUtc { get; private set; }
+
+    /// <summary>
     /// An unverified account may not hold a session. Every token-issuing path
     /// (login, refresh, OAuth exchange) checks this, so an unverified user
     /// never has a token in the first place.
@@ -132,6 +138,26 @@ public class User : BaseEntity, IAuditableEntity
         }
 
         EmailVerificationSentAtUtc = now;
+        return true;
+    }
+
+    /// <summary>
+    /// Records that a password reset link was just generated. Same cooldown
+    /// idea as <see cref="TryRecordVerificationSent"/> but separate, because
+    /// the two senders must not steal each other's throttle: a user waiting on
+    /// a reset link and then asking for a verification link should get both,
+    /// not be told to wait a minute for one that was never sent.
+    /// </summary>
+    public bool TryRecordPasswordResetSent(TimeSpan cooldown, DateTimeOffset? nowUtc = null)
+    {
+        var now = nowUtc ?? DateTimeOffset.UtcNow;
+
+        if (PasswordResetSentAtUtc is not null && now - PasswordResetSentAtUtc.Value < cooldown)
+        {
+            return false;
+        }
+
+        PasswordResetSentAtUtc = now;
         return true;
     }
 

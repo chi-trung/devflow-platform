@@ -40,5 +40,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(user => user.EmailVerifiedAtUtc);
 
         builder.Property(user => user.EmailVerificationSentAtUtc);
+
+        builder.Property(user => user.PasswordResetSentAtUtc);
     }
 }

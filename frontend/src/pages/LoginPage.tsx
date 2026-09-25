@@ -110,6 +110,15 @@ export function LoginPage() {
           />
         </Field>
 
+        {/* Without this the page has no way out of a forgotten password, and
+            the recovery route would be reachable only by typing the URL. */}
+        <Link
+          to="/forgot-password"
+          className="-mt-1 self-end text-xs font-medium text-muted-foreground transition-colors duration-150 hover:text-primary"
+        >
+          {t("auth.forgotPassword")}
+        </Link>
+
         <Button type="submit" disabled={submitting}>
           {submitting ? t("auth.signingIn") : t("auth.signIn")}
         </Button>

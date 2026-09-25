@@ -103,6 +103,7 @@ public static class DependencyInjection
         services.AddScoped<ITaskWatcherRepository, TaskWatcherRepository>();
         services.AddScoped<INotificationPreferencesRepository, NotificationPreferencesRepository>();
         services.AddScoped<IPersonalAccessTokenRepository, PersonalAccessTokenRepository>();
+        services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
         services.AddScoped<ISocialLoginRepository, SocialLoginRepository>();
         services.AddScoped<IWebhookDispatcher, WebhookDispatcher>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
@@ -135,6 +136,8 @@ public static class DependencyInjection
         services.AddScoped<ITokenProvider, JwtTokenProvider>();
         services.AddSingleton<IEmailVerificationTokenProvider, EmailVerificationTokenProvider>();
         services.AddScoped<IEmailVerificationLinkBuilder, EmailVerificationLinkBuilder>();
+        services.AddSingleton<IPasswordResetTokenGenerator, PasswordResetTokenGenerator>();
+        services.AddScoped<IPasswordResetLinkBuilder, PasswordResetLinkBuilder>();
         services.AddScoped<IExternalIdentityProvider, GoogleIdentityProvider>();
         services.AddScoped<IExternalIdentityProvider, GitHubIdentityProvider>();
         services.AddHttpClient("OAuth");

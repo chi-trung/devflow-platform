@@ -53,6 +53,29 @@ public sealed class ResendEmailService(
                 appUrl: AppUrl));
     }
 
+    public Task SendPasswordResetAsync(
+        string toEmail, string displayName, string resetUrl)
+    {
+        return SendEmailAsync(
+            toEmail,
+            "Reset your DevFlow password",
+            EmailLayout.Render(
+                preheader: $"A password reset was requested for your {Strong(displayName)} account.",
+                body: string.Join(
+                    string.Empty,
+                    Heading("Reset your password"),
+                    Paragraph(
+                        "Someone asked to reset the password for this account. " +
+                        "If it was you, choose a new one with the button below."),
+                    Paragraph(
+                        "<span style=\"color:#64748b;\">The link works once and expires in 30 minutes. " +
+                        "If you did not ask for this, nothing has changed and you can ignore this email — " +
+                        "but it is worth checking your password.</span>")),
+                actionUrl: resetUrl,
+                actionLabel: "Choose a new password",
+                appUrl: AppUrl));
+    }
+
     public Task SendTaskAssignedEmailAsync(
         string toEmail, string taskTitle, string projectName, string assignedBy,
         string workspaceId, string projectId, string taskId)

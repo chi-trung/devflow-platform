@@ -83,6 +83,8 @@ public class DevFlowDbContext : DbContext
 
     public DbSet<RecurringTaskRule> RecurringTaskRules => Set<RecurringTaskRule>();
 
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DevFlowDbContext).Assembly);
