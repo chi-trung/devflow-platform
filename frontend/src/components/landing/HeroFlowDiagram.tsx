@@ -1,25 +1,48 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Brain, BookOpen, Check, ChevronRight, Copy, Hash } from "lucide-react";
+import {
+  Brain,
+  BookOpen,
+  Check,
+  ChevronRight,
+  Copy,
+  Hash,
+  Users,
+  Rocket,
+  ShieldCheck,
+  SquareKanban,
+} from "lucide-react";
 
 /**
  * Interactive board tour — the hero mockup, not a passive animation:
  * - 7 stage pills with the REAL board names (landing.stages.*) act as tabs:
- *   click (or arrow-key) one and the board content below follows it — the
- *   task card, the AI plan state and the wiki row all change per stage via
- *   useStageContent. Auto-advance runs on a slow ~5000ms interval so each
- *   stage is readable; any manual pick pauses it for 30s
- *   (AUTO_RESUME_MS) before resuming.
- * - Left column: the stage's task card (key chip, priority dot + label,
- *   story-points chip, due date, DoD badge) with a glow ring only while its
- *   own stage is active, plus a pair of small Done cards so both columns
- *   end flush.
- * - Right column: AI plan shaped like AiPlanPanel output (summary + Steps +
- *   Definition of Done + Apply / Regenerate). The Pending badge swaps to
- *   Applied styling for late stages (index >= 5). Steps cascade with
- *   staggered animation-delay, restarted per stage via key.
- * - A wiki entry row with a real KnowledgeEntryCard status badge (Accepted)
- *   and a real `w {weight}` weight chip.
+ *   click (or arrow-key) one and the board content below follows it — a
+ *   different SCENE per stage, not the same template with swapped text.
+ *   Auto-advance runs on a slow ~5000ms interval so each stage is readable;
+ *   any manual pick pauses it for 30s (AUTO_RESUME_MS) before resuming.
+ * - Idea: a 3-card backlog stack fanned with rotation, like a fresh inbox.
+ * - Planning: a 3-lane kanban strip (Idea / In Progress / Done) with member
+ *   avatars, echoing the real board.
+ * - Approval: an approval gate card — checklist with real check states plus
+ *   Apply / Regenerate actions.
+ * - Ready: the stage's task card (key chip, priority dot + label,
+ *   story-points chip, due date, DoD badge) with a glow ring, over a pair
+ *   of Done minis so both columns end flush.
+ * - In Progress: a split task + AI plan — the plan drafts live (Pending
+ *   badge) with cascading steps and a Definition of Done.
+ * - Review: the AI plan with an Applied badge and a weight-scored wiki row.
+ * - Done: release + knowledge scene — a v1.2.0 release card with a progress
+ *   bar and flow rows, plus the wiki row. Both Done minis stay visible so
+ *   the column never collapses.
+ * - A wiki entry row with real KnowledgeEntryCard status badges and real
+ *   `w {weight}` weight chips sits under the desktop panel (hidden on
+ *   Review/Done where the wiki lives inside the scene).
+ *
+ * Content comes from EXISTING i18n values only (never new keys — i18n-parity
+ * requires en/vi to match): landing.mock.flows/kanban/ai/wiki/orgs/releases,
+ * the flow strings, knowledge.status/type, ai.* and task.* labels.
+ * Identifiers (DEV-101, ADR titles, w weights, member initials) are fixture
+ * IDs, intentionally locale-independent.
  *
  * Accessibility: the pills are a real tablist (role=tablist/tab, arrow-key
  * navigation, aria-selected) driving a tabpanel below — a keyboard user gets
@@ -37,12 +60,10 @@ const AUTO_RESUME_MS = 30000;
 /**
  * Per-stage demo content. Points at EXISTING i18n values only (never new
  * keys — i18n-parity requires en/vi to match): task titles from
- * landing.mock.flows, plan steps/DoD from landing.hero.flow plus the
- * landing.mock.ai disciplines, wiki badges from knowledge.status/type, and
- * real TaskCard priority labels. Every stage gets its OWN overview, plan
- * summary, step triple, DoD list and wiki row, so clicking a pill always
- * shows different content. Wiki titles/weights are fixture identifiers
- * (like DEV-101 task IDs), intentionally locale-independent.
+ * landing.mock.flows/kanban, plan steps/DoD from landing.hero.flow plus the
+ * landing.mock.ai disciplines, releases rows, org member names, wiki badges
+ * from knowledge.status/type, and real TaskCard priority labels. Identifiers
+ * (DEV-xxx, ADR titles, w weights, member initials) are locale-independent.
  */
 function useStageContent() {
   const { t } = useTranslation();
@@ -77,47 +98,77 @@ function useStageContent() {
     "DEV-140",
     "DEV-132",
   ];
-  // One overview per stage: existing strings only, shuffled so each pill
-  // reads differently — and offset from planSummaries so the task card and
-  // the AI plan never show the same sentence on one stage.
-  const overviews = [
-    t("landing.mock.ai.discipline1"),
-    t("landing.mock.ai.discipline2"),
-    t("landing.mock.ai.discipline3"),
-    t("landing.mock.ai.planning"),
-    t("landing.hero.flow.overview"),
-    t("landing.mock.ai.review"),
-    t("landing.hero.flow.applied"),
+  // Idea backlog stack: three cards fanned with rotation.
+  const stackTitles = [
+    t("landing.mock.flows.card1"),
+    t("landing.mock.flows.card2"),
+    t("landing.mock.flows.card4"),
   ];
-  // One plan summary + step triple + DoD pair per stage. Steps reuse the
-  // flow checklist, the ai disciplines and the approved/review notes so the
-  // visible triplets differ per pill.
-  const planSummaries = [
-    t("landing.mock.ai.planning"),
-    t("landing.mock.ai.discipline1"),
-    t("landing.mock.ai.discipline2"),
-    t("landing.mock.ai.discipline3"),
-    t("landing.hero.flow.aiPlanDesc"),
-    t("landing.mock.ai.review"),
-    t("landing.hero.flow.applied"),
+  const stackIds = ["DEV-101", "DEV-112", "DEV-121"];
+  const stackDots = ["bg-amber-300", "bg-primary", "bg-primary"];
+  const stackLabels = [t("task.high"), t("task.medium"), t("task.medium")];
+  const stackPoints = [5, 3, 3];
+  const stackDates = ["Sep 28", "Oct 2", "Oct 5"];
+  // Planning lanes: 3 mini columns with a card + avatar each.
+  const laneCards = [
+    t("landing.mock.flows.card1"),
+    t("landing.mock.flows.card2"),
+    t("landing.mock.flows.card6"),
   ];
-  const planSteps = [
-    [t("landing.mock.ai.discipline1"), t("landing.mock.ai.discipline2"), t("landing.mock.ai.discipline3")],
-    [t("landing.hero.flow.checklistTitle"), t("landing.mock.ai.discipline2"), t("landing.mock.ai.discipline3")],
-    [t("landing.hero.flow.checklistTitle"), t("landing.hero.flow.checklistPassed"), t("landing.mock.ai.discipline3")],
-    [t("landing.hero.flow.checklistTitle"), t("landing.hero.flow.checklistPassed"), t("landing.hero.flow.version")],
-    [t("landing.hero.flow.checklistTitle"), t("landing.hero.flow.checklistPassed"), t("landing.mock.ai.approved")],
-    [t("landing.mock.ai.approved"), t("landing.hero.flow.checklistPassed"), t("landing.hero.flow.version")],
-    [t("landing.mock.ai.approved"), t("landing.mock.ai.review"), t("landing.hero.flow.applied")],
+  const laneIds = ["DEV-101", "DEV-112", "DEV-144"];
+  const laneAvatars = [
+    t("landing.mock.kanban.assignee1"),
+    t("landing.mock.kanban.assignee2"),
+    t("landing.mock.kanban.assignee3"),
   ];
-  const planDod = [
-    [t("landing.mock.ai.discipline2"), t("landing.mock.ai.discipline3")],
-    [t("landing.hero.flow.approved"), t("landing.mock.ai.discipline2")],
-    [t("landing.hero.flow.approved"), t("landing.mock.ai.discipline3")],
-    [t("landing.hero.flow.approved"), t("landing.hero.flow.version")],
-    [t("landing.hero.flow.approved"), t("landing.hero.flow.applied")],
-    [t("landing.hero.flow.applied"), t("landing.hero.flow.version")],
-    [t("landing.hero.flow.applied"), t("landing.mock.ai.review")],
+  // Approval gate checklist: [label, checked].
+  const gateSteps: [string, boolean][] = [
+    [t("landing.hero.flow.checklistTitle"), true],
+    [t("landing.hero.flow.checklistPassed"), true],
+    [t("landing.hero.flow.version"), false],
+  ];
+  // Release scene rows.
+  const releaseFlows = [
+    t("landing.mock.releases.flow1"),
+    t("landing.mock.releases.flow2"),
+    t("landing.mock.releases.flow3"),
+  ];
+  /**
+   * Done minis, one pair per stage — the work that has already shipped behind
+   * the stage's own card. Two rules keep them honest: a stage never lists its
+   * own card as finished, and no two stages show the same pair twice. Titles
+   * reuse the existing landing.mock.flows/kanban cards; keys, points and dates
+   * are locale-independent fixture data.
+   */
+  const doneCards: { title: string; id: string; points: number; date: string; wiki: string }[][] = [
+    [
+      { title: t("landing.mock.flows.card5"), id: "DEV-140", points: 8, date: "Oct 1", wiki: t("knowledge.type.Adr") },
+      { title: t("landing.mock.flows.card6"), id: "DEV-144", points: 3, date: "Sep 20", wiki: t("knowledge.type.Runbook") },
+    ],
+    [
+      { title: t("landing.mock.kanban.card1"), id: "DEV-109", points: 5, date: "Sep 26", wiki: t("knowledge.status.Accepted") },
+      { title: t("landing.mock.flows.card4"), id: "DEV-121", points: 3, date: "Oct 5", wiki: t("knowledge.type.Pattern") },
+    ],
+    [
+      { title: t("landing.mock.flows.card2"), id: "DEV-112", points: 3, date: "Oct 2", wiki: t("knowledge.status.Proposed") },
+      { title: t("landing.mock.kanban.card4"), id: "DEV-116", points: 2, date: "Sep 30", wiki: t("knowledge.type.Pattern") },
+    ],
+    [
+      { title: t("landing.mock.flows.card5"), id: "DEV-140", points: 8, date: "Oct 1", wiki: t("knowledge.status.Superseded") },
+      { title: t("landing.mock.flows.card6"), id: "DEV-144", points: 3, date: "Sep 20", wiki: t("knowledge.type.Runbook") },
+    ],
+    [
+      { title: t("landing.mock.flows.card4"), id: "DEV-121", points: 3, date: "Oct 5", wiki: t("knowledge.type.Adr") },
+      { title: t("landing.mock.flows.card3"), id: "DEV-118", points: 2, date: "Oct 3", wiki: t("knowledge.type.Pattern") },
+    ],
+    [
+      { title: t("landing.mock.kanban.card6"), id: "DEV-149", points: 2, date: "Sep 18", wiki: t("knowledge.status.Accepted") },
+      { title: t("landing.mock.flows.card4"), id: "DEV-121", points: 3, date: "Oct 5", wiki: t("knowledge.type.Runbook") },
+    ],
+    [
+      { title: t("landing.mock.flows.card6"), id: "DEV-144", points: 3, date: "Sep 20", wiki: t("knowledge.status.Accepted") },
+      { title: t("landing.mock.flows.card5"), id: "DEV-140", points: 8, date: "Sep 19", wiki: t("knowledge.autoCaptured") },
+    ],
   ];
   // One wiki row per stage: fixture entry titles + real status/type badges.
   // Mirrors landing.mock.wiki semantics: the Superseded (ADR-119) and
@@ -131,7 +182,37 @@ function useStageContent() {
     { title: "RUN-07: Cache-stale recovery", weight: "w 0.71", type: t("knowledge.type.Runbook"), status: t("knowledge.status.Accepted") },
     { title: "ADR-127: No client cache", weight: "w 0.94", type: t("knowledge.type.Adr"), status: t("knowledge.status.Accepted") },
   ];
-  return { titles, priorities, dates, points, dodMet, ids, overviews, planSummaries, planSteps, planDod, wiki };
+  // In-Progress / Review plan bodies (also reused for the wiki footer copy
+  // on other stages via overview).
+  const progressSummary = t("landing.hero.flow.aiPlanDesc");
+  const progressSteps = [
+    t("landing.hero.flow.checklistTitle"),
+    t("landing.hero.flow.checklistPassed"),
+    t("landing.mock.ai.approved"),
+  ];
+  const progressDod = [
+    t("landing.hero.flow.approved"),
+    t("landing.hero.flow.applied"),
+  ];
+  const reviewSummary = t("landing.mock.ai.review");
+  const reviewSteps = [
+    t("landing.mock.ai.approved"),
+    t("landing.hero.flow.checklistPassed"),
+    t("landing.hero.flow.version"),
+  ];
+  const reviewDod = [
+    t("landing.hero.flow.applied"),
+    t("landing.hero.flow.version"),
+  ];
+  const overview = t("landing.hero.flow.overview");
+  return {
+    titles, priorities, dates, points, dodMet, ids,
+    stackTitles, stackIds, stackDots, stackLabels, stackPoints, stackDates,
+    laneCards, laneIds, laneAvatars, gateSteps,
+    releaseFlows, wiki, doneCards,
+    progressSummary, progressSteps, progressDod,
+    reviewSummary, reviewSteps, reviewDod, overview,
+  };
 }
 
 export function HeroFlowDiagram({ className = "" }: { className?: string }) {
@@ -187,9 +268,6 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
   ];
 
   const label = `${stages[activeIndex]}: ${content.titles[activeIndex]}`;
-
-  const planApplied = activeIndex >= 5;
-  const wikiLive = activeIndex === 6;
 
   const pillBase =
     "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
@@ -266,86 +344,122 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
     </div>
   );
 
-  const renderTaskCard = () => {
-    const p = content.priorities[activeIndex];
+  // ─── Shared bits (one definition, reused by every scene) ───
+
+  const renderChips = (index: number) => {
+    const p = content.priorities[index];
+    return (
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+          <span className={`size-1.5 rounded-full ${p.dot}`} aria-hidden />
+          {p.label}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary-strong">
+          <Hash className="size-3" aria-hidden />
+          {content.points[index]}
+        </span>
+        <span className="font-mono text-[11px] text-muted-foreground">
+          {content.dates[index]}
+        </span>
+        {content.dodMet[index] && (
+          <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-500">
+            <Check className="size-3" aria-hidden />
+            {t("board.dodMet")}
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  /**
+   * The stage's task card. `flex` defaults to true because the right-hand
+   * columns stack it above a `flex-1` mini grid and the two must SHARE the
+   * column height. Pass false where the scene lays its parts out itself
+   * (stage 3) and a growing card would swallow the centring space.
+   */
+  const renderTaskCard = (flex = true) => {
+    const index = activeIndex;
     return (
       <div
-        key={`task-${activeIndex}`}
-        className="df-row-in flex flex-1 flex-col justify-center gap-2.5 rounded-xl border border-primary bg-card p-3.5 shadow-[0_0_0_2px_var(--color-primary),0_24px_60px_-24px_rgba(0,0,0,0.5)]"
+        key={`task-${index}`}
+        className={`df-row-in flex flex-col justify-center gap-2.5 rounded-xl border border-primary bg-card p-3.5 shadow-[0_0_0_2px_var(--color-primary),0_24px_60px_-24px_rgba(0,0,0,0.5)] ${flex ? "flex-1" : ""}`}
       >
         <div className="flex items-start justify-between gap-2">
           <span className="min-w-0 flex-1 truncate text-sm font-medium leading-snug text-foreground">
-            {content.titles[activeIndex]}
+            {content.titles[index]}
           </span>
           <span className="inline-flex shrink-0 items-center gap-1 rounded bg-elevated px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
-            {content.ids[activeIndex]}
+            {content.ids[index]}
             <Copy className="size-3" aria-hidden />
           </span>
         </div>
         <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-          {content.overviews[activeIndex]}
+          {content.overview}
         </p>
-        <div className="mt-2.5 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
-            <span className={`size-1.5 rounded-full ${p.dot}`} aria-hidden />
-            {p.label}
+        {renderChips(index)}
+      </div>
+    );
+  };
+
+  /**
+   * A finished card, filled like a real TaskCard instead of a one-line stub:
+   * check + title on top, key/points/date in the meta row, a Done badge and
+   * the knowledge entry it produced. The pair is per-stage, so the tour never
+   * repeats the same two boxes.
+   */
+  const renderDoneMini = (cardIndex: number) => {
+    const card = content.doneCards[activeIndex][cardIndex];
+    return (
+      <div
+        key={`done-${activeIndex}-${cardIndex}`}
+        className="df-row-in flex h-full min-w-0 flex-col justify-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5"
+        style={{ animationDelay: `${cardIndex * 120}ms` }}
+      >
+        <div className="flex min-w-0 items-start gap-1.5">
+          <span className="mt-px inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
+            <Check className="size-2.5 text-emerald-500" aria-hidden />
           </span>
-          <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary-strong">
-            <Hash className="size-3" aria-hidden />
-            {content.points[activeIndex]}
+          <span className="line-clamp-2 min-w-0 flex-1 text-[11px] font-medium leading-snug text-foreground">
+            {card.title}
           </span>
-          <span className="font-mono text-[11px] text-muted-foreground">
-            {content.dates[activeIndex]}
+        </div>
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 pl-5.5 font-mono text-[10px] text-muted-foreground">
+          <span className="rounded bg-elevated px-1 py-0.5 font-semibold">{card.id}</span>
+          <span className="inline-flex items-center gap-0.5 rounded-md bg-primary/10 px-1 py-0.5 font-semibold text-primary-strong">
+            <Hash className="size-2.5" aria-hidden />
+            {card.points}
           </span>
-          {content.dodMet[activeIndex] && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-500">
-              <Check className="size-3" aria-hidden />
-              {t("board.dodMet")}
-            </span>
-          )}
+          <span className="shrink-0">{card.date}</span>
+        </div>
+        <div className="flex min-w-0 items-center gap-1.5 pl-5.5">
+          <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary-strong">
+            {t("landing.stages.done")}
+          </span>
+          <span className="min-w-0 truncate rounded bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+            {card.wiki}
+          </span>
         </div>
       </div>
     );
   };
 
-  const renderDoneMini = (title: string) => (
-    <div className="flex h-full flex-col justify-center rounded-xl border border-border bg-card px-3 py-2.5">
-      <div className="flex min-w-0 items-center gap-1.5">
-        <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
-          <Check className="size-2.5 text-emerald-500" aria-hidden />
-        </span>
-        <span className="min-w-0 flex-1 truncate text-[11px] font-medium leading-snug text-muted-foreground">
-          {title}
-        </span>
-      </div>
-      <span className="mt-1.5 inline-flex rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary-strong">
-        {t("landing.stages.done")}
-      </span>
-    </div>
-  );
-
-  const renderAiPlan = (withActions: boolean) => (
-    <div
-      key={`plan-${activeIndex}`}
-      className="df-row-in flex h-full flex-col rounded-xl border border-violet-400/25 bg-violet-400/5 p-3.5 animate-float-slow"
-    >
+  const renderAiPlanCard = (
+    badge: React.ReactNode,
+    summary: string,
+    steps: string[],
+    dod: string[],
+    withActions: boolean,
+  ) => (
+    <div className="flex h-full flex-col rounded-xl border border-violet-400/25 bg-violet-400/5 p-3.5 animate-float-slow">
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-400">
           <Brain className="size-3.5" aria-hidden />
           {t("landing.hero.flow.aiPlan")}
         </span>
-        {planApplied ? (
-          <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-primary-strong">
-            {t("ai.applied")}
-          </span>
-        ) : (
-          <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-500">
-            {t("ai.pending")}
-          </span>
-        )}
+        {badge}
       </div>
       <p className="mb-2 line-clamp-2 text-xs leading-relaxed text-foreground">
-        {content.planSummaries[activeIndex]}
+        {summary}
       </p>
       <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {t("ai.steps")}
@@ -354,7 +468,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
         role="list"
         className="mb-2 list-inside list-decimal space-y-0.5 text-[11px] leading-snug text-muted-foreground"
       >
-        {content.planSteps[activeIndex].map((s, i) => (
+        {steps.map((s, i) => (
           <li key={s} className="df-step-in" style={{ animationDelay: `${i * 160}ms` }}>
             {s}
           </li>
@@ -364,7 +478,7 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
         {t("ai.dod")}
       </p>
       <ul role="list" className="space-y-0.5">
-        {content.planDod[activeIndex].map((d) => (
+        {dod.map((d) => (
           <li
             key={d}
             className="flex items-start gap-1.5 text-[11px] leading-snug text-muted-foreground"
@@ -389,32 +503,410 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
     </div>
   );
 
-  const renderWiki = (full: boolean) => (
+  const renderWikiRow = (index: number, full: boolean) => (
     <div
-      key={`wiki-${activeIndex}`}
-      className={`df-row-in mt-4 flex items-center gap-2 rounded-xl border bg-card px-3.5 py-2.5 text-left ${
-        wikiLive ? "border-primary/50" : "border-border"
-      }`}
+      className="flex items-center gap-2 rounded-xl border bg-card px-3.5 py-2.5 text-left border-border"
     >
       <BookOpen className="size-4 shrink-0 text-primary" aria-hidden />
       <span className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground">
-        {content.wiki[activeIndex].title}
+        {content.wiki[index].title}
       </span>
       {full && (
         <span className="shrink-0 rounded-md border border-border bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-          {content.wiki[activeIndex].type}
+          {content.wiki[index].type}
         </span>
       )}
       <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary-strong">
-        {content.wiki[activeIndex].status}
+        {content.wiki[index].status}
       </span>
-      {content.wiki[activeIndex].weight && (
+      {content.wiki[index].weight && (
         <span className="shrink-0 rounded bg-elevated px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-          {content.wiki[activeIndex].weight}
+          {content.wiki[index].weight}
         </span>
       )}
     </div>
   );
+
+  // ─── Scenes: one layout per stage, same outer size ───
+  // All seven scenes set the SAME desktop floor — `md:min-h-[19.5rem]` (312px) —
+  // so the panel never changes height when the tour advances; the tighter scenes
+  // centre themselves in the leftover space (justify-center) and the
+  // `items-stretch` grids make both columns end flush. 312px is the tallest
+  // scene (Review) plus a few px of headroom for longer locales (vi) that wrap
+  // and grow. `md:` only, so the stacked mobile panel hugs its content.
+
+  // Stage 0 Idea: backlog inbox — 3 cards fanned with rotation over a hint.
+  // The shared desktop floor (see above) keeps the auto tour from changing the
+  // panel size when the back cards fade in — the OCD rule, same as every scene.
+  // Sized min-h so longer locales (vi) wrap inside the same box height.
+  // Back cards reserve their own vertical slots (relative flow, small
+  // negative overlap) instead of absolute positioning — absolute cards can
+  // slide out of the container and overlap the right column. The overlap is
+  // small (-mt-2, 8px) because the back cards carry only a title row (46px);
+  // the earlier -mt-9 (36px) buried their titles under the card in front, and
+  // the back cards step DOWN the z-axis (z-20 / z-10 / z-0) so the fan paints
+  // front-to-back instead of the last sibling landing on top.
+  const renderIdeaScene = (withHint: boolean) => (
+    <div className="flex flex-col justify-center gap-2.5 md:min-h-[19.5rem]">
+      <div key={`idea-${activeIndex}`} className="df-row-in mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-0">
+        {content.stackTitles.map((title, i) => (
+          <div
+            key={title}
+            className={`df-step-in rounded-xl border bg-card px-3.5 py-3 shadow-[0_16px_40px_-20px_rgba(0,0,0,0.5)] ${
+              i === 0
+                ? "relative z-20 rotate-[-1.5deg] border-primary/60"
+                : i === 1
+                  ? "relative z-10 mx-6 -mt-2 rotate-[2deg] border-border opacity-80"
+                  : "relative z-0 mx-10 -mt-2 rotate-[-2deg] border-border opacity-50"
+            }`}
+            style={{ animationDelay: `${i * 140}ms` }}
+            aria-hidden={i > 0}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                {title}
+              </span>
+              <span className="shrink-0 rounded bg-elevated px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
+                {content.stackIds[i]}
+              </span>
+            </div>
+            {i === 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 font-mono text-[11px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className={`size-1.5 rounded-full ${content.stackDots[i]}`} aria-hidden />
+                  {content.stackLabels[i]}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary-strong">
+                  <Hash className="size-3" aria-hidden />
+                  {content.stackPoints[i]}
+                </span>
+                <span>{content.stackDates[i]}</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      {withHint && (
+        <p className="flex items-center justify-center gap-1.5 text-center font-mono text-[11px] text-muted-foreground">
+          <ShieldCheck className="size-3.5 text-primary" aria-hidden />
+          {t("board.dragHint")}
+        </p>
+      )}
+    </div>
+  );
+
+  // Stage 1 Planning: 3-lane kanban strip with member avatars.
+  // min-h matches the tallest desktop scene so the tour never jumps height.
+  const renderPlanningScene = () => {
+    const lanes = [
+      t("landing.mock.kanban.todo"),
+      t("landing.mock.kanban.doing"),
+      t("landing.mock.kanban.done"),
+    ];
+    const laneMembers = [
+      t("landing.mock.orgs.member1"),
+      t("landing.mock.orgs.member2"),
+      t("landing.mock.orgs.member3"),
+    ];
+    return (
+      <div key={`planning-${activeIndex}`} className="df-row-in flex flex-col justify-center gap-2.5 md:min-h-[19.5rem]">
+        <div className="grid flex-1 grid-cols-3 items-stretch gap-2.5">
+          {lanes.map((lane, i) => (
+            <div
+              key={lane}
+              className="df-step-in flex flex-col gap-2 rounded-xl border border-border bg-surface p-2.5"
+              style={{ animationDelay: `${i * 140}ms` }}
+            >
+              <p className="flex items-center gap-1.5 px-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <SquareKanban className="size-3 shrink-0 text-primary" aria-hidden />
+                <span className="truncate">{lane}</span>
+              </p>
+              <div className="flex flex-1 flex-col justify-center rounded-lg border border-border bg-card px-2.5 py-2">
+                <p className="truncate text-xs font-medium text-foreground">
+                  {content.laneCards[i]}
+                </p>
+                <div className="mt-1.5 flex items-center justify-between gap-1.5">
+                  <span className="rounded bg-elevated px-1 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
+                    {content.laneIds[i]}
+                  </span>
+                  <span
+                    className="inline-flex size-5 items-center justify-center rounded-full bg-primary/15 font-mono text-[9px] font-bold text-primary-strong"
+                    aria-hidden
+                  >
+                    {content.laneAvatars[i]}
+                  </span>
+                </div>
+              </div>
+              <p className="truncate px-1 font-mono text-[10px] text-muted-foreground">
+                {laneMembers[i]}
+              </p>
+            </div>
+          ))}
+        </div>
+        <p className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+          <Users className="size-3.5 shrink-0 text-primary" aria-hidden />
+          <span className="truncate">
+            {t("landing.mock.orgs.member2")} · {t("landing.mock.orgs.member2Role")}
+          </span>
+          <span className="ml-auto shrink-0 rounded-lg border border-border px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            {t("landing.mock.orgs.inviteBtn")}
+          </span>
+        </p>
+      </div>
+    );
+  };
+
+  // Stage 2 Approval: gate card with real check states + actions.
+  const renderApprovalScene = (withActions: boolean) => (
+    <div key={`approval-${activeIndex}`} className="df-row-in flex flex-col justify-center gap-2.5 md:min-h-[19.5rem]">
+      <div className="flex flex-1 flex-col justify-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5">
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-500">
+          <ShieldCheck className="size-3.5" aria-hidden />
+          {t("landing.mock.ai.gateLabel")}
+        </p>
+        <ul role="list" className="space-y-1.5">
+          {content.gateSteps.map(([label, checked], i) => (
+            <li
+              key={label}
+              className="df-step-in flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-2 text-xs text-foreground"
+              style={{ animationDelay: `${i * 140}ms` }}
+            >
+              <span
+                className={`inline-flex size-4 shrink-0 items-center justify-center rounded-full ${
+                  checked ? "bg-emerald-500/15" : "border border-border-strong"
+                }`}
+                aria-hidden
+              >
+                {checked && <Check className="size-2.5 text-emerald-500" aria-hidden />}
+              </span>
+              <span className="min-w-0 flex-1 truncate">{label}</span>
+            </li>
+          ))}
+        </ul>
+        {withActions && (
+          <div className="mt-1 flex items-center gap-2">
+            <span className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-semibold text-on-primary">
+              {t("landing.mock.ai.gateApproved")}
+            </span>
+            <span className="rounded-lg border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+              {t("landing.mock.ai.gateReview")}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Stage 3 Ready: task card + 2 Done minis (fills the left column flush).
+  // The task card centres and the mini grid takes a definite height instead of
+  // `flex-1`: the Ready content is ~215px in a 312px frame, so a flexible grid
+  // collapsed to its content and left a gap under it. Two fixed parts — a
+  // centred card and an 8rem row — end the column flush, which is what the
+  // `items-stretch` siblings on the right already do. Those two literals
+  // (19.5rem + 8rem + 12px gap) add up to the shared scene floor, so the
+  // min-h below is belt-and-braces and long locales (vi) can still grow.
+  const renderReadyScene = () => (
+    <div className="flex min-h-0 flex-col justify-center gap-3 md:min-h-[19.5rem]">
+      {renderTaskCard(false)}
+      <div className="grid h-32 grid-cols-2 items-stretch gap-3">
+        {renderDoneMini(0)}
+        {renderDoneMini(1)}
+      </div>
+    </div>
+  );
+
+  // Stage 4 In Progress: task + drafting AI plan side by side.
+  // Same min-h so it ends flush with every other scene.
+  const renderProgressScene = () => (
+    <div className="grid grid-cols-2 items-stretch gap-3 md:min-h-[19.5rem]">
+      <div className="flex flex-col">{renderTaskCard()}</div>
+      <div key={`plan-${activeIndex}`} className="df-row-in">
+        {renderAiPlanCard(
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-500">
+            <span className="size-1.5 rounded-full bg-amber-500 animate-glow-pulse" aria-hidden />
+            {t("ai.pending")}
+          </span>,
+          content.progressSummary,
+          content.progressSteps,
+          content.progressDod,
+          true,
+        )}
+      </div>
+    </div>
+  );
+
+  // Stage 5 Review: applied AI plan + weight-scored wiki inside the panel.
+  const renderReviewScene = (full: boolean) => (
+    <div key={`review-${activeIndex}`} className="df-row-in flex flex-col gap-2.5 md:min-h-[19.5rem]">
+      <div className="flex-none">
+        {renderAiPlanCard(
+          <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-primary-strong">
+            {t("ai.applied")}
+          </span>,
+          content.reviewSummary,
+          content.reviewSteps,
+          content.reviewDod,
+          true,
+        )}
+      </div>
+      {renderWikiRow(5, full)}
+    </div>
+  );
+
+  // Stage 6 Done: release card + wiki, with Done minis staying visible.
+  const renderDoneScene = (full: boolean) => (
+    <div key={`done-${activeIndex}`} className="df-row-in flex flex-col gap-2.5 md:min-h-[19.5rem]">
+      <div className="flex flex-none flex-col gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3.5">
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-500">
+          <Rocket className="size-3.5" aria-hidden />
+          {t("landing.mock.releases.version")}
+          <span className="ml-auto rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary-strong">
+            {t("knowledge.autoCaptured")}
+          </span>
+        </p>
+        <div
+          className="h-1.5 overflow-hidden rounded-full bg-elevated"
+          role="img"
+          aria-label={t("landing.mock.releases.progress")}
+        >
+          <div className="df-step-in h-full w-4/5 rounded-full bg-emerald-500" aria-hidden />
+        </div>
+        <ul role="list" className="space-y-1">
+          {content.releaseFlows.map((flow, i) => (
+            <li
+              key={flow}
+              className="df-step-in flex items-center gap-1.5 text-[11px] text-muted-foreground"
+              style={{ animationDelay: `${i * 140}ms` }}
+            >
+              <Check className="size-3 shrink-0 text-emerald-500" aria-hidden />
+              <span className="truncate">{flow}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="font-mono text-[10px] text-muted-foreground">
+          {t("landing.mock.releases.target")}
+        </p>
+      </div>
+      {renderWikiRow(6, full)}
+    </div>
+  );
+
+  // Desktop pairs every full-width scene with the Done minis so the right
+  // column never collapses — both columns end flush (the OCD rule).
+  const renderSceneWithMinis = (scene: React.ReactNode) => (
+    <div className="grid grid-cols-2 items-stretch gap-4 text-left">
+      <div className="flex flex-col self-stretch">{scene}</div>
+      <div className="flex flex-col gap-3 self-stretch">
+        {renderTaskCard()}
+        <div className="grid flex-1 grid-cols-2 items-stretch gap-3">
+          {renderDoneMini(0)}
+          {renderDoneMini(1)}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderDesktopPanel = () => {
+    switch (activeIndex) {
+      case 0:
+      case 1:
+      case 2:
+        return renderSceneWithMinis(
+          activeIndex === 0
+            ? renderIdeaScene(true)
+            : activeIndex === 1
+              ? renderPlanningScene()
+              : renderApprovalScene(true),
+        );
+      case 3:
+        return (
+          <div className="grid grid-cols-2 items-stretch gap-4 text-left">
+            {renderReadyScene()}
+            <div key={`plan-${activeIndex}`} className="df-row-in">
+              {renderAiPlanCard(
+                <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-500">
+                  {t("ai.pending")}
+                </span>,
+                content.progressSummary,
+                content.progressSteps,
+                content.progressDod,
+                true,
+              )}
+            </div>
+          </div>
+        );
+      case 4:
+        return renderProgressScene();
+      case 5:
+        return (
+          <div className="grid grid-cols-2 items-stretch gap-4 text-left">
+            {renderReviewScene(true)}
+            <div className="flex flex-col gap-3 self-stretch">
+              {renderTaskCard()}
+              <div className="grid flex-1 grid-cols-2 items-stretch gap-3">
+                {renderDoneMini(0)}
+                {renderDoneMini(1)}
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <div className="grid grid-cols-2 items-stretch gap-4 text-left">
+            {renderDoneScene(true)}
+            <div className="flex flex-col gap-3 self-stretch">
+              {renderTaskCard()}
+              <div className="grid flex-1 grid-cols-2 items-stretch gap-3">
+                {renderDoneMini(0)}
+                {renderDoneMini(1)}
+              </div>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  const renderMobilePanel = () => {
+    switch (activeIndex) {
+      case 0:
+        return renderIdeaScene(false);
+      case 1:
+        return renderPlanningScene();
+      case 2:
+        return renderApprovalScene(false);
+      case 3:
+        return (
+          <div className="space-y-3">
+            {renderTaskCard()}
+            <div className="grid grid-cols-2 gap-2">
+              {renderDoneMini(0)}
+              {renderDoneMini(1)}
+            </div>
+          </div>
+        );
+      case 4:
+        return (
+          <div className="space-y-3">
+            {renderTaskCard()}
+            <div key={`plan-${activeIndex}`} className="df-row-in">
+              {renderAiPlanCard(
+                <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-500">
+                  {t("ai.pending")}
+                </span>,
+                content.progressSummary,
+                content.progressSteps,
+                content.progressDod,
+                false,
+              )}
+            </div>
+          </div>
+        );
+      case 5:
+        return renderReviewScene(false);
+      default:
+        return renderDoneScene(false);
+    }
+  };
 
   return (
     <div className={className}>
@@ -422,22 +914,15 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
       <div className="hidden w-full md:block">
         {renderPills()}
 
-        <div
-          role="tabpanel"
-          aria-label={label}
-          className="grid grid-cols-2 items-stretch gap-4 text-left"
-        >
-          <div className="flex flex-col gap-3 self-stretch">
-            {renderTaskCard()}
-            <div className="grid flex-1 grid-cols-2 items-stretch gap-3">
-              {renderDoneMini(t("landing.mock.flows.card5"))}
-              {renderDoneMini(t("landing.mock.flows.card6"))}
-            </div>
-          </div>
-          {renderAiPlan(true)}
+        <div role="tabpanel" aria-label={label}>
+          {renderDesktopPanel()}
         </div>
 
-        {renderWiki(true)}
+        {activeIndex < 5 && (
+          <div key={`wiki-${activeIndex}`} className="df-row-in mt-4">
+            {renderWikiRow(activeIndex, true)}
+          </div>
+        )}
         <p className="mt-3 flex items-center justify-center gap-1 text-center font-mono text-[11px] text-muted-foreground">
           {paused ? t("landing.hero.tourPaused") : t("landing.hero.tourHint")}
           <ChevronRight className="size-3" aria-hidden />
@@ -448,14 +933,8 @@ export function HeroFlowDiagram({ className = "" }: { className?: string }) {
       <div className="w-full md:hidden">
         {renderPills(true)}
 
-        <div role="tabpanel" aria-label={label} className="space-y-3 text-left">
-          {renderTaskCard()}
-          <div className="grid grid-cols-2 gap-2">
-            {renderDoneMini(t("landing.mock.flows.card5"))}
-            {renderDoneMini(t("landing.mock.flows.card6"))}
-          </div>
-          {renderAiPlan(false)}
-          {renderWiki(false)}
+        <div role="tabpanel" aria-label={label} className="text-left">
+          {renderMobilePanel()}
         </div>
       </div>
     </div>
