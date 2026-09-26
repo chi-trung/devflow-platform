@@ -532,10 +532,13 @@ public sealed class AiActionExecutor(
         var members = await workspaceRepository.GetMembersAsync(workspaceId, cancellationToken);
 
         // Match display name, username, or email (case-insensitive, substring).
+        // Email is null for accounts that never linked a provider, so it is
+        // skipped rather than dereferenced — a null here would throw on a
+        // perfectly ordinary @mention.
         var member = members.FirstOrDefault(m =>
             m.DisplayName.Contains(assigneeRef, StringComparison.OrdinalIgnoreCase)
             || m.Username.Contains(assigneeRef, StringComparison.OrdinalIgnoreCase)
-            || m.Email.Contains(assigneeRef, StringComparison.OrdinalIgnoreCase));
+            || (m.Email ?? string.Empty).Contains(assigneeRef, StringComparison.OrdinalIgnoreCase));
 
         return member.UserId;
     }

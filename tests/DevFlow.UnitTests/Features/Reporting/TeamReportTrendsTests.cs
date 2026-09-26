@@ -20,7 +20,7 @@ public class TeamReportTrendsTests
     public async Task Trends_ShouldReturnNeutral_WhenNoDateRangeProvided()
     {
         _workspaceRepository.GetMembersAsync(_workspaceId, Arg.Any<CancellationToken>())
-            .Returns(new[] { (UserId: _memberId, Email: "a@x.io", Username: "a", DisplayName: "A", Role: WorkspaceRole.Member) });
+            .Returns(new[] { (UserId: _memberId, Email: (string?)"a@x.io", Username: "a", DisplayName: "A", Role: WorkspaceRole.Member) });
         _taskItemRepository.GetAssignedInWorkspaceAsync(_memberId, _workspaceId, Arg.Any<CancellationToken>())
             .Returns(new List<TaskItem>());
         _timeEntryRepository.GetTotalMinutesByUserIdInWorkspaceAsync(_memberId, _workspaceId, Arg.Any<CancellationToken>())
@@ -43,7 +43,7 @@ public class TeamReportTrendsTests
         var previousTask = DoneTask("Previous", started: start.AddDays(-9), completed: start.AddDays(-8));
 
         _workspaceRepository.GetMembersAsync(_workspaceId, Arg.Any<CancellationToken>())
-            .Returns(new[] { (UserId: _memberId, Email: "a@x.io", Username: "a", DisplayName: "A", Role: WorkspaceRole.Member) });
+            .Returns(new[] { (UserId: _memberId, Email: (string?)"a@x.io", Username: "a", DisplayName: "A", Role: WorkspaceRole.Member) });
         _taskItemRepository.GetAssignedInWorkspaceAsync(_memberId, _workspaceId, Arg.Any<CancellationToken>())
             .Returns(new[] { currentTask, previousTask });
         _timeEntryRepository.GetTotalMinutesByUserIdInWorkspaceAsync(_memberId, _workspaceId, Arg.Any<CancellationToken>())

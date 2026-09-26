@@ -17,16 +17,16 @@ public class ProjectAndSprintIntegrationTests(DevFlowWebApplicationFactory facto
             return;
         }
 
-        // 1. Register
-        var email = $"user_{Guid.NewGuid():N}@test.io";
+        // 1. Register — no address collected, so no verification step follows.
         var username = $"u_{Guid.NewGuid():N}".Substring(0, 10);
         var password = "Sup3rSecret!";
 
         var userId = await RegistrationFlow.RegisterAsync(
-            client, email, username, password, "Project User");
+            client, username, password, "Project User");
+        Assert.NotEqual(Guid.Empty, userId);
 
-        // 2. Verify
-        var accessToken = await RegistrationFlow.VerifyAsync(factory, client, userId);
+        // 2. Sign in with the username.
+        var accessToken = await RegistrationFlow.LoginAsync(client, username, password);
         Assert.False(string.IsNullOrEmpty(accessToken));
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);

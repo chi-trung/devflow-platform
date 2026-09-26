@@ -27,11 +27,12 @@ public class SearchUsersHandler(
         return members
             .Where(m => m.Username.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                         m.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                        m.Email.Contains(query, StringComparison.OrdinalIgnoreCase))
+                        (m.Email ?? string.Empty).Contains(query, StringComparison.OrdinalIgnoreCase))
             .Take(10)
             .Select(m => new UserSearchResponse(m.UserId, m.Username, m.DisplayName, m.Email, m.Role.ToString()))
             .ToList();
     }
 }
 
-public sealed record UserSearchResponse(Guid Id, string Username, string DisplayName, string Email, string Role);
+/// <param name="Email">Null for an account that never linked a provider.</param>
+public sealed record UserSearchResponse(Guid Id, string Username, string DisplayName, string? Email, string Role);

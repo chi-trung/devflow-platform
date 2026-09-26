@@ -54,8 +54,8 @@ public class RefreshCommandHandlerTests
         var userId = Guid.NewGuid();
         var user = Domain.Entities.User.Create("dev@test.io", "devuser", "hash", "Dev User");
         // The verification gate has its own tests; this one is about rotation,
-        // so the fixture starts from an already-verified account.
-        user.MarkEmailVerified();
+        // so the fixture is an account that has an address at all. The gate
+        // itself no longer exists — see EmailVerificationGateTests.
         var storedToken = Domain.Entities.RefreshToken.Create(
             userId, "active-token", DateTimeOffset.UtcNow.AddDays(1));
 

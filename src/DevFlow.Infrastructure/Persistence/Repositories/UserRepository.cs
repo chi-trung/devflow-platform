@@ -69,4 +69,24 @@ public sealed class UserRepository(DevFlowDbContext dbContext) : IUserRepository
     {
         return dbContext.Users.FirstOrDefaultAsync(user => user.Username == username, cancellationToken);
     }
+
+    public Task<bool> ExistsByEmailExceptIdAsync(string email, Guid userId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Users.AnyAsync(
+            user => user.Email == email && user.Id != userId,
+            cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<string>> GetLinkedProvidersAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        // AsNoTracking: this is a read-only status endpoint, and the banner
+        // refetches it after every link attempt.
+        return await dbContext.SocialLogins
+            .AsNoTracking()
+            .Where(login => login.UserId == userId)
+            .Select(login => login.Provider)
+            .ToListAsync(cancellationToken);
+    }
 }

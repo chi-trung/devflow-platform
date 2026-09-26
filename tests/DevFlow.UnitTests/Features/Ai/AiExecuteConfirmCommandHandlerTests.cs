@@ -39,7 +39,7 @@ public class AiExecuteConfirmCommandHandlerTests
         _projectRepository.GetForWorkspaceAsync(_workspaceId, Arg.Any<CancellationToken>())
             .Returns(new List<Project> { _project });
         _workspaceRepository.GetMembersAsync(_workspaceId, Arg.Any<CancellationToken>())
-            .Returns(new List<(Guid UserId, string Email, string Username, string DisplayName, WorkspaceRole Role)>());
+            .Returns(new List<(Guid UserId, string? Email, string Username, string DisplayName, WorkspaceRole Role)>());
     }
 
     private AiExecuteConfirmCommandHandler BuildHandler() => new(

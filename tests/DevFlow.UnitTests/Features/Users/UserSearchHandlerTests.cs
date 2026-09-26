@@ -11,11 +11,14 @@ public class UserSearchHandlerTests
 
     private readonly Guid _workspaceId = Guid.NewGuid();
 
-    private readonly (Guid UserId, string Email, string Username, string DisplayName, WorkspaceRole Role)[] _members =
+    // Carol has no address at all: registration stopped collecting one, so a
+    // member without an email is the normal case now, not an edge case. Any
+    // handler that reads Email has to survive the null.
+    private readonly (Guid UserId, string? Email, string Username, string DisplayName, WorkspaceRole Role)[] _members =
     {
         (Guid.NewGuid(), "alice@devflow.local", "alice", "Alice Doe", WorkspaceRole.Member),
         (Guid.NewGuid(), "bob@devflow.local", "bob", "Bob Smith", WorkspaceRole.Admin),
-        (Guid.NewGuid(), "carol@devflow.local", "carol", "Carol Nguyen", WorkspaceRole.Member),
+        (Guid.NewGuid(), null, "carol", "Carol Nguyen", WorkspaceRole.Member),
     };
 
     public UserSearchHandlerTests()

@@ -23,8 +23,8 @@ public class StartSprintNotificationTests
     private readonly Project _project;
     private readonly Sprint _sprint;
 
-    private readonly (Guid UserId, string Email, string Username, string DisplayName, WorkspaceRole Role) _member1;
-    private readonly (Guid UserId, string Email, string Username, string DisplayName, WorkspaceRole Role) _member2;
+    private readonly (Guid UserId, string? Email, string Username, string DisplayName, WorkspaceRole Role) _member1;
+    private readonly (Guid UserId, string? Email, string Username, string DisplayName, WorkspaceRole Role) _member2;
 
     public StartSprintNotificationTests()
     {
@@ -83,7 +83,7 @@ public class StartSprintNotificationTests
         await handler.Handle(CreateCommand(), CancellationToken.None);
 
         await _emailService.Received(1).SendSprintStartedEmailAsync(
-            _member1.Email,
+            _member1.Email!,
             _sprint.Name,
             _project.Name,
             _workspaceId.ToString(),
@@ -114,7 +114,7 @@ public class StartSprintNotificationTests
     public async Task Start_ShouldEnqueueOutboxWebhookEvent()
     {
         _workspaceRepository.GetMembersAsync(_workspaceId, Arg.Any<CancellationToken>())
-            .Returns(Array.Empty<(Guid, string, string, string, WorkspaceRole)>());
+            .Returns(Array.Empty<(Guid, string?, string, string, WorkspaceRole)>());
 
         var handler = CreateHandler();
         await handler.Handle(CreateCommand(), CancellationToken.None);

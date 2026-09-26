@@ -80,7 +80,7 @@ public class SearchQueryHandlerTests
     {
         SetupEmptyRepository();
         _workspaceRepository.GetMembersAsync(_workspaceId, Arg.Any<CancellationToken>())
-            .Returns(new[] { (UserId: Guid.NewGuid(), Email: "test@test.com", Username: "testuser", DisplayName: "Test Member", Role: WorkspaceRole.Member) });
+            .Returns(new[] { (UserId: Guid.NewGuid(), Email: (string?)"test@test.com", Username: "testuser", DisplayName: "Test Member", Role: WorkspaceRole.Member) });
 
         var handler = new SearchQueryHandler(_searchRepository, _workspaceRepository);
         var query = new SearchQuery(_workspaceId, "member");

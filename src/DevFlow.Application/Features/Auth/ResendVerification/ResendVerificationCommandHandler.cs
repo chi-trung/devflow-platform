@@ -46,10 +46,16 @@ public sealed class ResendVerificationCommandHandler(
 
         var link = linkBuilder.Build(user.Id);
 
+        // Found BY this address, so non-null by construction — see the same
+        // guard in ForgotPasswordCommandHandler.
+        var address = user.Email
+            ?? throw new InvalidOperationException(
+                $"User {user.Id} has no email but was found by one.");
+
         // Fire-and-forget, matching every other notification in the codebase
         // (see InviteMemberCommandHandler): the send must not decide whether
         // this call succeeds.
-        _ = emailService.SendEmailVerificationAsync(user.Email, user.DisplayName, link)
+        _ = emailService.SendEmailVerificationAsync(address, user.DisplayName, link)
             .ContinueWith(
                 task => logger.LogError(
                     task.Exception,

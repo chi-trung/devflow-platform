@@ -8,7 +8,7 @@ public class User : BaseEntity, IAuditableEntity
     {
     }
 
-    private User(string email, string username, string passwordHash, string displayName)
+    private User(string? email, string username, string passwordHash, string displayName)
     {
         Email = email;
         Username = username;
@@ -16,8 +16,20 @@ public class User : BaseEntity, IAuditableEntity
         DisplayName = displayName;
     }
 
-    public string Email { get; private set; } = string.Empty;
+    /// <summary>
+    /// The address an external provider proved this person owns, or null for a
+    /// password account that has not linked a provider yet. Nullable because
+    /// registration deliberately does not collect one: requiring an address to
+    /// sign up let anyone claim an inbox that belonged to somebody else, and
+    /// the only remedy was an emailed link — which needs a mail provider the
+    /// free deployment tiers cannot run.
+    /// </summary>
+    public string? Email { get; private set; }
 
+    /// <summary>
+    /// The sign-in handle. This is the login identifier, since an account is not
+    /// required to have an email to reach.
+    /// </summary>
     public string Username { get; private set; } = string.Empty;
 
     public string PasswordHash { get; private set; } = string.Empty;
@@ -33,9 +45,9 @@ public class User : BaseEntity, IAuditableEntity
 
     /// <summary>
     /// When the address in <see cref="Email"/> was proven to belong to this
-    /// user, or null while it is still unproven. Accounts that predate email
-    /// verification are backfilled to "now" by the migration that added this
-    /// column, so they are never locked out.
+    /// user — by a provider that verified it, or by a link in an inbox.
+    /// Null for a password account with no address at all, and for one whose
+    /// address is still unproven.
     /// </summary>
     public DateTimeOffset? EmailVerifiedAtUtc { get; private set; }
 
@@ -52,16 +64,58 @@ public class User : BaseEntity, IAuditableEntity
     public DateTimeOffset? PasswordResetSentAtUtc { get; private set; }
 
     /// <summary>
-    /// An unverified account may not hold a session. Every token-issuing path
-    /// (login, refresh, OAuth exchange) checks this, so an unverified user
-    /// never has a token in the first place.
+    /// True once an address has been proven. Note this is no longer a gate on
+    /// holding a session: registration does not collect an address, so an
+    /// account without one is legitimate rather than pending.
     /// </summary>
     public bool IsEmailVerified => EmailVerifiedAtUtc is not null;
+
+    /// <summary>
+    /// Whether this account can still be recovered if its password is lost.
+    /// Recovery is by emailed link, so an account with no proven address can
+    /// only be re-entered through a linked provider — which is what the
+    /// dashboard prompt asks for. Loss is permanent, so the UI must warn
+    /// rather than quietly let it happen.
+    /// </summary>
+    public bool CanBeRecovered => Email is not null;
 
     public DateTimeOffset CreatedAtUtc { get; set; }
 
     public DateTimeOffset? UpdatedAtUtc { get; set; }
 
+    /// <summary>
+    /// Creates a password account with no email at all. This is what
+    /// registration uses: the person gets in immediately and is prompted on the
+    /// dashboard to link a Google or GitHub identity so the account can still be
+    /// recovered if the password is lost.
+    /// </summary>
+    public static User CreateWithPassword(string username, string passwordHash, string displayName)
+    {
+        return Build(null, username, passwordHash, displayName);
+    }
+
+    /// <summary>
+    /// Creates an account owned by an external identity provider. The provider
+    /// has already proven the address, so it is stored as verified on the way
+    /// in rather than marked afterwards.
+    /// </summary>
+    public static User CreateFromOAuth(string email, string username, string passwordHash, string displayName)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new ArgumentException("Email is required.", nameof(email));
+        }
+
+        var user = Build(email, username, passwordHash, displayName);
+        user.EmailVerifiedAtUtc ??= DateTimeOffset.UtcNow;
+        return user;
+    }
+
+    /// <summary>
+    /// The email-collecting factory, kept for callers that already hold a
+    /// provider-proven address. Registration does not use it — see
+    /// <see cref="CreateWithPassword"/>.
+    /// </summary>
     public static User Create(string email, string username, string passwordHash, string displayName)
     {
         if (string.IsNullOrWhiteSpace(email))
@@ -69,6 +123,11 @@ public class User : BaseEntity, IAuditableEntity
             throw new ArgumentException("Email is required.", nameof(email));
         }
 
+        return Build(email, username, passwordHash, displayName);
+    }
+
+    private static User Build(string? email, string username, string passwordHash, string displayName)
+    {
         if (string.IsNullOrWhiteSpace(username))
         {
             throw new ArgumentException("Username is required.", nameof(username));
@@ -84,7 +143,11 @@ public class User : BaseEntity, IAuditableEntity
             throw new ArgumentException("Display name is required.", nameof(displayName));
         }
 
-        return new User(email.Trim().ToLowerInvariant(), username.Trim(), passwordHash, displayName.Trim());
+        return new User(
+            string.IsNullOrWhiteSpace(email) ? null : email.Trim().ToLowerInvariant(),
+            username.Trim(),
+            passwordHash,
+            displayName.Trim());
     }
 
     public void UpdateProfile(string displayName, string username)
@@ -121,6 +184,35 @@ public class User : BaseEntity, IAuditableEntity
     public void MarkEmailVerified()
     {
         EmailVerifiedAtUtc ??= DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Stores an address the person proved by linking an identity provider.
+    /// Refuses one already held by somebody else: a provider asserting an
+    /// address is the only evidence this has, and two accounts claiming the
+    /// same inbox is exactly the collision the email column's unique index
+    /// exists to prevent. Linking Google to a second account while the address
+    /// is still someone's would otherwise silently take it over.
+    /// </summary>
+    public void AttachEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new ArgumentException("Email is required.", nameof(email));
+        }
+
+        var normalized = email.Trim().ToLowerInvariant();
+
+        if (Email is not null && !string.Equals(Email, normalized, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                "This account already has a different email address.");
+        }
+
+        Email = normalized;
+        // The provider just proved this address, so it is verified from here on
+        // — no link in an inbox is involved, and none could arrive anyway.
+        MarkEmailVerified();
     }
 
     /// <summary>

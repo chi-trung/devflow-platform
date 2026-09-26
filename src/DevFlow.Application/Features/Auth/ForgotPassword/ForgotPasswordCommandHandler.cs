@@ -70,11 +70,19 @@ public sealed class ForgotPasswordCommandHandler(
         await resetTokenRepository.AddAsync(resetToken, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        // The user was found BY this address, so it is non-null by
+        // construction — the compiler cannot see that through the repository
+        // signature, and the null-forgiving operator would hide a future
+        // lookup-by-id change that did lose the guarantee.
+        var address = user.Email
+            ?? throw new InvalidOperationException(
+                $"User {user.Id} has no email but was found by one.");
+
         // Persist first: if the mail fails the link is still single-use and
         // expires on its own, whereas sending first and failing to save would
         // email a token that resolves to nothing.
         _ = emailService
-            .SendPasswordResetAsync(user.Email, user.DisplayName, link)
+            .SendPasswordResetAsync(address, user.DisplayName, link)
             .ContinueWith(
                 task => logger.LogError(
                     task.Exception,

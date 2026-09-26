@@ -176,7 +176,7 @@ public class GetTeamReportHandler(
 
     private async Task<TeamReportTrends> ComputeTrendsAsync(
         GetTeamReportQuery request,
-        IReadOnlyList<(Guid UserId, string Email, string Username, string DisplayName, Domain.Enums.WorkspaceRole Role)> members,
+        IReadOnlyList<(Guid UserId, string? Email, string Username, string DisplayName, Domain.Enums.WorkspaceRole Role)> members,
         CancellationToken ct)
     {
         var start = request.StartDateUtc!.Value;

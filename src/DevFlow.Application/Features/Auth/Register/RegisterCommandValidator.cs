@@ -6,11 +6,6 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
 {
     public RegisterCommandValidator()
     {
-        RuleFor(command => command.Email)
-            .NotEmpty()
-            .MaximumLength(255)
-            .EmailAddress();
-
         RuleFor(command => command.Username)
             .NotEmpty()
             .MinimumLength(3)

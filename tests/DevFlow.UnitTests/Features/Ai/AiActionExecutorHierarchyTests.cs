@@ -40,7 +40,7 @@ public class AiActionExecutorHierarchyTests
         _projectRepository.GetForWorkspaceAsync(_workspaceId, Arg.Any<CancellationToken>())
             .Returns(new List<Project> { _project });
         _workspaceRepository.GetMembersAsync(_workspaceId, Arg.Any<CancellationToken>())
-            .Returns(new List<(Guid UserId, string Email, string Username, string DisplayName, WorkspaceRole Role)>());
+            .Returns(new List<(Guid UserId, string? Email, string Username, string DisplayName, WorkspaceRole Role)>());
 
         _executor = new AiActionExecutor(
             _workspaceRepository,

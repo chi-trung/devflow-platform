@@ -1,4 +1,3 @@
-using DevFlow.Application.Common.Exceptions;
 using DevFlow.Application.Common.Interfaces;
 using DevFlow.Application.Features.Auth.Login;
 using DevFlow.Domain.Entities;
@@ -25,18 +24,11 @@ public sealed class RefreshCommandHandler(
         var user = await userRepository.GetByIdAsync(storedToken.UserId, cancellationToken)
             ?? throw new UnauthorizedAccessException("Invalid refresh token.");
 
-        // A session is never issued to an unverified account, so an unverified
-        // user should hold no refresh token either. This is the path that would
-        // otherwise hand one out anyway: rotating here is how a revoked
-        // session comes back to life, and the frontend retries it silently on
-        // any 401.
-        if (!user.IsEmailVerified)
-        {
-            storedToken.Revoke(DateTimeOffset.UtcNow);
-            await unitOfWork.SaveChangesAsync(cancellationToken);
-            throw new EmailNotVerifiedException();
-        }
-
+        // No verification gate here either, and it has to match the login path
+        // exactly: login issues a session to an account with no address, so a
+        // gate left in place would only fire once the access token expired —
+        // signing everyone out after a few minutes. The token is still rotated
+        // below either way, so this path grants nothing extra.
         storedToken.Revoke(DateTimeOffset.UtcNow);
 
         var newAccessToken = tokenProvider.GenerateAccessToken(user);

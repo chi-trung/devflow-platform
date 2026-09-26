@@ -1,9 +1,11 @@
+using DevFlow.Application.Common.Interfaces;
 using DevFlow.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Testcontainers.PostgreSql;
 
 namespace DevFlow.IntegrationTests;
@@ -85,6 +87,17 @@ public sealed class DevFlowWebApplicationFactory : WebApplicationFactory<Program
 
         builder.ConfigureServices(services =>
         {
+            // Swap the real Google/GitHub providers for one that answers from a
+            // script. The real ones do a live HTTPS round trip to a provider we
+            // do not control and cannot reach from CI, so without this the link
+            // flow could only be tested at the handler level — the controller,
+            // the [Authorize] wiring, the 409 mapping and the persistence would
+            // all be untested. Add or move a FakeOAuthIdentityProvider to change
+            // what the next request sees.
+            services.RemoveAll<IExternalIdentityProvider>();
+            services.AddSingleton<IExternalIdentityProvider>(new FakeOAuthIdentityProvider("google"));
+            services.AddSingleton<IExternalIdentityProvider>(new FakeOAuthIdentityProvider("github"));
+
             if (externalConnectionString is null && !IsDockerAvailable)
             {
                 // EF9 registers AddDbContext option actions as cumulative

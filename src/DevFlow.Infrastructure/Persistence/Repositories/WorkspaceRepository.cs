@@ -33,7 +33,7 @@ public sealed class WorkspaceRepository(DevFlowDbContext dbContext) : IWorkspace
         return rows.Select(row => (row.Workspace, row.Role)).ToList();
     }
 
-    public async Task<IReadOnlyList<(Guid UserId, string Email, string Username, string DisplayName, WorkspaceRole Role)>>
+    public async Task<IReadOnlyList<(Guid UserId, string? Email, string Username, string DisplayName, WorkspaceRole Role)>>
         GetMembersAsync(Guid workspaceId, CancellationToken cancellationToken = default)
     {
         var rows = await dbContext.WorkspaceMembers

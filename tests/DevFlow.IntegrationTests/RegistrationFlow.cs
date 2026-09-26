@@ -1,35 +1,34 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using DevFlow.Application.Common.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DevFlow.IntegrationTests;
 
 /// <summary>
-/// The register → verify → sign-in sequence every authenticated integration
-/// test has to walk, gathered in one place so the flow is changed once.
+/// The register → sign-in sequence every authenticated integration test has to
+/// walk, gathered in one place so the flow is changed once.
 ///
-/// The verification step resolves the real token provider from the host rather
-/// than stubbing it, so these tests exercise the actual signed-token path end
-/// to end. Minting the token here is the test standing in for the recipient
-/// clicking the link in their inbox — there is no inbox in CI to click.
+/// There is no verification step any more. Registration does not collect an
+/// address, so there is nothing to prove and no inbox to click a link in; an
+/// account is usable the moment it exists. <see cref="AuthenticateAsync"/>
+/// therefore signs in over HTTP with the username rather than minting a token
+/// and posting it, which exercises the real password path instead of
+/// short-circuiting around it.
 /// </summary>
 internal static class RegistrationFlow
 {
     /// <summary>
-    /// Registers an account and returns its id. The account is NOT verified
-    /// yet — call <see cref="VerifyAsync"/> to finish the sequence.
+    /// Registers an account and returns its id. The account is usable
+    /// immediately — there is no verify step to call.
     /// </summary>
     public static async Task<Guid> RegisterAsync(
         HttpClient client,
-        string email,
         string username,
         string password,
         string displayName)
     {
         var response = await client.PostAsJsonAsync("/api/v1/auth/register", new
         {
-            email,
             username,
             password,
             displayName,
@@ -46,46 +45,41 @@ internal static class RegistrationFlow
     }
 
     /// <summary>
-    /// Plays the part of the verification link: mints a token for the account
-    /// and posts it to the same endpoint the email link points at.
+    /// Signs in with a username. Not the address — registration no longer
+    /// collects one, so the username is the only identifier an account has.
     /// </summary>
-    public static async Task<string> VerifyAsync(
-        DevFlowWebApplicationFactory factory,
+    public static async Task<string> LoginAsync(
         HttpClient client,
-        Guid userId)
+        string username,
+        string password)
     {
-        using var scope = factory.Services.CreateScope();
-        var tokenProvider = scope.ServiceProvider
-            .GetRequiredService<IEmailVerificationTokenProvider>();
-
-        var response = await client.PostAsJsonAsync("/api/v1/auth/verify-email", new
+        var response = await client.PostAsJsonAsync("/api/v1/auth/login", new
         {
-            token = tokenProvider.Generate(userId),
+            username,
+            password,
         });
 
         if (!response.IsSuccessStatusCode)
         {
             var errorBody = await response.Content.ReadAsStringAsync();
-            throw new Exception(
-                $"Verify failed with {response.StatusCode}: {errorBody}");
+            throw new Exception($"Login failed with {response.StatusCode}: {errorBody}");
         }
 
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
         return body.GetProperty("accessToken").GetString()!;
     }
 
-    /// <summary>Registers, verifies, and points the client at the new session.</summary>
+    /// <summary>Registers, signs in, and points the client at the new session.</summary>
     public static async Task<string> AuthenticateAsync(
         DevFlowWebApplicationFactory factory,
         HttpClient client,
         string displayName)
     {
-        var email = $"user_{Guid.NewGuid():N}@test.io";
         var username = $"u_{Guid.NewGuid():N}"[..10];
         var password = "Sup3rSecret!";
 
-        var userId = await RegisterAsync(client, email, username, password, displayName);
-        var accessToken = await VerifyAsync(factory, client, userId);
+        await RegisterAsync(client, username, password, displayName);
+        var accessToken = await LoginAsync(client, username, password);
 
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);

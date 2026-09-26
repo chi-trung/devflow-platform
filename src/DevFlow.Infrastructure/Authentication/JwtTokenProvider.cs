@@ -18,7 +18,6 @@ public sealed class JwtTokenProvider(IOptions<JwtSettings> options) : ITokenProv
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new(JwtRegisteredClaimNames.Email, user.Email),
             new("username", user.Username),
             // AuthContext's currentUser.displayName and ProjectHub's presence
             // payload both read this claim; without it they were permanently
@@ -26,6 +25,15 @@ public sealed class JwtTokenProvider(IOptions<JwtSettings> options) : ITokenProv
             new("displayName", user.DisplayName),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+
+        // Only claim an email when there is one. Registration does not collect
+        // an address, so the claim is absent for most accounts — and a Claim
+        // constructed with a null value throws. AuthContext reads it as
+        // optional, and a linked provider fills it in on a later token.
+        if (!string.IsNullOrWhiteSpace(user.Email))
+        {
+            claims.Insert(1, new Claim(JwtRegisteredClaimNames.Email, user.Email));
+        }
 
         // The frontend reads avatarUrl straight off the decoded JWT (AuthContext
         // builds CurrentUser from claims — no extra /auth/me fetch). Omit the

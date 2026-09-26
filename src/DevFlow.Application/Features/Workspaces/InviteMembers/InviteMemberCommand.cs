@@ -10,4 +10,5 @@ public sealed record InviteMemberCommand(
     string Email,
     WorkspaceRole Role) : IRequest<MemberResponse>, IWorkspaceRequest;
 
-public sealed record MemberResponse(Guid UserId, string Email, string Role);
+/// <param name="Email">Null for a member who never linked a provider.</param>
+public sealed record MemberResponse(Guid UserId, string? Email, string Role);

@@ -15,6 +15,13 @@ public sealed class AuthController(
     IUserContext userContext,
     Auth.HubTicketStore hubTicketStore) : ControllerBase
 {
+    /// <summary>
+    /// Creates a password account with no email attached — see the remarks on
+    /// <see cref="RegisterRequest"/> for why none is collected. The response
+    /// hands back the username so the client can show it on the dashboard
+    /// prompt: an account with no address is only recoverable through a linked
+    /// provider, and the person has to know their own handle to sign in again.
+    /// </summary>
     [HttpPost("register")]
     [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -24,7 +31,6 @@ public sealed class AuthController(
         CancellationToken cancellationToken)
     {
         var command = new Application.Features.Auth.Register.RegisterCommand(
-            request.Email,
             request.Username,
             request.Password,
             request.DisplayName);
@@ -33,7 +39,7 @@ public sealed class AuthController(
 
         return StatusCode(
             StatusCodes.Status201Created,
-            new RegisterResponse(userId, request.Email.Trim().ToLowerInvariant()));
+            new RegisterResponse(userId, request.Username.Trim()));
     }
 
     /// <summary>
@@ -123,7 +129,7 @@ public sealed class AuthController(
         CancellationToken cancellationToken)
     {
         var command = new Application.Features.Auth.Login.LoginCommand(
-            request.Email,
+            request.Username,
             request.Password);
 
         var response = await sender.Send(command, cancellationToken);
@@ -242,6 +248,51 @@ public sealed class AuthController(
                 request.Provider,
                 request.Code,
                 request.CodeVerifier),
+            cancellationToken);
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Attaches a Google or GitHub identity to the signed-in account — the
+    /// "activate your account" step for an account registered with no address.
+    /// Requires a session: unlike /oauth/exchange, the target account is the
+    /// one in the token, not whoever the provider claims to be.
+    /// </summary>
+    [Authorize]
+    [HttpPost("oauth/link")]
+    [ProducesResponseType(typeof(Application.Features.Auth.OAuth.LinkedAccountsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> LinkOAuth(
+        OAuthLinkRequest request,
+        CancellationToken cancellationToken)
+    {
+        var response = await sender.Send(
+            new Application.Features.Auth.OAuth.LinkOAuthCommand(
+                userContext.UserId,
+                request.Provider,
+                request.Code,
+                request.CodeVerifier),
+            cancellationToken);
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// What this account has linked, and whether a lost password could be
+    /// recovered at all. The dashboard prompt reads this; see the remarks on
+    /// the query for why it is not a claim on the access token.
+    /// </summary>
+    [Authorize]
+    [HttpGet("linked-accounts")]
+    [ProducesResponseType(typeof(Application.Features.Auth.OAuth.LinkedAccountsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetLinkedAccounts(CancellationToken cancellationToken)
+    {
+        var response = await sender.Send(
+            new Application.Features.Auth.OAuth.GetLinkedAccountsQuery(userContext.UserId),
             cancellationToken);
 
         return Ok(response);

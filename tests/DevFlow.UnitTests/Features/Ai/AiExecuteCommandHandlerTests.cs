@@ -35,7 +35,7 @@ public class AiExecuteCommandHandlerTests
         _projectRepository.GetForWorkspaceAsync(_workspaceId, Arg.Any<CancellationToken>())
             .Returns(new List<Project> { _project });
         _workspaceRepository.GetMembersAsync(_workspaceId, Arg.Any<CancellationToken>())
-            .Returns(new List<(Guid UserId, string Email, string Username, string DisplayName, WorkspaceRole Role)>());
+            .Returns(new List<(Guid UserId, string? Email, string Username, string DisplayName, WorkspaceRole Role)>());
         _knowledgeRetrieval.RetrieveAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new List<DevFlow.Application.Common.Models.KnowledgeChunkHit>());
         // Existing create_* tests model an Owner/Admin caller (the happy path).

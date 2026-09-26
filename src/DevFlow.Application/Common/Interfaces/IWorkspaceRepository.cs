@@ -12,7 +12,8 @@ public interface IWorkspaceRepository
     Task<IReadOnlyList<(Workspace Workspace, WorkspaceRole Role)>> GetForUserAsync(
         Guid userId, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<(Guid UserId, string Email, string Username, string DisplayName, WorkspaceRole Role)>>
+    /// <param name="Email">Null for a member who never linked a provider.</param>
+    Task<IReadOnlyList<(Guid UserId, string? Email, string Username, string DisplayName, WorkspaceRole Role)>>
         GetMembersAsync(Guid workspaceId, CancellationToken cancellationToken = default);
 
     Task<WorkspaceRole?> GetMemberRoleAsync(Guid workspaceId, Guid userId, CancellationToken cancellationToken = default);

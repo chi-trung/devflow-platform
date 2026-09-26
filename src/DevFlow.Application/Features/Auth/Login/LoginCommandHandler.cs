@@ -14,20 +14,23 @@ public sealed class LoginCommandHandler(
 {
     public async Task<LoginResponse> Handle(LoginCommand command, CancellationToken cancellationToken)
     {
-        var email = command.Email.Trim().ToLowerInvariant();
-
-        var user = await userRepository.GetByEmailAsync(email, cancellationToken)
-            ?? throw new UnauthorizedAccessException("Invalid email or password.");
+        // Username, not email: registration no longer collects an address, so
+        // the email is nullable and absent for most accounts. The message is
+        // deliberately shape-agnostic — "Invalid username or password" for both
+        // an unknown handle and a wrong password, so a wrong guess cannot tell
+        // an attacker which usernames exist.
+        var user = await userRepository.GetByUsernameAsync(command.Username.Trim(), cancellationToken)
+            ?? throw new UnauthorizedAccessException("Invalid username or password.");
 
         if (!passwordHasher.Verify(command.Password, user.PasswordHash))
         {
-            throw new UnauthorizedAccessException("Invalid email or password.");
+            throw new UnauthorizedAccessException("Invalid username or password.");
         }
 
-        if (!user.IsEmailVerified)
-        {
-            throw new EmailNotVerifiedException();
-        }
+        // No email-verification gate. A password account has no address to
+        // verify, so requiring one would lock out everyone who signed up the
+        // normal way. Recovery is a dashboard prompt to link a provider, which
+        // warns without blocking.
 
         var accessToken = tokenProvider.GenerateAccessToken(user);
 
