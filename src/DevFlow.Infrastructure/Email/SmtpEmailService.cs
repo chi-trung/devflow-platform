@@ -1,30 +1,45 @@
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
 using DevFlow.Application.Features.Email;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using MimeKit;
+using MimeKit.Text;
 
 namespace DevFlow.Infrastructure.Email;
 
 /// <summary>
-/// Delivers over Resend's HTTP API.
+/// Delivers DevFlow's mail over plain SMTP, for anyone who has an SMTP mailbox
+/// but no sending domain.
 ///
-/// The wording of every message lives in <see cref="EmailComposer"/>, shared
-/// with the SMTP transport — this class only turns a composed message into a
-/// JSON request.
+/// The case that matters is free: Gmail app passwords. A Google account with
+/// 2-Step Verification can mint a 16-character app password, which speaks
+/// SMTP on <c>smtp.gmail.com:587</c> with no DNS to set up and no paid plan to
+/// buy — the one route to working mail when you own no domain, which is also
+/// the condition the HTTP providers refuse to help with.
+///
+/// Two costs of that route are worth stating plainly, because they are why
+/// this is not a permanent answer:
+///
+/// <list type="bullet">
+/// <item>Messages go out from a person's mailbox, not a branded one. Gmail and
+/// most receiving providers judge SMTP traffic from a plain consumer account
+/// more harshly than traffic from a domain with SPF/DKIM set, so a verification
+/// mail is somewhat more likely to land in spam. Fine for a handful of
+/// signups a day; not something to build a launch on.</item>
+/// <item>The account is a single point of failure. Changing that Google
+/// password revokes the app password immediately, and a mailbox locked by
+/// Google's abuse filters takes every verification and reset mail with it.</item>
+/// </list>
+///
+/// So the DI chain keeps a real provider ahead of this one. Reach for SMTP when
+/// a domain is not yet worth buying, then move to it once it is.
 /// </summary>
-public sealed class ResendEmailService(
-    HttpClient httpClient,
+public sealed class SmtpEmailService(
+    SmtpOptions options,
     EmailComposer composer,
-    IConfiguration configuration,
-    ILogger<ResendEmailService> logger) : IEmailService
+    ILogger<SmtpEmailService> logger) : IEmailService
 {
-    private readonly string _apiKey = configuration["RESEND_API_KEY"]
-        ?? throw new InvalidOperationException("RESEND_API_KEY is not configured.");
-
-    private readonly string _fromEmail = configuration["RESEND_FROM_EMAIL"] ?? "DevFlow <onboarding@resend.dev>";
-
     public Task SendEmailVerificationAsync(
         string toEmail, string displayName, string verificationUrl)
         => SendAsync(toEmail, composer.EmailVerification(displayName, verificationUrl));
@@ -87,35 +102,35 @@ public sealed class ResendEmailService(
 
     private async Task SendAsync(string to, ComposedEmail message)
     {
-        var payload = new
+        // Message-ID: an SMTP server will happily forward the same message
+        // twice — a retry after a timeout, a duplicated queue entry — and two
+        // copies of a verification mail look like a phishing attempt. A stable
+        // id lets the receiving side collapse them.
+        var mime = new MimeMessage();
+        mime.From.Add(new MailboxAddress(options.FromName, options.FromEmail));
+        mime.To.Add(MailboxAddress.Parse(to));
+        mime.Subject = message.Subject;
+        mime.Body = new TextPart(TextFormat.Html) { Text = message.Html };
+        mime.MessageId = $"<{options.MessageIdPrefix}-{Guid.NewGuid():N}@devflow>";
+
+        // Open a connection per send rather than holding one open. The volume
+        // here is a handful of signups a day; a pooled connection would cost
+        // more in idle-timeout handling than it saves in handshakes, and a
+        // long-lived SMTP session is just another thing to go stale silently.
+        using var client = new SmtpClient();
+        await client.ConnectAsync(options.Host, options.Port, options.UseStartTls
+            ? SecureSocketOptions.StartTls
+            : SecureSocketOptions.None);
+
+        if (!string.IsNullOrWhiteSpace(options.Username))
         {
-            from = _fromEmail,
-            to = new[] { to },
-            subject = message.Subject,
-            html = message.Html,
-        };
-
-        var json = JsonSerializer.Serialize(payload);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails")
-        {
-            Content = content,
-        };
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
-
-        using var response = await httpClient.SendAsync(request);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync();
-            logger.LogError(
-                "Resend rejected {Subject} for {Recipient}: {StatusCode} {Body}",
-                message.Subject,
-                to,
-                (int)response.StatusCode,
-                body);
-            throw new InvalidOperationException($"Resend API error {(int)response.StatusCode}: {body}");
+            await client.AuthenticateAsync(options.Username, options.Password);
         }
+
+        await client.SendAsync(mime);
+        await client.DisconnectAsync(true);
+
+        logger.LogInformation(
+            "SMTP sent {Subject} to {Recipient} via {Host}.", message.Subject, to, options.Host);
     }
 }

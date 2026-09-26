@@ -17,8 +17,14 @@ public class EmailServiceTests
             .AddInMemoryCollection(settings)
             .Build();
 
+        // The composer is shared with the SMTP transport, so the wording under
+        // test here is the wording that transport would send too.
+        var composer = new EmailComposer(
+            (configuration["FRONTEND_URL"] ?? "http://localhost:5173").TrimEnd('/'));
+
         return new ResendEmailService(
             httpClient,
+            composer,
             configuration,
             Substitute.For<ILogger<ResendEmailService>>());
     }

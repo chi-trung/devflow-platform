@@ -4,8 +4,8 @@ using Microsoft.Extensions.Logging;
 namespace DevFlow.Infrastructure.Email;
 
 /// <summary>
-/// Active when no Resend API key is configured — local development, or a
-/// deployment that has not set one up yet.
+/// Active when no transport is configured — local development, or a deployment
+/// that has not set up Resend or SMTP yet.
 ///
 /// It is NOT a silent no-op. Registration now depends on a verification link
 /// actually reaching the new user, and a lost account is now recoverable
@@ -22,7 +22,7 @@ public sealed class ConsoleLogEmailService(ILogger<ConsoleLogEmailService> logge
         string toEmail, string displayName, string verificationUrl)
     {
         logger.LogWarning(
-            "EMAIL VERIFICATION (no RESEND_API_KEY configured — link below was NOT sent).\n" +
+            "EMAIL VERIFICATION (no mail provider configured — link below was NOT sent).\n" +
             "  To:      {ToEmail}\n" +
             "  Name:    {DisplayName}\n" +
             "  Link:    {VerificationUrl}\n" +
@@ -38,7 +38,7 @@ public sealed class ConsoleLogEmailService(ILogger<ConsoleLogEmailService> logge
         string toEmail, string displayName, string resetUrl)
     {
         logger.LogWarning(
-            "PASSWORD RESET (no RESEND_API_KEY configured — link below was NOT sent).\n" +
+            "PASSWORD RESET (no mail provider configured — link below was NOT sent).\n" +
             "  To:      {ToEmail}\n" +
             "  Name:    {DisplayName}\n" +
             "  Link:    {ResetUrl}\n" +

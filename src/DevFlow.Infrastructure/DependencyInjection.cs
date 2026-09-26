@@ -112,6 +112,14 @@ public static class DependencyInjection
         services.AddHostedService<OutboxProcessor>();
         services.AddHostedService<RecurringTaskProcessor>();
         services.AddHttpClient("Webhooks");
+
+        // Every transport composes the same messages, so the wording has one
+        // home regardless of which one is selected below.
+        var appUrl = (configuration["FRONTEND_URL"] ?? "http://localhost:5173").TrimEnd('/');
+        services.AddSingleton(new EmailComposer(appUrl));
+
+        var smtpOptions = SmtpOptions.FromConfiguration(configuration);
+
         if (!string.IsNullOrWhiteSpace(configuration["RESEND_API_KEY"]))
         {
             // Explicit timeout: HttpClient otherwise waits 100 seconds, so a
@@ -123,6 +131,17 @@ public static class DependencyInjection
             {
                 client.Timeout = TimeSpan.FromSeconds(10);
             });
+        }
+        else if (smtpOptions.IsConfigured)
+        {
+            // A real provider first is the point of this ordering. SMTP is the
+            // fallback for a deployment that has mail credentials but no
+            // sending domain, which is exactly where the HTTP providers refuse
+            // to start; it sends from a real mailbox, so registration works
+            // today even though the deliverability is not production-grade.
+            // Promote Resend above this line once a domain exists.
+            services.AddSingleton(smtpOptions);
+            services.AddScoped<IEmailService, SmtpEmailService>();
         }
         else
         {
