@@ -20,7 +20,8 @@ type AuthStatus = "loading" | "authenticated" | "anonymous";
 
 export interface CurrentUser {
   id: string;
-  email: string;
+  /** null for an account that has never had an address (or never linked one). */
+  email: string | null;
   username: string;
   displayName: string | null;
   /** OAuth avatar URL from the JWT; null → Avatar renders initials. */
@@ -30,15 +31,15 @@ export interface CurrentUser {
 interface AuthContextValue {
   status: AuthStatus;
   currentUser: CurrentUser | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   /**
-   * Creates the account and returns the address it was created with.
-   * Deliberately does NOT sign in: the account cannot be used until the
-   * address is proven, and the backend answers a login attempt for an
-   * unverified account with 403.
+   * Creates the account and returns the username it was created with.
+   * Deliberately does NOT sign in: the caller shows the identifier so the
+   * person can use it, and minting a session here would be a second thing to
+   * get wrong. The dashboard is where the new account learns it should link a
+   * provider, so it has to get there through the login form.
    */
   register: (input: {
-    email: string;
     username: string;
     password: string;
     displayName: string;
@@ -81,10 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     const data = await api<LoginResponse>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ username, password }),
     });
     tokens.save(data.accessToken, data.refreshToken);
     // New principal — drop any persisted snapshots from the previous one.
@@ -94,20 +95,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (input: {
-      email: string;
       username: string;
       password: string;
       displayName: string;
     }) => {
       // No login call here, and that is the feature: registering used to mint
       // a session on the spot, which is exactly how a stranger could claim
-      // somebody else's address. The account now waits for the emailed link.
+      // somebody else's address. The account is also created with no address
+      // at all now, so the identifier returned below is the only handle there
+      // is to give back.
       const data = await api<RegisterResponse>("/auth/register", {
         method: "POST",
         body: JSON.stringify(input),
       });
 
-      return data.email;
+      return data.username;
     },
     [],
   );
@@ -152,8 +154,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!claims?.sub) return null;
     return {
       id: claims.sub,
-      email: claims.email,
-      username: claims.username ?? claims.email,
+      email: claims.email ?? null,
+      // sub is the account id, not a handle — it is only the last resort for a
+      // token minted before the username claim existed. Falling back to the
+      // email here would put "undefined" (or a null email) in the greeting
+      // for every account that has no address.
+      username: claims.username ?? claims.sub,
       displayName: claims.displayName ?? null,
       avatarUrl: claims.avatarUrl ?? null,
     };

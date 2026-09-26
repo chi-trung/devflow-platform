@@ -27,6 +27,7 @@ import { StatsCards } from "../components/dashboard/StatsCards";
 import { TaskDistribution } from "../components/dashboard/TaskDistribution";
 import { ActivityFeed } from "../components/dashboard/ActivityFeed";
 import { SprintHealthCard } from "../components/dashboard/SprintHealthCard";
+import { LinkAccountBanner } from "../components/LinkAccountBanner";
 import type {
   AcceptInvitationResponse,
   InvitationSummary,
@@ -361,6 +362,12 @@ export function DashboardPage() {
             )}
           </div>
         </div>
+
+        {/* First thing on the page and above the invites: an account with no
+            recovery route is a warning about this account specifically, so it
+            is the first thing said — not filed under the one section that
+            happens to own banners. */}
+        <LinkAccountBanner />
 
         {/* Pending invites: fail-closed — only an error with no data may
             render the banner; empty is simply "nothing to accept". */}

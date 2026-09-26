@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthContext";
 import { AuthLayout } from "../components/AuthLayout";
@@ -22,46 +22,44 @@ export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const providers = useSocialProviders();
+  // A registration that just created an account hands the username over, so
+  // the person does not have to remember what they typed on the previous
+  // screen. It is a convenience, not a guarantee: the value comes from our own
+  // navigation state, never from the URL, so it cannot be used to prefill an
+  // account somebody else is about to be asked for.
+  const location = useLocation();
+  const registeredUsername =
+    (location.state as { registeredUsername?: string } | null)?.registeredUsername ?? "";
 
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState(() => registeredUsername);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  // Set when the credentials were right but the address is still unproven.
-  // The alert is not enough on its own: the fix is a click on a link in an
-  // inbox, so the user needs a way to get to the resend screen from here.
-  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    setUnverifiedEmail(null);
 
-    if (!email.trim() || !password) {
+    if (!username.trim() || !password) {
       setError(t("auth.fillBothFields"));
       return;
     }
 
     setSubmitting(true);
     try {
-      await login(email.trim(), password);
+      await login(username.trim(), password);
       navigate("/", { replace: true });
     } catch (err) {
-      // 403 (not 401) is what the API answers for an unverified account, and
-      // it has to stay that way: the API client silently refreshes and retries
-      // on a 401, which would hand this user a working session anyway.
-      if (err instanceof ApiError && err.status === 403) {
-        setError(t("auth.emailNotVerified"));
-        setUnverifiedEmail(email.trim());
-      } else {
-        setError(
-          err instanceof ApiError && err.status === 401
-            ? t("auth.incorrectCredentials")
-            : err instanceof Error
-              ? err.message
-              : t("auth.somethingWrong"),
-        );
-      }
+      // One message for "no such username" and for "wrong password": the form
+      // cannot tell them apart, and saying which one was wrong would let
+      // anyone confirm which usernames exist.
+      setError(
+        err instanceof ApiError && err.status === 401
+          ? t("auth.incorrectCredentials")
+          : err instanceof Error
+            ? err.message
+            : t("auth.somethingWrong"),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -78,26 +76,26 @@ export function LoginPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         {error && <ErrorAlert message={error} />}
 
-        {unverifiedEmail && (
-          <Link
-            to="/check-email"
-            state={{ email: unverifiedEmail }}
-            className="-mt-2 text-center text-sm font-semibold text-primary transition-colors duration-150 hover:text-primary-strong"
-          >
-            {t("auth.resendVerification")}
-          </Link>
-        )}
-
-        <Field label={t("auth.email")} htmlFor="email">
+        <Field label={t("auth.username")} htmlFor="username">
           <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@team.dev"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            id="username"
+            type="text"
+            autoComplete="username"
+            placeholder="dangn"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
           />
         </Field>
+
+        {/* A registration that just happened is the one case where "forgot
+            password" is known to be a dead end, and it is exactly the one the
+            person is about to hit. Saying so here is cheaper than letting them
+            find out by typing an address that was never collected. */}
+        {registeredUsername && (
+          <p className="-mt-2 text-center text-xs text-muted-foreground">
+            {t("auth.registeredHint")}
+          </p>
+        )}
 
         <Field label={t("auth.password")} htmlFor="password">
           <Input

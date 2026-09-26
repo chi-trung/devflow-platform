@@ -1,6 +1,12 @@
 export interface JwtClaims {
   sub: string;
-  email: string;
+  /**
+   * Absent entirely for an account registered with no address — the server
+   * only adds the claim when there is an email to put in it, so this must be
+   * optional rather than an empty-string default. Read it through
+   * `?? null` at the call sites.
+   */
+  email?: string;
   username?: string;
   displayName?: string;
   /** Provider-hosted avatar URL; absent for password users / no picture. */

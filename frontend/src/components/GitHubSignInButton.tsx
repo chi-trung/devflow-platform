@@ -5,6 +5,7 @@ import {
   buildGitHubAuthUrl,
   completeOAuthExchange,
   getOAuthConfig,
+  isOAuthLinkMode,
   OAuthCancelledError,
   peekOAuthConfig,
   stripOAuthCallbackParams,
@@ -57,6 +58,11 @@ export function GitHubSignInButton() {
     const denial = params.get("error");
     if (!code && !denial) return;
     if (sessionStorage.getItem("devflow.oauthProvider") !== "github") return;
+    // This button also renders inside AppShell, so it is mounted on the
+    // dashboard where a link flow is started. The code there belongs to the
+    // account already signed in — the dashboard banner redeems it, and this
+    // component must not turn it into a sign-in of a different account.
+    if (isOAuthLinkMode()) return;
     let cancelled = false;
     if (denial && !code) {
       // Consent denied: GitHub lands with ?error=access_denied and no code.

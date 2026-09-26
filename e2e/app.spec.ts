@@ -105,27 +105,30 @@ async function assertPageLoads(
 // ---------------------------------------------------------------------------
 
 test.describe("DevFlow E2E", () => {
+  const E2E_USERNAME = "e2etester";
+  const E2E_PASSWORD = "E2ePass!123";
   let workspaceId: string;
   let projectId: string;
 
   test.beforeAll(async ({ request }) => {
-    // Ensure the test user exists and get an access token
+    // The sign-in identifier is the username, not an address: registration no
+    // longer collects one, so an account can be created with no email at all.
+    // The register call below matches that shape.
     const loginRes = await request.post("/api/v1/auth/login", {
-      data: { email: "e2e@devflow.test", password: "E2ePass!123" },
+      data: { username: E2E_USERNAME, password: E2E_PASSWORD },
     });
     let token: string;
     if (!loginRes.ok()) {
       const regRes = await request.post("/api/v1/auth/register", {
         data: {
-          email: "e2e@devflow.test",
-          username: "e2etester",
-          password: "E2ePass!123",
+          username: E2E_USERNAME,
+          password: E2E_PASSWORD,
           displayName: "E2E Tester",
         },
       });
       expect([200, 201, 409]).toContain(regRes.status());
       const login2 = await request.post("/api/v1/auth/login", {
-        data: { email: "e2e@devflow.test", password: "E2ePass!123" },
+        data: { username: E2E_USERNAME, password: E2E_PASSWORD },
       });
       expect(login2.ok()).toBeTruthy();
       const b = await login2.json();
@@ -187,10 +190,10 @@ test.describe("DevFlow E2E", () => {
 
   test("Login and land on dashboard", async ({ page }) => {
     await page.goto("/login", { waitUntil: "networkidle" });
-    await expect(page.locator("#email")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("#username")).toBeVisible({ timeout: 10_000 });
 
-    await page.fill("#email", "e2e@devflow.test");
-    await page.fill("#password", "E2ePass!123");
+    await page.fill("#username", E2E_USERNAME);
+    await page.fill("#password", E2E_PASSWORD);
     await page.click("button[type=submit]");
 
     // App redirects to / (dashboard) after login

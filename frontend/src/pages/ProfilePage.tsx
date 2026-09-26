@@ -105,8 +105,11 @@ export function ProfilePage() {
             <h1 className="font-display text-2xl font-semibold tracking-tight">
               {currentUser?.displayName || currentUser?.username}
             </h1>
+            {/* An account registered without an address has none, and the
+                username is the only handle there is — showing nothing here
+                would read as a rendering fault. */}
             <p className="truncate text-sm text-muted-foreground">
-              {currentUser?.email}
+              {currentUser?.email ?? `@${currentUser?.username}`}
             </p>
           </div>
         </header>

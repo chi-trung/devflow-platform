@@ -1266,8 +1266,9 @@
   "signingIn": "Đang đăng nhập…",
   "createAccountBtn": "Tạo tài khoản",
   "creatingAccount": "Đang tạo tài khoản…",
-  "fillBothFields": "Vui lòng nhập cả email và mật khẩu.",
-  "incorrectCredentials": "Email hoặc mật khẩu không đúng.",
+  "fillBothFields": "Vui lòng nhập cả tên đăng nhập và mật khẩu.",
+  "incorrectCredentials": "Tên đăng nhập hoặc mật khẩu không đúng.",
+  "registeredHint": "Tài khoản của bạn được tạo mà không có địa chỉ email. Nếu quên mật khẩu, hãy liên kết tài khoản Google hoặc GitHub từ dashboard để quay lại.",
   "somethingWrong": "Đã xảy ra lỗi. Vui lòng thử lại.",
   "or": "hoặc",
   "continueWithGoogle": "Tiếp tục với Google",
@@ -1326,6 +1327,19 @@
   "resetLinkInvalid": "Link đặt lại mật khẩu này không hợp lệ hoặc đã hết hạn.",
   "resetLinkInvalidSubtitle": "Link đặt lại mật khẩu chỉ dùng một lần và hết hạn sau 30 phút. Hãy yêu cầu link mới để tiếp tục.",
   "requestNewLink": "Yêu cầu link mới"
+ },
+ "account": {
+  "linkWarningTitle": "Tài khoản này có thể mất vĩnh viễn",
+  "linkWarningBody": "Tài khoản chưa có địa chỉ email nên không thể đặt lại mật khẩu khi quên — tài khoản cùng toàn bộ dữ liệu trong đó sẽ mất vĩnh viễn. Hãy liên kết tài khoản Google hoặc GitHub ngay để có đường quay lại.",
+  "linkGoogle": "Liên kết Google",
+  "linkGithub": "Liên kết GitHub",
+  "linkLater": "Để sau",
+  "linkLaterSnoozed": "Tài khoản này vẫn chưa có cách khôi phục khi quên mật khẩu.",
+  "linking": "Đang chuyển hướng…",
+  "linkCancelled": "Đã hủy liên kết. Tài khoản của bạn không thay đổi.",
+  "linkFailed": "Không liên kết được tài khoản đó. Tài khoản của bạn không thay đổi.",
+  "linked": "Đã liên kết tài khoản {{provider}}.",
+  "alreadyLinkedWith": "Đã liên kết: {{providers}}."
  },
  "settings": {
   "title": "Cài đặt",

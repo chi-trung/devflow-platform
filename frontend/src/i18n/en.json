@@ -1266,8 +1266,9 @@
   "signingIn": "Signing in…",
   "createAccountBtn": "Create account",
   "creatingAccount": "Creating account…",
-  "fillBothFields": "Please fill in both email and password.",
-  "incorrectCredentials": "Email or password is incorrect.",
+  "fillBothFields": "Please fill in both username and password.",
+  "incorrectCredentials": "Username or password is incorrect.",
+  "registeredHint": "Your account was created without an email address. If you forget the password, link a Google or GitHub account from the dashboard to get back in.",
   "somethingWrong": "Something went wrong. Please try again.",
   "or": "or",
   "continueWithGoogle": "Continue with Google",
@@ -1326,6 +1327,19 @@
   "resetLinkInvalid": "This reset link is invalid or has expired.",
   "resetLinkInvalidSubtitle": "Reset links work once and last 30 minutes. Request a new one to continue.",
   "requestNewLink": "Request a new link"
+ },
+ "account": {
+  "linkWarningTitle": "This account can be lost",
+  "linkWarningBody": "It has no email address, so a forgotten password cannot be reset — the account and everything in it would be gone for good. Link a Google or GitHub account now and you get a way back in.",
+  "linkGoogle": "Link Google",
+  "linkGithub": "Link GitHub",
+  "linkLater": "Do this later",
+  "linkLaterSnoozed": "This account still has no way to recover a forgotten password.",
+  "linking": "Redirecting…",
+  "linkCancelled": "Linking was cancelled. Your account is unchanged.",
+  "linkFailed": "Could not link that account. Your account is unchanged.",
+  "linked": "Account linked with {{provider}}.",
+  "alreadyLinkedWith": "Already linked: {{providers}}."
  },
  "settings": {
   "title": "Settings",

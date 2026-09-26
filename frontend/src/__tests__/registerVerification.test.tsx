@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { useState } from "react";
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
@@ -69,27 +70,28 @@ function jsonResponse(body: unknown, status = 200) {
 
 function RegisterProbe() {
   const { register } = useAuth();
+  const [result, setResult] = useState<string | null>(null);
   return (
-    <button
-      onClick={() =>
-        register({
-          email: "someone@else.com",
-          username: "someone",
-          password: "Sup3rSecret!",
-          displayName: "Someone",
-        })
-      }
-    >
-      register
-    </button>
+    <>
+      <button
+        onClick={() =>
+          register({
+            username: "someone",
+            password: "Sup3rSecret!",
+            displayName: "Someone",
+          }).then(setResult)
+        }
+      >
+        register
+      </button>
+      <span data-testid="result">{result ?? ""}</span>
+    </>
   );
 }
 
 describe("registration no longer signs the user in", () => {
   it("posts to /auth/register only, and stores no session", async () => {
-    fetchMock.mockResolvedValue(
-      jsonResponse({ id: "u-1", email: "someone@else.com" }, 201),
-    );
+    fetchMock.mockResolvedValue(jsonResponse({ id: "u-1", username: "someone" }, 201));
 
     render(
       <MemoryRouter>
@@ -103,7 +105,7 @@ describe("registration no longer signs the user in", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
-    const [url] = fetchMock.mock.calls[0];
+    const [url, init] = fetchMock.mock.calls[0];
     expect(String(url)).toContain("/auth/register");
 
     // The whole vulnerability: if a second call to /auth/login had gone out,
@@ -115,6 +117,22 @@ describe("registration no longer signs the user in", () => {
     // And nothing was persisted that RequireAuth or a page refresh would
     // pick up as a signed-in visitor.
     expect(Object.keys(localStore)).toHaveLength(0);
+
+    // The request body carries no address at all. Registration no longer
+    // collects one — the field was the hole, not a formatting nicety — so a
+    // leftover "email" here would be sending a claim the server cannot use,
+    // and the test would pass on a body that no longer matches the form.
+    expect(JSON.parse(String((init as RequestInit).body))).toEqual({
+      username: "someone",
+      password: "Sup3rSecret!",
+      displayName: "Someone",
+    });
+
+    // What the form shows the person afterwards is the username: with no
+    // address on the account, it is the only handle there is.
+    await waitFor(() =>
+      expect(screen.getByTestId("result").textContent).toBe("someone"),
+    );
   });
 });
 

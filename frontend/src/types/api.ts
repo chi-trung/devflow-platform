@@ -5,8 +5,20 @@ export interface LoginResponse {
 
 export interface RegisterResponse {
   id: string;
-  /** Lower-cased by the server; the check-your-email screen shows this. */
-  email: string;
+  /** The only identifier a new account has — there is no address to fall back on. */
+  username: string;
+}
+
+export interface LinkedAccountsResponse {
+  /** Providers this account has linked, e.g. ["google"]. */
+  providers: string[];
+  /** The account's address, or null if it has none. */
+  email: string | null;
+  /**
+   * Whether a lost password can be recovered at all. False means the only way
+   * back in is a linked provider — the dashboard prompt exists to change this.
+   */
+  canBeRecovered: boolean;
 }
 
 export interface WorkspaceResponse {
@@ -21,7 +33,8 @@ export interface WorkspaceResponse {
 
 export interface WorkspaceMemberResponse {
   userId: string;
-  email: string;
+  /** null for a member who registered without an address. */
+  email: string | null;
   username: string;
   displayName: string;
   role: string;
@@ -384,7 +397,8 @@ export interface FieldErrors {
 
 export interface UserProfileResponse {
   id: string;
-  email: string;
+  /** null for an account that has never had (or never linked) an address. */
+  email: string | null;
   username: string;
   displayName: string | null;
   avatarUrl?: string | null;

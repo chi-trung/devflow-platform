@@ -347,8 +347,11 @@ export function SettingsPage() {
                   <p className="truncate text-sm font-medium" title={currentUser?.displayName || currentUser?.username}>
                     {currentUser?.displayName || currentUser?.username}
                   </p>
-                  <p className="truncate font-mono text-[11px] text-muted-foreground" title={currentUser?.email}>
-                    {currentUser?.email}
+                  <p
+                    className="truncate font-mono text-[11px] text-muted-foreground"
+                    title={currentUser?.email ?? `@${currentUser?.username}`}
+                  >
+                    {currentUser?.email ?? `@${currentUser?.username}`}
                   </p>
                 </div>
               </div>

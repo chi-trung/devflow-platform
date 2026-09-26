@@ -5,6 +5,7 @@ import {
   buildGoogleAuthUrl,
   completeOAuthExchange,
   getOAuthConfig,
+  isOAuthLinkMode,
   OAuthCancelledError,
   peekOAuthConfig,
   stripOAuthCallbackParams,
@@ -54,6 +55,12 @@ export function GoogleSignInButton() {
     // Only claim the exchange when Google started this flow — the GitHub
     // button is mounted beside this one and the one-time code is single-use.
     if (sessionStorage.getItem("devflow.oauthProvider") !== "google") return;
+    // …and never when the flow is a link. This button also renders inside
+    // AppShell, so it is mounted on the dashboard too — where the account
+    // being linked belongs to whoever is already signed in. Redeeming the code
+    // here would mint a brand-new session from the provider instead of
+    // attaching the identity to the open account.
+    if (isOAuthLinkMode()) return;
     let cancelled = false;
     if (denial && !code) {
       // Consent denied: Google lands with ?error=access_denied and no code.

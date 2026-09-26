@@ -905,8 +905,15 @@ export function WorkspacePage() {
                             <p className="truncate text-sm font-medium" title={member.displayName || member.username}>
                               {member.displayName || member.username}
                             </p>
-                            <p className="truncate font-mono text-[11px] text-muted-foreground" title={member.email}>
-                              {member.email}
+                            {/* A member who registered with no address has
+                                none; the username is the identifier they
+                                actually sign in with, so it is what the row
+                                shows rather than a blank line. */}
+                            <p
+                              className="truncate font-mono text-[11px] text-muted-foreground"
+                              title={member.email ?? `@${member.username}`}
+                            >
+                              {member.email ?? `@${member.username}`}
                             </p>
                           </div>
                           <span className="ml-auto shrink-0">

@@ -240,7 +240,7 @@ export function ProjectSettingsPage() {
                   </option>
                   {availableWorkspaceMembers.map((wm) => (
                     <option key={wm.userId} value={wm.userId}>
-                      {wm.displayName || wm.username} ({wm.email})
+                      {wm.displayName || wm.username} ({wm.email ?? `@${wm.username}`})
                     </option>
                   ))}
                 </select>

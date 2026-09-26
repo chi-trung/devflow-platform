@@ -16,14 +16,12 @@ import { useSocialProviders } from "../hooks/useSocialProviders";
 interface FormState {
   displayName: string;
   username: string;
-  email: string;
   password: string;
 }
 
 const initialForm: FormState = {
   displayName: "",
   username: "",
-  email: "",
   password: "",
 };
 
@@ -43,10 +41,6 @@ function validate(form: FormState, t: (key: string) => string): Partial<Record<k
     !/^[a-zA-Z0-9_]+$/.test(form.username.trim())
   ) {
     errors.username = t("auth.usernameFormat");
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-    errors.email = t("auth.validEmail");
   }
 
   if (form.password.length < 8) {
@@ -73,7 +67,7 @@ export function RegisterPage() {
   // Track which keys just went invalid so the submit handler can move focus
   // to the first one. The fields render in this same order, so a fixed list
   // keeps visual and focus order aligned without reading DOM positions.
-  const fieldOrder = useRef(["displayName", "username", "email", "password"] as const);
+  const fieldOrder = useRef(["displayName", "username", "password"] as const);
 
   function focusFirstInvalid(errors: Partial<Record<keyof FormState, string>>) {
     const firstKey = fieldOrder.current.find((key) => errors[key]);
@@ -100,15 +94,19 @@ export function RegisterPage() {
 
     setSubmitting(true);
     try {
-      const registeredEmail = await register({
-        email: form.email.trim(),
+      // No address is collected, so the account is immediately usable — but
+      // usable only by the username, and only until the password is forgotten.
+      // The dashboard banner is what tells the second half of that story, so
+      // the next step is the login form, not the app itself.
+      await register({
         username: form.username.trim(),
         password: form.password,
         displayName: form.displayName.trim(),
       });
-      // The account exists but is not usable until the address is proven, so
-      // there is no app to go to yet — the next screen is the inbox.
-      navigate("/check-email", { replace: true, state: { email: registeredEmail } });
+      navigate("/login", {
+        replace: true,
+        state: { registeredUsername: form.username.trim() },
+      });
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setFormError(err.message);
@@ -173,18 +171,6 @@ export function RegisterPage() {
             value={form.username}
             onChange={(event) => update("username", event.target.value)}
             invalid={Boolean(fieldErrors.username)}
-          />
-        </Field>
-
-        <Field label={t("auth.email")} htmlFor="email" error={fieldErrors.email}>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@team.dev"
-            value={form.email}
-            onChange={(event) => update("email", event.target.value)}
-            invalid={Boolean(fieldErrors.email)}
           />
         </Field>
 

@@ -91,10 +91,46 @@ async function sha256(input: string): Promise<Uint8Array> {
 }
 
 /** Remembers which provider started the flow, so the ?code= landing handler
- * on each button only fires for the provider that actually redirected here. */
+ * on each button only fires for the provider that actually redirected here.
+ * A link flow sets the link tag first; the landing handler checks that before
+ * claiming, so the two never race for the same ?code=. */
 function setPendingProvider(provider: string): void {
   try {
     sessionStorage.setItem("devflow.oauthProvider", provider);
+  } catch {}
+}
+
+/**
+ * Marks the flow as "attach this identity to the account I am already signed
+ * in to" rather than "sign me in as whoever this identity belongs to".
+ *
+ * The tag is the difference between the two endpoints: without it, a click on
+ * the dashboard's link button would land back at the sign-in button's
+ * exchange, mint a whole new session from the provider, and drop the person
+ * into an account that is not the one they were trying to protect.
+ */
+export function setOAuthLinkMode(): void {
+  try {
+    sessionStorage.setItem("devflow.oauthMode", "link");
+  } catch {}
+}
+
+/** True when the pending flow is a link, not a sign-in. */
+export function isOAuthLinkMode(): boolean {
+  try {
+    return sessionStorage.getItem("devflow.oauthMode") === "link";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Clears the link tag once a callback has been consumed or refused, so a later
+ * sign-in is not mistaken for a link.
+ */
+export function clearOAuthLinkMode(): void {
+  try {
+    sessionStorage.removeItem("devflow.oauthMode");
   } catch {}
 }
 
@@ -203,14 +239,27 @@ export function reconcileOAuthCallback(): void {
   stripOAuthCallbackParams();
 }
 
-/** Parses ?code= off the current URL and exchanges it for a DevFlow session. */
-export async function completeOAuthExchange(): Promise<LoginResponse | null> {
+/**
+ * Validates the anti-CSRF evidence of a pending callback and hands back the
+ * provider and the one-time code, having cleared the stored values so a
+ * replay of the same URL cannot redeem a second time.
+ *
+ * Shared by sign-in and link because the failure modes are identical — an
+ * expired verifier or a mismatched GitHub state means the landing cannot be
+ * trusted — and duplicating the checks would mean one of them could drift.
+ */
+export interface OAuthCallback {
+  provider: string;
+  code: string;
+  codeVerifier: string;
+}
+
+export function claimOAuthCallback(): OAuthCallback {
   const params = new URLSearchParams(window.location.search);
   const code = params.get("code");
   if (!code) throw new OAuthCancelledError();
 
-  const provider =
-    sessionStorage.getItem("devflow.oauthProvider") ?? "google";
+  const provider = sessionStorage.getItem("devflow.oauthProvider") ?? "google";
   sessionStorage.removeItem("devflow.oauthProvider");
 
   let codeVerifier = "";
@@ -218,16 +267,23 @@ export async function completeOAuthExchange(): Promise<LoginResponse | null> {
     codeVerifier = sessionStorage.getItem("devflow.oauthVerifier") ?? "";
     sessionStorage.removeItem("devflow.oauthVerifier");
     if (!codeVerifier) {
-      throw new Error("OAuth session expired. Please try signing in again.");
+      throw new Error("OAuth session expired. Please try linking again.");
     }
   } else {
     // GitHub: validate the anti-CSRF state we stored before redirecting.
     const expectedState = sessionStorage.getItem("devflow.oauthState");
     sessionStorage.removeItem("devflow.oauthState");
     if (!expectedState || params.get("state") !== expectedState) {
-      throw new Error("OAuth session expired. Please try signing in again.");
+      throw new Error("OAuth session expired. Please try linking again.");
     }
   }
+
+  return { provider, code, codeVerifier };
+}
+
+/** Parses ?code= off the current URL and exchanges it for a DevFlow session. */
+export async function completeOAuthExchange(): Promise<LoginResponse | null> {
+  const { provider, code, codeVerifier } = claimOAuthCallback();
 
   return api<LoginResponse>("/auth/oauth/exchange", {
     method: "POST",
