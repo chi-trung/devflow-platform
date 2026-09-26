@@ -9,12 +9,19 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { RequireAuth } from "./auth/RequireAuth";
-import { ToastProvider } from "./components/ui/ToastProvider";
+import { ToastProvider, useToast } from "./components/ui/ToastProvider";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
 import { ShellSkeleton } from "./components/ShellSkeleton";
-import { API_BASE, tokens } from "./lib/api";
+import { API_BASE, api, tokens } from "./lib/api";
 import { prefetchRoute } from "./lib/routePrefetch";
+import type { LinkedAccountsResponse } from "./types/api";
+import {
+  claimOAuthCallback,
+  clearOAuthLinkMode,
+  isOAuthLinkMode,
+  stripOAuthCallbackParams,
+} from "./lib/oauth";
 
 const LandingPage = lazy(() =>
   import("./pages/LandingPage").then((m) => ({ default: m.LandingPage })),
@@ -231,6 +238,102 @@ function RoutePrefetcher() {
   return null;
 }
 
+/**
+ * Finishes a provider *link* that the provider sent to the sign-in URL.
+ *
+ * Both providers are registered with `/login` as their redirect URI — one URI
+ * for both flows, because the provider console allows a limited number of
+ * entries and the sign-in landing is the one both flows share. So a link
+ * started on the dashboard comes back to `/login`, a page whose only provider
+ * button deliberately declines to claim a code while the link tag is set
+ * (`GoogleSignInButton`'s `isOAuthLinkMode()` guard). Without this component
+ * the code sits in the address bar of a page that will never redeem it, and
+ * the account stays unrecoverable no matter how many times the button is
+ * pressed.
+ *
+ * So the landing is claimed here, above the router, where it does not matter
+ * which page the provider happened to return to. It is deliberately narrower
+ * than the sign-in buttons: it only runs while the link tag is set, only for
+ * the provider that started the flow, and only once the session is
+ * authenticated — a link needs an open account to attach to, and an expired
+ * session means this is a *sign-in* the user meant to start fresh, which
+ * RequireAuth must still refuse.
+ */
+export function OAuthLinkReturn() {
+  const { t } = useTranslation();
+  const { push } = useToast();
+  const { status } = useAuth();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const denial = params.get("error");
+    if (!code && !denial) return;
+    if (!isOAuthLinkMode()) return;
+    // Both providers use the same redirect URI, so the tag is the only thing
+    // that distinguishes a link landing from a sign-in landing. Without it this
+    // would race the sign-in buttons for the same one-time code.
+    const provider = sessionStorage.getItem("devflow.oauthProvider") ?? "";
+    if (provider !== "google" && provider !== "github") return;
+    // Wait for the session restore. Linking needs the access token that
+    // restore fetches; firing before it lands would send an anonymous request
+    // and the provider would be consumed by a 401.
+    if (status !== "authenticated") return;
+
+    let cancelled = false;
+    const landing = sessionStorage.getItem("devflow.oauthRedirect") ?? "/";
+    sessionStorage.removeItem("devflow.oauthRedirect");
+
+    if (denial && !code) {
+      // Consent refused: ?error=access_denied with no code. Clear every tag so
+      // nothing else claims this landing, then drop the dead params — a spent
+      // code is a credential and must not sit in browser history.
+      clearOAuthLinkMode();
+      sessionStorage.removeItem("devflow.oauthProvider");
+      stripOAuthCallbackParams();
+      push(t("account.linkCancelled"), "error");
+      return;
+    }
+
+    void (async () => {
+      try {
+        const claimed = claimOAuthCallback();
+        // The code is spent and the flow is decided either way, so the tag goes
+        // now: leaving it would disarm the sign-in buttons for the rest of this
+        // tab, and the next "Continue with Google" would be silently ignored.
+        clearOAuthLinkMode();
+
+        await api<LinkedAccountsResponse>("/auth/oauth/link", {
+          method: "POST",
+          body: JSON.stringify({
+            provider: claimed.provider,
+            code: claimed.code,
+            codeVerifier: claimed.codeVerifier,
+          }),
+        });
+        if (cancelled) return;
+        // A full page load, not a client navigation: the dashboard's banner
+        // decides what to render from /auth/linked-accounts on mount, and
+        // React Router would reuse the stale tree it already has.
+        window.location.href = landing;
+      } catch (err: unknown) {
+        if (cancelled) return;
+        stripOAuthCallbackParams();
+        // A 409 here means the other account already owns this identity. It is
+        // a refusal, not a fault — the session and this account are untouched —
+        // and the server's own message is the only party that knows why, so it
+        // is shown rather than flattened into a generic failure.
+        push(err instanceof Error ? err.message : t("account.linkFailed"), "error");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [status, t, push]);
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -242,6 +345,7 @@ export default function App() {
           {/* Keyed by pathname: once the visitor navigates away from the
               route that threw, remount so a failed chunk can be retried on
               the next visit instead of staying stuck on the fallback. */}
+          <OAuthLinkReturn />
           <RoutedBoundary />
         </ToastProvider>
       </AuthProvider>
