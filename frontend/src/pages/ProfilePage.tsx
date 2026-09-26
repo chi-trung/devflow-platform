@@ -9,6 +9,7 @@ import { Avatar } from "../components/ui/Avatar";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { ErrorAlert } from "../components/ui/ErrorAlert";
+import { LinkedAccountsCard } from "../components/LinkedAccountsCard";
 
 function messageFrom(err: unknown, fallback: string): string {
   if (err instanceof ApiError) {
@@ -157,6 +158,8 @@ export function ProfilePage() {
             </div>
           </form>
         </section>
+
+        <LinkedAccountsCard />
 
         <section
           aria-label={t("profile.changePassword")}

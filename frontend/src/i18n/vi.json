@@ -1339,7 +1339,17 @@
   "linkCancelled": "Đã hủy liên kết. Tài khoản của bạn không thay đổi.",
   "linkFailed": "Không liên kết được tài khoản đó. Tài khoản của bạn không thay đổi.",
   "linked": "Đã liên kết tài khoản {{provider}}.",
-  "alreadyLinkedWith": "Đã liên kết: {{providers}}."
+  "alreadyLinkedWith": "Đã liên kết: {{providers}}.",
+  "linkedAccountsTitle": "Tài khoản đã kết nối",
+  "linkedAccountsBody": "Những cách bạn có thể đăng nhập DevFlow mà không cần mật khẩu.",
+  "noLinkedAccounts": "Chưa liên kết gì. Bạn đăng nhập bằng tên tài khoản và mật khẩu.",
+  "linkingUnavailable": "Ứng dụng chưa cấu hình nhà cung cấp đăng nhập nào.",
+  "unlink": "Gỡ bỏ",
+  "unlinkYes": "Vâng, gỡ bỏ",
+  "unlinking": "Đang gỡ bỏ…",
+  "unlinkConfirm": "Đăng nhập bằng {{provider}} sẽ không còn dùng được.",
+  "unlinkDone": "Đã gỡ bỏ {{provider}}.",
+  "unlinkFailed": "Không gỡ bỏ được tài khoản đó. Không có gì thay đổi."
  },
  "settings": {
   "title": "Cài đặt",

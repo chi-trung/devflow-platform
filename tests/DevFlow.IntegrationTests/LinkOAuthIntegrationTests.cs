@@ -254,4 +254,126 @@ public class LinkOAuthIntegrationTests(DevFlowWebApplicationFactory factory)
         var link = await anonymous.GetAsync("/api/v1/auth/linked-accounts");
         Assert.Equal(HttpStatusCode.Unauthorized, link.StatusCode);
     }
+
+    /// <summary>
+    /// Unlinking is the reverse of linking, so it inherits the same trust
+    /// question: whose account loses the identity? The answer must be the
+    /// signed-in one, and an anonymous call must be refused — a DELETE that
+    /// worked without a session would be a way to strip someone's recovery
+    /// route on a guessed user id.
+    /// </summary>
+    [Fact]
+    public async Task Unlink_RequiresAuthentication()
+    {
+        var anonymous = factory.CreateClient();
+
+        var response = await anonymous.DeleteAsync("/api/v1/auth/linked-accounts/google");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    /// <summary>
+    /// The guard that matters: the last provider on an account with no address
+    /// cannot be removed. The account is left exactly as it was — link intact,
+    /// session intact — because the alternative is a password becoming the
+    /// permanent sole key to the account by accident.
+    /// </summary>
+    [Fact]
+    public async Task UnlinkingTheOnlyRouteBackIn_Conflicts_AndLeavesTheLinkIntact()
+    {
+        if (!DevFlowWebApplicationFactory.IsDockerAvailable)
+        {
+            return;
+        }
+
+        var (client, username) = await NewAccountAsync(factory, this.client);
+        var subject = $"sub-{Guid.NewGuid():N}";
+
+        var link = await client.PostAsJsonAsync("/api/v1/auth/oauth/link", new
+        {
+            provider = "google",
+            code = FakeOAuthIdentityProvider.Register(subject, $"{Guid.NewGuid():N}@gmail.com"),
+            codeVerifier = "verifier",
+        });
+        Assert.Equal(HttpStatusCode.OK, link.StatusCode);
+
+        // Google just proved an address, so the account IS recoverable — which
+        // is exactly the case where unlinking must be allowed. Clear the address
+        // with raw SQL to reach the state the guard exists for: the entity has no
+        // "forget my address" operation, and adding one to production purely so a
+        // test could call it would be a real capability nobody asked for.
+        // Scoped to this account — the other tests in the collection still need
+        // theirs intact.
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider
+                .GetRequiredService<DevFlow.Infrastructure.Persistence.DevFlowDbContext>();
+            await db.Database.ExecuteSqlRawAsync(
+                "UPDATE users SET email = NULL, email_verified_at_utc = NULL WHERE username = {0}",
+                username);
+        }
+
+        var refused = await client.DeleteAsync("/api/v1/auth/linked-accounts/google");
+        Assert.Equal(HttpStatusCode.Conflict, refused.StatusCode);
+
+        // The link survives, and so does the session.
+        var status = await client.GetFromJsonAsync<JsonElement>("/api/v1/auth/linked-accounts");
+        Assert.Equal(new[] { "google" }, status.GetProperty("providers").EnumerateArray().Select(p => p.GetString()));
+    }
+
+    [Fact]
+    public async Task UnlinkingWithAnAddress_RemovesTheLink()
+    {
+        if (!DevFlowWebApplicationFactory.IsDockerAvailable)
+        {
+            return;
+        }
+
+        var (client, username) = await NewAccountAsync(factory, this.client);
+
+        await client.PostAsJsonAsync("/api/v1/auth/oauth/link", new
+        {
+            provider = "google",
+            code = FakeOAuthIdentityProvider.Register($"g-{Guid.NewGuid():N}", $"{Guid.NewGuid():N}@gmail.com"),
+            codeVerifier = "verifier",
+        });
+
+        // An address plus a provider: either alone is enough to get back in, so
+        // removing one leaves the other.
+        var removed = await client.DeleteAsync("/api/v1/auth/linked-accounts/google");
+        Assert.Equal(HttpStatusCode.OK, removed.StatusCode);
+
+        var body = await removed.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Empty(body.GetProperty("providers").EnumerateArray());
+        // The address the provider proved is not the provider's to take back.
+        Assert.False(string.IsNullOrEmpty(body.GetProperty("email").GetString()));
+        Assert.True(body.GetProperty("canBeRecovered").GetBoolean());
+
+        // Scoped to this account: the table holds links from every other test
+        // in the collection, and asserting it is empty would only be true if
+        // they had all run first.
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider
+            .GetRequiredService<DevFlow.Infrastructure.Persistence.DevFlowDbContext>();
+        var userId = await db.Users
+            .Where(u => u.Username == username)
+            .Select(u => u.Id)
+            .SingleAsync();
+        Assert.Empty(await db.SocialLogins.AsNoTracking()
+            .Where(s => s.UserId == userId)
+            .ToListAsync());
+    }
+
+    [Fact]
+    public async Task UnlinkingSomethingNotLinked_IsNotFound()
+    {
+        if (!DevFlowWebApplicationFactory.IsDockerAvailable)
+        {
+            return;
+        }
+
+        var (client, _) = await NewAccountAsync(factory, this.client);
+
+        var response = await client.DeleteAsync("/api/v1/auth/linked-accounts/github");
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 }

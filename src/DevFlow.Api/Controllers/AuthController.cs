@@ -281,6 +281,31 @@ public sealed class AuthController(
     }
 
     /// <summary>
+    /// Removes a linked provider from the signed-in account.
+    ///
+    /// Refused with a 409 when it would leave the account with no way back in
+    /// at all — the last provider on an account that has no address. See the
+    /// handler for why that has to be a decision rather than a consequence.
+    /// </summary>
+    [Authorize]
+    [HttpDelete("linked-accounts/{provider}")]
+    [ProducesResponseType(typeof(Application.Features.Auth.OAuth.LinkedAccountsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UnlinkOAuth(
+        string provider,
+        CancellationToken cancellationToken)
+    {
+        var response = await sender.Send(
+            new Application.Features.Auth.OAuth.UnlinkOAuthCommand(userContext.UserId, provider),
+            cancellationToken);
+
+        return Ok(response);
+    }
+
+    /// <summary>
     /// What this account has linked, and whether a lost password could be
     /// recovered at all. The dashboard prompt reads this; see the remarks on
     /// the query for why it is not a claim on the access token.

@@ -1339,7 +1339,17 @@
   "linkCancelled": "Linking was cancelled. Your account is unchanged.",
   "linkFailed": "Could not link that account. Your account is unchanged.",
   "linked": "Account linked with {{provider}}.",
-  "alreadyLinkedWith": "Already linked: {{providers}}."
+  "alreadyLinkedWith": "Already linked: {{providers}}.",
+  "linkedAccountsTitle": "Connected accounts",
+  "linkedAccountsBody": "Ways you can sign in to DevFlow without your password.",
+  "noLinkedAccounts": "Nothing linked yet. You sign in with your username and password.",
+  "linkingUnavailable": "No sign-in provider is configured for this app.",
+  "unlink": "Remove",
+  "unlinkYes": "Yes, remove it",
+  "unlinking": "Removing…",
+  "unlinkConfirm": "Sign in with {{provider}} will stop working.",
+  "unlinkDone": "{{provider}} removed.",
+  "unlinkFailed": "Could not remove that account. Nothing changed."
  },
  "settings": {
   "title": "Settings",
