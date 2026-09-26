@@ -37,6 +37,18 @@ const LoginPage = lazy(() =>
 const RegisterPage = lazy(() =>
   import("./pages/RegisterPage").then((m) => ({ default: m.RegisterPage })),
 );
+const CheckEmailPage = lazy(() =>
+  import("./pages/CheckEmailPage").then((m) => ({ default: m.CheckEmailPage })),
+);
+const VerifyEmailPage = lazy(() =>
+  import("./pages/VerifyEmailPage").then((m) => ({ default: m.VerifyEmailPage })),
+);
+const ForgotPasswordPage = lazy(() =>
+  import("./pages/ForgotPasswordPage").then((m) => ({ default: m.ForgotPasswordPage })),
+);
+const ResetPasswordPage = lazy(() =>
+  import("./pages/ResetPasswordPage").then((m) => ({ default: m.ResetPasswordPage })),
+);
 const DashboardPage = lazy(() =>
   import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })),
 );
@@ -246,6 +258,15 @@ function RoutedBoundary() {
           <Route path="/" element={<HomeRoute />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          {/* Both public: the first shows before a session exists, the
+              second IS the sign-in, since a clicked link carries the token
+              that a password would otherwise prove. */}
+          <Route path="/check-email" element={<CheckEmailPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          {/* Recovery pair, both public: the link is the only way back into an
+              account whose password was lost, so it must work with no session. */}
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/changelog" element={<ChangelogPage />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />

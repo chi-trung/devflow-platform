@@ -25,6 +25,18 @@ public sealed class RefreshCommandHandler(
         var user = await userRepository.GetByIdAsync(storedToken.UserId, cancellationToken)
             ?? throw new UnauthorizedAccessException("Invalid refresh token.");
 
+        // A session is never issued to an unverified account, so an unverified
+        // user should hold no refresh token either. This is the path that would
+        // otherwise hand one out anyway: rotating here is how a revoked
+        // session comes back to life, and the frontend retries it silently on
+        // any 401.
+        if (!user.IsEmailVerified)
+        {
+            storedToken.Revoke(DateTimeOffset.UtcNow);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            throw new EmailNotVerifiedException();
+        }
+
         storedToken.Revoke(DateTimeOffset.UtcNow);
 
         var newAccessToken = tokenProvider.GenerateAccessToken(user);

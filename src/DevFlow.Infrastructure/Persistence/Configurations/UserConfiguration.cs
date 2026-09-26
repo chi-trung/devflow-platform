@@ -36,5 +36,11 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(user => user.AvatarUrl)
             .HasMaxLength(500);
+
+        builder.Property(user => user.EmailVerifiedAtUtc);
+
+        builder.Property(user => user.EmailVerificationSentAtUtc);
+
+        builder.Property(user => user.PasswordResetSentAtUtc);
     }
 }

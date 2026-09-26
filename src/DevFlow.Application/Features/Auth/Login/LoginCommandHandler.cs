@@ -24,6 +24,11 @@ public sealed class LoginCommandHandler(
             throw new UnauthorizedAccessException("Invalid email or password.");
         }
 
+        if (!user.IsEmailVerified)
+        {
+            throw new EmailNotVerifiedException();
+        }
+
         var accessToken = tokenProvider.GenerateAccessToken(user);
 
         var refreshToken = RefreshToken.Create(

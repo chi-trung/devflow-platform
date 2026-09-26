@@ -84,6 +84,7 @@ public sealed class GlobalExceptionHandlingMiddleware
             NotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
             ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
             ForbiddenAccessException => (StatusCodes.Status403Forbidden, "Forbidden"),
+            EmailNotVerifiedException => (StatusCodes.Status403Forbidden, "Email not verified"),
             UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
             AiPlanningUnavailableException => (StatusCodes.Status503ServiceUnavailable, "AI planner unavailable"),
             TaskCanceledException or OperationCanceledException => (StatusCodes.Status503ServiceUnavailable, "AI request timed out"),

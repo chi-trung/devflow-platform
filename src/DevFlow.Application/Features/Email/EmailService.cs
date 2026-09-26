@@ -2,6 +2,29 @@ namespace DevFlow.Application.Features.Email;
 
 public interface IEmailService
 {
+    /// <summary>
+    /// Delivers the one-click link that proves the recipient controls
+    /// <paramref name="toEmail"/>. Unlike the notifications below, a failure
+    /// here blocks the sign-up itself, so the link is also logged locally
+    /// rather than silently dropped.
+    /// </summary>
+    Task SendEmailVerificationAsync(
+        string toEmail,
+        string displayName,
+        string verificationUrl);
+
+    /// <summary>
+    /// Delivers the one-shot link that lets the recipient choose a new
+    /// password. Like the verification link this is on the critical path of
+    /// getting into the account, so a local run logs it rather than dropping
+    /// it. If the mail never arrives, the address is unreachable and the
+    /// account is not.
+    /// </summary>
+    Task SendPasswordResetAsync(
+        string toEmail,
+        string displayName,
+        string resetUrl);
+
     Task SendTaskAssignedEmailAsync(
         string toEmail,
         string taskTitle,
@@ -71,6 +94,18 @@ public interface IEmailService
 
 public class NoOpEmailService : IEmailService
 {
+    public Task SendEmailVerificationAsync(
+        string toEmail, string displayName, string verificationUrl)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task SendPasswordResetAsync(
+        string toEmail, string displayName, string resetUrl)
+    {
+        return Task.CompletedTask;
+    }
+
     public Task SendTaskAssignedEmailAsync(
         string toEmail, string taskTitle, string projectName, string assignedBy,
         string workspaceId, string projectId, string taskId)

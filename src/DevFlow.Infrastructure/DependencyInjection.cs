@@ -103,6 +103,7 @@ public static class DependencyInjection
         services.AddScoped<ITaskWatcherRepository, TaskWatcherRepository>();
         services.AddScoped<INotificationPreferencesRepository, NotificationPreferencesRepository>();
         services.AddScoped<IPersonalAccessTokenRepository, PersonalAccessTokenRepository>();
+        services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
         services.AddScoped<ISocialLoginRepository, SocialLoginRepository>();
         services.AddScoped<IWebhookDispatcher, WebhookDispatcher>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
@@ -111,17 +112,51 @@ public static class DependencyInjection
         services.AddHostedService<OutboxProcessor>();
         services.AddHostedService<RecurringTaskProcessor>();
         services.AddHttpClient("Webhooks");
+
+        // Every transport composes the same messages, so the wording has one
+        // home regardless of which one is selected below.
+        var appUrl = (configuration["FRONTEND_URL"] ?? "http://localhost:5173").TrimEnd('/');
+        services.AddSingleton(new EmailComposer(appUrl));
+
+        var smtpOptions = SmtpOptions.FromConfiguration(configuration);
+
         if (!string.IsNullOrWhiteSpace(configuration["RESEND_API_KEY"]))
         {
-            services.AddHttpClient<IEmailService, ResendEmailService>();
+            // Explicit timeout: HttpClient otherwise waits 100 seconds, so a
+            // Resend outage would hold each caller's request open for over a
+            // minute and a minute and a half. 10s is well inside the budget
+            // the mail API itself needs, and the send is fire-and-forget
+            // anyway — the caller has already moved on.
+            services.AddHttpClient<IEmailService, ResendEmailService>(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(10);
+            });
+        }
+        else if (smtpOptions.IsConfigured)
+        {
+            // A real provider first is the point of this ordering. SMTP is the
+            // fallback for a deployment that has mail credentials but no
+            // sending domain, which is exactly where the HTTP providers refuse
+            // to start; it sends from a real mailbox, so registration works
+            // today even though the deliverability is not production-grade.
+            // Promote Resend above this line once a domain exists.
+            services.AddSingleton(smtpOptions);
+            services.AddScoped<IEmailService, SmtpEmailService>();
         }
         else
         {
-            services.AddScoped<IEmailService, NoOpEmailService>();
+            // Not a no-op: registration is gated on a verification link, so
+            // without a mail provider the link is logged rather than dropped.
+            // See ConsoleLogEmailService.
+            services.AddScoped<IEmailService, ConsoleLogEmailService>();
         }
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<ITokenProvider, JwtTokenProvider>();
+        services.AddSingleton<IEmailVerificationTokenProvider, EmailVerificationTokenProvider>();
+        services.AddScoped<IEmailVerificationLinkBuilder, EmailVerificationLinkBuilder>();
+        services.AddSingleton<IPasswordResetTokenGenerator, PasswordResetTokenGenerator>();
+        services.AddScoped<IPasswordResetLinkBuilder, PasswordResetLinkBuilder>();
         services.AddScoped<IExternalIdentityProvider, GoogleIdentityProvider>();
         services.AddScoped<IExternalIdentityProvider, GitHubIdentityProvider>();
         services.AddHttpClient("OAuth");

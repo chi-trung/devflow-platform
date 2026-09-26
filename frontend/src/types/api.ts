@@ -5,6 +5,8 @@ export interface LoginResponse {
 
 export interface RegisterResponse {
   id: string;
+  /** Lower-cased by the server; the check-your-email screen shows this. */
+  email: string;
 }
 
 export interface WorkspaceResponse {

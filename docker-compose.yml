@@ -39,6 +39,22 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Database: Host=postgres;Port=5432;Database=${POSTGRES_DB:-devflow};Username=${POSTGRES_USER:-devflow};Password=${POSTGRES_PASSWORD:-devflow}
       ConnectionStrings__Redis: redis:6379
+      # Email verification. Both transports empty on purpose: with no
+      # provider the API logs the verification link instead of mailing it,
+      # which is what you want locally — paste it out of
+      # `docker compose logs api`. Resend wins if you set its key; the SMTP
+      # pair is the fallback for a machine with no sending domain.
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-DevFlow <noreply@resend.dev>}
+      # A Google app password is 16 characters shown in four groups. Store it
+      # without the spaces — "abcdefghijklmnop", not "abcd efgh ijkl mnop".
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-DevFlow}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "8080:8080"
     depends_on:

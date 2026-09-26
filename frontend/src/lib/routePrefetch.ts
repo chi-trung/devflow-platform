@@ -24,6 +24,12 @@ const ROUTES: RouteShape[] = [
   { name: "dashboard", test: /^\/$/, load: () => import("../pages/DashboardPage") },
   { name: "login", test: /^\/login$/, load: () => import("../pages/LoginPage") },
   { name: "register", test: /^\/register$/, load: () => import("../pages/RegisterPage") },
+  { name: "check-email", test: /^\/check-email$/, load: () => import("../pages/CheckEmailPage") },
+  // The link is the first thing a brand-new user clicks, often on a cold
+  // cache, so its chunk is warmed on the login page's hover like the rest.
+  { name: "verify-email", test: /^\/verify-email$/, load: () => import("../pages/VerifyEmailPage") },
+  { name: "forgot-password", test: /^\/forgot-password$/, load: () => import("../pages/ForgotPasswordPage") },
+  { name: "reset-password", test: /^\/reset-password$/, load: () => import("../pages/ResetPasswordPage") },
   { name: "profile", test: /^\/profile$/, load: () => import("../pages/ProfilePage") },
   { name: "settings", test: /^\/settings$/, load: () => import("../pages/SettingsPage") },
   { name: "notifications", test: /^\/notifications$/, load: () => import("../pages/NotificationsPage") },

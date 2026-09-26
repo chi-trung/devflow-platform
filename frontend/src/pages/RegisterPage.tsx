@@ -100,13 +100,15 @@ export function RegisterPage() {
 
     setSubmitting(true);
     try {
-      await register({
+      const registeredEmail = await register({
         email: form.email.trim(),
         username: form.username.trim(),
         password: form.password,
         displayName: form.displayName.trim(),
       });
-      navigate("/", { replace: true });
+      // The account exists but is not usable until the address is proven, so
+      // there is no app to go to yet — the next screen is the inbox.
+      navigate("/check-email", { replace: true, state: { email: registeredEmail } });
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setFormError(err.message);

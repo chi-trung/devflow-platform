@@ -31,12 +31,18 @@ interface AuthContextValue {
   status: AuthStatus;
   currentUser: CurrentUser | null;
   login: (email: string, password: string) => Promise<void>;
+  /**
+   * Creates the account and returns the address it was created with.
+   * Deliberately does NOT sign in: the account cannot be used until the
+   * address is proven, and the backend answers a login attempt for an
+   * unverified account with 403.
+   */
   register: (input: {
     email: string;
     username: string;
     password: string;
     displayName: string;
-  }) => Promise<void>;
+  }) => Promise<string>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<boolean>;
   setSessionFromTokens: (accessToken: string, refreshToken: string) => void;
@@ -93,13 +99,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password: string;
       displayName: string;
     }) => {
-      await api<RegisterResponse>("/auth/register", {
+      // No login call here, and that is the feature: registering used to mint
+      // a session on the spot, which is exactly how a stranger could claim
+      // somebody else's address. The account now waits for the emailed link.
+      const data = await api<RegisterResponse>("/auth/register", {
         method: "POST",
         body: JSON.stringify(input),
       });
-      await login(input.email, input.password);
+
+      return data.email;
     },
-    [login],
+    [],
   );
 
   const logout = useCallback(async () => {

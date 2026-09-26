@@ -56,6 +56,21 @@ coveragereport/
 !.env.example
 appsettings.*.local.json
 secrets.json
+# Machine-local compose tweaks (port conflicts, mounts) — never shared.
+docker-compose.override.yml
+# Local launcher that reads .env so secrets stay out of shell history.
+run-api.local.ps1
+# Log written by the local launcher.
+api-local.log
+# Local SMTP harness: the API pointed at a throwaway sink, the sink itself,
+# and the messages it captured. Machine-local, same as the launcher above.
+run-api.smtp.local.ps1
+smtp-sink.local.ps1
+smtp-sink/
+smtp-sink.log
+smtp-sink.err
+api-smtp.log
+api-smtp.err
 
 # OS files
 .DS_Store

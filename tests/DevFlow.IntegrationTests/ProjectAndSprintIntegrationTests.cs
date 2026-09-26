@@ -17,35 +17,16 @@ public class ProjectAndSprintIntegrationTests(DevFlowWebApplicationFactory facto
             return;
         }
 
+        // 1. Register
         var email = $"user_{Guid.NewGuid():N}@test.io";
         var username = $"u_{Guid.NewGuid():N}".Substring(0, 10);
         var password = "Sup3rSecret!";
 
-        // 1. Register
-        var registerResponse = await client.PostAsJsonAsync("/api/v1/auth/register", new
-        {
-            email,
-            username,
-            password,
-            displayName = "Project User"
-        });
+        var userId = await RegistrationFlow.RegisterAsync(
+            client, email, username, password, "Project User");
 
-        if (!registerResponse.IsSuccessStatusCode)
-        {
-            var errorBody = await registerResponse.Content.ReadAsStringAsync();
-            throw new Exception($"Register failed with {registerResponse.StatusCode}: {errorBody}");
-        }
-
-        // 2. Login
-        var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new
-        {
-            email,
-            password
-        });
-
-        Assert.True(loginResponse.IsSuccessStatusCode);
-        var loginBody = await loginResponse.Content.ReadFromJsonAsync<JsonElement>();
-        var accessToken = loginBody.GetProperty("accessToken").GetString();
+        // 2. Verify
+        var accessToken = await RegistrationFlow.VerifyAsync(factory, client, userId);
         Assert.False(string.IsNullOrEmpty(accessToken));
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);

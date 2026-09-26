@@ -6,7 +6,19 @@ public sealed record RegisterRequest(
     string Password,
     string DisplayName);
 
-public sealed record RegisterResponse(Guid Id);
+/// <param name="Id">The new account's id.</param>
+/// <param name="Email">The address the verification link was sent to. Echoed
+/// back so the client can name it on the "check your inbox" screen without
+/// making the visitor retype it.</param>
+public sealed record RegisterResponse(Guid Id, string Email);
+
+public sealed record VerifyEmailRequest(string Token);
+
+public sealed record ResendVerificationRequest(string Email);
+
+public sealed record ForgotPasswordRequest(string Email);
+
+public sealed record ResetPasswordRequest(string Token, string NewPassword);
 
 public sealed record LoginRequest(string Email, string Password);
 
