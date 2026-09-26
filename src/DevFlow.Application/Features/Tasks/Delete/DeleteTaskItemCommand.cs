@@ -9,9 +9,15 @@ namespace DevFlow.Application.Features.Tasks.Delete;
 public sealed record DeleteTaskItemCommand(
     Guid WorkspaceId,
     Guid ProjectId,
-    Guid TaskId) : IRequest, IWorkspaceRequest, IProjectEvent
+    Guid TaskId) : IRequest, IWorkspaceRequest, IProjectEvent, IActivityLabelSink
 {
         public string ActivityVerb => "deleted task";
-        public string ActivityLabel => "a task";
+
+        /// <summary>Placeholder only — once the row is gone the title is
+        /// unrecoverable, so the handler resolves it before the write via
+        /// <see cref="IActivityLabelSink"/>.</summary>
+        public string ActivityLabel => "";
+
         public Guid? ActivityTaskId => TaskId;
+        public string? ResolvedActivityLabel { get; set; }
     }

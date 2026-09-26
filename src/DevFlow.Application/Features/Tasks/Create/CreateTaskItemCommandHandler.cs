@@ -9,8 +9,6 @@ namespace DevFlow.Application.Features.Tasks.Create;
 public sealed class CreateTaskItemCommandHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
-    IActivityLogRepository activityLog,
-    IUserContext userContext,
     IUnitOfWork unitOfWork) : IRequestHandler<CreateTaskItemCommand, TaskItemCreatedResponse>
 {
     private const int MaxSaveAttempts = 3;
@@ -40,15 +38,6 @@ public sealed class CreateTaskItemCommandHandler(
         task.SetNumber(await taskItemRepository.GetMaxNumberAsync(command.ProjectId, cancellationToken) + 1);
 
         await taskItemRepository.AddAsync(task, cancellationToken);
-
-        var log = ActivityLog.Create(
-            command.WorkspaceId,
-            command.ProjectId,
-            task.Id,
-            userContext.UserId,
-            "created task",
-            task.Title);
-        await activityLog.AddAsync(log, cancellationToken);
 
         // Two tasks created at the same moment can race on Max+1; the
         // (project_id, number) unique index is the source of truth — re-query

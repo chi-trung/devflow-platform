@@ -27,7 +27,7 @@ public class CreateTaskItemCommandHandlerTests
     }
 
     private CreateTaskItemCommandHandler CreateHandler() =>
-        new(_projectRepository, _taskItemRepository, _activityLogRepository, _userContext, _unitOfWork);
+        new(_projectRepository, _taskItemRepository, _unitOfWork);
 
     [Fact]
     public async Task Handle_ShouldAssignMaxNumberPlusOne()

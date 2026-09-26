@@ -9,8 +9,6 @@ namespace DevFlow.Application.Features.Tasks.Subtasks;
 public sealed class DetachSubtaskCommandHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
-    IActivityLogRepository activityLog,
-    IUserContext userContext,
     IUnitOfWork unitOfWork) : IRequestHandler<DetachSubtaskCommand>
 {
     public async Task Handle(DetachSubtaskCommand command, CancellationToken cancellationToken)
@@ -43,14 +41,10 @@ public sealed class DetachSubtaskCommandHandler(
 
         subtask.DetachFromParent();
 
-        var log = ActivityLog.Create(
-            command.WorkspaceId,
-            command.ProjectId,
-            parent.Id,
-            userContext.UserId,
-            "removed subtask",
-            subtask.Title);
-        await activityLog.AddAsync(log, cancellationToken);
+        // The command only ever held the subtask's id; ActivityBehavior writes
+        // the entry after this returns, and by then the reader has no way to get
+        // the title. Hand it over now.
+        command.ResolvedActivityLabel = subtask.Title;
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }

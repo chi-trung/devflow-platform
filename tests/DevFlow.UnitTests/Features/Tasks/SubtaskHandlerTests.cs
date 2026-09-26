@@ -53,7 +53,7 @@ public class SubtaskHandlerTests
         _taskItemRepository.GetByIdAsync(parent.Id, Arg.Any<CancellationToken>()).Returns(parent);
 
         var handler = new CreateSubtaskCommandHandler(
-            _projectRepository, _taskItemRepository, _activityLogRepository, _userContext, _unitOfWork);
+            _projectRepository, _taskItemRepository, _unitOfWork);
         var command = new CreateSubtaskCommand(
             _workspaceId, _project.Id, parent.Id, "Write migration", null, TaskItemPriority.Medium);
 
@@ -67,6 +67,10 @@ public class SubtaskHandlerTests
                 && task.SprintId == sprintId),
             Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+
+        // The pipeline writes the activity row; a second one here is what put
+        // "created subtask" and "added subtask" next to each other in the feed.
+        await _activityLogRepository.DidNotReceive().AddAsync(Arg.Any<ActivityLog>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -79,7 +83,7 @@ public class SubtaskHandlerTests
         _taskItemRepository.GetByIdAsync(child.Id, Arg.Any<CancellationToken>()).Returns(child);
 
         var handler = new CreateSubtaskCommandHandler(
-            _projectRepository, _taskItemRepository, _activityLogRepository, _userContext, _unitOfWork);
+            _projectRepository, _taskItemRepository, _unitOfWork);
         var command = new CreateSubtaskCommand(
             _workspaceId, _project.Id, child.Id, "Grandchild", null, TaskItemPriority.Low);
 
@@ -105,10 +109,32 @@ public class SubtaskHandlerTests
         _taskItemRepository.GetByIdAsync(other.Id, Arg.Any<CancellationToken>()).Returns(other);
 
         var handler = new DetachSubtaskCommandHandler(
-            _projectRepository, _taskItemRepository, _activityLogRepository, _userContext, _unitOfWork);
+            _projectRepository, _taskItemRepository, _unitOfWork);
         var command = new DetachSubtaskCommand(_workspaceId, _project.Id, parent.Id, other.Id);
 
         await Assert.ThrowsAsync<ConflictException>(() => handler.Handle(command, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Detach_ShouldHandTheTitleToTheActivityPipeline()
+    {
+        var parent = TaskItem.Create(_project.Id, "Parent", null, TaskItemPriority.Medium);
+        var subtask = TaskItem.Create(_project.Id, "Wire the retry queue", null, TaskItemPriority.Medium);
+        subtask.AttachToParent(parent.Id);
+
+        _taskItemRepository.GetByIdAsync(parent.Id, Arg.Any<CancellationToken>()).Returns(parent);
+        _taskItemRepository.GetByIdAsync(subtask.Id, Arg.Any<CancellationToken>()).Returns(subtask);
+
+        var handler = new DetachSubtaskCommandHandler(
+            _projectRepository, _taskItemRepository, _unitOfWork);
+        var command = new DetachSubtaskCommand(_workspaceId, _project.Id, parent.Id, subtask.Id);
+
+        await handler.Handle(command, CancellationToken.None);
+
+        // The command only ever carried an id, which rendered in the feed as a
+        // bare GUID. The handler has the title and must hand it over.
+        Assert.Equal("Wire the retry queue", command.ResolvedActivityLabel);
+        await _activityLogRepository.DidNotReceive().AddAsync(Arg.Any<ActivityLog>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

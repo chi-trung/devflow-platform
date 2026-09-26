@@ -10,9 +10,14 @@ public sealed record DetachSubtaskCommand(
     Guid WorkspaceId,
     Guid ProjectId,
     Guid ParentTaskId,
-    Guid SubtaskId) : IRequest, IWorkspaceRequest, IProjectEvent
+    Guid SubtaskId) : IRequest, IWorkspaceRequest, IProjectEvent, IActivityLabelSink
 {
     public string ActivityVerb => "detached subtask";
-    public string ActivityLabel => SubtaskId.ToString();
+
+    /// <summary>Placeholder only — the id means nothing to a reader. The handler
+    /// replaces it with the subtask title via <see cref="IActivityLabelSink"/>.</summary>
+    public string ActivityLabel => "";
+
     public Guid? ActivityTaskId => ParentTaskId;
+    public string? ResolvedActivityLabel { get; set; }
 }

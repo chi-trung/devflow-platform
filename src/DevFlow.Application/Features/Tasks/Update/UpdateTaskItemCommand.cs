@@ -18,7 +18,12 @@ public sealed record UpdateTaskItemCommand(
     DateTimeOffset? DueDateUtc,
     string? DefinitionOfDone = null) : IRequest, IWorkspaceRequest, IProjectEvent, INotificationEvent
 {
-        public string ActivityVerb => "updated task";
+        // Empty on purpose. This command writes its own, better logs inside the
+        // handler — "moved task to Done", "assigned task to X" — each of which
+        // carries something "updated task" does not. Leaving the automatic verb
+        // here would add a third, content-free row to every save, and the
+        // dashboard feed has room for only five.
+        public string ActivityVerb => "";
         public string ActivityLabel => Title ?? "a task";
         public Guid? ActivityTaskId => TaskId;
 

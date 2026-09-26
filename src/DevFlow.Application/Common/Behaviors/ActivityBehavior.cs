@@ -41,13 +41,20 @@ public sealed class ActivityBehavior<TRequest, TResponse> : IPipelineBehavior<TR
         {
             try
             {
+                // A handler that loaded the entity knows its title; a command
+                // that only carries an id cannot. Prefer the resolved label so
+                // the feed never shows a bare GUID where a task name belongs.
+                var label = request is IActivityLabelSink sink && sink.ResolvedActivityLabel is { Length: > 0 } resolved
+                    ? resolved
+                    : projectEvent.ActivityLabel;
+
                 var entry = Domain.Entities.ActivityLog.Create(
                     GetWorkspaceId(request),
                     projectEvent.ProjectId,
                     projectEvent.ActivityTaskId,
                     userContext.UserId,
                     projectEvent.ActivityVerb,
-                    projectEvent.ActivityLabel);
+                    label);
 
                 await activityLogRepository.AddAsync(entry, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
