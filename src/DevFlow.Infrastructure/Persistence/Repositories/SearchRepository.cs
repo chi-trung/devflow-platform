@@ -17,95 +17,104 @@ public sealed class SearchRepository(DevFlowDbContext dbContext) : ISearchReposi
         int take,
         CancellationToken cancellationToken = default)
     {
+        // The tenant check is an existence probe rather than a join. Every
+        // filter below reads TaskItem alone; joining Projects up front used to
+        // project a custom row record, and EF cannot re-expand that record when
+        // it reappears inside a later Where — the whole query failed to
+        // translate the moment a keyword was present. The project key is fetched
+        // in the final projection, where only columns are involved.
         var baseQuery = dbContext.TaskItems
             .AsNoTracking()
-            .Join(
-                dbContext.Projects.Where(p => p.WorkspaceId == workspaceId),
-                task => task.ProjectId,
-                project => project.Id,
-                (task, project) => new TaskRow(task, project.Key));
+            .Where(task => dbContext.Projects.Any(project =>
+                project.Id == task.ProjectId && project.WorkspaceId == workspaceId));
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
-            baseQuery = baseQuery.Where(x =>
-                EF.Functions.ILike(x.Task.Title, $"%{keyword}%") ||
-                (x.Task.Description != null && EF.Functions.ILike(x.Task.Description, $"%{keyword}%")));
+            baseQuery = baseQuery.Where(task =>
+                EF.Functions.ILike(task.Title, $"%{keyword}%") ||
+                (task.Description != null && EF.Functions.ILike(task.Description, $"%{keyword}%")));
         }
 
         if (filters.Status is not null)
         {
-            baseQuery = baseQuery.Where(x => x.Task.Status == filters.Status);
+            baseQuery = baseQuery.Where(task => task.Status == filters.Status);
         }
 
         if (filters.Priority is not null)
         {
-            baseQuery = baseQuery.Where(x => x.Task.Priority == filters.Priority);
+            baseQuery = baseQuery.Where(task => task.Priority == filters.Priority);
         }
 
         if (filters.AssigneeId is not null)
         {
-            baseQuery = baseQuery.Where(x => x.Task.AssigneeId == filters.AssigneeId);
+            baseQuery = baseQuery.Where(task => task.AssigneeId == filters.AssigneeId);
         }
 
         if (filters.DueBefore is not null)
         {
-            baseQuery = baseQuery.Where(x => x.Task.DueDateUtc.HasValue && x.Task.DueDateUtc <= filters.DueBefore);
+            baseQuery = baseQuery.Where(task => task.DueDateUtc.HasValue && task.DueDateUtc <= filters.DueBefore);
         }
 
         if (filters.DueAfter is not null)
         {
-            baseQuery = baseQuery.Where(x => x.Task.DueDateUtc.HasValue && x.Task.DueDateUtc >= filters.DueAfter);
+            baseQuery = baseQuery.Where(task => task.DueDateUtc.HasValue && task.DueDateUtc >= filters.DueAfter);
         }
 
         if (filters.LabelId is not null)
         {
-            baseQuery = baseQuery.Where(x => dbContext.TaskLabels.Any(tl => tl.TaskItemId == x.Task.Id && tl.LabelId == filters.LabelId));
+            baseQuery = baseQuery.Where(task => dbContext.TaskLabels.Any(tl => tl.TaskItemId == task.Id && tl.LabelId == filters.LabelId));
         }
 
         var total = await baseQuery.CountAsync(cancellationToken);
 
-        IQueryable<TaskRow> ordered = sort is not null
+        IOrderedQueryable<TaskItem> ordered = sort is not null
             ? ApplyTaskSort(baseQuery, sort)
-            : baseQuery.OrderByDescending(x => x.Task.CreatedAtUtc);
+            : baseQuery.OrderByDescending(task => task.CreatedAtUtc);
 
+        // Select the enum, not its name. Postgres cannot translate
+        // enum.ToString() into SQL, so projecting it here would fail at query
+        // time the moment a keyword is present. The name is rendered in C# by
+        // SearchQueryHandler, after the rows are in memory — the same shape
+        // TaskItemRepository uses.
         var page = await ordered
             .Skip(skip)
             .Take(take)
-            .Select(x => new TaskItemSearchRow(
-                x.Task.Id,
-                x.Task.Title,
-                x.Task.Status.ToString(),
-                x.Task.ProjectId,
-                x.ProjectKey))
+            .Select(task => new TaskItemSearchRow(
+                task.Id,
+                task.Title,
+                task.Status,
+                task.ProjectId,
+                dbContext.Projects
+                    .Where(project => project.Id == task.ProjectId)
+                    .Select(project => project.Key)
+                    .First()))
             .ToListAsync(cancellationToken);
 
         return new PagedSearchItems<TaskItemSearchRow>(page, total);
     }
 
-    private static IOrderedQueryable<TaskRow> ApplyTaskSort(IQueryable<TaskRow> query, TaskItemSearchSort sort)
+    private static IOrderedQueryable<TaskItem> ApplyTaskSort(IQueryable<TaskItem> query, TaskItemSearchSort sort)
     {
         return sort.Key switch
         {
             "title" => sort.Descending
-                ? query.OrderByDescending(x => x.Task.Title)
-                : query.OrderBy(x => x.Task.Title),
+                ? query.OrderByDescending(task => task.Title)
+                : query.OrderBy(task => task.Title),
             "status" => sort.Descending
-                ? query.OrderByDescending(x => x.Task.Status)
-                : query.OrderBy(x => x.Task.Status),
+                ? query.OrderByDescending(task => task.Status)
+                : query.OrderBy(task => task.Status),
             "priority" => sort.Descending
-                ? query.OrderByDescending(x => x.Task.Priority)
-                : query.OrderBy(x => x.Task.Priority),
+                ? query.OrderByDescending(task => task.Priority)
+                : query.OrderBy(task => task.Priority),
             "dueDate" => sort.Descending
-                ? query.OrderByDescending(x => x.Task.DueDateUtc)
-                : query.OrderBy(x => x.Task.DueDateUtc),
+                ? query.OrderByDescending(task => task.DueDateUtc)
+                : query.OrderBy(task => task.DueDateUtc),
             "updatedAt" => sort.Descending
-                ? query.OrderByDescending(x => x.Task.UpdatedAtUtc)
-                : query.OrderBy(x => x.Task.UpdatedAtUtc),
-            _ => query.OrderByDescending(x => x.Task.CreatedAtUtc),
+                ? query.OrderByDescending(task => task.UpdatedAtUtc)
+                : query.OrderBy(task => task.UpdatedAtUtc),
+            _ => query.OrderByDescending(task => task.CreatedAtUtc),
         };
     }
-
-    private sealed record TaskRow(TaskItem Task, string ProjectKey);
 
     public async Task<IReadOnlyList<ProjectSearchRow>> SearchProjectsAsync(
         Guid workspaceId,
@@ -124,10 +133,12 @@ public sealed class SearchRepository(DevFlowDbContext dbContext) : ISearchReposi
                 EF.Functions.ILike(p.Key, $"%{keyword}%"));
         }
 
+        // Same reasoning as SearchTasksAsync: the enum travels, the name is
+        // rendered by the handler in memory.
         var page = await query
             .OrderBy(p => p.Name)
             .Take(take)
-            .Select(p => new ProjectSearchRow(p.Id, p.Name, p.Key, p.Status.ToString()))
+            .Select(p => new ProjectSearchRow(p.Id, p.Name, p.Key, p.Status))
             .ToListAsync(cancellationToken);
 
         return page;

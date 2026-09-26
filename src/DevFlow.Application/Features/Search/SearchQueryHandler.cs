@@ -33,31 +33,26 @@ public sealed class SearchQueryHandler(
         var sort = ParseSort(query.SortBy, query.SortDir);
 
         // One query per entity group, all against the workspace's project IDs.
-        var tasksTask = searchRepository.SearchTasksAsync(query.WorkspaceId, keyword, filters, sort, skip, pageSize, cancellationToken);
-        var projectsTask = searchRepository.SearchProjectsAsync(query.WorkspaceId, keyword, pageSize, cancellationToken);
-        var epicsTask = searchRepository.SearchEpicsAsync(query.WorkspaceId, keyword, pageSize, cancellationToken);
-        var labelsTask = searchRepository.SearchLabelsAsync(query.WorkspaceId, keyword, pageSize, cancellationToken);
-        var customFieldsTask = searchRepository.SearchCustomFieldsAsync(query.WorkspaceId, keyword, skip, pageSize, cancellationToken);
-
-        await Task.WhenAll(tasksTask, projectsTask, epicsTask, labelsTask, customFieldsTask);
-
-        var tasks = tasksTask.Result;
-        var projects = projectsTask.Result;
-        var epics = epicsTask.Result;
-        var labels = labelsTask.Result;
-        var customFields = customFieldsTask.Result;
+        // These run one after another on purpose. They share a single scoped
+        // DbContext, and EF rejects a second operation while the first is still
+        // in flight — starting them together threw "A second operation was
+        // started on this context instance". Each is a small indexed read, so
+        // serialising them costs little and keeps the context's single-threaded
+        // contract.
+        var tasks = await searchRepository.SearchTasksAsync(query.WorkspaceId, keyword, filters, sort, skip, pageSize, cancellationToken);
+        var projects = await searchRepository.SearchProjectsAsync(query.WorkspaceId, keyword, pageSize, cancellationToken);
+        var epics = await searchRepository.SearchEpicsAsync(query.WorkspaceId, keyword, pageSize, cancellationToken);
+        var labels = await searchRepository.SearchLabelsAsync(query.WorkspaceId, keyword, pageSize, cancellationToken);
+        var customFields = await searchRepository.SearchCustomFieldsAsync(query.WorkspaceId, keyword, skip, pageSize, cancellationToken);
 
         // Users + comments stay on workspace-level repos.
-        var membersTask = workspaceRepository.GetMembersAsync(query.WorkspaceId, cancellationToken);
-        var commentsTask = searchRepository.SearchCommentsAsync(query.WorkspaceId, keyword, skip, pageSize, cancellationToken);
+        var members = await workspaceRepository.GetMembersAsync(query.WorkspaceId, cancellationToken);
+        var comments = await searchRepository.SearchCommentsAsync(query.WorkspaceId, keyword, skip, pageSize, cancellationToken);
 
-        await Task.WhenAll(membersTask, commentsTask);
-
-        var members = membersTask.Result;
-        var comments = commentsTask.Result;
-
-        var taskResults = tasks.Items.Select(t => new TaskItemResult(t.Id, t.Title, t.Status, t.ProjectKey)).ToList();
-        var projectResults = projects.Select(p => new ProjectResult(p.Id, p.Name, p.Key, p.Status)).ToList();
+        // The repository hands back enums; the wire contract is still a string,
+        // and this is plain C# rather than a translatable expression.
+        var taskResults = tasks.Items.Select(t => new TaskItemResult(t.Id, t.Title, t.Status.ToString(), t.ProjectKey)).ToList();
+        var projectResults = projects.Select(p => new ProjectResult(p.Id, p.Name, p.Key, p.Status.ToString())).ToList();
         var epicResults = epics.Select(e => new EpicResult(e.Id, e.Name, e.ProjectKey)).ToList();
         var labelResults = labels.Select(l => new LabelResult(l.Id, l.Name, l.Color, l.ProjectKey)).ToList();
         var userResults = members

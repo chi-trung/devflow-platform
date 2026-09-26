@@ -99,7 +99,7 @@ public sealed record TaskItemSearchSort(
 public sealed record TaskItemSearchRow(
     Guid Id,
     string Title,
-    string Status,
+    TaskItemStatus Status,
     Guid ProjectId,
     string ProjectKey);
 
@@ -107,7 +107,7 @@ public sealed record ProjectSearchRow(
     Guid Id,
     string Name,
     string Key,
-    string Status);
+    ProjectStatus Status);
 
 public sealed record EpicSearchRow(
     Guid Id,

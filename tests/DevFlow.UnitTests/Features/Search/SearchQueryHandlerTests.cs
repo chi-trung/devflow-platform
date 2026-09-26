@@ -61,7 +61,7 @@ public class SearchQueryHandlerTests
                 Arg.Any<int>(),
                 Arg.Any<CancellationToken>())
             .Returns(new PagedSearchItems<TaskItemSearchRow>([
-                new TaskItemSearchRow(Guid.NewGuid(), "Fix login bug", "Idea", Guid.NewGuid(), "DEV")
+                new TaskItemSearchRow(Guid.NewGuid(), "Fix login bug", TaskItemStatus.Idea, Guid.NewGuid(), "DEV")
             ], 1));
 
         var handler = new SearchQueryHandler(_searchRepository, _workspaceRepository);
@@ -72,6 +72,10 @@ public class SearchQueryHandlerTests
         Assert.Single(result.Tasks);
         Assert.Equal("Fix login bug", result.Tasks[0].Title);
         Assert.Equal("DEV", result.Tasks[0].ProjectKey);
+        // The repository now carries the enum; the wire contract must not have
+        // moved with it. The SPA switches on these names, so a numeric here
+        // would silently break every status filter it renders.
+        Assert.Equal("Idea", result.Tasks[0].Status);
         Assert.Equal(1, result.Pagination.TotalTasks);
     }
 
@@ -103,8 +107,8 @@ public class SearchQueryHandlerTests
                 Arg.Any<TaskItemSearchSort?>(),
                 0, 10, Arg.Any<CancellationToken>())
             .Returns(new PagedSearchItems<TaskItemSearchRow>([
-                new TaskItemSearchRow(Guid.NewGuid(), "task 1", "Idea", Guid.NewGuid(), "DEV"),
-                new TaskItemSearchRow(Guid.NewGuid(), "task 2", "Idea", Guid.NewGuid(), "DEV")
+                new TaskItemSearchRow(Guid.NewGuid(), "task 1", TaskItemStatus.Idea, Guid.NewGuid(), "DEV"),
+                new TaskItemSearchRow(Guid.NewGuid(), "task 2", TaskItemStatus.Idea, Guid.NewGuid(), "DEV")
             ], 25));
 
         var handler = new SearchQueryHandler(_searchRepository, _workspaceRepository);
