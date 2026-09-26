@@ -343,6 +343,34 @@ async function parseProblemDetails(response: Response): Promise<ApiError> {
   return new ApiError(response.status, title, fieldErrors);
 }
 
+/**
+ * Parse a successful body, tolerating the empty one.
+ *
+ * `202 Accepted` with no body is a deliberate shape on the auth endpoints:
+ * forgot-password and resend-verification must answer identically whether or
+ * not the address is registered, and a body that varies would turn them into
+ * an account-enumeration oracle. `Accepted()` therefore returns
+ * `Content-Length: 0`, and the old unconditional `response.json()` threw
+ * `SyntaxError: Unexpected end of JSON input` on it — which the pages caught
+ * and rendered verbatim, so "we sent you a link" became a JSON parser message
+ * shown to the user.
+ *
+ * The header check is a fast path only. `content-length` is absent whenever a
+ * response is streamed or the length is unknown, so a body-less response that
+ * omits the header still has to be handled — hence the fallback read, which
+ * yields an empty string for a genuinely empty body and then parses to
+ * `undefined`, keeping `api<void>` honest without special-casing it.
+ */
+async function parseSuccessBody<T>(response: Response): Promise<T> {
+  const declaredLength = response.headers.get("content-length");
+  if (declaredLength === "0") return undefined as T;
+
+  const raw = await response.text();
+  if (raw.length === 0) return undefined as T;
+
+  return JSON.parse(raw) as T;
+}
+
 export async function api<T>(
   path: string,
   options: RequestInit = {},
@@ -382,14 +410,14 @@ export async function api<T>(
             const retry = await send();
             if (!retry.ok) throw await parseProblemDetails(retry);
             if (retry.status === 204) return undefined as T;
-            const data = (await retry.json()) as T;
+            const data = await parseSuccessBody<T>(retry);
             cache.set(key, { data, ts: Date.now() });
             return data;
           }
         }
         if (!response.ok) throw await parseProblemDetails(response);
         if (response.status === 204) return undefined as T;
-        const data = (await response.json()) as T;
+        const data = await parseSuccessBody<T>(response);
         cache.set(key, { data, ts: Date.now() });
         return data;
       })
@@ -420,7 +448,7 @@ export async function api<T>(
   inflight.clear();
 
   if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  return parseSuccessBody<T>(response);
 }
 
 export function getSprints(
