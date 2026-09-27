@@ -57,9 +57,13 @@ public sealed class CreateSubtaskCommandHandler(
             subtask.AttachToEpic(parent.EpicId);
         }
 
-        await taskItemRepository.AddAsync(subtask, cancellationToken);
-
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        // A subtask is a task row like any other: it needs its own number in the
+        // project's sequence. Without this every subtask kept the CLR default of
+        // 0, and the (project_id, number) unique index rejected the second one —
+        // so a project could hold exactly one subtask, and creating another was
+        // a 500 rather than a story.
+        await TaskNumberAssigner.SaveWithNumberAsync(
+            subtask, taskItemRepository, unitOfWork, command.ProjectId, cancellationToken);
 
         return new SubtaskCreatedResponse(subtask.Id, parent.Id);
     }

@@ -74,6 +74,30 @@ public class SubtaskHandlerTests
     }
 
     [Fact]
+    public async Task CreateSubtask_ShouldAssignANumberLikeAnyOtherTask()
+    {
+        var parent = TaskItem.Create(_project.Id, "Parent", null, TaskItemPriority.Medium);
+        _taskItemRepository.GetByIdAsync(parent.Id, Arg.Any<CancellationToken>()).Returns(parent);
+        _taskItemRepository.GetMaxNumberAsync(_project.Id, Arg.Any<CancellationToken>()).Returns(3);
+
+        TaskItem? added = null;
+        _taskItemRepository.When(r => r.AddAsync(Arg.Any<TaskItem>(), Arg.Any<CancellationToken>()))
+            .Do(call => added = call.Arg<TaskItem>());
+
+        var handler = new CreateSubtaskCommandHandler(
+            _projectRepository, _taskItemRepository, _unitOfWork);
+
+        await handler.Handle(new CreateSubtaskCommand(
+            _workspaceId, _project.Id, parent.Id, "Write migration", null, TaskItemPriority.Medium),
+            CancellationToken.None);
+
+        // A subtask is a task row like any other. Left at the CLR default of 0
+        // it collided with the (project_id, number) unique index, and a project
+        // could hold exactly one subtask — the second was a 500, not a story.
+        Assert.Equal(4, added!.Number);
+    }
+
+    [Fact]
     public async Task CreateSubtask_ShouldRejectNestedSubtask()
     {
         var root = TaskItem.Create(_project.Id, "Root", null, TaskItemPriority.Medium);
