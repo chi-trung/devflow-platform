@@ -2,6 +2,7 @@ using System.Reflection;
 using DevFlow.Application.Common.Authorization;
 using DevFlow.Application.Common.Behaviors;
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Tasks;
 using DevFlow.Domain.Common;
 using ExportData = DevFlow.Application.Features.Export.ProjectBackupData;
 using DevFlow.Domain.Enums;
@@ -133,6 +134,15 @@ public class ImportProjectBackupHandler(
 
         // ── 3. Import Tasks (with remapped IDs) ──
         var taskIdMap = new Dictionary<Guid, Guid>();
+        var staged = new Dictionary<Guid, Domain.Entities.TaskItem>();
+
+        // Every task in this backup is staged and saved in one go at the end of
+        // the handler. Numbering has to count up in memory rather than re-read
+        // the max per row: rows staged in the same DbContext are not in the
+        // table yet, so each one would be handed the same number and the whole
+        // batch would be rejected by the (project_id, number) unique index —
+        // which is why restoring a backup used to fail outright.
+        var numbers = new TaskNumberAssigner.Batch(taskItemRepository, request.ProjectId);
 
         // First pass: create all tasks to get ID mapping
         foreach (var taskData in backup.Tasks)
@@ -211,7 +221,15 @@ public class ImportProjectBackupHandler(
 
                 task.Position = taskData.Position;
 
+                await numbers.AssignAsync(task, ct);
                 await taskItemRepository.AddAsync(task, ct);
+
+                // Kept in memory on purpose. The parent links below are wired up
+                // before the single SaveChanges at the end of this handler, so
+                // these rows are staged and not in the table yet — reading them
+                // back by id would return null and drop the link without any
+                // error.
+                staged[newTaskId] = task;
                 importedTasks++;
             }
             catch (Exception ex)
@@ -220,19 +238,19 @@ public class ImportProjectBackupHandler(
             }
         }
 
-        // Second pass: set parent task references (after all tasks exist)
+        // Second pass: set parent task references. Both ends are still staged —
+        // nothing has been saved yet — so they are read from the in-memory map
+        // above rather than from the database, which does not have them yet.
         foreach (var taskData in backup.Tasks.Where(t => t.ParentTaskId.HasValue))
         {
             if (taskIdMap.TryGetValue(taskData.Id, out var newTaskId)
-                && taskIdMap.TryGetValue(taskData.ParentTaskId!.Value, out var newParentId))
+                && taskIdMap.TryGetValue(taskData.ParentTaskId!.Value, out var newParentId)
+                && staged.TryGetValue(newTaskId, out var stagedChild)
+                && staged.ContainsKey(newParentId))
             {
                 try
                 {
-                    var task = await taskItemRepository.GetByIdAsync(newTaskId, ct);
-                    if (task is not null)
-                    {
-                        task.AttachToParent(newParentId);
-                    }
+                    stagedChild.AttachToParent(newParentId);
                 }
                 catch (Exception ex)
                 {

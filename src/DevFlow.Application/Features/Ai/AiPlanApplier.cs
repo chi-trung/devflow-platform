@@ -1,4 +1,5 @@
 using DevFlow.Application.Common.Interfaces;
+using DevFlow.Application.Features.Tasks;
 using DevFlow.Domain.Entities;
 
 namespace DevFlow.Application.Features.Ai;
@@ -23,6 +24,13 @@ public sealed class AiPlanApplier(
         var existingTitles = new HashSet<string>(
             existingSubtasks.Select(s => s.Title.Trim().ToLowerInvariant()),
             StringComparer.OrdinalIgnoreCase);
+
+        // All the subtasks below are staged and saved in one go at the end of
+        // this method. Numbering counts up in memory instead of re-reading the
+        // max per row: rows staged in the same DbContext are not in the table
+        // yet, so each one would be handed the same number and the batch would
+        // be rejected by the (project_id, number) unique index.
+        var numbers = new TaskNumberAssigner.Batch(taskItemRepository, project.Id);
 
         foreach (var subtaskContract in contract.Subtasks)
         {
@@ -59,6 +67,7 @@ public sealed class AiPlanApplier(
             }
 
             existingTitles.Add(title.ToLowerInvariant());
+            await numbers.AssignAsync(subtask, cancellationToken);
             await taskItemRepository.AddAsync(subtask, cancellationToken);
         }
 

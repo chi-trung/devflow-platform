@@ -105,4 +105,63 @@ public class TaskNumberAssignerTests
         Assert.Equal("connection reset", ex.Message);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
+
+    // --- Batch: rows staged together and saved once ------------------------
+
+    [Fact]
+    public async Task Batch_ShouldCountUpFromTheCurrentMax()
+    {
+        // Rows staged in the same context are not in the table yet. A per-row
+        // read would return the same max every time and hand every row the
+        // same number, which the (project_id, number) index then rejects.
+        _taskItemRepository.GetMaxNumberAsync(ProjectId, Arg.Any<CancellationToken>()).Returns(4);
+        var batch = new TaskNumberAssigner.Batch(_taskItemRepository, ProjectId);
+
+        var tasks = Enumerable.Range(0, 3)
+            .Select(i => TaskItem.Create(ProjectId, $"Task {i}", null, TaskItemPriority.Medium))
+            .ToArray();
+
+        foreach (var task in tasks)
+        {
+            await batch.AssignAsync(task, CancellationToken.None);
+        }
+
+        Assert.Equal(new[] { 5, 6, 7 }, tasks.Select(t => t.Number).ToArray());
+
+        // One read for the whole batch, not one per row.
+        await _taskItemRepository.Received(1).GetMaxNumberAsync(ProjectId, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Batch_ShouldStartAtOne_InAnEmptyProject()
+    {
+        _taskItemRepository.GetMaxNumberAsync(ProjectId, Arg.Any<CancellationToken>()).Returns(0);
+        var batch = new TaskNumberAssigner.Batch(_taskItemRepository, ProjectId);
+
+        var only = TaskItem.Create(ProjectId, "First ever", null, TaskItemPriority.Medium);
+        await batch.AssignAsync(only, CancellationToken.None);
+
+        Assert.Equal(1, only.Number);
+    }
+
+    [Fact]
+    public async Task Batch_ShouldNotRepeatANumber_WhenTheProjectAlreadyHasGaps()
+    {
+        // Soft-deleted tasks keep occupying their number, so a project can
+        // easily read 0, 1, 2, 8. The batch must start above the highest, not
+        // fill the gap — and must not hand the same number to two rows.
+        _taskItemRepository.GetMaxNumberAsync(ProjectId, Arg.Any<CancellationToken>()).Returns(8);
+        var batch = new TaskNumberAssigner.Batch(_taskItemRepository, ProjectId);
+
+        var tasks = Enumerable.Range(0, 2)
+            .Select(i => TaskItem.Create(ProjectId, $"Task {i}", null, TaskItemPriority.Medium))
+            .ToArray();
+
+        foreach (var task in tasks)
+        {
+            await batch.AssignAsync(task, CancellationToken.None);
+        }
+
+        Assert.Equal(new[] { 9, 10 }, tasks.Select(t => t.Number).ToArray());
+    }
 }

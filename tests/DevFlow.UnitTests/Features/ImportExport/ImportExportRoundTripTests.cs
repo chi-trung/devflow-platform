@@ -137,6 +137,12 @@ public class ImportExportRoundTripTests
         // Verify IDs are new GUIDs (not empty)
         Assert.NotEqual(Guid.Empty, importedTasks[0].Id);
         Assert.NotEqual(Guid.Empty, importedEpics[0].Id);
+
+        // The whole batch is staged and saved in one go, so a per-row database
+        // read would hand every task the same number and the batch would be
+        // rejected by the (project_id, number) unique index. Only a real
+        // Postgres test can prove that end to end; this pins the arithmetic.
+        Assert.Equal(new[] { 1, 2 }, importedTasks.Select(t => t.Number).ToArray());
     }
 
     [Fact]

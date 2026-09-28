@@ -59,6 +59,31 @@ public class ApplyAiPlanCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_ShouldNumberTheSubtasksItStages()
+    {
+        // Both subtasks are staged and saved in one SaveChanges at the end of
+        // the applier. Without a number they both keep the CLR default of 0 and
+        // the (project_id, number) unique index rejects the pair, so applying a
+        // plan with two or more subtasks failed outright.
+        var plan = CreatePendingPlan();
+        _aiPlanRepository.GetByIdAsync(plan.Id, Arg.Any<CancellationToken>()).Returns(plan);
+        _aiPlanRepository.GetPendingForTaskAsync(_task.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<AiPlan>());
+
+        var added = new List<TaskItem>();
+        _taskItemRepository.When(r => r.AddAsync(Arg.Any<TaskItem>(), Arg.Any<CancellationToken>()))
+            .Do(call => added.Add(call.Arg<TaskItem>()));
+
+        _taskItemRepository.GetMaxNumberAsync(_project.Id, Arg.Any<CancellationToken>()).Returns(2);
+
+        await BuildHandler().Handle(
+            new ApplyAiPlanCommand(_workspaceId, _project.Id, plan.Id),
+            CancellationToken.None);
+
+        Assert.Equal(new[] { 3, 4 }, added.Select(t => t.Number).ToArray());
+    }
+
+    [Fact]
     public async Task Handle_ShouldCreateSubtasks_AndSetDoD_AndMarkApplied()
     {
         var plan = CreatePendingPlan();

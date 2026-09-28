@@ -57,4 +57,34 @@ public static class TaskNumberAssigner
         return ex.Message.Contains("23505", StringComparison.Ordinal) ||
                ex.InnerException?.Message.Contains("23505", StringComparison.Ordinal) == true;
     }
+
+    /// <summary>
+    /// Hands out numbers to a batch of rows that will be saved together — AI
+    /// plan application, backup import.
+    ///
+    /// Asking the database per row would be wrong: rows staged in the same
+    /// DbContext are not in the table yet, so every one of them would be told
+    /// the same number and the batch would fail on the very unique index this
+    /// type exists to satisfy. The max is therefore read once and counted up
+    /// in memory for the rest of the batch.
+    /// </summary>
+    public sealed class Batch(ITaskItemRepository taskItemRepository, Guid projectId)
+    {
+        private int _next = -1;
+
+        /// <summary>
+        /// Numbering always starts at 1, even in an empty project where the max
+        /// is 0. Reading it lazily keeps the query off the path that stages no
+        /// tasks at all.
+        /// </summary>
+        public async Task AssignAsync(TaskItem task, CancellationToken cancellationToken)
+        {
+            if (_next < 0)
+            {
+                _next = await taskItemRepository.GetMaxNumberAsync(projectId, cancellationToken);
+            }
+
+            task.SetNumber(++_next);
+        }
+    }
 }
