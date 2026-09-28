@@ -14,6 +14,30 @@ public interface IUserRepository
 
     Task AddAsync(User user, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Stages the removal of every row that still names this account but is
+    /// NOT covered by a cascade foreign key — workspace and project
+    /// memberships, invitations on either end, notifications sent to or sent
+    /// by it, and the tasks assigned to it (those are unassigned rather than
+    /// deleted, since the task belongs to the project, not to the person).
+    ///
+    /// Staged, not executed: nothing here runs until the caller flushes the
+    /// unit of work, so a failure part-way through cannot leave memberships
+    /// gone while the account itself is still there. History the person
+    /// authored — comments, activity rows, plans and knowledge they created —
+    /// is deliberately left alone; see the repository for why.
+    ///
+    /// Returns the workspace ids whose member roster just changed, so the
+    /// caller can drop the cached rosters after the flush. They cannot be
+    /// re-read afterwards: by then the rows are staged for deletion.
+    /// </summary>
+    Task<IReadOnlyList<Guid>> RemoveAccountReferencesAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Stages the removal of the account row itself.</summary>
+    Task RemoveAsync(User user, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyDictionary<Guid, string>> GetDisplayNamesAsync(
         IEnumerable<Guid> userIds,
         CancellationToken cancellationToken = default);
