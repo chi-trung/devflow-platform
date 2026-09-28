@@ -236,6 +236,28 @@ public sealed class AuthController(
         return NoContent();
     }
 
+    /// <summary>
+    /// Deletes the signed-in account outright — memberships, invitations,
+    /// notifications and task assignments go with it. Self-service only: the id
+    /// comes from the token, never from the body, so there is no way to aim this
+    /// at somebody else's account.
+    ///
+    /// Idempotent on purpose. The access token outlives the row it names for up
+    /// to 15 minutes, so a second DELETE must quietly succeed rather than turn an
+    /// already-finished deletion into a confusing 404.
+    /// </summary>
+    [Authorize]
+    [HttpDelete("account")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeleteAccount(CancellationToken cancellationToken)
+    {
+        await sender.Send(
+            new Application.Features.Auth.DeleteAccount.DeleteAccountCommand(userContext.UserId),
+            cancellationToken);
+
+        return NoContent();
+    }
+
     [HttpPost("oauth/exchange")]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
